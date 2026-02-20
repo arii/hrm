@@ -27,7 +27,6 @@ describe('parseGoogleDocTable', () => {
 
     const expectedDto: WorkoutTableDto = {
       headers: ['Exercise', 'Sets', 'Reps', 'Notes'],
-      rows: [],
     }
 
     const result = parseGoogleDocTable(html)

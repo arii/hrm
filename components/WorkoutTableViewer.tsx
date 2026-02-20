@@ -4,11 +4,10 @@
 import { useEffect, useState } from 'react'
 import {
   Table,
-  TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TableCell,
   Paper,
   CircularProgress,
   Typography,
@@ -16,11 +15,7 @@ import {
   Box,
 } from '@mui/material'
 import RefreshIconButton from '@/components/RefreshIconButton'
-
-interface WorkoutData {
-  headers: string[]
-  rows: string[][]
-}
+import { WorkoutTableDto } from '@/types/workout'
 
 interface WorkoutTableViewerProps {
   docId: string
@@ -33,7 +28,7 @@ export default function WorkoutTableViewer({
   refreshKey,
   onRefresh,
 }: WorkoutTableViewerProps) {
-  const [data, setData] = useState<WorkoutData | null>(null)
+  const [data, setData] = useState<WorkoutTableDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,14 +65,18 @@ export default function WorkoutTableViewer({
     return <Alert severity="error">{error}</Alert>
   }
 
-  if (!data || (data.headers.length === 0 && data.rows.length === 0)) {
+  if (!data || data.headers.length === 0) {
     return (
       <Alert severity="info">No workout data found in this document.</Alert>
     )
   }
 
+  const tableHeaderStyle = { fontWeight: 'bold' }
+  const tableContainerStyle = { width: '100%' }
+  const tableHeaderRowStyle = { backgroundColor: 'action.hover' }
+
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
+    <Box sx={{ position: 'relative', ...tableContainerStyle }}>
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
@@ -90,44 +89,23 @@ export default function WorkoutTableViewer({
         data-testid="workout-table-viewer"
       >
         <Table sx={{ minWidth: 650 }} aria-label="workout table">
-          {/* Render Headers */}
-          {data.headers.length > 0 && (
-            <TableHead>
-              <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                {data.headers.map((header, index) => (
-                  <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+          <TableHead>
+            <TableRow sx={tableHeaderRowStyle}>
+              {data.headers.map((header, index) => (
+                <TableCell key={index} sx={tableHeaderStyle}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: 'inherit',
+                      m: 0,
+                    }}
+                  >
                     {header}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-          )}
-
-          {/* Render Data Rows */}
-          <TableBody>
-            {data.rows.map((row, rowIndex) => (
-              <TableRow
-                key={rowIndex}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                {row.map((cell, cellIndex) => (
-                  <TableCell key={cellIndex} sx={{ verticalAlign: 'top' }}>
-                    <Typography
-                      variant="body2"
-                      component="pre"
-                      sx={{
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: 'inherit',
-                        m: 0,
-                      }}
-                    >
-                      {cell}
-                    </Typography>
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
+                  </Typography>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
         </Table>
       </TableContainer>
     </Box>
