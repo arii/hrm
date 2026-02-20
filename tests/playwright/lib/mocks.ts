@@ -120,6 +120,7 @@ export async function mockSpotifyPlaybackState(
 export async function mockLoggedInSession(
   context: BrowserContext
 ): Promise<void> {
+  // Mock the session endpoint
   await context.route('**/api/auth/session', (route) => {
     route.fulfill({
       status: 200,
@@ -132,6 +133,30 @@ export async function mockLoggedInSession(
         },
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         accessToken: 'mock-access-token',
+      }),
+    })
+  })
+
+  // Mock the Spotify access token endpoint as it's required for the control panel
+  await mockSpotifyAccessToken(context)
+}
+
+/**
+ * Mocks the Spotify access token endpoint.
+ *
+ * @param context - The Playwright BrowserContext object.
+ * @param accessToken - The mock access token to return.
+ */
+export async function mockSpotifyAccessToken(
+  context: BrowserContext,
+  accessToken: string = 'mock-spotify-access-token'
+): Promise<void> {
+  await context.route('**/api/spotify/access-token', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken,
       }),
     })
   })
