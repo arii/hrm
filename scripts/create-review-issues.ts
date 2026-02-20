@@ -353,13 +353,21 @@ const GENERIC_TITLES = [
   'enhance readability',
 ]
 
-export function isLowQualityIssue(
+export interface QualityResult {
+  isLowQuality: boolean
+  reason?: string
+}
+
+export function checkIssueQuality(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
-): boolean {
+): QualityResult {
   // 1. Check description length
   if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
-    return true
+    return {
+      isLowQuality: true,
+      reason: `Description too short (${issue.description.trim().length} chars)`,
+    }
   }
 
   // 2. Check for generic titles
@@ -368,19 +376,42 @@ export function isLowQualityIssue(
     .trim()
     .replace(/[^\w\s]/g, '')
   if (GENERIC_TITLES.includes(normalizedTitle)) {
-    return true
+    return { isLowQuality: true, reason: 'Generic title' }
   }
 
   // 3. Check for "AI slop" patterns
-  if (!slopPattern) return false
-  const combinedText = `${issue.title} ${issue.description}`
-  return slopPattern.test(combinedText)
+  if (slopPattern) {
+    const combinedText = `${issue.title} ${issue.description}`
+    const matches = combinedText.match(new RegExp(slopPattern, 'gi')) || []
+    if (matches.length >= 3) {
+      const uniqueMatches = [...new Set(matches.map((m) => m.toLowerCase()))]
+      return {
+        isLowQuality: true,
+        reason: `AI slop detected (${uniqueMatches.join(', ')})`,
+      }
+    }
+  }
+
+  return { isLowQuality: false }
 }
 
-export function isDuplicate(
+export function isLowQualityIssue(
+  issue: SuggestedIssue,
+  slopPattern: RegExp | null
+): boolean {
+  return checkIssueQuality(issue, slopPattern).isLowQuality
+}
+
+export interface DuplicateResult {
+  isDuplicate: boolean
+  reason?: string
+  matchingIssueNumber?: number
+}
+
+export function checkDuplicate(
   newIssue: SuggestedIssue,
   existingIssues: PreparedExistingIssue[]
-): boolean {
+): DuplicateResult {
   const newSignature = getIssueSignature(newIssue.title, newIssue.description)
   const newIssueTokens = tokenize(newIssue.title)
 
@@ -392,7 +423,11 @@ export function isDuplicate(
       existingDescription
     )
     if (newSignature === existingSignature) {
-      return true
+      return {
+        isDuplicate: true,
+        reason: 'Exact content match',
+        matchingIssueNumber: existing.number,
+      }
     }
 
     // 2. Check for fingerprint match
@@ -402,19 +437,36 @@ export function isDuplicate(
       existingFingerprint &&
       newIssue.fingerprint === existingFingerprint
     ) {
-      return true
+      return {
+        isDuplicate: true,
+        reason: `Fingerprint match (${newIssue.fingerprint})`,
+        matchingIssueNumber: existing.number,
+      }
     }
 
-    // 3. Check for fuzzy title match
-    const titleSimilarity = calculateJaccardSimilarity(
-      newIssueTokens,
-      existing.titleTokens
-    )
-    if (titleSimilarity >= 0.85) {
-      return true
+    // 3. Check for fuzzy title match (Only against OPEN issues)
+    if (existing.state.toUpperCase() === 'OPEN') {
+      const titleSimilarity = calculateJaccardSimilarity(
+        newIssueTokens,
+        existing.titleTokens
+      )
+      if (titleSimilarity >= 0.85) {
+        return {
+          isDuplicate: true,
+          reason: `Fuzzy title match (${Math.round(titleSimilarity * 100)}% similarity)`,
+          matchingIssueNumber: existing.number,
+        }
+      }
     }
   }
-  return false
+  return { isDuplicate: false }
+}
+
+export function isDuplicate(
+  newIssue: SuggestedIssue,
+  existingIssues: PreparedExistingIssue[]
+): boolean {
+  return checkDuplicate(newIssue, existingIssues).isDuplicate
 }
 
 // --- Core Logic ---
@@ -489,14 +541,20 @@ export async function run(
   let skippedLowQuality = 0
 
   for (const issue of result.suggestedIssues) {
-    if (isDuplicate(issue, preparedExistingIssues)) {
-      console.log(`⏭️  Skipping duplicate: "${issue.title}"`)
+    const duplicate = checkDuplicate(issue, preparedExistingIssues)
+    if (duplicate.isDuplicate) {
+      console.log(
+        `⏭️  Skipping duplicate: "${issue.title}" (${duplicate.reason} with #${duplicate.matchingIssueNumber})`
+      )
       skippedDuplicates++
       continue
     }
 
-    if (isLowQualityIssue(issue, slopPattern)) {
-      console.log(`🗑️  Skipping low-quality issue: "${issue.title}"`)
+    const quality = checkIssueQuality(issue, slopPattern)
+    if (quality.isLowQuality) {
+      console.log(
+        `🗑️  Skipping low-quality issue: "${issue.title}" (${quality.reason})`
+      )
       skippedLowQuality++
       continue
     }
