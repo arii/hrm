@@ -30,7 +30,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     headers.push(text)
   })
 
-  // Per requirements: assume table has 1 row but 4+ columns.
+  // Per requirements: assume table has 1 row.
   // We return the contents of this row as headers.
   return { headers }
 }
