@@ -11,7 +11,6 @@ import { waitForPageReady } from './lib/waits'
 test.describe('Component-Specific VRT', () => {
   test.beforeEach(async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
-    await waitForPageReady(dashboardPage)
   })
 
   test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
