@@ -362,7 +362,7 @@ jobs:
         run: |
           pnpm tsx scripts/gemini-client.ts \
             --preset "review" \
-            --instructions "If a bug or debt is found in code CHANGED by this PR, include it in reviewComment. If a bug or debt is found in code NOT CHANGED by this PR (base branch legacy code), include it in suggestedIssues." \
+            --instructions "## 📋 Additional Instructions\nIf a bug or debt is found in code CHANGED by this PR, include it in reviewComment. If a bug or debt is found in code NOT CHANGED by this PR (base branch legacy code), include it in suggestedIssues." \
             --context "docs/DEVELOPMENT.md,docs/DESIGN_GUIDELINES.md,docs/TYPESCRIPT_PATTERNS.md,.github/copilot-instructions.md,docs/CODE_REVIEW_GUIDELINES.md" \
             --output "review_result.json"
 

@@ -505,7 +505,9 @@ function verifyIsPreExisting(
       return isAncestor
     }
   } catch (e) {
-    console.warn(`Warning: Failed to verify pre-existing status for ${issue.filePath}:${issue.lineNumber}:`, e)
+    console.warn(
+      `Warning: Git command failed to verify pre-existing status for ${issue.filePath}:${issue.lineNumber}: ${e instanceof Error ? e.message : e}`
+    )
   }
 
   return true

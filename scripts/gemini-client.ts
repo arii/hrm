@@ -626,9 +626,7 @@ export async function buildReviewPrompt(
       ? context.slopAnalysis.substring(0, maxSlopLength) + '\n...[TRUNCATED]'
       : context.slopAnalysis || 'Not available.'
 
-  const customInstructions = instructions
-    ? `\n\n## 📋 Additional Instructions\n${instructions}\n`
-    : ''
+  const customInstructions = instructions || ''
 
   const placeholders: { [key: string]: string } = {
     reviewIteration,
@@ -663,20 +661,6 @@ export async function buildReviewPrompt(
       value
     )
   }
-
-  promptTemplate += `
-## 🛠️ Issue Generation Instructions
-If you identify Technical Debt, Refactoring opportunities, or Improvements:
-1. **Create a 'suggestedIssue'** in the JSON output.
-2. **Criteria**:
-   - MUST be specific, actionable, and non-trivial. Avoid generic suggestions like "Refactor code" or "Improve quality".
-   - **Type**: \`bug\`, \`enhancement\`, \`refactor\`, \`chore\`, \`documentation\`, \`technical-debt\`, \`frontend-improvement\`, \`security\`.
-   - **Priority**: \`high\`, \`medium\`, \`low\`.
-   - **Fingerprint**: Provide a stable, unique identifier for the issue. Format: \`file_path:entity_name\` (e.g., \`lib/auth.ts:validateToken\`). This is used for deduplication.
-   - **isPreExisting**: Set to \`true\` if the issue exists in the base branch code (legacy debt). Set to \`false\` if it is introduced by the current PR changes.
-   - **filePath**: Provide the relative path to the file.
-   - **lineNumber**: Provide the line number.
-`
 
   return promptTemplate
 }
