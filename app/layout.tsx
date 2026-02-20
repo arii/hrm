@@ -20,7 +20,7 @@ const roboto_mono = Roboto_Mono({
 })
 
 const digital7 = localFont({
-  src: '../public/assets/digital-7-mono.ttf',
+  src: './fonts/digital-7-mono.ttf',
   variable: '--font-digital-7',
   display: 'swap',
 })
@@ -38,14 +38,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preload the primary display font to prevent FOUT. */}
-        <link
-          rel="preload"
-          href="/assets/digital-7-mono.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
         {/*
           Workaround for a `ReferenceError: DOCS_timing is not defined`
           error that originates from scripts within an embedded Google Doc.

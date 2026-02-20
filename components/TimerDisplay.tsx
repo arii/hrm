@@ -84,12 +84,12 @@ const TimerDisplay = () => {
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
+        backgroundColor: '#000000',
         color: phaseColor, // Dynamic color based on phase
         height: { xs: 200, sm: 250, md: 300 },
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: '2px solid #1a1a1a',
         position: 'relative',
         overflow: 'hidden',
         animation:
@@ -107,7 +107,6 @@ const TimerDisplay = () => {
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          zIndex: 2,
         }}
       >
         <Typography
@@ -144,7 +143,6 @@ const TimerDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           width: SIDE_COLUMN_WIDTH,
-          zIndex: 2,
         }}
       >
         {currentPhase !== 'IDLE' && (
@@ -158,7 +156,6 @@ const TimerDisplay = () => {
       <CardContent
         sx={{
           position: 'relative',
-          zIndex: 1,
           width: '100%',
           py: { xs: 2, md: 3 },
           px: SIDE_COLUMN_WIDTH,
@@ -258,7 +255,6 @@ const TimerDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           width: SIDE_COLUMN_WIDTH,
-          zIndex: 2,
         }}
       >
         {mode === 'TABATA' && (
