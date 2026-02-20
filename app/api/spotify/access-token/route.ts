@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -16,30 +17,44 @@ import { NextResponse } from 'next/server'
  */
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session (NextAuth automatically refreshes tokens)
+    let accessToken: string | null = null
     const session = await getServerSession(authOptions)
 
-    // 2. Check if the session and token exist.
-    if (!session || !session.accessToken) {
-      logger.error('No session or access token found.')
+    if (session?.accessToken && session.error !== 'RefreshAccessTokenError') {
+      accessToken = session.accessToken
+    } else {
+      // Fallback to SpotifyTokenManager (System Token)
+      logger.info(
+        'No valid user session found, attempting system token fallback.'
+      )
+      const tokenManager = new SpotifyTokenManager(
+        process.env.SPOTIFY_CLIENT_ID || '',
+        process.env.SPOTIFY_CLIENT_SECRET || ''
+      )
+      accessToken = await tokenManager.getValidAccessToken()
+    }
+
+    if (!accessToken) {
+      if (session?.error === 'RefreshAccessTokenError') {
+        logger.error(
+          'Token refresh failed in NextAuth and no fallback available'
+        )
+        return NextResponse.json(
+          { error: 'Token refresh failed. Please re-authenticate.' },
+          { status: 401 }
+        )
+      }
+      logger.error(
+        'Not authenticated: No user session or valid system token available.'
+      )
       return NextResponse.json(
         { error: 'Not authenticated or token is missing.' },
         { status: 401 }
       )
     }
 
-    // 3. Check for refresh errors from NextAuth
-    if (session.error === 'RefreshAccessTokenError') {
-      logger.error('Token refresh failed in NextAuth')
-      return NextResponse.json(
-        { error: 'Token refresh failed. Please re-authenticate.' },
-        { status: 401 }
-      )
-    }
-
-    // 4. Return the access token (already refreshed by NextAuth if needed)
     return NextResponse.json({
-      accessToken: session.accessToken,
+      accessToken: accessToken,
     })
   } catch (error) {
     const message =
