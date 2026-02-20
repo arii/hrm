@@ -182,7 +182,11 @@ export default function ConnectView({
 
   if (!isSupported) {
     return (
-      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+      <Container
+        data-testid="connect-view"
+        maxWidth="sm"
+        sx={{ py: 10, textAlign: 'center' }}
+      >
         <BluetoothDisabledIcon
           sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
         />

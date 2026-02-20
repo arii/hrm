@@ -21,10 +21,10 @@ import {
  * Common routes used in HRM testing
  */
 export const HRM_ROUTES = {
-  /** Experimental analytics dashboard (primary target for VRTs) */
-  DASHBOARD: '/client/experimental',
   /** Main viewer dashboard */
-  VIEWER: '/',
+  DASHBOARD: '/',
+  /** Experimental analytics dashboard (primary target for VRTs) */
+  EXPERIMENTAL_DASHBOARD: '/client/experimental',
   /** Control panel for timer and music */
   CONTROL: '/client/control',
   /** Mock HRM client for testing */
