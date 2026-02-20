@@ -8,7 +8,7 @@ import { HeartRateZone } from '@/lib/shared/hr-zones'
 import type {
   HrmStreamData as HrmData,
   TimerData,
-  SpotifyPlaybackState as SpotifyData,
+  SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
   TimerMode,
   SpotifyCommand,
 } from './core'
@@ -90,7 +90,6 @@ export type ServerMessage =
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
-  | SpotifyExecutionMessage
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
@@ -175,12 +174,7 @@ export interface ClientRegistrationMessage {
   role: 'dashboard' | 'controller'
 }
 
-export interface SpotifyExecutionMessage {
-  type: 'EXECUTE_SPOTIFY'
-  payload: SpotifyCommandMessage
-}
-
-interface PingMessage {
+export interface PingMessage {
   type: 'PING'
 }
 
