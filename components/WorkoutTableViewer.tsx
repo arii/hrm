@@ -6,10 +6,10 @@ import {
   Table,
   TableContainer,
   TableHead,
+  TableRow,
   TableCell,
   Paper,
   CircularProgress,
-  Typography,
   Alert,
   Box,
 } from '@mui/material'
@@ -70,7 +70,11 @@ export default function WorkoutTableViewer({
     )
   }
 
-  const tableHeaderStyle = { fontWeight: 'bold' }
+  const tableHeaderStyle = {
+    fontWeight: 'bold',
+    fontFamily: 'inherit',
+    fontSize: '0.875rem', // Match body2 default
+  }
   const tableContainerStyle = { width: '100%' }
   const tableHeaderRowStyle = { backgroundColor: 'action.hover' }
 
@@ -88,22 +92,14 @@ export default function WorkoutTableViewer({
         data-testid="workout-table-viewer"
       >
         <Table sx={{ minWidth: 650 }} aria-label="workout table">
-          <TableHead sx={{ '& tr': tableHeaderRowStyle }}>
-            <tr>
+          <TableHead>
+            <TableRow sx={tableHeaderRowStyle}>
               {data.headers.map((header, index) => (
                 <TableCell key={index} sx={tableHeaderStyle}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontFamily: 'inherit',
-                      m: 0,
-                    }}
-                  >
-                    {header}
-                  </Typography>
+                  {header}
                 </TableCell>
               ))}
-            </tr>
+            </TableRow>
           </TableHead>
         </Table>
       </TableContainer>
