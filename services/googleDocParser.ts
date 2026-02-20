@@ -4,7 +4,7 @@ import { WorkoutTableDto } from '@/types/workout'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.
- * Simplified logic: assumes the table has 1 row with 4+ columns.
+ * Simplified logic: extracts the first row as headers, processing at least 4 columns if present.
  * Removes whitespace and formatting from each cell.
  * Replaces newlines within cells with spaces for UI consistency.
  */
