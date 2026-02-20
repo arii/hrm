@@ -7,7 +7,11 @@ import {
   WebSocketState,
   HrmData,
 } from '../../../context/webSocketReducer'
-import { ServerMessage } from '../../../types/websocket'
+import {
+  ServerMessage,
+  InitialStateSnapshotPayload,
+  SpotifyData as SpotifyDataType,
+} from '../../../types/websocket'
 import { HrmStreamData } from '../../../types/core'
 
 describe('webSocketReducer', () => {
@@ -75,19 +79,25 @@ describe('webSocketReducer', () => {
         },
         spotifyData: {
           ...INITIAL_STATE.spotifyData,
-          trackName: 'Test Track',
+          playback: {
+            ...INITIAL_STATE.spotifyData.playback,
+            track: {
+              ...INITIAL_STATE.spotifyData.playback.track,
+              name: 'Test Track',
+            },
+          },
         },
       }
 
       const action: ServerMessage = {
         type: 'INITIAL_STATE',
-        payload: serverState,
+        payload: serverState as unknown as InitialStateSnapshotPayload,
       }
       const state = reducer(INITIAL_STATE, action)
 
       expect(state.hrmData[0].isConnected).toBe(true)
       expect(state.timerData.isRunning).toBe(true)
-      expect(state.spotifyData.trackName).toBe('Test Track')
+      expect(state.spotifyData.playback.track.name).toBe('Test Track')
     })
   })
 
@@ -188,10 +198,18 @@ describe('webSocketReducer', () => {
   })
 
   it('should handle SPOTIFY_UPDATE action', () => {
-    const payload = { trackName: 'New Song', isPlaying: true }
-    const action: ServerMessage = { type: 'SPOTIFY_UPDATE', payload }
+    const payload = {
+      playback: {
+        track: { name: 'New Song' },
+        is_playing: true,
+      },
+    }
+    const action: ServerMessage = {
+      type: 'SPOTIFY_UPDATE',
+      payload: payload as unknown as SpotifyDataType,
+    }
     const state = reducer(INITIAL_STATE, action)
-    expect(state.spotifyData.trackName).toBe('New Song')
-    expect(state.spotifyData.isPlaying).toBe(true)
+    expect(state.spotifyData.playback.track.name).toBe('New Song')
+    expect(state.spotifyData.playback.is_playing).toBe(true)
   })
 })

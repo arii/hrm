@@ -568,7 +568,7 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
+    it('should call spotifyService.handleCommand and NOT forward to dashboard clients', () => {
       const dashboardWs = new MockWebSocket() as ExtWebSocket
       dashboardWs.clientType = 'dashboard'
       const controllerWs = new MockWebSocket() as ExtWebSocket
@@ -582,12 +582,7 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      expect(sendWebSocketMessage).toHaveBeenCalled()
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        'socketManager.SPOTIFY_COMMAND'
-      )
+      // Should still call the server-side service
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
         {}

@@ -6,7 +6,6 @@ import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
   SpotifyCommandMessage,
-  SpotifyExecutionMessage,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -399,24 +398,6 @@ const handleIncomingMessage = (
           { clientId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
-
-        wsServerInstance.clients.forEach((client: WebSocket) => {
-          const target = client as ExtWebSocket
-          if (
-            target.readyState === WebSocket.OPEN &&
-            target.clientType === 'dashboard'
-          ) {
-            const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
-            }
-            sendWebSocketMessage(
-              target,
-              executionMessage,
-              'socketManager.SPOTIFY_COMMAND'
-            )
-          }
-        })
 
         const spotifyService = services.spotifyService
         const spotifyCommandParams: {
