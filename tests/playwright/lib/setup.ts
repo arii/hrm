@@ -153,7 +153,7 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   // Navigate all pages to their respective routes in parallel
   const baseUrl = getBaseURL()
   await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.EXPERIMENTAL_DASHBOARD}`),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
     controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
     mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
   ])
