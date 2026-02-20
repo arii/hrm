@@ -1,6 +1,11 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+<<<<<<< HEAD
 import { ServerMessage, SpotifyData } from '@/types/websocket'
 import { SpotifyCommandParameters } from '@/types/core'
+=======
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
+>>>>>>> origin/leader
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
@@ -9,6 +14,7 @@ import logger from '@/utils/logger.server'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
+<<<<<<< HEAD
 } from '@/services/spotifyApiErrorHandling'
 import { SpotifyService } from '@/types/interfaces'
 import { SpotifyCommand } from '@/types/core'
@@ -16,6 +22,13 @@ import { SafeSpotifyApi, createSafeSpotifyApi } from '@/services/safeSpotifyApi'
 import { env } from '@/lib/env'
 import { SpotifyPlayerManager } from '@/services/spotifyPlayerManager'
 import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
+=======
+} from './spotifyApiErrorHandling.js'
+import { SpotifyService } from '../types/interfaces.js'
+import { env } from '../lib/env.js'
+import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
+import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
+>>>>>>> origin/leader
 
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
@@ -31,18 +44,23 @@ export class SpotifyPolling implements SpotifyService {
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private state: SpotifyData = {
-    trackId: null,
-    trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
-    albumArtUrl: '',
-    isPlaying: false,
     devices: [],
-    volume: 70,
-    isMuted: false,
+    playback: {
+      track: {
+        id: null,
+        name: 'Awaiting Login...',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      isMuted: false,
+      volume_percent: 70,
+      progress_ms: 0,
+    },
   }
 
-  private sdk: SafeSpotifyApi | null = null
+  private sdk: SpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -85,7 +103,7 @@ export class SpotifyPolling implements SpotifyService {
     process.env.NODE_ENV === 'test'
       ? {
           setState: this.setState,
-          setSdk: (sdk: SafeSpotifyApi | null) => {
+          setSdk: (sdk: SpotifyApi | null) => {
             this.sdk = sdk
           },
           getPollInterval: () => this.pollInterval,
@@ -137,7 +155,7 @@ export class SpotifyPolling implements SpotifyService {
       env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
     )
-    this.sdk = createSafeSpotifyApi(sdk)
+    this.sdk = sdk
     this.playerManager = new SpotifyPlayerManager(
       this.sdk,
       this.broadcastUpdate,

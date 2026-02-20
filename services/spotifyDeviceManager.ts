@@ -1,17 +1,24 @@
+<<<<<<< HEAD
 import { Device } from '@spotify/web-api-ts-sdk'
 import { SpotifyDevice } from '@/types/core'
 import { ServerMessage, SpotifyData } from '@/types/websocket'
 import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
 import logger from '@/utils/logger.server'
+=======
+import { Device, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyDevice } from '../types/core'
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import logger from '../utils/logger.server.js'
+>>>>>>> origin/leader
 
 export class SpotifyDeviceManager {
-  private sdk: SafeSpotifyApi
+  private sdk: SpotifyApi
   private broadcastUpdate: (message: ServerMessage) => void
   private getState: () => SpotifyData
   private setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void
 
   constructor(
-    sdk: SafeSpotifyApi,
+    sdk: SpotifyApi,
     broadcastUpdate: (message: ServerMessage) => void,
     getState: () => SpotifyData,
     setState: (updateFn: (prevState: SpotifyData) => SpotifyData) => void

@@ -279,17 +279,6 @@ export const WebSocketProvider = ({
           return // Pong message is handled, no state dispatch needed
         }
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
-        if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
-          window.dispatchEvent(
-            new CustomEvent('spotify-remote-command', {
-              detail: message,
-            })
-          )
-          return
-        }
-
         // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)

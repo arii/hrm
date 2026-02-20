@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+<<<<<<< HEAD
 import { SpotifyDeviceManager } from '@/services/spotifyDeviceManager'
 import { mockPlayer } from '@/tests/unit/spotify-test-utils'
 import { SafeSpotifyApi } from '@/services/safeSpotifyApi'
 import { createSafeSpotifyApi } from '@/services/safeSpotifyApi'
+=======
+import { SpotifyDeviceManager } from '../../../services/spotifyDeviceManager'
+import { mockPlayer } from '../spotify-test-utils'
+>>>>>>> origin/leader
 import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output
@@ -14,14 +19,14 @@ jest.mock('../../../utils/logger.server.js', () => ({
 
 describe('SpotifyDeviceManager', () => {
   let deviceManager: SpotifyDeviceManager
-  let sdk: SafeSpotifyApi
+  let sdk: SpotifyApi
   let broadcastMock: jest.Mock
   let getStateMock: jest.Mock
   let setStateMock: jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
-    sdk = createSafeSpotifyApi({ player: mockPlayer } as unknown as SpotifyApi)
+    sdk = { player: mockPlayer } as unknown as SpotifyApi
     broadcastMock = jest.fn()
     getStateMock = jest.fn().mockReturnValue({
       devices: [],

@@ -3,7 +3,7 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useSpotifyControls } from '@/hooks/useSpotifyControls'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   TimerCommandMessage,
@@ -55,7 +55,7 @@ const stopButtonSx = (theme: Theme) => ({
 const TimerControls = () => {
   const theme = useTheme()
   const { timerData, sendData, connectionStatus } = useWebSocket()
-  const { sendSpotifyCommand } = useSpotifyControls()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
   const [optimisticAction, setOptimisticAction] = useState<
@@ -132,10 +132,10 @@ const TimerControls = () => {
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
 
-      if (command === 'START') sendSpotifyCommand('NEXT')
-      else if (command === 'STOP') sendSpotifyCommand('PAUSE')
+      if (command === 'START') executeSpotify('NEXT')
+      else if (command === 'STOP') executeSpotify('PAUSE')
     },
-    [sendData, sendSpotifyCommand, connectionStatus, workTime, restTime]
+    [sendData, executeSpotify, connectionStatus, workTime, restTime]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {

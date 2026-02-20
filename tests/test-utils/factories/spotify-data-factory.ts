@@ -28,12 +28,6 @@ export const createMockSpotifyDevice = (
 export const createMockSpotifyData = (
   overrides: Partial<SpotifyData> = {}
 ): SpotifyData => ({
-  trackId: 'mock-track-id',
-  trackName: 'Mock Track',
-  artist: 'Mock Artist',
-  albumName: 'Mock Album',
-  albumArtUrl: 'http://localhost/mock-art.jpg',
-  isPlaying: true,
   devices: [
     createMockSpotifyDevice({ id: '1', name: 'Device 1', is_active: true }),
     createMockSpotifyDevice({
@@ -42,7 +36,18 @@ export const createMockSpotifyData = (
       is_active: false,
     }),
   ],
-  volume: 50,
-  isMuted: false,
+  playback: {
+    track: {
+      id: 'mock-track-id',
+      name: 'Mock Track',
+      artist: 'Mock Artist',
+      albumName: 'Mock Album',
+      albumArtUrl: 'http://localhost/mock-art.jpg',
+    },
+    is_playing: true,
+    isMuted: false,
+    volume_percent: 50,
+    progress_ms: 0,
+  },
   ...overrides,
 })
