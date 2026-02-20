@@ -116,8 +116,15 @@ export const reducer = (
         ...state,
         spotifyData: { ...state.spotifyData, ...message.payload },
       }
-    case 'ACTIVE_ALERTS_UPDATE':
-      return { ...state, activeAlerts: message.payload }
+    case 'ACTIVE_ALERTS_UPDATE': {
+      const now = Date.now()
+      const offset = message.serverTimestamp ? now - message.serverTimestamp : 0
+      const adjustedAlerts = message.payload.map((alert) => ({
+        ...alert,
+        timestamp: alert.timestamp + offset,
+      }))
+      return { ...state, activeAlerts: adjustedAlerts }
+    }
     case 'SPOTIFY_SERVICE_INIT_UPDATE':
       return { ...state, spotifyServiceInitialized: message.payload }
     default:

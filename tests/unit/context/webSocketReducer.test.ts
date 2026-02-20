@@ -188,6 +188,26 @@ describe('webSocketReducer', () => {
 
       dateSpy.mockRestore()
     })
+
+    it('should compensate for clock skew for NEW users in HRM_UPDATE', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000
+      const updatedAt = 990000
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [{ ...baseUser, clientId: 'new-user', updatedAt }],
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+      expect(state.hrmData[0].clientId).toBe('new-user')
+      expect(state.hrmData[0].updatedAt).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
   })
 
   describe('INITIAL_STATE action clock skew', () => {
@@ -210,6 +230,35 @@ describe('webSocketReducer', () => {
 
       const state = reducer(INITIAL_STATE, action)
       expect(state.hrmData[0].updatedAt).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
+  })
+
+  describe('ACTIVE_ALERTS_UPDATE action clock skew', () => {
+    it('should compensate for clock skew in active alerts', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000
+      const alertTimestamp = 990000
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'ACTIVE_ALERTS_UPDATE',
+        payload: [
+          {
+            clientId: '1',
+            code: 'HRM_STALE',
+            message: 'Stale',
+            severity: 'warning',
+            timestamp: alertTimestamp,
+          },
+        ],
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+      expect(state.activeAlerts[0].timestamp).toBe(1050000)
 
       dateSpy.mockRestore()
     })

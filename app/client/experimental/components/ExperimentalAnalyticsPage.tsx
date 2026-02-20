@@ -1,7 +1,7 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Container, Box, Button } from '@mui/material'
+import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -34,6 +34,7 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 
 type View = 'active' | 'list' | 'detail'
