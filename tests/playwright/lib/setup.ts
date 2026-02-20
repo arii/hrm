@@ -24,7 +24,7 @@ export const HRM_ROUTES = {
   /** Main viewer dashboard */
   DASHBOARD: '/',
   /** Experimental analytics dashboard (primary target for VRTs) */
-  EXPERIMENTAL_DASHBOARD: '/client/experimental',
+  ANALYTICS_DASHBOARD: '/client/experimental',
   /** Control panel for timer and music */
   CONTROL: '/client/control',
   /** Mock HRM client for testing */
