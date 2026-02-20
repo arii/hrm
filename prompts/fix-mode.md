@@ -59,3 +59,7 @@ If you identify Technical Debt, Refactoring opportunities, or Improvements:
    - **isPreExisting**: Set to `true` if the issue exists in the base branch code (legacy debt). Set to `false` if it is introduced by the current PR changes.
    - **filePath**: Provide the relative path to the file.
    - **lineNumber**: Provide the line number.
+
+---
+
+{{customInstructions}}

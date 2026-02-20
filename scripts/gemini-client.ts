@@ -566,7 +566,6 @@ export async function buildReviewPrompt(
     ? 'prompts/fix-mode.md'
     : 'prompts/standard-review.md'
   let promptTemplate = await readFile(templatePath, 'utf-8')
-  promptTemplate += '\n\n{{customInstructions}}'
 
   // --- Base Context Section ---
   const reviewIteration = isReReview

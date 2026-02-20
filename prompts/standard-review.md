@@ -41,6 +41,10 @@
 
 ---
 
+{{customInstructions}}
+
+---
+
 ## AI Slop Analysis
 
 ```

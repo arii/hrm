@@ -72,9 +72,11 @@ describe('create-review-issues logic', () => {
     it('should detect duplicate via fingerprint', () => {
       const newIssue: SuggestedIssue = {
         title: 'New Title',
-        description: 'New Description',
+        description:
+          'New Description that is definitely long enough to pass the validation check.',
         type: 'technical-debt',
-        priority: 'medium', isPreExisting: true,
+        priority: 'medium',
+        isPreExisting: true,
         fingerprint: 'auth:validate',
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
@@ -83,7 +85,8 @@ describe('create-review-issues logic', () => {
     it('should detect duplicate via fuzzy title match', () => {
       const newIssue: SuggestedIssue = {
         title: 'Fuzzy Match Title!', // Near identical to issue #2
-        description: 'New Description',
+        description:
+          'New Description that is definitely long enough to pass the validation check.',
         type: 'technical-debt',
         priority: 'medium',
         isPreExisting: true,
@@ -107,9 +110,11 @@ describe('create-review-issues logic', () => {
     it('should not detect duplicate for different issues', () => {
       const newIssue: SuggestedIssue = {
         title: 'Completely New Issue',
-        description: 'Unique description here.',
+        description:
+          'Unique description here that is also long enough to pass the validation check.',
         type: 'bug',
-        priority: 'high', isPreExisting: true,
+        priority: 'high',
+        isPreExisting: true,
         fingerprint: 'unique:fingerprint',
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(false)
