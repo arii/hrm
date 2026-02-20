@@ -75,6 +75,7 @@ describe('create-review-issues script', () => {
           type: 'refactor',
           priority: 'high',
           isPreExisting: true,
+          fingerprint: 'refactor-auth-service',
         },
         {
           title: 'Fix the button alignment',
@@ -83,6 +84,7 @@ describe('create-review-issues script', () => {
           type: 'enhancement',
           priority: 'low',
           isPreExisting: true,
+          fingerprint: 'fix-button-alignment',
         },
       ],
     }
@@ -123,6 +125,7 @@ describe('create-review-issues script', () => {
           type: 'refactor',
           priority: 'high',
           isPreExisting: true,
+          fingerprint: 'refactor-auth-service',
         },
       ],
     }
@@ -161,6 +164,7 @@ describe('create-review-issues script', () => {
           type: 'refactor',
           priority: 'high',
           isPreExisting: true,
+          fingerprint: 'refactor-auth-service-closed',
         },
       ],
     }
@@ -206,6 +210,7 @@ describe('create-review-issues script', () => {
         type: 'bug',
         priority: 'medium',
         isPreExisting: true,
+        fingerprint: 'test-issue-fingerprint',
       }
       const context = {
         repo: 'test/repo',
@@ -251,6 +256,7 @@ describe('create-review-issues script', () => {
         type: 'bug',
         priority: 'high',
         isPreExisting: true,
+        fingerprint: 'special-char-fingerprint',
       }
       const context = { repo: 'test/repo', prNumber: '789' }
       ghClient.createIssue(issue, context)
@@ -280,6 +286,7 @@ describe('create-review-issues script', () => {
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
+            fingerprint: 'test-issue-no-file-info',
           },
         ],
       }
@@ -301,6 +308,7 @@ describe('create-review-issues script', () => {
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
+            fingerprint: 'test-issue-old-commit',
             filePath: 'test.ts',
             lineNumber: 10,
           },
@@ -336,6 +344,7 @@ describe('create-review-issues script', () => {
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
+            fingerprint: 'test-issue-new-commit',
             filePath: 'test.ts',
             lineNumber: 10,
           },
@@ -372,6 +381,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'slop-issue-1',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -384,6 +394,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'slop-issue-2',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -396,6 +407,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'slop-issue-3',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -407,6 +419,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'short-issue',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -419,6 +432,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'high-quality-issue',
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -431,6 +445,7 @@ describe('isLowQualityIssue', () => {
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
+      fingerprint: 'high-quality-issue-empty-slop',
     }
     expect(isLowQualityIssue(issue, null)).toBe(false)
   })
