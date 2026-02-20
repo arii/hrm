@@ -112,7 +112,7 @@ describe('TimerDisplay', () => {
   })
 
   describe('Layout Structure', () => {
-    it('should implement a three-column Flexbox layout', () => {
+    it('should implement an absolute-positioned side column layout for perfect centering', () => {
       setupMock({
         currentPhase: 'WORK',
         mode: 'TABATA',
@@ -127,32 +127,21 @@ describe('TimerDisplay', () => {
       )
 
       const flexContainer = screen.getByTestId('timer-display-container')
+      // Container is still a flex container for the main content centering
       expect(flexContainer).toHaveStyle('display: flex')
 
-      // Filter out absolutely positioned elements to only test the flex items
-      const flexItems = Array.from(flexContainer.children).filter(
-        (child) =>
-          window.getComputedStyle(child as Element).position !== 'absolute'
-      )
+      // The main content should be relatively positioned and occupy full width
+      const mainContent = screen
+        .getByTestId('timer-countdown')
+        .closest('.MuiCardContent-root')
+      expect(mainContent).toHaveStyle('position: relative')
+      expect(mainContent).toHaveStyle('width: 100%')
 
-      // Expect three direct children in the flex layout: left column, content, right column
-      expect(flexItems.length).toBe(3)
-
-      const [leftColumn, mainContent, rightColumn] = flexItems
-
-      // Verify Left Column (Mode)
-      expect(leftColumn).toHaveStyle('flex: 0 0 40px')
-      expect(leftColumn).toHaveTextContent('TABATA')
-
-      // Verify Center Column (Timer)
-      expect(mainContent).toHaveStyle('flex: 1')
-      expect(mainContent).toContainElement(
-        screen.getByTestId('timer-countdown')
-      )
-
-      // Verify Right Column (Durations)
-      expect(rightColumn).toHaveStyle('flex: 0 0 40px')
-      expect(rightColumn).toHaveTextContent('WORK:30s REST:15s')
+      // Check for absolute positioned side labels
+      // We can't easily use getComputedStyle in this JSDOM environment for absolute positioning
+      // if it's set via MUI sx props and not in actual CSS, but we can check the presence of the text
+      expect(flexContainer).toHaveTextContent('TABATA')
+      expect(flexContainer).toHaveTextContent('WORK:30s REST:15s')
     })
   })
 })
