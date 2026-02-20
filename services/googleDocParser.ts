@@ -31,6 +31,6 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   })
 
   // Per requirements: assume table has 1 row.
-  // We return the contents of this row as headers.
+  // Extracts all columns from the first row and returns them as headers.
   return { headers }
 }
