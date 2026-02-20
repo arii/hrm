@@ -30,7 +30,6 @@ import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -41,7 +40,6 @@ type View = 'active' | 'list' | 'detail'
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
-  const isReady = useTestPageReady()
 
   // Use #5110's hooks
   const {
@@ -203,12 +201,7 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{ mt: 4, mb: 4 }}
-      data-testid="dashboard"
-      data-ready={isReady ? 'true' : 'false'}
-    >
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>

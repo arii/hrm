@@ -289,21 +289,23 @@ import { waitForPageReady, getBaseURL } from './lib'
 
 ### Dimension Assertions
 
-Always add dimension assertions for components with fixed height/width:
+Always add dimension assertions for components with fixed height/width. Use shared constants (e.g., from `constants/layout.ts`) to avoid magic numbers and ensure consistency with the source code:
 
 ```typescript
+import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
+
 const tile = page.getByTestId('hr-tile-card')
 const bbox = await tile.boundingBox()
-expect(bbox?.height).toBeGreaterThanOrEqual(180)
-expect(bbox?.height).toBeLessThanOrEqual(250)
+expect(bbox?.height).toBeGreaterThanOrEqual(HR_TILE_MIN_HEIGHT)
+expect(bbox?.height).toBeLessThanOrEqual(HR_TILE_MAX_HEIGHT)
 ```
 
 Alternatively, use the `assertFixedDimensions` helper:
 
 ```typescript
 await assertFixedDimensions(page.getByTestId('hr-tile-card'), {
-  minHeight: 180,
-  maxHeight: 250,
+  minHeight: HR_TILE_MIN_HEIGHT,
+  maxHeight: HR_TILE_MAX_HEIGHT,
 })
 ```
 

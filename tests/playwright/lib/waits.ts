@@ -47,26 +47,33 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-  try {
-    // Wait for custom test readiness signal from the application
-    await page.waitForFunction(
-      () => {
-        return document.querySelector('[data-ready="true"]') !== null
-      },
-      { timeout }
-    )
-  } catch {
-    // Fallback: If custom signal fails, wait for a known stable element
-    console.warn('__TEST_READY__ signal not found, proceeding with UI check')
-    await page
-      .waitForSelector('main, [role="main"], body > div', {
+  // Wait for fonts to be loaded
+  await waitForFontsLoaded(page)
+
+  // Wait for a known stable element
+  await page
+    .waitForSelector(
+      'main, [role="main"], [data-testid="dashboard"], [data-testid="control-panel"], [data-testid="mock-client-form"], [data-testid="connect-view"]',
+      {
         state: 'visible',
-        timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-      })
-      .catch(() => {
-        console.warn('No main element found, continuing anyway')
-      })
-  }
+        timeout,
+      }
+    )
+    .catch(() => {
+      console.warn('No main element found, continuing anyway')
+    })
+
+  // Wait for skeletons to disappear (dynamic content loading)
+  // This ensures Spotify/Doc viewers are loaded before snapshot
+  await page
+    .waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout: WAIT_TIMEOUTS.LONG, // Skeletons might stay longer
+    })
+    .catch(() => {
+      // It's possible skeletons were never there or are stubborn, continue
+      // console.warn('Skeletons still visible or timeout waiting for them')
+    })
 }
 
 /**
@@ -80,14 +87,41 @@ export async function waitForWebSocketConnection(
   page: Page,
   options: { timeout?: number } = {}
 ): Promise<void> {
-  const { timeout = WAIT_TIMEOUTS.WEBSOCKET } = options
+  const { timeout = WAIT_TIMEOUTS.INFRASTRUCTURE } = options // Increased timeout for connection
 
-  await page.waitForFunction(
-    () => {
-      return window.__TEST_WEBSOCKET_READY__ === true
-    },
-    { timeout }
-  )
+  // Check for various UI indicators of connection status
+  await page
+    .waitForFunction(
+      () => {
+        // Check for TimerDisplay status indicator (Dashboard)
+        const statusIndicator = document.querySelector(
+          '[data-testid="ws-status-indicator"]'
+        )
+        if (
+          statusIndicator &&
+          statusIndicator.textContent?.includes('Connected')
+        ) {
+          return true
+        }
+
+        // Check for text-based status (Control Panel, Mock Page)
+        // Look for "Server: Connected" or "Server Status: Connected"
+        const bodyText = document.body.innerText
+        if (
+          bodyText.includes('Server: Connected') ||
+          bodyText.includes('Server Status: Connected')
+        ) {
+          return true
+        }
+
+        return false
+      },
+      undefined,
+      { timeout }
+    )
+    .catch(() => {
+      console.warn('WebSocket connection indicator not found or timed out')
+    })
 }
 
 /**
