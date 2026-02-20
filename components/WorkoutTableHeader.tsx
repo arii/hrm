@@ -54,7 +54,7 @@ export default function WorkoutTableHeader({
   }, [docId, refreshKey])
 
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
+    <Box sx={{ position: 'relative' }}>
       {onRefresh && (
         <IconButton
           onClick={onRefresh}
@@ -92,7 +92,7 @@ export default function WorkoutTableHeader({
           elevation={2}
           data-testid="workout-table-header"
         >
-          <Table sx={{ width: '100%' }} aria-label="workout table">
+          <Table aria-label="workout table">
             <TableHead>
               <TableRow sx={{ backgroundColor: 'action.hover' }}>
                 {data.headers.map((header, index) => (
