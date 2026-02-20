@@ -288,8 +288,12 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmSessionManager.findById(clientId)
         if (existingData) {
+          const { weight, ...rest } = message.data
           const updateData: Partial<HrmStreamData> = objectFromEntries(
-            Object.entries(message.data)
+            Object.entries({
+              ...rest,
+              ...(weight !== undefined ? { weightKg: weight } : {}),
+            })
           )
 
           if (

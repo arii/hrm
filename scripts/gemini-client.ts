@@ -674,9 +674,7 @@ async function runReviewPreset(
     context.prLabels.includes('ai-reviewed') ||
     context.prLabels.includes('abandon')
   ) {
-    console.log(
-      'PR is marked as "ai-reviewed" or "abandon". Skipping review.'
-    )
+    console.log('PR is marked as "ai-reviewed" or "abandon". Skipping review.')
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile

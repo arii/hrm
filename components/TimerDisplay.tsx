@@ -15,13 +15,36 @@ import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
+import { useTheme, alpha, Theme } from '@mui/material/styles'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
+interface PhaseConfig {
+  color: (theme: Theme) => string
+  label: string
+}
+
+const DEFAULT_PHASE_CONFIG: PhaseConfig = {
+  color: (theme) => theme.palette.text.secondary,
+  label: 'READY',
+}
+
+// Map timer phases to MUI theme palette colors using accessor functions for type safety
+const TIMER_PHASE_CONFIG: Record<string, PhaseConfig> = {
+  PREPARE: { color: (theme) => theme.palette.warning.main, label: 'GET READY' },
+  RUNNING: { color: (theme) => theme.palette.primary.main, label: 'RUNNING' },
+  WORK: { color: (theme) => theme.palette.error.main, label: 'WORK' },
+  REST: { color: (theme) => theme.palette.success.main, label: 'REST' },
+  COOLDOWN: { color: (theme) => theme.palette.info.main, label: 'COOLDOWN' },
+  IDLE: DEFAULT_PHASE_CONFIG,
+}
+
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
+  const theme = useTheme()
+
   const {
     currentPhase,
     timeRemaining,
@@ -33,22 +56,19 @@ const TimerDisplay = () => {
 
   // Determine what to display based on mode and phase
   let displayTime: string
-  let phaseColor: string
-  let phaseLabel: string
+  let configKey = 'IDLE'
 
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
-    phaseLabel = 'GET READY'
+    configKey = 'PREPARE'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     displayTime = formatDuration(timeElapsed, {
       unit: 'seconds',
       format: 'MM:SS',
     })
-    phaseColor = '#2563EB' // Blue/Primary
-    phaseLabel = 'RUNNING'
+    configKey = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
     (currentPhase === 'WORK' ||
@@ -62,21 +82,21 @@ const TimerDisplay = () => {
     })
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
-      phaseLabel = 'WORK'
+      configKey = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
-      phaseLabel = 'REST'
+      configKey = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
-      phaseLabel = 'COOLDOWN'
+      configKey = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    phaseColor = '#6B7280' // Gray
-    phaseLabel = 'READY'
+    configKey = 'IDLE'
   }
+
+  const config = TIMER_PHASE_CONFIG[configKey] ?? DEFAULT_PHASE_CONFIG
+  const phaseLabel = config.label
+  const phaseColor = config.color(theme)
 
   return (
     <Card
@@ -192,7 +212,7 @@ const TimerDisplay = () => {
             letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 20px ${alpha(phaseColor, 0.5)}`,
           }}
         >
           {displayTime}

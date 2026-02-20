@@ -27,15 +27,17 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
     },
     enhancement: {
       color: 'a2eeef',
-      description: 'New feature, request, or improvement to existing functionality.',
+      description:
+        'New feature, request, or improvement to existing functionality.',
     },
     bug: {
       color: 'd73a4a',
-      description: 'Something isn\'t working.',
+      description: "Something isn't working.",
     },
     chore: {
       color: 'eeeeee',
-      description: 'Internal maintenance, dependency updates, or build process changes.',
+      description:
+        'Internal maintenance, dependency updates, or build process changes.',
     },
     documentation: {
       color: '0075ca',

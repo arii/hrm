@@ -54,6 +54,7 @@ To ensure consistency across the project, we use a standardized set of GitHub la
 All managed labels are defined in [`.github/pr-labels.json`](../.github/pr-labels.json). Automated workflows ensure these labels exist in the repository.
 
 **Key Label Categories (Strictly Limited to 5 per Category):**
+
 - **Review Status**: `ai-reviewed`, `approved`, `changes-requested`
 - **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`
 - **Scope**: `scope:focused`, `scope:needs-review`
