@@ -4,7 +4,8 @@ import { WorkoutTableDto } from '@/types/workout'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.
- * Enforces a 10-line limit per cell.
+ * Simplified logic: assumes the table has 1 row with 4+ columns.
+ * Removes whitespace and formatting from each cell.
  */
 export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   const $ = cheerio.load(html)
@@ -14,50 +15,18 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     throw new Error('No table found in the Google Doc')
   }
 
-  const parsedRows: string[][] = []
+  // Find the first row in the table
+  const firstRow = table.find('tr').first()
+  const headers: string[] = []
 
-  table.find('tr').each((_rowIndex, rowElement) => {
-    const cells: string[] = []
-
-    $(rowElement)
-      .find('td, th')
-      .each((_colIndex, cellElement) => {
-        // 1. Get text and normalize whitespace (but keep newlines)
-        // Google docs often uses <p> tags inside cells, so we map over them
-        let text = ''
-        const paragraphs = $(cellElement).find('p')
-
-        // Helper to clean invisible Google Docs artifacts like non-breaking spaces
-        const cleanText = (str: string) => str.replace(/\u00A0/g, ' ').trim()
-
-        if (paragraphs.length > 0) {
-          text = paragraphs
-            .map((_, p) => cleanText($(p).text()))
-            .get()
-            .join('\n')
-        } else {
-          text = cleanText($(cellElement).text())
-        }
-
-        // 2. Enforce the 10-line limit
-        const lines = text.split('\n')
-        if (lines.length > 10) {
-          text = lines.slice(0, 10).join('\n') + '...'
-        }
-
-        cells.push(text)
-      })
-
-    // Only include rows that have actual content
-    if (cells.some((cell) => cell.length > 0)) {
-      parsedRows.push(cells)
-    }
+  // Extract each cell (td or th) from the first row
+  firstRow.find('td, th').each((_colIndex, cellElement) => {
+    // Get raw text content and trim whitespace
+    const text = $(cellElement).text().trim()
+    headers.push(text)
   })
 
-  // The first row is the header, the rest are data rows.
-  // .shift() removes the first element and returns it. If the array is empty, it returns undefined.
-  const headers = parsedRows.shift() || []
-  const rows = parsedRows // The rest of the array is the data rows.
-
-  return { headers, rows }
+  // Per requirements: assume table has 1 row but 4+ columns.
+  // We return the contents of this row as headers.
+  return { headers, rows: [] }
 }
