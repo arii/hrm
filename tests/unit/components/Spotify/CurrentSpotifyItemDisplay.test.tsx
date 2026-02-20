@@ -23,7 +23,23 @@ const mockWebSocketContext = (
   spotifyData: Partial<SpotifyData>,
   connectionStatus: 'Connecting' | 'Connected' | 'Disconnected'
 ): WebSocketContextType => ({
-  spotifyData: spotifyData as SpotifyData,
+  spotifyData: {
+    devices: [],
+    isMuted: false,
+    playback: {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      volume_percent: 70,
+      progress_ms: 0,
+    },
+    ...spotifyData,
+  } as SpotifyData,
   connectionStatus,
   sendData: jest.fn(),
   timerData: {
@@ -66,7 +82,23 @@ describe('CurrentSpotifyItemDisplay', () => {
   })
 
   it('renders empty state when nothing is playing', () => {
-    const contextValue = mockWebSocketContext({ trackName: null }, 'Connected')
+    const contextValue = mockWebSocketContext(
+      {
+        playback: {
+          track: {
+            id: null,
+            name: null as unknown as string,
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+          volume_percent: 0,
+          progress_ms: 0,
+        },
+      },
+      'Connected'
+    )
     render(
       <WebSocketContext.Provider value={contextValue}>
         <CurrentSpotifyItemDisplay />
@@ -78,7 +110,20 @@ describe('CurrentSpotifyItemDisplay', () => {
 
   it('renders "Awaiting Login..." as empty state', () => {
     const contextValue = mockWebSocketContext(
-      { trackName: 'Awaiting Login...' },
+      {
+        playback: {
+          track: {
+            id: null,
+            name: 'Awaiting Login...',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+          volume_percent: 0,
+          progress_ms: 0,
+        },
+      },
       'Connected'
     )
     render(
@@ -92,10 +137,14 @@ describe('CurrentSpotifyItemDisplay', () => {
 
   it('renders track information when data is available', () => {
     const spotifyData = {
-      trackName: 'Test Track',
-      artist: 'Test Artist',
-      albumName: 'Test Album',
-      albumArtUrl: 'http://example.com/art.jpg',
+      playback: {
+        track: {
+          name: 'Test Track',
+          artist: 'Test Artist',
+          albumName: 'Test Album',
+          albumArtUrl: 'http://example.com/art.jpg',
+        },
+      },
     }
     const contextValue = mockWebSocketContext(spotifyData, 'Connected')
 
@@ -115,10 +164,14 @@ describe('CurrentSpotifyItemDisplay', () => {
 
   it('renders a placeholder when album art is missing', () => {
     const spotifyData = {
-      trackName: 'Test Track',
-      artist: 'Test Artist',
-      albumName: 'Test Album',
-      albumArtUrl: null,
+      playback: {
+        track: {
+          name: 'Test Track',
+          artist: 'Test Artist',
+          albumName: 'Test Album',
+          albumArtUrl: null,
+        },
+      },
     }
     const contextValue = mockWebSocketContext(spotifyData, 'Connected')
 
@@ -137,8 +190,19 @@ describe('CurrentSpotifyItemDisplay', () => {
       deviceId: null,
       isAuthenticated: true,
     })
-    const spotifyData = {
-      trackName: 'Test Track',
+    const spotifyData: Partial<SpotifyData> = {
+      playback: {
+        track: {
+          id: null,
+          name: 'Test Track',
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        volume_percent: 0,
+        progress_ms: 0,
+      },
     }
     const contextValue = mockWebSocketContext(spotifyData, 'Connected')
     render(
@@ -155,8 +219,19 @@ describe('CurrentSpotifyItemDisplay', () => {
       deviceId: 'test-device',
       isAuthenticated: true,
     })
-    const spotifyData = {
-      trackName: 'Test Track',
+    const spotifyData: Partial<SpotifyData> = {
+      playback: {
+        track: {
+          id: null,
+          name: 'Test Track',
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        volume_percent: 0,
+        progress_ms: 0,
+      },
     }
     const contextValue = mockWebSocketContext(spotifyData, 'Connected')
     render(
