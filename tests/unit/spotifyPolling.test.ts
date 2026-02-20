@@ -110,9 +110,9 @@ describe('SpotifyPolling Service', () => {
   describe('Initialization', () => {
     it('should initialize with default state', () => {
       const state = spotifyService.getState()
-      expect(state.trackName).toBe('Awaiting Login...')
-      expect(state.artist).toBe('')
-      expect(state.isPlaying).toBe(false)
+      expect(state.playback.track.name).toBe('Awaiting Login...')
+      expect(state.playback.track.artist).toBe('')
+      expect(state.playback.is_playing).toBe(false)
     })
 
     describe('SDK Initialization', () => {
@@ -310,6 +310,7 @@ describe('SpotifyPolling Service', () => {
   describe('Playback State', () => {
     it('should broadcast state when track changes', async () => {
       const mockPlayback = {
+        device: { volume_percent: 70 },
         item: {
           id: 'track123',
           name: 'Test Track',
@@ -321,9 +322,9 @@ describe('SpotifyPolling Service', () => {
           type: 'track',
         },
         is_playing: true,
-        currently_playing_type: 'track',
+        progress_ms: 1000,
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.resolve(mockPlayback)
       )
 
@@ -334,11 +335,11 @@ describe('SpotifyPolling Service', () => {
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Test Track')
+      expect(lastState?.playback.track.name).toBe('Test Track')
     })
 
     it('should handle 204 No Content response', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.resolve(null)
       )
 
@@ -349,7 +350,9 @@ describe('SpotifyPolling Service', () => {
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     // Helper function to reduce boilerplate
@@ -362,7 +365,7 @@ describe('SpotifyPolling Service', () => {
         ...initialState,
       })
 
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockResponse)
+      mockPlayer.getPlaybackState.mockResolvedValue(mockResponse)
 
       spotifyService.startPolling()
       jest.advanceTimersByTime(150)
@@ -372,29 +375,59 @@ describe('SpotifyPolling Service', () => {
 
     it('should broadcast update when transitioning from playing to stopped', async () => {
       await runPollingScenario(
-        { isPlaying: true, trackName: 'Some Song' },
+        {
+          playback: {
+            ...spotifyService.getState().playback,
+            is_playing: true,
+            track: {
+              ...spotifyService.getState().playback.track,
+              name: 'Some Song',
+            },
+          },
+        },
         null
       )
 
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.isPlaying).toBe(false)
-      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.is_playing).toBe(false)
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     it('should broadcast update when transitioning from non-default track name to stopped', async () => {
       await runPollingScenario(
-        { isPlaying: false, trackName: 'Awaiting Login...' },
+        {
+          playback: {
+            ...spotifyService.getState().playback,
+            track: {
+              ...spotifyService.getState().playback.track,
+              name: 'Awaiting Login...',
+            },
+          },
+        },
         null
       )
 
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+      expect(lastState?.playback.track.name).toBe(
+        'Nothing is currently playing.'
+      )
     })
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
       broadcastedStates.length = 0 // Clear previous broadcasts
       await runPollingScenario(
-        { isPlaying: false, trackName: 'Nothing is currently playing.' },
+        {
+          playback: {
+            ...spotifyService.getState().playback,
+            is_playing: false,
+            track: {
+              ...spotifyService.getState().playback.track,
+              name: 'Nothing is currently playing.',
+            },
+          },
+        },
         null
       )
 
@@ -402,18 +435,27 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should NOT broadcast if playback state has not changed', async () => {
+      const state = spotifyService.getState()
       const trackState = {
-        trackId: 'track1',
-        trackName: 'Song 1',
-        artist: 'Artist 1',
-        albumName: 'Album 1',
-        albumArtUrl: 'url1',
-        isPlaying: true,
+        ...state,
+        playback: {
+          ...state.playback,
+          track: {
+            id: 'track1',
+            name: 'Song 1',
+            artist: 'Artist 1',
+            albumName: 'Album 1',
+            albumArtUrl: 'url1',
+          },
+          is_playing: true,
+          volume_percent: 70,
+        },
       }
 
       broadcastedStates.length = 0 // Clear broadcasts
 
       const mockPlayback = {
+        device: { volume_percent: 70 },
         item: {
           id: 'track1',
           name: 'Song 1',
@@ -422,7 +464,7 @@ describe('SpotifyPolling Service', () => {
           type: 'track',
         },
         is_playing: true,
-        currently_playing_type: 'track',
+        progress_ms: 1000,
       }
 
       await runPollingScenario(trackState, mockPlayback)
@@ -478,7 +520,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle 401 unauthorized responses', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
+      mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.reject({ status: 401 })
       )
       // @ts-expect-error - Testing private method
