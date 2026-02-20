@@ -161,10 +161,14 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 
 ## Architectural Patterns
 
-### Type-Safe API Wrappers
+### Direct Third-Party SDK Usage
 
-When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains reliable. A prime example of this is the `safeSpotifyApi.ts` module.
+We prefer using official SDKs directly whenever possible. For the Spotify integration, we use `@spotify/web-api-ts-sdk`.
 
-**Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
+**Handling 204 No Content**: Some Spotify API endpoints return a `204 No Content` status on success, which can sometimes cause JSON parsing errors in certain environments or older SDK versions. We handle this using the `isEmptyResponseError` utility.
 
-**Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.
+**Consistent Targeting**: All playback commands should explicitly include a `deviceId` when possible to ensure commands are executed on the intended device and to maintain state synchronization across multiple Spotify Connect instances.
+
+### Unified Service Bus (Spotify)
+
+The Spotify integration uses a "Unified Service Bus" architecture. All playback commands (Play/Pause/Skip/Volume) are dispatched from the client via WebSockets as `SPOTIFY_COMMAND` messages. The server handles these messages directly using the official SDK, establishing the server as the single source of truth for both playback execution and state broadcasting. This eliminates complex branching logic between local (browser) and remote (Spotify Connect) devices.
