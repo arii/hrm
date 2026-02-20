@@ -1,0 +1,48 @@
+[
+  {
+    "url": "https://api.github.com/repos/arii/hrm/issues/comments/3935751927",
+    "html_url": "https://github.com/arii/hrm/pull/8881#issuecomment-3935751927",
+    "issue_url": "https://api.github.com/repos/arii/hrm/issues/8881",
+    "id": 3935751927,
+    "node_id": "IC_kwDOEXbUDM7qls73",
+    "user": {
+      "login": "arii",
+      "id": 342438,
+      "node_id": "MDQ6VXNlcjM0MjQzOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/342438?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/arii",
+      "html_url": "https://github.com/arii",
+      "followers_url": "https://api.github.com/users/arii/followers",
+      "following_url": "https://api.github.com/users/arii/following{/other_user}",
+      "gists_url": "https://api.github.com/users/arii/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/arii/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/arii/subscriptions",
+      "organizations_url": "https://api.github.com/users/arii/orgs",
+      "repos_url": "https://api.github.com/users/arii/repos",
+      "events_url": "https://api.github.com/users/arii/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/arii/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "created_at": "2026-02-20T16:01:41Z",
+    "updated_at": "2026-02-20T16:01:41Z",
+    "body": "> Reviewed commit: `62e42061050ede6c18b442d9f2d7ee26169bb64d`\n\nThis PR delivers a significant and well-executed refactoring of the Bluetooth HRM reconnection logic. The move from a complex, randomized exponential backoff to a simpler, predictable linear backoff strategy is a clear improvement in terms of maintainability and readability, directly aligning with the project's `CODE_REVIEW_GUIDELINES.md` to \"Avoid Overly Complex Solutions\" and \"Reduce Lines of Code\".\n\n**Key Strengths:**\n\n*   **Complexity Reduction:** The removal of the internal retry loop in `connectToGatt` and the simplification of the `reconnect` function drastically reduce cyclomatic complexity in `hooks/useBluetoothHRM.ts`.\n*   **Improved Predictability:** The linear backoff with increased `BLUETOOTH_MAX_RECONNECT_ATTEMPTS` (to 8) and `RECONNECT_BASE_DELAY_MS` (to 2000ms) provides a robust yet predictable 72-second reconnection window.\n*   **Excellent Documentation:** The addition of `docs/adr/0007-simplified-bluetooth-reconnection.md` thoroughly documents the architectural decision, its drivers, and consequences, which is crucial for long-term project understanding.\n*   **Test Coverage:** All relevant unit and E2E tests (`tests/playwright/bluetooth-flow.spec.ts`, `tests/unit/hooks/useBluetoothHRM.test.ts`, etc.) have been updated to reflect the new logic and UI changes, ensuring no regressions.\n*   **MUI Theme Adherence:** The change in `ConnectView.tsx` to use `theme.palette.divider` for borders is a good practice, leveraging the established MUI theme.\n*   **UX Improvement:** The updated text for the reset button (\"Reset Permissions & Settings\") is clearer for the user.\n\n**Minor Suggestion:**\n\n*   **`app/client/connect/ConnectView.tsx` - Inlined `ResetSection`:** While inlining the `ResetSection` component reduced the file count, it introduced duplication of the JSX structure for the reset button and its descriptive caption. The `CODE_REVIEW_GUIDELINES.md` emphasizes \"Don't Repeat Yourself (DRY)\" and suggests creating reusable components when code is found in multiple places. Although the logic is simple, extracting this into a dedicated, reusable component would improve maintainability. This is a minor point and does not warrant requesting changes for this PR, but it's an opportunity for a follow-up refactor.\n\n> Reviewed at commit: `62e42061050ede6c18b442d9f2d7ee26169bb64d`\n",
+    "author_association": "OWNER",
+    "pin": null,
+    "reactions": {
+      "url": "https://api.github.com/repos/arii/hrm/issues/comments/3935751927/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "performed_via_github_app": null
+  }
+]
