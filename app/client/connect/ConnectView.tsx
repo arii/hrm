@@ -16,7 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
@@ -61,7 +61,6 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
@@ -70,7 +69,6 @@ interface ConnectViewProps {
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
-  onReset: () => void
   workoutStatus: WorkoutStatus
   onStartWorkout: () => void
   onPauseWorkout: () => void
@@ -105,7 +103,6 @@ export default function ConnectView({
   batteryLevel,
   onConnect,
   onDisconnect,
-  onForgetDevice,
   isSupported,
   signalPeriodMs,
   currentHR,
@@ -114,14 +111,11 @@ export default function ConnectView({
   connectionStatus,
   bluetoothConnected,
   hasStarted,
-  onReset,
   workoutStatus,
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
-
   useEffect(() => {
     if (isConnected) {
       logger.debug(
@@ -138,18 +132,6 @@ export default function ConnectView({
     return <BatteryAlertIcon color="error" />
   }
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
-
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -163,30 +145,6 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <Box
-          sx={{
-            textAlign: 'center',
-            mt: 4,
-            pt: 4,
-            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleFullReset}
-            disabled={isResetting}
-          >
-            {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-          </Button>
-          <Typography
-            variant="caption"
-            display="block"
-            sx={{ mt: 1, color: 'text.secondary' }}
-          >
-            Resets server state AND forgets Bluetooth device connection.
-          </Typography>
-        </Box>
         <BottomNavBar />
       </Container>
     )
@@ -410,31 +368,6 @@ export default function ConnectView({
         >
           WebSocket: {connectionStatus}
         </Typography>
-
-        <Box
-          sx={{
-            textAlign: 'center',
-            mt: 4,
-            pt: 4,
-            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleFullReset}
-            disabled={isResetting}
-          >
-            {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-          </Button>
-          <Typography
-            variant="caption"
-            display="block"
-            sx={{ mt: 1, color: 'text.secondary' }}
-          >
-            Resets server state AND forgets Bluetooth device connection.
-          </Typography>
-        </Box>
       </Container>
       <BottomNavBar />
     </>

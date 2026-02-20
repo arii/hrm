@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
 
@@ -32,45 +32,27 @@ describe('ConnectView', () => {
     batteryLevel: null,
     onConnect: jest.fn(),
     onDisconnect: jest.fn(),
-    onForgetDevice: jest.fn().mockResolvedValue(undefined),
     isSupported: true,
     currentHR: 0,
     hrZoneProps: { percentage: 0, progressColor: 'grey' },
     connectionStatus: 'Connected',
     bluetoothConnected: false,
     hasStarted: false,
-    onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
+    onPauseWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
   }
 
-  it('renders the reset button when bluetooth is not supported', () => {
+  it('renders the connect button when disconnected', () => {
+    render(<ConnectView {...mockProps} />)
+    expect(
+      screen.getByRole('button', { name: /Connect Bluetooth HRM/i })
+    ).toBeInTheDocument()
+  })
+
+  it('renders not supported message when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    expect(resetButton).toBeInTheDocument()
-  })
-
-  it('renders the reset button as enabled by default', () => {
-    render(<ConnectView {...mockProps} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    expect(resetButton).toBeEnabled()
-  })
-
-  it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
-    render(<ConnectView {...mockProps} />)
-    const resetButton = screen.getByRole('button', {
-      name: /Reset Permissions & Settings/i,
-    })
-    fireEvent.click(resetButton)
-
-    await waitFor(() => {
-      expect(mockProps.onForgetDevice).toHaveBeenCalled()
-      expect(mockProps.onReset).toHaveBeenCalled()
-    })
+    expect(screen.getByText(/Bluetooth Not Supported/i)).toBeInTheDocument()
   })
 })
