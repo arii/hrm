@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import Image from 'next/image'
 
 const PlaylistTracksDisplay = dynamic(
@@ -37,7 +37,8 @@ interface PlaylistDetails {
 const PlaylistPage = () => {
   const params = useParams()
   const playlistId = params.playlistId as string
-  const { spotifyData, sendData } = useWebSocket()
+  const { spotifyData } = useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,12 +74,7 @@ const PlaylistPage = () => {
   }, [playlistId])
 
   const handleDeviceSelect = (deviceId: string) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'TRANSFER_PLAYBACK',
-      deviceId,
-    }
-    sendData(message)
+    executeSpotify('TRANSFER_PLAYBACK', { deviceId })
     setDeviceMenuAnchor(null)
   }
 

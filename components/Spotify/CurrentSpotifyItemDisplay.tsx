@@ -20,7 +20,10 @@ const CurrentSpotifyItemDisplay = () => {
     )
   }
 
-  if (!spotifyData.trackName || spotifyData.trackName === 'Awaiting Login...') {
+  if (
+    !spotifyData.playback.track.name ||
+    spotifyData.playback.track.name === 'Awaiting Login...'
+  ) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
@@ -44,10 +47,10 @@ const CurrentSpotifyItemDisplay = () => {
       aria-live="polite"
       aria-atomic="true"
     >
-      {spotifyData.albumArtUrl ? (
+      {spotifyData.playback.track.albumArtUrl ? (
         <Image
-          src={spotifyData.albumArtUrl}
-          alt={spotifyData.albumName || 'Album art'}
+          src={spotifyData.playback.track.albumArtUrl}
+          alt={spotifyData.playback.track.albumName || 'Album art'}
           width={64}
           height={64}
           style={{ borderRadius: '4px' }}
@@ -67,13 +70,13 @@ const CurrentSpotifyItemDisplay = () => {
           variant="body1"
           sx={{ fontWeight: 600, color: 'common.white' }}
         >
-          {spotifyData.trackName}
+          {spotifyData.playback.track.name}
         </Typography>
         <Typography variant="body2" sx={{ color: 'grey.400' }}>
-          {spotifyData.artist}
+          {spotifyData.playback.track.artist}
         </Typography>
         <Typography variant="caption" sx={{ color: 'grey.500' }}>
-          {spotifyData.albumName}
+          {spotifyData.playback.track.albumName}
         </Typography>
       </Box>
       {!isReady && (
