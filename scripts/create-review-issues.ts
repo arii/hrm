@@ -78,6 +78,7 @@ const SuggestedIssueSchema = z.object({
   ]),
   priority: z.enum(['high', 'medium', 'low']),
   fingerprint: z.string().optional(),
+  isPreExisting: z.boolean().default(true),
 })
 
 const PRContextSchema = z.object({
@@ -503,8 +504,15 @@ export async function run(
     )
   }
 
-  if (!result.suggestedIssues || result.suggestedIssues.length === 0) {
-    console.log('✨ No suggested issues found in the review result.')
+  // Filter: ONLY create issues for items identified as pre-existing on the base branch
+  const outOfScopeIssues = (result.suggestedIssues || []).filter((issue) => {
+    return issue.isPreExisting === true
+  })
+
+  if (outOfScopeIssues.length === 0) {
+    console.log(
+      '✨ No pre-existing base branch issues identified for extraction.'
+    )
     return
   }
 
@@ -543,7 +551,7 @@ export async function run(
   let skippedDuplicates = 0
   let skippedLowQuality = 0
 
-  for (const issue of result.suggestedIssues) {
+  for (const issue of outOfScopeIssues) {
     const duplicate = checkDuplicate(issue, preparedExistingIssues)
     if (duplicate.isDuplicate) {
       console.log(

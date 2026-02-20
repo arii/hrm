@@ -23,6 +23,7 @@ const contextFiles = getArg('--context')?.split(',') || []
 const contextFile = getArg('--context-file')
 const outputFile = getArg('--output')
 const preset = getArg('--preset')
+const instructions = getArg('--instructions')
 
 // List of models to try in order.
 // The first model in the list is the primary model, and the rest are fallbacks.
@@ -275,7 +276,13 @@ async function main() {
 
     if (preset === 'review') {
       reviewContext = getReviewContextFromEnv()
-      await runReviewPreset(genAI, contextContent, outputFile, reviewContext)
+      await runReviewPreset(
+        genAI,
+        contextContent,
+        outputFile,
+        reviewContext,
+        instructions || undefined
+      )
     } else if (preset === 'resolve-conflict') {
       if (!contextFile) {
         console.error(
@@ -549,7 +556,8 @@ function getReviewContextFromEnv(): ReviewContext {
 export async function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
-  contextContent: string
+  contextContent: string,
+  instructions?: string
 ): Promise<string> {
   const isReReview = context.reviewCount > 0
   const hasFailures = context.failedChecks && context.failedChecks.length > 0
@@ -558,6 +566,7 @@ export async function buildReviewPrompt(
     ? 'prompts/fix-mode.md'
     : 'prompts/standard-review.md'
   let promptTemplate = await readFile(templatePath, 'utf-8')
+  promptTemplate += '\n\n{{customInstructions}}'
 
   // --- Base Context Section ---
   const reviewIteration = isReReview
@@ -617,6 +626,10 @@ export async function buildReviewPrompt(
       ? context.slopAnalysis.substring(0, maxSlopLength) + '\n...[TRUNCATED]'
       : context.slopAnalysis || 'Not available.'
 
+  const customInstructions = instructions
+    ? `\n\n## 📋 Additional Instructions\n${instructions}\n`
+    : ''
+
   const placeholders: { [key: string]: string } = {
     reviewIteration,
     prNumber: context.prNumber,
@@ -641,6 +654,7 @@ export async function buildReviewPrompt(
     failureList,
     testCoverageAlert,
     slopAnalysis: truncatedSlopAnalysis,
+    customInstructions,
   }
 
   for (const [key, value] of Object.entries(placeholders)) {
@@ -650,7 +664,8 @@ export async function buildReviewPrompt(
     )
   }
 
-  promptTemplate += `\n## 🛠️ Issue Generation Instructions
+  promptTemplate += `
+## 🛠️ Issue Generation Instructions
 If you identify Technical Debt, Refactoring opportunities, or Improvements:
 1. **Create a 'suggestedIssue'** in the JSON output.
 2. **Criteria**:
@@ -658,6 +673,7 @@ If you identify Technical Debt, Refactoring opportunities, or Improvements:
    - **Type**: \`bug\`, \`enhancement\`, \`refactor\`, \`chore\`, \`documentation\`, \`technical-debt\`, \`frontend-improvement\`, \`security\`.
    - **Priority**: \`high\`, \`medium\`, \`low\`.
    - **Fingerprint**: Provide a stable, unique identifier for the issue. Format: \`file_path:entity_name\` (e.g., \`lib/auth.ts:validateToken\`). This is used for deduplication.
+   - **isPreExisting**: Set to \`true\` if the issue exists in the base branch code (legacy debt). Set to \`false\` if it is introduced by the current PR changes.
 `
 
   return promptTemplate
@@ -667,7 +683,8 @@ async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
   outputFile: string | null | undefined,
-  context: ReviewContext
+  context: ReviewContext,
+  instructions?: string
 ) {
   // Skip logic
   if (
@@ -711,7 +728,12 @@ async function runReviewPreset(
     return
   }
 
-  const prompt = await buildReviewPrompt(diff, context, contextContent)
+  const prompt = await buildReviewPrompt(
+    diff,
+    context,
+    contextContent,
+    instructions
+  )
   const text = await generateContentWithFallback({
     genAI,
     prompt,
@@ -760,8 +782,20 @@ async function runReviewPreset(
                     description:
                       'A stable, unique identifier for the issue (e.g., file_path:entity_name).',
                   },
+                  isPreExisting: {
+                    type: SchemaType.BOOLEAN,
+                    description:
+                      'Whether the issue is pre-existing technical debt (true) or introduced by the PR (false).',
+                  },
                 },
-                required: ['title', 'description', 'type', 'priority', 'fingerprint'],
+                required: [
+                  'title',
+                  'description',
+                  'type',
+                  'priority',
+                  'fingerprint',
+                  'isPreExisting',
+                ],
               },
             },
           },

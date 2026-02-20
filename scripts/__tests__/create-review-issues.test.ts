@@ -74,7 +74,7 @@ describe('create-review-issues logic', () => {
         title: 'New Title',
         description: 'New Description',
         type: 'technical-debt',
-        priority: 'medium',
+        priority: 'medium', isPreExisting: true,
         fingerprint: 'auth:validate',
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
@@ -85,7 +85,7 @@ describe('create-review-issues logic', () => {
         title: 'Fuzzy Match Title!', // Near identical to issue #2
         description: 'New Description',
         type: 'technical-debt',
-        priority: 'medium',
+        priority: 'medium', isPreExisting: true,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
     })
@@ -95,7 +95,7 @@ describe('create-review-issues logic', () => {
         title: 'Original Issue',
         description: 'Description here.',
         type: 'technical-debt',
-        priority: 'medium',
+        priority: 'medium', isPreExisting: true,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
     })
@@ -105,7 +105,7 @@ describe('create-review-issues logic', () => {
         title: 'Completely New Issue',
         description: 'Unique description here.',
         type: 'bug',
-        priority: 'high',
+        priority: 'high', isPreExisting: true,
         fingerprint: 'unique:fingerprint',
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(false)
@@ -118,7 +118,7 @@ describe('create-review-issues logic', () => {
         title: 'Valid Title',
         description: 'Too short.',
         type: 'bug',
-        priority: 'low',
+        priority: 'low', isPreExisting: true,
       }
       expect(isLowQualityIssue(issue, null)).toBe(true)
     })
@@ -129,7 +129,7 @@ describe('create-review-issues logic', () => {
         description:
           'This is a long enough description that should be valid otherwise.',
         type: 'technical-debt',
-        priority: 'low',
+        priority: 'low', isPreExisting: true,
       }
       expect(isLowQualityIssue(issue, null)).toBe(true)
     })
@@ -144,7 +144,7 @@ describe('create-review-issues logic', () => {
         title: `Issue title with "${s1}" keyword`,
         description: `Issue description containing the word "${s2}".`,
         type: 'technical-debt',
-        priority: 'low',
+        priority: 'low', isPreExisting: true,
       }
       expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
     })
@@ -155,7 +155,7 @@ describe('create-review-issues logic', () => {
         description:
           'The validateToken function has a race condition when multiple requests arrive simultaneously.',
         type: 'bug',
-        priority: 'high',
+        priority: 'high', isPreExisting: true,
       }
       expect(isLowQualityIssue(issue, null)).toBe(false)
     })
