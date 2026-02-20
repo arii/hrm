@@ -30,7 +30,7 @@ test.describe('WorkoutSummary Component VRT', () => {
 
   test('active state', async () => {
     // Navigate to experimental dashboard where this component lives
-    await dashboardPage.goto(HRM_ROUTES.EXPERIMENTAL_DASHBOARD)
+    await dashboardPage.goto(HRM_ROUTES.ANALYTICS_DASHBOARD)
     await waitForPageReady(dashboardPage)
 
     // The dashboard starts in a "list" view. Click "New Workout" (or "Back to Active Workout") to show the summary.
