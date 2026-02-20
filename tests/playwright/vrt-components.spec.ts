@@ -62,12 +62,38 @@ test.describe('Component-Specific VRT', () => {
 
     // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {
-      isPlaying: true,
-      trackName: 'VRT Test Track',
-      artist: 'VRT Artist',
+      playback: {
+        is_playing: true,
+        volume_percent: 50,
+        isMuted: false,
+        progress_ms: 0,
+        track: {
+          id: 'vrt-track',
+          name: 'VRT Test Track',
+          artist: 'VRT Artist',
+          albumName: 'VRT Album',
+          albumArtUrl: 'https://via.placeholder.com/150',
+        },
+      },
       devices: [
-        { id: 'dev-1', name: 'Speaker 1', isActive: true, type: 'Speaker' },
-        { id: 'dev-2', name: 'Phone', isActive: false, type: 'Smartphone' },
+        {
+          id: 'dev-1',
+          name: 'Speaker 1',
+          is_active: true,
+          type: 'Speaker',
+          is_private_session: false,
+          is_restricted: false,
+          volume_percent: 50,
+        },
+        {
+          id: 'dev-2',
+          name: 'Phone',
+          is_active: false,
+          type: 'Smartphone',
+          is_private_session: false,
+          is_restricted: false,
+          volume_percent: 50,
+        },
       ],
     })
 

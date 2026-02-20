@@ -234,6 +234,9 @@ const useSpotifyWebPlayback = () => {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
       }
+      // Ensure the global callback is cleared to prevent it from firing
+      // after the component has unmounted.
+      window.onSpotifyWebPlaybackSDKReady = () => {}
     }
   }, [player])
 

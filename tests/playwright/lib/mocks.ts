@@ -84,15 +84,20 @@ export async function mockSpotifyPlaybackState(
   state: Partial<SpotifyPlaybackState>
 ): Promise<void> {
   const defaultState: SpotifyPlaybackState = {
-    trackId: 'track-1',
-    trackName: 'Mock Track',
-    artist: 'Mock Artist',
-    albumName: 'Mock Album',
-    albumArtUrl: 'https://via.placeholder.com/150',
-    isPlaying: true,
     devices: [],
-    volume: 50,
-    isMuted: false,
+    playback: {
+      track: {
+        id: 'track-1',
+        name: 'Mock Track',
+        artist: 'Mock Artist',
+        albumName: 'Mock Album',
+        albumArtUrl: 'https://via.placeholder.com/150',
+      },
+      is_playing: true,
+      volume_percent: 50,
+      isMuted: false,
+      progress_ms: 0,
+    },
   }
 
   await page.evaluate(
