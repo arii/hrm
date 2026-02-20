@@ -79,6 +79,8 @@ const SuggestedIssueSchema = z.object({
   priority: z.enum(['high', 'medium', 'low']),
   fingerprint: z.string().optional(),
   isPreExisting: z.boolean().default(true),
+  filePath: z.string().optional(),
+  lineNumber: z.number().optional(),
 })
 
 const PRContextSchema = z.object({
@@ -473,6 +475,42 @@ export function isDuplicate(
   return checkDuplicate(newIssue, existingIssues).isDuplicate
 }
 
+function verifyIsPreExisting(
+  issue: SuggestedIssue,
+  baseSha: string | undefined
+): boolean {
+  if (!issue.isPreExisting) return false
+  if (!issue.filePath || !issue.lineNumber) return true
+
+  try {
+    const range = `${issue.lineNumber},${issue.lineNumber}`
+    // Use git blame to see if the line was modified since baseSha
+    const output = spawnSync(
+      'git',
+      ['blame', '-L', range, '--porcelain', issue.filePath],
+      { encoding: 'utf-8' }
+    ).stdout.trim()
+
+    if (!output) return true
+
+    // The first line of porcelain output is the commit hash
+    const commitHash = output.split('\n')[0]?.split(' ')[0]
+    if (!commitHash) return true
+
+    // If baseSha is provided, check if commitHash is an ancestor of baseSha
+    if (baseSha) {
+      const isAncestor =
+        spawnSync('git', ['merge-base', '--is-ancestor', commitHash, baseSha])
+          .status === 0
+      return isAncestor
+    }
+  } catch (e) {
+    console.warn(`Warning: Failed to verify pre-existing status for ${issue.filePath}:${issue.lineNumber}:`, e)
+  }
+
+  return true
+}
+
 // --- Core Logic ---
 
 export async function run(
@@ -504,9 +542,12 @@ export async function run(
     )
   }
 
+  const baseSha = process.env.BASE_SHA
+
   // Filter: ONLY create issues for items identified as pre-existing on the base branch
   const outOfScopeIssues = (result.suggestedIssues || []).filter((issue) => {
-    return issue.isPreExisting === true
+    if (issue.isPreExisting !== true) return false
+    return verifyIsPreExisting(issue, baseSha)
   })
 
   if (outOfScopeIssues.length === 0) {

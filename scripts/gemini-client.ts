@@ -674,6 +674,8 @@ If you identify Technical Debt, Refactoring opportunities, or Improvements:
    - **Priority**: \`high\`, \`medium\`, \`low\`.
    - **Fingerprint**: Provide a stable, unique identifier for the issue. Format: \`file_path:entity_name\` (e.g., \`lib/auth.ts:validateToken\`). This is used for deduplication.
    - **isPreExisting**: Set to \`true\` if the issue exists in the base branch code (legacy debt). Set to \`false\` if it is introduced by the current PR changes.
+   - **filePath**: Provide the relative path to the file.
+   - **lineNumber**: Provide the line number.
 `
 
   return promptTemplate
@@ -786,6 +788,14 @@ async function runReviewPreset(
                     type: SchemaType.BOOLEAN,
                     description:
                       'Whether the issue is pre-existing technical debt (true) or introduced by the PR (false).',
+                  },
+                  filePath: {
+                    type: SchemaType.STRING,
+                    description: 'The path to the file where the issue was found (relative to repo root).',
+                  },
+                  lineNumber: {
+                    type: SchemaType.NUMBER,
+                    description: 'The line number where the issue starts.',
                   },
                 },
                 required: [

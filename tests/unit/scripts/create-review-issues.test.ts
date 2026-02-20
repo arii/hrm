@@ -265,6 +265,96 @@ describe('create-review-issues script', () => {
       expect(lastCall[1][titleIndex + 1]).toBe(issue.title)
     })
   })
+
+  describe('verifyIsPreExisting', () => {
+    it('should return true if no file info is provided', async () => {
+      const reviewResult = {
+        reviewComment: 'Found some issues.',
+        labels: [],
+        verdict: 'comment',
+        suggestedIssues: [
+          {
+            title: 'Test Issue',
+            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            type: 'bug',
+            priority: 'medium',
+            isPreExisting: true,
+          },
+        ],
+      }
+      ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
+      await run(client, prNumber, reviewFilePath)
+      expect(client.createIssue).toHaveBeenCalled()
+    })
+
+    it('should return true if git blame shows old commit', async () => {
+      const reviewResult = {
+        reviewComment: 'Found some issues.',
+        labels: [],
+        verdict: 'comment',
+        suggestedIssues: [
+          {
+            title: 'Test Issue',
+            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            type: 'bug',
+            priority: 'medium',
+            isPreExisting: true,
+            filePath: 'test.ts',
+            lineNumber: 10,
+          },
+        ],
+      }
+      ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
+      ;(spawnSync as jest.Mock).mockImplementation((cmd, args) => {
+        if (cmd === 'git' && args[0] === 'blame') {
+          return { status: 0, stdout: 'oldhash 10 10 1\n' }
+        }
+        if (cmd === 'git' && args[0] === 'merge-base') {
+          return { status: 0 } // Ancestor
+        }
+        return { status: 0, stdout: '' }
+      })
+
+      process.env.BASE_SHA = 'basesha'
+      await run(client, prNumber, reviewFilePath)
+      expect(client.createIssue).toHaveBeenCalled()
+      delete process.env.BASE_SHA
+    })
+
+    it('should return false if git blame shows new commit', async () => {
+      const reviewResult = {
+        reviewComment: 'Found some issues.',
+        labels: [],
+        verdict: 'comment',
+        suggestedIssues: [
+          {
+            title: 'Test Issue',
+            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            type: 'bug',
+            priority: 'medium',
+            isPreExisting: true,
+            filePath: 'test.ts',
+            lineNumber: 10,
+          },
+        ],
+      }
+      ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
+      ;(spawnSync as jest.Mock).mockImplementation((cmd, args) => {
+        if (cmd === 'git' && args[0] === 'blame') {
+          return { status: 0, stdout: 'newhash 10 10 1\n' }
+        }
+        if (cmd === 'git' && args[0] === 'merge-base') {
+          return { status: 1 } // Not an ancestor
+        }
+        return { status: 0, stdout: '' }
+      })
+
+      process.env.BASE_SHA = 'basesha'
+      await run(client, prNumber, reviewFilePath)
+      expect(client.createIssue).not.toHaveBeenCalled()
+      delete process.env.BASE_SHA
+    })
+  })
 })
 
 describe('isLowQualityIssue', () => {
