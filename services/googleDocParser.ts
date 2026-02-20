@@ -6,6 +6,7 @@ import { WorkoutTableDto } from '@/types/workout'
  * Parses raw HTML from a Google Doc export and extracts the first table.
  * Simplified logic: assumes the table has 1 row with 4+ columns.
  * Removes whitespace and formatting from each cell.
+ * Replaces newlines within cells with spaces for UI consistency.
  */
 export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   const $ = cheerio.load(html)
@@ -21,8 +22,11 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
 
   // Extract each cell (td or th) from the first row
   firstRow.find('td, th').each((_colIndex, cellElement) => {
-    // Get raw text content and trim whitespace
-    const text = $(cellElement).text().trim()
+    // Get raw text content, replace newlines with spaces, and trim whitespace
+    const text = $(cellElement)
+      .text()
+      .replace(/\r?\n|\r/g, ' ')
+      .trim()
     headers.push(text)
   })
 

@@ -39,7 +39,7 @@ describe('parseGoogleDocTable', () => {
       <table>
         <tr>
           <td>  Exercise  </td>
-          <td>Sets\n</td>
+          <td>Sets</td>
           <td>\tReps</td>
           <td>Notes</td>
         </tr>
@@ -47,6 +47,41 @@ describe('parseGoogleDocTable', () => {
     `
     const result = parseGoogleDocTable(html)
     expect(result.headers).toEqual(['Exercise', 'Sets', 'Reps', 'Notes'])
+  })
+
+  it('should replace newlines with spaces in cell contents', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>Line 1\nLine 2</td>
+          <td>Part A\r\nPart B</td>
+          <td>Space\rCase</td>
+          <td>Notes</td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([
+      'Line 1 Line 2',
+      'Part A Part B',
+      'Space Case',
+      'Notes',
+    ])
+  })
+
+  it('should preserve empty cells to maintain column alignment', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>Exercise</td>
+          <td></td>
+          <td>Reps</td>
+          <td>Notes</td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual(['Exercise', '', 'Reps', 'Notes'])
   })
 
   it('should handle tables with 4+ columns', () => {
