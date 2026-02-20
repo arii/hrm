@@ -105,7 +105,13 @@ export async function mockSpotifyPlaybackState(
     ...defaultState,
     ...state,
     playback: state.playback
-      ? { ...defaultState.playback, ...state.playback }
+      ? {
+          ...defaultState.playback,
+          ...state.playback,
+          track: state.playback.track
+            ? { ...defaultState.playback.track, ...state.playback.track }
+            : defaultState.playback.track,
+        }
       : defaultState.playback,
   }
 

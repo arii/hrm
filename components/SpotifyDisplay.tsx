@@ -286,6 +286,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
+          minHeight: '64px',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -312,7 +313,7 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: { xs: 2, sm: 3 },
-          py: 1,
+          py: 1.5,
           borderRadius: 2,
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
@@ -333,7 +334,7 @@ const SpotifyDisplay = () => {
             alignItems: 'center',
             justifySelf: 'start',
             gap: 2,
-            minHeight: '40px',
+            minHeight: '32px',
           }}
         >
           <Typography
