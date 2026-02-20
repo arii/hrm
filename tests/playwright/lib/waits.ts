@@ -93,28 +93,9 @@ export async function waitForWebSocketConnection(
   await page
     .waitForFunction(
       () => {
-        // Check for TimerDisplay status indicator (Dashboard)
-        const statusIndicator = document.querySelector(
-          '[data-testid="ws-status-indicator"]'
+        return (
+          document.body.getAttribute('data-connection-status') === 'Connected'
         )
-        if (
-          statusIndicator &&
-          statusIndicator.textContent?.includes('Connected')
-        ) {
-          return true
-        }
-
-        // Check for text-based status (Control Panel, Mock Page)
-        // Look for "Server: Connected" or "Server Status: Connected"
-        const bodyText = document.body.innerText
-        if (
-          bodyText.includes('Server: Connected') ||
-          bodyText.includes('Server Status: Connected')
-        ) {
-          return true
-        }
-
-        return false
       },
       undefined,
       { timeout }
