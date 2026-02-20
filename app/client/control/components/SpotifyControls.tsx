@@ -14,8 +14,12 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { SpotifyCommand } from '@/types/websocket'
+import {
+  HRM_WEB_PLAYER_NAME,
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+} from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -24,6 +28,7 @@ const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
+  const { execute: executeSpotify } = useSpotifyCommand()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -33,13 +38,10 @@ const SpotifyControls = () => {
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command: 'PLAY',
+    executeSpotify('PLAY', {
       uri: uri,
-      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-    }
-    sendData(message)
+      deviceId: targetDeviceId,
+    })
   }
 
   const handleBrowseClick = () => {
@@ -47,9 +49,9 @@ const SpotifyControls = () => {
   }
 
   const hasSpotifyData =
-    spotifyData.trackName !== 'Awaiting Login...' &&
-    spotifyData.trackName !== '' &&
-    spotifyData.trackName !== 'No Track Playing'
+    spotifyData.playback.track.name !== 'Awaiting Login...' &&
+    spotifyData.playback.track.name !== '' &&
+    spotifyData.playback.track.name !== 'No Track Playing'
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -83,14 +85,18 @@ const SpotifyControls = () => {
     prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging and not within grace period after send)
-    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
+    // We rely on the server as the source of truth for volume, but use a grace period
+    // to prevent local sliders from "jumping" while the user is actively adjusting them.
+    const playbackVolume = spotifyData.playback.volume_percent
+    if (activeDevice && typeof playbackVolume === 'number') {
       const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
-      const GRACE_PERIOD_MS = 600 // Match the debounce + buffer
 
-      // Only sync if we haven't sent a volume command recently
-      if (timeSinceLastVolumeSend > GRACE_PERIOD_MS) {
-        if (activeDevice.volume_percent !== volume) {
-          setVolume(activeDevice.volume_percent)
+      // Only sync if we haven't sent a volume command recently.
+      // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
+      // confirming the new state to all clients.
+      if (timeSinceLastVolumeSend > VOLUME_SYNC_GRACE_PERIOD_MS) {
+        if (playbackVolume !== volume) {
+          setVolume(playbackVolume)
         }
       }
     }
@@ -127,18 +133,32 @@ const SpotifyControls = () => {
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
-      const targetDeviceId =
+      const deviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
           : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+
+      switch (command) {
+        case 'PLAY':
+          executeSpotify('PLAY', { deviceId })
+          break
+        case 'PAUSE':
+          executeSpotify('PAUSE', { deviceId })
+          break
+        case 'NEXT':
+          executeSpotify('NEXT', { deviceId })
+          break
+        case 'PREVIOUS':
+          executeSpotify('PREVIOUS', { deviceId })
+          break
+        case 'TRANSFER_PLAYBACK':
+          if (deviceId) {
+            executeSpotify('TRANSFER_PLAYBACK', { deviceId })
+          }
+          break
       }
-      sendData(message)
     },
-    [resolveTargetDeviceId, sendData]
+    [resolveTargetDeviceId, executeSpotify]
   )
 
   const handlePlaybackCommand = useCallback(
@@ -166,17 +186,16 @@ const SpotifyControls = () => {
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
+
+      executeSpotify('SET_VOLUME', {
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+        deviceId: targetDeviceId,
+      })
+
       lastSentVolumeRef.current = messageKey
       lastVolumeSyncTimeRef.current = Date.now()
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
   const debounceTimeoutRef = useRef<number | null>(null)
@@ -238,15 +257,15 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyData.trackName}
+                {spotifyData.playback.track.name}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyData.artist}
+                {spotifyData.playback.track.artist}
               </Typography>
             </Box>
 
             <PlaybackControls
-              isPlaying={spotifyData.isPlaying}
+              isPlaying={spotifyData.playback.is_playing}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />
