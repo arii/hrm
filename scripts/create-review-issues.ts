@@ -499,22 +499,25 @@ function verifyIsPreExisting(
 
     // The first line of porcelain output is the commit hash
     const commitHash = output.split('\n')[0]?.split(' ')[0]
-    if (!commitHash) return true
+    if (!commitHash) return false
 
-    // If baseSha is provided, check if commitHash is an ancestor of baseSha
-    if (baseSha) {
-      const isAncestor =
-        spawnSync('git', ['merge-base', '--is-ancestor', commitHash, baseSha])
-          .status === 0
-      return isAncestor
+    if (!baseSha) {
+      console.warn(
+        `Warning: BASE_SHA environment variable is missing. Cannot verify pre-existing status for ${issue.filePath}:${issue.lineNumber}. Assuming not pre-existing to be safe.`
+      )
+      return false
     }
+
+    const isAncestor =
+      spawnSync('git', ['merge-base', '--is-ancestor', commitHash, baseSha])
+        .status === 0
+    return isAncestor
   } catch (e) {
     console.warn(
       `Warning: Git command failed to verify pre-existing status for ${issue.filePath}:${issue.lineNumber}: ${e instanceof Error ? e.message : e}`
     )
+    return false
   }
-
-  return true
 }
 
 // --- Core Logic ---

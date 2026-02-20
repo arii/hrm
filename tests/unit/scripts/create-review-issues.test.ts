@@ -38,11 +38,16 @@ describe('create-review-issues script', () => {
   beforeEach(() => {
     client = new MockGitHubClient()
     jest.clearAllMocks()
+    process.env.BASE_SHA = 'test-base-sha'
     ;(spawnSync as jest.Mock).mockReturnValue({
       status: 0,
       stdout: 'oldhash 1 1 1\n',
       stderr: '',
     })
+  })
+
+  afterEach(() => {
+    delete process.env.BASE_SHA
   })
 
   it('should run without crashing when there are no suggested issues', async () => {
