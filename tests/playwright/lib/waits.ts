@@ -47,26 +47,20 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-  try {
-    // Wait for custom test readiness signal from the application
-    await page.waitForFunction(
-      () => {
-        return document.querySelector('[data-ready="true"]') !== null
-      },
-      { timeout }
-    )
-  } catch {
-    // Fallback: If custom signal fails, wait for a known stable element
-    console.warn('__TEST_READY__ signal not found, proceeding with UI check')
-    await page
-      .waitForSelector('main, [role="main"], body > div', {
-        state: 'visible',
-        timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-      })
-      .catch(() => {
-        console.warn('No main element found, continuing anyway')
-      })
-  }
+  // Wait for fonts to be ready
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+
+  // Wait for loading skeletons to disappear
+  await page
+    .waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout,
+    })
+    .catch(() => {
+      // Ignore errors if skeletons are not found (already hidden/removed)
+    })
 }
 
 /**
