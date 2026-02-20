@@ -761,7 +761,7 @@ async function runReviewPreset(
                       'A stable, unique identifier for the issue (e.g., file_path:entity_name).',
                   },
                 },
-                required: ['title', 'description', 'type', 'priority'],
+                required: ['title', 'description', 'type', 'priority', 'fingerprint'],
               },
             },
           },
