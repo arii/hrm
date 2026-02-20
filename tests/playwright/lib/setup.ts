@@ -199,10 +199,18 @@ export async function setupMinimalVisualRegressionTest(
   if (path === '' || path === '/') {
     await mockGoogleDocIframe(page)
   }
-  await navigateAndWait(page, path)
 
-  // Ensure WebSocket is disconnected to remove loading skeletons
-  // This uses the test control window object exposed when NEXT_PUBLIC_TESTING=true
+  // Navigate to the page but DO NOT wait for it to be fully ready yet
+  const baseUrl = getBaseURL()
+  await page.goto(`${baseUrl}${path}`)
+
+  // Wait for the window object to be available and controls to attach
+  // This is a minimal wait to ensure JS has executed
+  await page.waitForFunction(() => !!window.__TEST_CONTROLS__, {
+    timeout: 5000,
+  }).catch(() => console.warn('Test controls not found within timeout'))
+
+  // Force disconnect to remove HrmConnectionPanel skeleton
   await page.evaluate(() => {
     // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
     if (window.__TEST_CONTROLS__) {
@@ -210,6 +218,9 @@ export async function setupMinimalVisualRegressionTest(
       window.__TEST_CONTROLS__.disconnect()
     }
   })
+
+  // NOW wait for the page to be stable (skeletons detached)
+  await waitForPageReady(page)
 }
 
 /**
