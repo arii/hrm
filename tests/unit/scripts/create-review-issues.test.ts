@@ -73,14 +73,16 @@ describe('create-review-issues script', () => {
           description:
             'The auth service is too complex and should be refactored to improve maintainability.',
           type: 'refactor',
-          priority: 'high', isPreExisting: true,
+          priority: 'high',
+          isPreExisting: true,
         },
         {
           title: 'Fix the button alignment',
           description:
             'The button is not aligned correctly on the main page, which affects the user experience.',
           type: 'enhancement',
-          priority: 'low', isPreExisting: true,
+          priority: 'low',
+          isPreExisting: true,
         },
       ],
     }
@@ -119,7 +121,8 @@ describe('create-review-issues script', () => {
           description:
             'The auth service is too complex and should be refactored to improve maintainability.',
           type: 'refactor',
-          priority: 'high', isPreExisting: true,
+          priority: 'high',
+          isPreExisting: true,
         },
       ],
     }
@@ -156,7 +159,8 @@ describe('create-review-issues script', () => {
           description:
             'The auth service is too complex and should be refactored to improve maintainability.',
           type: 'refactor',
-          priority: 'high', isPreExisting: true,
+          priority: 'high',
+          isPreExisting: true,
         },
       ],
     }
@@ -200,7 +204,8 @@ describe('create-review-issues script', () => {
         description:
           'Test Description that is long enough to pass the quality check.',
         type: 'bug',
-        priority: 'medium', isPreExisting: true,
+        priority: 'medium',
+        isPreExisting: true,
       }
       const context = {
         repo: 'test/repo',
@@ -244,7 +249,8 @@ describe('create-review-issues script', () => {
         description:
           'A very serious bug that needs to be fixed right away because it is a security vulnerability.',
         type: 'bug',
-        priority: 'high', isPreExisting: true,
+        priority: 'high',
+        isPreExisting: true,
       }
       const context = { repo: 'test/repo', prNumber: '789' }
       ghClient.createIssue(issue, context)
@@ -271,7 +277,8 @@ describe('isLowQualityIssue', () => {
       description:
         'We need to delve into this issue and leverage our resources to fix this problem.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -282,7 +289,8 @@ describe('isLowQualityIssue', () => {
       description:
         'We need to fix this issue in the authentication service. It should be long enough.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -293,7 +301,8 @@ describe('isLowQualityIssue', () => {
       description:
         'This is a robust description of a robust problem that requires a robust solution.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -303,7 +312,8 @@ describe('isLowQualityIssue', () => {
       title: 'This is a trivial issue',
       description: 'This is a short description.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -314,7 +324,8 @@ describe('isLowQualityIssue', () => {
       description:
         'This is a long and detailed description of the issue. It does not contain any "slop" words.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -325,7 +336,8 @@ describe('isLowQualityIssue', () => {
       description:
         'This is a long and detailed description of the issue. It does not contain any "slop" words.',
       type: 'refactor',
-      priority: 'medium', isPreExisting: true,
+      priority: 'medium',
+      isPreExisting: true,
     }
     expect(isLowQualityIssue(issue, null)).toBe(false)
   })
