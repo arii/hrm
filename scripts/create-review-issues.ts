@@ -479,10 +479,6 @@ function verifyIsPreExisting(
   issue: SuggestedIssue,
   baseSha: string | undefined
 ): boolean {
-  if (!issue.isPreExisting) return false
-  // Requirements are now enforced by Zod schema, but keeping check for type safety
-  if (!issue.filePath || !issue.lineNumber) return false
-
   try {
     const range = `${issue.lineNumber},${issue.lineNumber}`
     // Use git blame to see if the line was modified since baseSha
