@@ -69,5 +69,12 @@ if [ -n "$NEW_LABELS" ]; then
   echo "Label check complete."
 
   echo "Adding labels: $NEW_LABELS"
-  gh pr edit $PR_NUMBER --add-label "$NEW_LABELS"
+  # Apply labels one by one for better robustness and error handling
+  for label in "${LABELS[@]}"; do
+    clean_label=$(echo "$label" | xargs)
+    if [ -n "$clean_label" ]; then
+      echo "Applying label: $clean_label"
+      gh pr edit "$PR_NUMBER" --add-label "$clean_label" || echo "::warning::Failed to apply label: $clean_label"
+    fi
+  done
 fi
