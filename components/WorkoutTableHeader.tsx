@@ -70,16 +70,8 @@ export default function WorkoutTableHeader({
     )
   }
 
-  const tableHeaderStyle = {
-    fontWeight: 'bold',
-    fontFamily: 'inherit',
-    fontSize: '0.875rem', // Match body2 default
-  }
-  const tableContainerStyle = { width: '100%' }
-  const tableHeaderRowStyle = { backgroundColor: 'action.hover' }
-
   return (
-    <Box sx={{ position: 'relative', ...tableContainerStyle }}>
+    <Box sx={{ position: 'relative', width: '100%' }}>
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
@@ -93,9 +85,9 @@ export default function WorkoutTableHeader({
       >
         <Table sx={{ minWidth: 650 }} aria-label="workout table">
           <TableHead>
-            <TableRow sx={tableHeaderRowStyle}>
+            <TableRow sx={{ backgroundColor: 'action.hover' }}>
               {data.headers.map((header, index) => (
-                <TableCell key={index} sx={tableHeaderStyle}>
+                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
                   {header}
                 </TableCell>
               ))}
