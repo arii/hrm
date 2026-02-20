@@ -79,8 +79,8 @@ const SuggestedIssueSchema = z.object({
   priority: z.enum(['high', 'medium', 'low']),
   fingerprint: z.string(),
   isPreExisting: z.boolean(),
-  filePath: z.string().optional(),
-  lineNumber: z.number().optional(),
+  filePath: z.string(),
+  lineNumber: z.number(),
 })
 
 const PRContextSchema = z.object({
@@ -480,18 +480,22 @@ function verifyIsPreExisting(
   baseSha: string | undefined
 ): boolean {
   if (!issue.isPreExisting) return false
-  if (!issue.filePath || !issue.lineNumber) return true
+  // Requirements are now enforced by Zod schema, but keeping check for type safety
+  if (!issue.filePath || !issue.lineNumber) return false
 
   try {
     const range = `${issue.lineNumber},${issue.lineNumber}`
     // Use git blame to see if the line was modified since baseSha
-    const output = spawnSync(
+    const result = spawnSync(
       'git',
       ['blame', '-L', range, '--porcelain', issue.filePath],
       { encoding: 'utf-8' }
-    ).stdout.trim()
+    )
 
-    if (!output) return true
+    if (result.status !== 0 || !result.stdout) return false
+
+    const output = result.stdout.trim()
+    if (!output) return false
 
     // The first line of porcelain output is the commit hash
     const commitHash = output.split('\n')[0]?.split(' ')[0]

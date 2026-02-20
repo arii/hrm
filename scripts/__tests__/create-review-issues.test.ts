@@ -78,6 +78,8 @@ describe('create-review-issues logic', () => {
         priority: 'medium',
         isPreExisting: true,
         fingerprint: 'auth:validate',
+        filePath: 'lib/auth.ts',
+        lineNumber: 10,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
     })
@@ -91,6 +93,8 @@ describe('create-review-issues logic', () => {
         priority: 'medium',
         isPreExisting: true,
         fingerprint: 'fuzzy-match-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 20,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
     })
@@ -98,11 +102,14 @@ describe('create-review-issues logic', () => {
     it('should detect duplicate via exact content match (legacy)', () => {
       const newIssue: SuggestedIssue = {
         title: 'Original Issue',
-        description: 'Description here.',
+        description:
+          'Description here that is definitely long enough to pass the validation check.',
         type: 'technical-debt',
         priority: 'medium',
         isPreExisting: true,
         fingerprint: 'exact-match-fingerprint',
+        filePath: 'lib/auth.ts',
+        lineNumber: 1,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(true)
     })
@@ -116,6 +123,8 @@ describe('create-review-issues logic', () => {
         priority: 'high',
         isPreExisting: true,
         fingerprint: 'unique:fingerprint',
+        filePath: 'new.ts',
+        lineNumber: 5,
       }
       expect(isDuplicate(newIssue, existingIssues)).toBe(false)
     })
@@ -130,6 +139,8 @@ describe('create-review-issues logic', () => {
         priority: 'low',
         isPreExisting: true,
         fingerprint: 'short-description-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 1,
       }
       expect(isLowQualityIssue(issue, null)).toBe(true)
     })
@@ -143,6 +154,8 @@ describe('create-review-issues logic', () => {
         priority: 'low',
         isPreExisting: true,
         fingerprint: 'generic-title-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 1,
       }
       expect(isLowQualityIssue(issue, null)).toBe(true)
     })
@@ -151,15 +164,18 @@ describe('create-review-issues logic', () => {
       // Obfuscate keywords to avoid triggering the slop detector on the test file itself
       const s1 = ['seam', 'less'].join('')
       const s2 = ['del', 've'].join('')
-      const slopPattern = new RegExp(`${s1}|${s2}`, 'i')
+      const s3 = ['rob', 'ust'].join('')
+      const slopPattern = new RegExp(`${s1}|${s2}|${s3}`, 'i')
 
       const issue: SuggestedIssue = {
         title: `Issue title with "${s1}" keyword`,
-        description: `Issue description containing the word "${s2}".`,
+        description: `This is a very ${s3} description that will delve into the details and leverage ${s2} and ${s1} technologies to improve our codebase significantly.`,
         type: 'technical-debt',
         priority: 'low',
         isPreExisting: true,
         fingerprint: 'ai-slop-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 1,
       }
       expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
     })
@@ -173,6 +189,8 @@ describe('create-review-issues logic', () => {
         priority: 'high',
         isPreExisting: true,
         fingerprint: 'high-quality-fingerprint',
+        filePath: 'lib/auth.ts',
+        lineNumber: 100,
       }
       expect(isLowQualityIssue(issue, null)).toBe(false)
     })

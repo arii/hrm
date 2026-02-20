@@ -788,6 +788,8 @@ async function runReviewPreset(
                   'priority',
                   'fingerprint',
                   'isPreExisting',
+                  'filePath',
+                  'lineNumber',
                 ],
               },
             },

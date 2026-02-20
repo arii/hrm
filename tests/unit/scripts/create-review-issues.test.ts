@@ -38,6 +38,11 @@ describe('create-review-issues script', () => {
   beforeEach(() => {
     client = new MockGitHubClient()
     jest.clearAllMocks()
+    ;(spawnSync as jest.Mock).mockReturnValue({
+      status: 0,
+      stdout: 'oldhash 1 1 1\n',
+      stderr: '',
+    })
   })
 
   it('should run without crashing when there are no suggested issues', async () => {
@@ -76,6 +81,8 @@ describe('create-review-issues script', () => {
           priority: 'high',
           isPreExisting: true,
           fingerprint: 'refactor-auth-service',
+          filePath: 'lib/auth.ts',
+          lineNumber: 1,
         },
         {
           title: 'Fix the button alignment',
@@ -85,6 +92,8 @@ describe('create-review-issues script', () => {
           priority: 'low',
           isPreExisting: true,
           fingerprint: 'fix-button-alignment',
+          filePath: 'components/Button.tsx',
+          lineNumber: 10,
         },
       ],
     }
@@ -126,6 +135,8 @@ describe('create-review-issues script', () => {
           priority: 'high',
           isPreExisting: true,
           fingerprint: 'refactor-auth-service',
+          filePath: 'lib/auth.ts',
+          lineNumber: 1,
         },
       ],
     }
@@ -165,6 +176,8 @@ describe('create-review-issues script', () => {
           priority: 'high',
           isPreExisting: true,
           fingerprint: 'refactor-auth-service-closed',
+          filePath: 'lib/auth.ts',
+          lineNumber: 1,
         },
       ],
     }
@@ -211,6 +224,8 @@ describe('create-review-issues script', () => {
         priority: 'medium',
         isPreExisting: true,
         fingerprint: 'test-issue-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 1,
       }
       const context = {
         repo: 'test/repo',
@@ -257,6 +272,8 @@ describe('create-review-issues script', () => {
         priority: 'high',
         isPreExisting: true,
         fingerprint: 'special-char-fingerprint',
+        filePath: 'test.ts',
+        lineNumber: 1,
       }
       const context = { repo: 'test/repo', prNumber: '789' }
       ghClient.createIssue(issue, context)
@@ -273,7 +290,7 @@ describe('create-review-issues script', () => {
   })
 
   describe('verifyIsPreExisting', () => {
-    it('should return true if no file info is provided', async () => {
+    it('should return false if verification fails (due to missing info or other reasons)', async () => {
       const reviewResult = {
         reviewComment: 'Found some issues.',
         labels: [],
@@ -286,13 +303,17 @@ describe('create-review-issues script', () => {
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
-            fingerprint: 'test-issue-no-file-info',
+            fingerprint: 'test-issue-failed-verification',
+            filePath: 'non-existent.ts',
+            lineNumber: 999,
           },
         ],
       }
       ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
+      ;(spawnSync as jest.Mock).mockReturnValue({ status: 1, stdout: '', stderr: 'File not found' })
+
       await run(client, prNumber, reviewFilePath)
-      expect(client.createIssue).toHaveBeenCalled()
+      expect(client.createIssue).not.toHaveBeenCalled()
     })
 
     it('should return true if git blame shows old commit', async () => {
@@ -382,6 +403,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'slop-issue-1',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -395,6 +418,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'slop-issue-2',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -408,6 +433,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'slop-issue-3',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -420,6 +447,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'short-issue',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
@@ -433,6 +462,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'high-quality-issue',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
   })
@@ -446,6 +477,8 @@ describe('isLowQualityIssue', () => {
       priority: 'medium',
       isPreExisting: true,
       fingerprint: 'high-quality-issue-empty-slop',
+      filePath: 'test.ts',
+      lineNumber: 1,
     }
     expect(isLowQualityIssue(issue, null)).toBe(false)
   })
