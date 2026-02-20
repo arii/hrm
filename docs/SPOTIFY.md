@@ -84,7 +84,7 @@ The `useSpotifyWebPlayback` hook (`hooks/useSpotifyWebPlayback.ts`) manages the 
 
 ### Why Pre-Auth Check Was Removed
 
-Previously, the application might have checked for an existing authentication session before attempting to initialize the Web Playback SDK. This check was removed to support a more seamless user experience for unauthenticated users. The SDK is now initialized regardless of auth state. The `getOAuthToken` function itself serves as the authentication gatekeeper. If the user is not logged in, the token fetch will fail gracefully, and the SDK will not connect, without breaking the UI.
+Previously, the application might have checked for an existing authentication session before attempting to initialize the Web Playback SDK. This check was removed to provide a more consistent and non-blocking experience for unauthenticated users. The SDK is now initialized regardless of auth state. The `getOAuthToken` function itself serves as the authentication gatekeeper. If the user is not logged in, the token fetch will fail gracefully, and the SDK will not connect, without breaking the UI.
 
 ### Unauthenticated User Handling
 
@@ -110,7 +110,7 @@ These errors are caught and displayed to the user using the global error handlin
 
 The `SpotifyPolling` service (`services/spotifyPolling.ts`) on the backend periodically fetches a list of the user's available Spotify devices using `sdk.player.getAvailableDevices()`. This list is then broadcast to the frontend via WebSockets and updated in the application's state.
 
-When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent to the backend via WebSocket. The backend then instructs the Spotify API to transfer playback to the selected device ID.
+When a user selects a device from the UI, a `TRANSFER_PLAYBACK` command is sent to the backend via WebSocket using the `SPOTIFY_COMMAND` message type. The backend service (`socketManager.ts`) handles this message and calls the Spotify service directly to transfer playback to the selected device ID.
 
 ### SpotifyDevice Type Documentation
 
@@ -132,9 +132,18 @@ The Web Playback SDK registers the browser as a `Computer` device.
 
 Device management is tightly integrated with WebSockets:
 
-- The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds. This value is part of the environment variable schema defined in `lib/env.ts` (using Zod). It can be overridden via an environment variable but defaults to 10,000ms if not set.
+- The backend's `SpotifyPolling` service fetches the device list every `SPOTIFY_DEVICE_POLLING_INTERVAL_MS` milliseconds (defaults to 10,000ms).
 - Any changes to the device list are broadcast in a `SPOTIFY_UPDATE` message to all connected clients.
-- The frontend receives this message, updates its state, and re-renders the device selector UI to show the most current list of devices.
+- The frontend receives this message, updates its state, and re-renders the device selector UI.
+
+### Unified Command Dispatch
+
+All playback commands (Play, Pause, Skip, Volume, etc.) follow a unified path:
+
+1.  The client uses the `useSpotifyCommand` hook to dispatch a `SPOTIFY_COMMAND` message via WebSocket.
+2.  The `socketManager.ts` on the server receives the message and identifies the target `deviceId`.
+3.  The command is executed directly on the server using the `@spotify/web-api-ts-sdk`.
+4.  This establishes the server-side service as the single source of truth for all Spotify interactions, ensuring perfect synchronization across different client types (Dashboard, Controller).
 
 This architecture ensures that if a user starts or stops playing music on another device (like their phone), it will be reflected in the web dashboard automatically.
 
@@ -203,4 +212,4 @@ Moving device data fetching to the backend and broadcasting it via WebSockets wa
 ### Unauthenticated Support (Design)
 
 - **Rationale**: The design for unauthenticated users focuses on providing a good "empty state" experience. Instead of showing broken or empty components, the UI clearly indicates that the user needs to log in to access Spotify features. This is achieved by letting the authentication flow fail silently within the `useSpotifyWebPlayback` hook and having the UI components react to the resulting unauthenticated state.
-- **Safe API Wrapper**: The backend SDK usage is wrapped in a `SafeSpotifyApi` (`services/safeSpotifyApi.ts`) to handle potential issues with Spotify's API, such as commands that succeed but return an empty response body. This aligns with the project's convention of creating type-safe wrappers for third-party APIs.
+- **Direct SDK usage**: The backend SDK usage utilizes the `@spotify/web-api-ts-sdk` directly. Potential issues with Spotify's API, such as commands that succeed but return an empty response body (204 No Content), are handled via utility functions like `isEmptyResponseError`.
