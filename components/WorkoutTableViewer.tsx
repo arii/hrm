@@ -6,7 +6,6 @@ import {
   Table,
   TableContainer,
   TableHead,
-  TableRow,
   TableCell,
   Paper,
   CircularProgress,
@@ -89,8 +88,8 @@ export default function WorkoutTableViewer({
         data-testid="workout-table-viewer"
       >
         <Table sx={{ minWidth: 650 }} aria-label="workout table">
-          <TableHead>
-            <TableRow sx={tableHeaderRowStyle}>
+          <TableHead sx={{ '& tr': tableHeaderRowStyle }}>
+            <tr>
               {data.headers.map((header, index) => (
                 <TableCell key={index} sx={tableHeaderStyle}>
                   <Typography
@@ -104,7 +103,7 @@ export default function WorkoutTableViewer({
                   </Typography>
                 </TableCell>
               ))}
-            </TableRow>
+            </tr>
           </TableHead>
         </Table>
       </TableContainer>
