@@ -15,7 +15,7 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-  TEST_READY: 2000,
+  TEST_READY: 5000,
   /** Default timeout for WebSocket connection */
   WEBSOCKET: 5000,
   /** Default timeout for element visibility */
@@ -47,26 +47,16 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-  try {
-    // Wait for custom test readiness signal from the application
-    await page.waitForFunction(
-      () => {
-        return document.querySelector('[data-ready="true"]') !== null
-      },
-      { timeout }
-    )
-  } catch {
-    // Fallback: If custom signal fails, wait for a known stable element
-    console.warn('__TEST_READY__ signal not found, proceeding with UI check')
-    await page
-      .waitForSelector('main, [role="main"], body > div', {
-        state: 'visible',
-        timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-      })
-      .catch(() => {
-        console.warn('No main element found, continuing anyway')
-      })
-  }
+  // Wait for fonts to be loaded
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+
+  // Wait for loading skeletons to disappear
+  await page.waitForSelector('.MuiSkeleton-root', {
+    state: 'detached',
+    timeout,
+  })
 }
 
 /**
@@ -84,7 +74,7 @@ export async function waitForWebSocketConnection(
 
   await page.waitForFunction(
     () => {
-      return window.__TEST_WEBSOCKET_READY__ === true
+      return document.body.dataset.connectionStatus === 'connected'
     },
     { timeout }
   )

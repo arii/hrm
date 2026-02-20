@@ -13,7 +13,6 @@ import {
 } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
@@ -41,7 +40,6 @@ type View = 'active' | 'list' | 'detail'
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
-  const isReady = useTestPageReady()
 
   // Use #5110's hooks
   const {
@@ -205,7 +203,6 @@ const ExperimentalAnalyticsPage = () => {
       maxWidth="lg"
       sx={{ mt: 4, mb: 4 }}
       data-testid="dashboard"
-      data-ready={isReady ? 'true' : 'false'}
     >
       {view === 'active' && (
         <>
