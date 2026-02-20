@@ -8,6 +8,7 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -194,15 +195,16 @@ describe('components/SpotifyControls', () => {
 
   it('shows registration status when player is initializing', () => {
     // Mock useSpotifyWebPlayback to return a player but not ready
-    const useSpotifyWebPlayback = require('@/hooks/useSpotifyWebPlayback')
-      .default
-    ;(useSpotifyWebPlayback as jest.Mock).mockReturnValue({
+    const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+    mockedUseSpotifyWebPlayback.mockReturnValue({
       player: { disconnect: jest.fn() },
       isReady: false,
       deviceId: null,
     })
 
     render(<SpotifyControls />)
-    expect(screen.getByText('Registering HRM Web Player...')).toBeInTheDocument()
+    expect(
+      screen.getByText('Registering HRM Web Player...')
+    ).toBeInTheDocument()
   })
 })
