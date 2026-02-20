@@ -1,37 +1,40 @@
 declare module '@garmin/fitsdk' {
-  export class Encoder {
-    constructor()
-    write(message: FileIdMessage | RecordMessage | SessionMessage): void
-    close(): Uint8Array
-  }
-
   export interface FileIdMessage {
-    fileId: {
-      type: number
-      manufacturer: number
-      product: number
-      serialNumber: number
-      timeCreated: Date
-    }
+    mesgNum: 0
+    type: number
+    manufacturer: number
+    product: number
+    serialNumber: number
+    timeCreated: number
   }
 
   export interface RecordMessage {
-    record: {
-      timestamp: Date
-      heartRate: number
-      calories?: number
-    }
+    mesgNum: 20
+    timestamp: number
+    heartRate: number
   }
 
   export interface SessionMessage {
-    session: {
-      timestamp: Date
-      startTime: Date
-      totalElapsedTime: number
-      totalTimerTime: number
-      totalCalories: number
-      avgHeartRate: number
-      maxHeartRate: number
-    }
+    mesgNum: 18
+    timestamp: number
+    startTime: number
+    totalTimerTime: number
+    totalElapsedTime: number
+    totalCalories: number
+    avgHeartRate: number
+    maxHeartRate: number
+    event: number
+    eventType: number
+    sport: number
+    subSport: number
+    trigger: number
+  }
+
+  export type FitMessage = FileIdMessage | RecordMessage | SessionMessage
+
+  export class Encoder {
+    constructor(options?: unknown)
+    writeMesg(mesg: FitMessage): void
+    close(): Uint8Array
   }
 }
