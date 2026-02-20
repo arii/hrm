@@ -199,11 +199,7 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{ mt: 4, mb: 4 }}
-      data-testid="dashboard"
-    >
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>

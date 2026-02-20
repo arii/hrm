@@ -125,10 +125,7 @@ export default function MockPage() {
 
   return (
     <>
-      <Container
-        maxWidth="sm"
-        sx={{ py: 3, pb: 10 }}
-      >
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
         <Card sx={{ p: 3, textAlign: 'center' }}>
           <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
           <Typography
