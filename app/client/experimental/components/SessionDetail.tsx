@@ -11,9 +11,13 @@ import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
-import HeartRateTimeSeries from './HeartRateTimeSeries'
 import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+
+const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+  ssr: false,
+})
 
 interface SessionDetailProps {
   session: WorkoutSessionData

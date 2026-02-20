@@ -311,8 +311,8 @@ export const useWorkoutSessionManager = () => {
     if (!state.session) return
 
     try {
-      const { generateFitFile } = await import('@/services/exportService')
-      const blob = await generateFitFile(state.session)
+      const { generateFitFile } = await import('@/utils/fit-export')
+      const blob = generateFitFile(state.session)
 
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
