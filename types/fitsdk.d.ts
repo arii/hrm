@@ -1,8 +1,16 @@
 declare module '@garmin/fitsdk' {
+  export namespace Stream {
+    class MemoryStream {
+      constructor()
+      // Use BlobPart to avoid "Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'"
+      // due to mismatching ArrayBuffer definitions in strict CI environments, while avoiding 'any'.
+      bytes: BlobPart
+    }
+  }
+
   export class Encoder {
-    constructor(options?: { fieldDescriptions?: Record<string, unknown> })
+    constructor(stream: Stream.MemoryStream)
     writeMesg(message: Record<string, unknown>): void
-    close(): Uint8Array
   }
 
   export namespace Profile {
