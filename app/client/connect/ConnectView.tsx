@@ -77,38 +77,6 @@ interface ConnectViewProps {
   onEndWorkout: () => void
 }
 
-interface ResetSectionProps {
-  onReset: () => void
-  isResetting: boolean
-}
-
-const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
-  <Box
-    sx={{
-      textAlign: 'center',
-      mt: 4,
-      pt: 4,
-      borderTop: '1px solid #eee',
-    }}
-  >
-    <Button
-      variant="contained"
-      color="error"
-      onClick={onReset}
-      disabled={isResetting}
-    >
-      {isResetting ? 'Resetting...' : 'Reset System & Device'}
-    </Button>
-    <Typography
-      variant="caption"
-      display="block"
-      sx={{ mt: 1, color: 'text.secondary' }}
-    >
-      Resets server state AND forgets Bluetooth device connection.
-    </Typography>
-  </Box>
-)
-
 export default function ConnectView({
   isReady,
   duration,
@@ -195,7 +163,30 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <Box
+          sx={{
+            textAlign: 'center',
+            mt: 4,
+            pt: 4,
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleFullReset}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
+          </Button>
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{ mt: 1, color: 'text.secondary' }}
+          >
+            Resets server state AND forgets Bluetooth device connection.
+          </Typography>
+        </Box>
         <BottomNavBar />
       </Container>
     )
@@ -420,42 +411,32 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <Box
+          sx={{
+            textAlign: 'center',
+            mt: 4,
+            pt: 4,
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleFullReset}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
+          </Button>
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{ mt: 1, color: 'text.secondary' }}
+          >
+            Resets server state AND forgets Bluetooth device connection.
+          </Typography>
+        </Box>
       </Container>
       <BottomNavBar />
     </>
   )
 }
-
-const ResetSection = ({
-  onReset,
-  isResetting,
-}: {
-  onReset: () => void
-  isResetting: boolean
-}) => (
-  <Box
-    sx={{
-      textAlign: 'center',
-      mt: 4,
-      pt: 4,
-      borderTop: '1px solid #eee',
-    }}
-  >
-    <Button
-      variant="contained"
-      color="error"
-      onClick={onReset}
-      disabled={isResetting}
-    >
-      {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-    </Button>
-    <Typography
-      variant="caption"
-      display="block"
-      sx={{ mt: 1, color: 'text.secondary' }}
-    >
-      Resets server state AND forgets Bluetooth device connection.
-    </Typography>
-  </Box>
-)
