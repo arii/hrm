@@ -1,9 +1,14 @@
-// app/client/experimental/components/ZoneDistribution.tsx
 'use client'
 
 import React, { useMemo } from 'react'
-import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  LinearProgress,
+  useTheme,
+} from '@mui/material'
 import {
   HeartRateZone,
   HR_ZONE_CONFIG,
@@ -11,52 +16,42 @@ import {
 } from '@/lib/shared/hr-zones'
 import { formatDuration } from '@/lib/utils'
 
-// --- Types ---
 interface ZoneDistributionProps {
   timeInZones: Record<HeartRateZone, number>
 }
-
-// --- Constants & Helpers ---
 
 const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
   const theme = useTheme()
 
   const totalDuration = useMemo(() => {
-    return Object.values(timeInZones).reduce((acc, curr) => acc + curr, 0)
+    return Object.values(timeInZones).reduce((sum, time) => sum + time, 0)
   }, [timeInZones])
 
   const data = useMemo(() => {
-    return HR_ZONE_ORDER.map((zoneKey) => {
-      const time = timeInZones[zoneKey] || 0
-      const config = HR_ZONE_CONFIG[zoneKey]
+    return HR_ZONE_ORDER.map((zone) => {
+      const time = timeInZones[zone] || 0
       const percentage = totalDuration > 0 ? (time / totalDuration) * 100 : 0
       return {
-        name: config.label,
-        value: time,
-        percentage: parseFloat(percentage.toFixed(1)),
+        zone,
+        time,
+        percentage,
         formattedTime: formatDuration(time, {
           unit: 'seconds',
           format: 'MM:SS',
           noPadMinutes: true,
         }),
-        color: config.color,
+        color: HR_ZONE_CONFIG[zone].color,
+        label: HR_ZONE_CONFIG[zone].label,
       }
-    })
+    }).filter((item) => item.time > 0)
   }, [timeInZones, totalDuration])
-
-  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
 
   if (data.length === 0) {
     return (
-      <Card elevation={3}>
+      <Card elevation={2}>
         <CardContent>
-          <Typography
-            variant="h6"
-            component="h2"
-            gutterBottom
-            fontWeight="bold"
-          >
-            Heart Rate Zone Distribution
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Time in Zones
           </Typography>
           <Typography variant="body2" color="textSecondary">
             No zone data available for this session.
@@ -67,171 +62,78 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
   }
 
   return (
-    <Card elevation={3}>
-      {/* Visually hidden table for screen reader accessibility */}
-      <Box
-        component="table"
-        sx={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          border: 0,
-        }}
-      >
-        <caption>Heart Rate Zone Distribution Data Table</caption>
-        <thead>
-          <tr>
-            <th scope="col">Zone</th>
-            <th scope="col">Duration</th>
-            <th scope="col">Percentage</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={`sr-row-${item.name}`}>
-              <td>{item.name}</td>
-              <td>{item.formattedTime}</td>
-              <td>{item.percentage}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </Box>
-
+    <Card elevation={2}>
       <CardContent>
-        <Typography variant="h6" component="h2" gutterBottom fontWeight="bold">
-          Heart Rate Zone Distribution
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
+          Time in Zones
         </Typography>
 
+        {/* Visually hidden table for screen reader accessibility */}
         <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          gap={2}
-          alignItems="center"
+          component="table"
+          sx={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
         >
-          {/* Chart Section */}
-          <Box
-            width={{ xs: '100%', sm: '50%' }}
-            height={200}
-            position="relative"
-            role="img"
-            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
-              totalDuration,
-              { unit: 'seconds', format: 'MM:SS', noPadMinutes: true }
-            )}.`}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {chartData.map((entry) => (
-                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number | undefined) =>
-                    [
-                      formatDuration(value || 0, {
-                        unit: 'seconds',
-                        format: 'MM:SS',
-                        noPadMinutes: true,
-                      }),
-                      'Duration',
-                    ] as [string, string]
-                  }
-                  contentStyle={{
-                    borderRadius: theme.shape.borderRadius,
-                    border: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: theme.palette.background.paper,
-                    boxShadow: theme.shadows[3],
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Center Label */}
-            <Box
-              position="absolute"
-              top={0}
-              left={0}
-              bottom={0}
-              right={0}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              flexDirection="column"
-              sx={{ pointerEvents: 'none' }}
-            >
-              <Typography variant="caption" color="textSecondary">
-                Total
-              </Typography>
-              <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, {
-                  unit: 'seconds',
-                  format: 'MM:SS',
-                  noPadMinutes: true,
-                })}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Legend / List Section */}
-          <Box
-            width={{ xs: '100%', sm: '50%' }}
-            display="flex"
-            flexDirection="column"
-            gap={1}
-          >
+          <caption>Heart Rate Zone Distribution Data Table</caption>
+          <thead>
+            <tr>
+              <th scope="col">Zone</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
             {data.map((item) => (
-              <Box
-                key={item.name}
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                p={0.5}
-              >
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box
-                    width={12}
-                    height={12}
-                    borderRadius="50%"
-                    bgcolor={item.color}
-                  />
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color="textPrimary"
-                  >
-                    {item.name}
-                  </Typography>
-                </Box>
-                <Box textAlign="right">
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                  >
-                    {item.formattedTime}
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {item.percentage}%
-                  </Typography>
-                </Box>
-              </Box>
+              <tr key={`sr-row-${item.zone}`}>
+                <td>{item.label}</td>
+                <td>{item.formattedTime}</td>
+                <td>{item.percentage.toFixed(1)}%</td>
+              </tr>
             ))}
-          </Box>
+          </tbody>
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+          {data.map((item) => (
+            <Box key={item.zone}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  mb: 0.5,
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  {item.label}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {item.formattedTime} ({item.percentage.toFixed(1)}%)
+                </Typography>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={item.percentage}
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  bgcolor: theme.palette.grey[200],
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: item.color,
+                    borderRadius: 4,
+                  },
+                }}
+              />
+            </Box>
+          ))}
         </Box>
       </CardContent>
     </Card>

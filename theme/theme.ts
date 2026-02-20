@@ -10,6 +10,8 @@ declare module '@mui/material/styles' {
       work: string
       rest: string
       running: string
+      paused: string
+      finished: string
       idle: string
       cooldown: string
     }
@@ -20,6 +22,8 @@ declare module '@mui/material/styles' {
       work?: string
       rest?: string
       running?: string
+      paused?: string
+      finished?: string
       idle?: string
       cooldown?: string
     }
@@ -29,12 +33,14 @@ declare module '@mui/material/styles' {
 const theme = createTheme(libTheme, {
   palette: {
     custom: {
-      prepare: '#f59e0b',
-      work: '#ef4444',
-      rest: '#22c55e',
-      running: '#3b82f6',
-      idle: '#6b7280',
-      cooldown: '#6b7280',
+      running: '#4CAF50', // Green
+      idle: '#cccccc', // Grey
+      paused: '#FBC02D', // Amber/Yellow
+      finished: '#2196F3', // Blue
+      prepare: '#f59e0b', // Amber
+      work: '#ef4444', // Red
+      rest: '#22c55e', // Bright Green
+      cooldown: '#6b7280', // Dark Grey
     },
   },
 })
