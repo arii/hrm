@@ -310,7 +310,11 @@ describe('create-review-issues script', () => {
         ],
       }
       ;(readFileSync as jest.Mock).mockReturnValue(JSON.stringify(reviewResult))
-      ;(spawnSync as jest.Mock).mockReturnValue({ status: 1, stdout: '', stderr: 'File not found' })
+      ;(spawnSync as jest.Mock).mockReturnValue({
+        status: 1,
+        stdout: '',
+        stderr: 'File not found',
+      })
 
       await run(client, prNumber, reviewFilePath)
       expect(client.createIssue).not.toHaveBeenCalled()
