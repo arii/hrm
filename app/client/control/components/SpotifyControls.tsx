@@ -38,6 +38,9 @@ const SpotifyControls = () => {
   const [isSyncingVolume, setIsSyncingVolume] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
+  const volumeLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -200,7 +203,13 @@ const SpotifyControls = () => {
       lastVolumeSyncTimeRef.current = Date.now()
 
       // Release lock after a short delay to allow state to settle
-      setTimeout(() => setIsSyncingVolume(false), 500)
+      if (volumeLockTimeoutRef.current) {
+        clearTimeout(volumeLockTimeoutRef.current)
+      }
+      volumeLockTimeoutRef.current = setTimeout(() => {
+        setIsSyncingVolume(false)
+        volumeLockTimeoutRef.current = null
+      }, 500)
     },
     [connectionStatus, resolveTargetDeviceId, executeSpotify, isSyncingVolume]
   )
@@ -229,6 +238,9 @@ const SpotifyControls = () => {
     return () => {
       if (debounceTimeoutRef.current) {
         window.clearTimeout(debounceTimeoutRef.current)
+      }
+      if (volumeLockTimeoutRef.current) {
+        clearTimeout(volumeLockTimeoutRef.current)
       }
     }
   }, [volume, sendVolumeCommand])
