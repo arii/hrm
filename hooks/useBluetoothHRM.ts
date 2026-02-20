@@ -11,7 +11,10 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
-import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
+import {
+  BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_BASE_DELAY_MS,
+} from '@/constants/bluetooth-reconnection'
 import {
   HR_SERVICE_UUID,
   HR_CHARACTERISTIC_UUID,
@@ -127,6 +130,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     if (status === BluetoothConnectionStatus.CONNECTED) {
+      // Ensure reconnect attempts are reset upon successful connection
+      reconnectAttempts.current = 0
       const { name, age } = userDetailsRef.current
       const calculatedMaxHr = calculateMaxHr(age)
       const deviceName = deviceRef.current?.name || 'Unknown'
@@ -265,8 +270,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.error({ error }, msg)
   }, [])
 
+  /**
+   * Reconnects using linear backoff (RECONNECT_BASE_DELAY_MS * attempt).
+   * Rationale: Centralized retry logic avoids cyclomatic complexity and
+   * provides a predictable ~72s window for device recovery.
+   */
   const reconnect = useCallback(
     (device: BluetoothDevice) => {
+      if (isManualDisconnect.current) return
+
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
@@ -280,7 +292,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       reconnectAttempts.current++
-      const delay = Math.pow(2, reconnectAttempts.current) * 1000
+      const delay = RECONNECT_BASE_DELAY_MS * reconnectAttempts.current
       setStatus(BluetoothConnectionStatus.RECONNECTING)
       setCustomStatusMessage(
         BLUETOOTH_MESSAGES.reconnectingAttempt(
@@ -291,10 +303,23 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       )
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (statusRef.current !== BluetoothConnectionStatus.CONNECTED) {
-          connectToGattRef.current?.(device, true).catch(() => {
-            logger.warn('Reconnect attempt failed')
-            reconnect(device) // Recursive call to try again
+        if (
+          statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
+          !isManualDisconnect.current
+        ) {
+          connectToGattRef.current?.(device, true).catch((error) => {
+            const isAbort =
+              error instanceof DOMException && error.name === 'AbortError'
+
+            if (isAbort) {
+              logger.info('Connection attempt aborted. Stopping reconnection.')
+              return
+            }
+
+            if (!isManualDisconnect.current) {
+              logger.warn({ error }, 'Reconnect attempt failed, retrying')
+              reconnect(device)
+            }
           })
         }
       }, delay)
@@ -376,6 +401,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
+  /**
+   * Performs a single GATT connection attempt and service discovery.
+   * Resilience for transient "busy" states is handled by the caller (e.g., reconnect)
+   * to maintain a clean, single-responsibility connection flow.
+   */
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
       if (isConnecting.current) {
@@ -411,39 +441,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         abortControllerRef.current = new AbortController()
 
-        let server: BluetoothRemoteGATTServer | undefined
-        let attempt = 0
-        const maxRetries = 3
-
-        while (attempt < maxRetries) {
-          try {
-            server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 20000,
-              errorMessage: 'GATT connection timeout',
-              signal: abortControllerRef.current.signal,
-            })
-            break
-          } catch (error) {
-            attempt++
-            const isBusy =
-              String(error).includes('busy') ||
-              String(error).includes('NetworkError')
-            if (isBusy && attempt < maxRetries) {
-              const delay = Math.pow(2, attempt) * 1000
-              logger.warn(
-                { device: device.name, attempt, delay, error },
-                'Device likely busy. Retrying...'
-              )
-              setStatus(BluetoothConnectionStatus.CONNECTING)
-              setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(delay, attempt, maxRetries)
-              )
-              await new Promise((res) => setTimeout(res, delay))
-              continue
-            }
-            throw error
-          }
-        }
+        const server = await cancellablePromise(device.gatt!.connect(), {
+          timeoutMs: 20000,
+          errorMessage: 'GATT connection timeout',
+          signal: abortControllerRef.current.signal,
+        })
 
         if (abortControllerRef.current?.signal.aborted) {
           server?.disconnect()

@@ -7,14 +7,17 @@ export interface ResetSectionProps {
   isResetting: boolean
 }
 
+/**
+ * ResetSection component handles resetting the server state and forgetting the Bluetooth device.
+ * Extracted from ConnectView to reduce duplication and improve maintainability.
+ */
 const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
   <Box
     sx={{
       textAlign: 'center',
       mt: 4,
       pt: 4,
-      borderTop: '1px solid',
-      borderColor: 'divider',
+      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
     }}
   >
     <Button

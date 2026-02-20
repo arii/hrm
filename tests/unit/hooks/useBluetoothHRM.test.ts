@@ -4,6 +4,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-config'
+import { RECONNECT_BASE_DELAY_MS } from '@/constants/bluetooth-reconnection'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
 import { env } from '@/lib/env'
@@ -524,7 +525,7 @@ describe('useBluetoothHRM', () => {
         i <= env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS;
         i++
       ) {
-        const delay = Math.pow(2, i) * 1000
+        const delay = RECONNECT_BASE_DELAY_MS * i
         await act(async () => {
           jest.advanceTimersByTime(delay)
         })
@@ -689,7 +690,7 @@ describe('useBluetoothHRM', () => {
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(5)
+      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(8)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
