@@ -79,6 +79,5 @@ test('should handle clock skew correctly', async ({ page }) => {
   })
 
   // 5. Assert the tile IS visible (because the reducer compensated for the skew)
-  // Note: This part will FAIL until the fix is implemented.
   await expect(tile).toBeVisible()
 })
