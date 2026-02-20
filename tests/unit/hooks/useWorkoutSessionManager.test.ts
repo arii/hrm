@@ -7,6 +7,7 @@ import { useAppSnackbar } from '../../../hooks/useAppSnackbar'
 import { isSameDay } from '../../../lib/date'
 import { WorkoutSessionData } from '../../../lib/workout-session-storage'
 import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import { estimateCaloriesBurned } from '../../../lib/calorie-estimation'
 
 // Mock dependencies
 jest.mock('../../../lib/workout-session-storage')
@@ -15,8 +16,12 @@ jest.mock('../../../hooks/useAppSnackbar')
 jest.mock('../../../lib/date', () => ({
   isSameDay: jest.fn(),
 }))
+jest.mock('../../../lib/calorie-estimation', () => ({
+  estimateCaloriesBurned: jest.fn(),
+}))
 
 const mockIsSameDay = isSameDay as jest.Mock
+const mockEstimateCaloriesBurned = estimateCaloriesBurned as jest.Mock
 
 const mockShowInfo = jest.fn()
 const mockGetIncompleteSession =
@@ -32,6 +37,7 @@ describe('useWorkoutSessionManager', () => {
     ;(useAppSnackbar as jest.Mock).mockReturnValue({ showInfo: mockShowInfo })
     mockGetIncompleteSession.mockResolvedValue(null) // Default to no incomplete session
     mockIsSameDay.mockReturnValue(true) // Default to same day
+    mockEstimateCaloriesBurned.mockReturnValue(5) // Default return value for calorie calc
 
     // Mock Date.now() to control time-based calculations
     mockDateNow = jest.spyOn(Date, 'now').mockReturnValue(1000000)
@@ -112,8 +118,9 @@ describe('useWorkoutSessionManager', () => {
       })
 
       // Add first data point (HR 120 -> ~65% -> Zone 2 / Warm Up)
+      mockDateNow.mockReturnValue(1001000)
       act(() => {
-        result.current.addHrData({ time: 1001000, hr: 120 })
+        result.current.addHrData(120)
       })
       expect(result.current.session?.hrHistory.length).toBe(1)
       expect(result.current.session?.maxHr).toBe(120)
@@ -121,24 +128,100 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
 
       // Add second data point (HR 150 -> ~81% -> Zone 4 / Cardio)
+      mockDateNow.mockReturnValue(1002000) // +1 second
       act(() => {
-        result.current.addHrData({ time: 1002000, hr: 150 })
+        result.current.addHrData(150)
       })
       expect(result.current.session?.hrHistory.length).toBe(2)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      expect(result.current.session?.timeInZones.ZONE_4).toBe(1) // 1 second elapsed since last point
+
+      // Calories should have increased by mocked amount (5)
+      expect(result.current.session?.totalCaloriesBurned).toBe(5)
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
+      mockDateNow.mockReturnValue(1004000) // +2 seconds
       act(() => {
-        result.current.addHrData({ time: 1004000, hr: 100 })
+        result.current.addHrData(100)
       })
       expect(result.current.session?.hrHistory.length).toBe(3)
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBeCloseTo(123.33)
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
+      // Zone 1 gets +2 seconds
       expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
+
+      // Calories should have increased by mocked amount again (5 + 5 = 10)
+      expect(result.current.session?.totalCaloriesBurned).toBe(10)
+    })
+
+    it('should smooth HR readings before calculating calories', async () => {
+      const { result } = renderHook(() => useWorkoutSessionManager())
+      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+      act(() => {
+        result.current.startWorkout(30, 80)
+      })
+
+      // Mock sequence of HR data: 100, 110, 120
+      // Smoothing window is 5.
+
+      // 1. HR 100
+      mockDateNow.mockReturnValue(1001000)
+      act(() => {
+        result.current.addHrData(100)
+      })
+
+      // 2. HR 110 (Smoothed: (100+110)/2 = 105)
+      mockDateNow.mockReturnValue(1002000)
+      act(() => {
+        result.current.addHrData(110)
+      })
+
+      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          heartRate: 105, // Expect smoothed value
+        })
+      )
+
+      // 3. HR 120 (Smoothed: (100+110+120)/3 = 110)
+      mockDateNow.mockReturnValue(1003000)
+      act(() => {
+        result.current.addHrData(120)
+      })
+
+      expect(mockEstimateCaloriesBurned).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          heartRate: 110, // Expect smoothed value
+        })
+      )
+    })
+
+    it('should respect gender in calorie calculation', async () => {
+      const { result } = renderHook(() => useWorkoutSessionManager())
+      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+      act(() => {
+        result.current.startWorkout(30, 80, { gender: 'MALE' })
+      })
+
+      mockDateNow.mockReturnValue(1001000)
+      act(() => {
+        result.current.addHrData(140)
+      })
+
+      mockDateNow.mockReturnValue(1002000)
+      act(() => {
+        result.current.addHrData(140)
+      })
+
+      expect(mockEstimateCaloriesBurned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gender: 'MALE',
+        })
+      )
     })
 
     it('should not add HR data if the session is not running', async () => {
@@ -156,8 +239,9 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('paused')
 
       // Attempt to add data
+      mockDateNow.mockReturnValue(1001000)
       act(() => {
-        result.current.addHrData({ time: 1001000, hr: 130 })
+        result.current.addHrData(130)
       })
 
       // Assert no changes
@@ -212,6 +296,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 1000000,
         status: 'paused',
         totalCaloriesBurned: 0,
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -237,6 +322,7 @@ describe('useWorkoutSessionManager', () => {
         sessionId: 'active-session-id',
         startTime: 1000000,
         status: 'running',
+        userSettings: { age: 30, weight: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Initially, it's the same day

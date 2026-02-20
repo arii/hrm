@@ -11,7 +11,7 @@ import {
 import {
   workoutSessionStorage,
   WorkoutSessionData,
-  HrDataPoint,
+  CalorieDataPoint,
 } from '../lib/workout-session-storage'
 import { WorkoutStatus } from '@/types/workout'
 import {
@@ -24,6 +24,13 @@ import { v4 as uuidv4 } from 'uuid'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import {
+  MAX_CALORIES_PER_WORKOUT,
+  TIME_GAP_THRESHOLD_SECONDS,
+  MIN_HR_FOR_CALORIE_CALCULATION,
+} from '@/constants/calorie-thresholds'
+import { Gender } from '@/types/core'
 
 // --- State, Actions, and Reducer ---
 
@@ -31,7 +38,6 @@ interface SessionManagerState {
   session: WorkoutSessionData | null
   status: WorkoutStatus
   pauseTime: number | null
-  startCalories: number
 }
 
 type SessionManagerAction =
@@ -42,21 +48,28 @@ type SessionManagerAction =
         age: number
         weight: number
         maxHr?: number
-        startCalories?: number
+        gender?: Gender
       }
     }
   | { type: 'PAUSE' }
   | { type: 'RESUME' }
   | { type: 'FINISH' }
   | { type: 'RESET' }
-  | { type: 'ADD_HR_DATA'; payload: HrDataPoint }
-  | { type: 'UPDATE_CALORIES'; payload: number }
+  | {
+      type: 'ADD_HR_DATA'
+      payload: {
+        hr: number
+        time: number
+        caloriesDelta: number
+        smoothedHr: number
+        caloriesPerSecond: number
+      }
+    }
 
 const initialState: SessionManagerState = {
   session: null,
   status: 'idle',
   pauseTime: null,
-  startCalories: 0,
 }
 
 function sessionManagerReducer(
@@ -71,17 +84,11 @@ function sessionManagerReducer(
         session: action.payload,
         status: action.payload.status,
         pauseTime: action.payload.pauseTime,
-        startCalories: 0,
       }
     }
     case 'START': {
       if (state.status !== 'idle') return state
-      const {
-        age,
-        weight,
-        maxHr: providedMaxHr,
-        startCalories = 0,
-      } = action.payload
+      const { age, weight, maxHr: providedMaxHr, gender } = action.payload
       const maxHr = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
         HR_ZONE_ORDER.map((zone) => [zone, 0])
@@ -99,8 +106,8 @@ function sessionManagerReducer(
         totalPaused: 0,
         pauseTime: null,
         calorieHistory: [],
-        totalCaloriesBurned: startCalories,
-        userSettings: { age, weight, maxHr },
+        totalCaloriesBurned: 0,
+        userSettings: { age, weight, maxHr, gender },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
       }
@@ -109,7 +116,6 @@ function sessionManagerReducer(
         session: newSession,
         status: 'running',
         pauseTime: null,
-        startCalories,
       }
     }
     case 'PAUSE': {
@@ -160,30 +166,21 @@ function sessionManagerReducer(
         },
       }
     }
-    case 'UPDATE_CALORIES': {
-      if (!state.session || state.status === 'finished') return state
-      return {
-        ...state,
-        session: {
-          ...state.session,
-          totalCaloriesBurned: action.payload,
-        },
-      }
-    }
     case 'RESET': {
       return initialState
     }
     case 'ADD_HR_DATA': {
       if (!state.session || state.status !== 'running') return state
 
+      const { hr, time, caloriesDelta, smoothedHr, caloriesPerSecond } =
+        action.payload
+
       const lastDataPoint =
         state.session.hrHistory[state.session.hrHistory.length - 1]
-      const timeDelta = lastDataPoint
-        ? (action.payload.time - lastDataPoint.time) / 1000
-        : 1
+      const timeDelta = lastDataPoint ? (time - lastDataPoint.time) / 1000 : 1
 
       const { zone } = calculateZoneFromMaxHr(
-        action.payload.hr,
+        hr,
         state.session.userSettings.maxHr
       )
       const zoneName = toHeartRateZone(zone)
@@ -192,12 +189,28 @@ function sessionManagerReducer(
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
       }
 
-      const newHrHistory = [...state.session.hrHistory, action.payload]
-      const newMaxHr = Math.max(state.session.maxHr, action.payload.hr)
+      const newHrHistory = [...state.session.hrHistory, { time, hr }]
+      const newMaxHr = Math.max(state.session.maxHr, hr)
       const oldAverage = state.session.averageHr
       const oldLength = state.session.hrHistory.length
-      const newAverageHr =
-        (oldAverage * oldLength + action.payload.hr) / (oldLength + 1)
+      const newAverageHr = (oldAverage * oldLength + hr) / (oldLength + 1)
+
+      const newTotalCalories = Math.min(
+        state.session.totalCaloriesBurned + caloriesDelta,
+        MAX_CALORIES_PER_WORKOUT
+      )
+
+      const newCalorieDataPoint: CalorieDataPoint = {
+        time,
+        hr: smoothedHr,
+        caloriesPerSecond,
+        totalToThisPoint: newTotalCalories,
+      }
+      const newCalorieHistory = [
+        ...state.session.calorieHistory,
+        newCalorieDataPoint,
+      ]
+
       return {
         ...state,
         session: {
@@ -206,6 +219,8 @@ function sessionManagerReducer(
           maxHr: newMaxHr,
           averageHr: newAverageHr,
           timeInZones: newTimeInZones,
+          totalCaloriesBurned: newTotalCalories,
+          calorieHistory: newCalorieHistory,
         },
       }
     }
@@ -225,7 +240,13 @@ export const useWorkoutSessionManager = () => {
   const [isInitialized, setIsInitialized] = useState(false)
   const { showInfo } = useAppSnackbar()
 
-  const lastCaloriesRef = useRef(0)
+  // Refs for smoothing and calorie calculation
+  const hrHistoryRef = useRef<number[]>([])
+  const lastTimestampRef = useRef<number | null>(null)
+  const ageRef = useRef<number>(30)
+  const weightRef = useRef<number>(70)
+  const genderRef = useRef<Gender | undefined>(undefined)
+  const smoothingWindow = 5 // Configurable if needed
 
   const clearStaleSession = useCallback(
     async (
@@ -259,6 +280,15 @@ export const useWorkoutSessionManager = () => {
       )
     }
   }, [state.session, showInfo, clearStaleSession])
+
+  // Sync refs with session state (for recovery)
+  useEffect(() => {
+    if (state.session) {
+      ageRef.current = state.session.userSettings.age
+      weightRef.current = state.session.userSettings.weight
+      genderRef.current = state.session.userSettings.gender
+    }
+  }, [state.session])
 
   // Auto-recovery
   useEffect(() => {
@@ -312,15 +342,22 @@ export const useWorkoutSessionManager = () => {
     (
       age: number,
       weight: number,
-      options: { maxHr?: number; startCalories?: number } = {}
+      options: { maxHr?: number; gender?: Gender } = {}
     ) => {
+      // Initialize refs
+      ageRef.current = age
+      weightRef.current = weight
+      genderRef.current = options.gender
+      hrHistoryRef.current = []
+      lastTimestampRef.current = null
+
       dispatch({
         type: 'START',
         payload: {
           age,
           weight,
           maxHr: options.maxHr,
-          startCalories: options.startCalories ?? lastCaloriesRef.current,
+          gender: options.gender,
         },
       })
     },
@@ -346,13 +383,51 @@ export const useWorkoutSessionManager = () => {
     dispatch({ type: 'RESET' })
   }, [state.session])
 
-  const addHrData = useCallback((hrDataPoint: HrDataPoint) => {
-    dispatch({ type: 'ADD_HR_DATA', payload: hrDataPoint })
-  }, [])
+  const addHrData = useCallback((hr: number) => {
+    const now = Date.now()
 
-  const updateCalories = useCallback((calories: number) => {
-    lastCaloriesRef.current = calories
-    dispatch({ type: 'UPDATE_CALORIES', payload: calories })
+    // Smoothing Logic
+    hrHistoryRef.current.push(hr)
+    if (hrHistoryRef.current.length > smoothingWindow) {
+      hrHistoryRef.current.shift()
+    }
+    const sum = hrHistoryRef.current.reduce((a, b) => a + b, 0)
+    const smoothedHr = sum / hrHistoryRef.current.length
+
+    let caloriesDelta = 0
+    let caloriesPerSecond = 0
+
+    if (lastTimestampRef.current) {
+      const dtSeconds = (now - lastTimestampRef.current) / 1000
+      if (
+        dtSeconds > 0 &&
+        dtSeconds < TIME_GAP_THRESHOLD_SECONDS &&
+        smoothedHr > MIN_HR_FOR_CALORIE_CALCULATION
+      ) {
+        const dtMinutes = dtSeconds / 60
+        const totalCaloriesForInterval = estimateCaloriesBurned({
+          heartRate: smoothedHr,
+          age: ageRef.current,
+          weightKg: weightRef.current,
+          gender: genderRef.current,
+          durationMinutes: dtMinutes,
+        })
+        caloriesDelta = totalCaloriesForInterval
+        caloriesPerSecond = totalCaloriesForInterval / dtSeconds
+      }
+    }
+    lastTimestampRef.current = now
+
+    dispatch({
+      type: 'ADD_HR_DATA',
+      payload: {
+        hr,
+        time: now,
+        caloriesDelta,
+        smoothedHr,
+        caloriesPerSecond: isNaN(caloriesPerSecond) ? 0 : caloriesPerSecond,
+      },
+    })
   }, [])
 
   // Map status for compatibility
@@ -360,17 +435,8 @@ export const useWorkoutSessionManager = () => {
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
-    if (
-      state.startCalories === 0 &&
-      (state.session?.totalCaloriesBurned || 0) === 0
-    ) {
-      return 0
-    }
-    const burned = Math.round(
-      (state.session?.totalCaloriesBurned || 0) - state.startCalories
-    )
-    return burned > 0 ? burned : 0
-  }, [state.session?.totalCaloriesBurned, state.startCalories])
+    return state.session?.totalCaloriesBurned || 0
+  }, [state.session?.totalCaloriesBurned])
 
   return {
     session: state.session,
@@ -385,6 +451,5 @@ export const useWorkoutSessionManager = () => {
     endWorkout,
     resetWorkout,
     addHrData,
-    updateCalories,
   }
 }
