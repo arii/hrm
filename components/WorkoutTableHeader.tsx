@@ -53,24 +53,6 @@ export default function WorkoutTableHeader({
     }
   }, [docId, refreshKey])
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (error) {
-    return <Alert severity="error">{error}</Alert>
-  }
-
-  if (!data || data.headers.length === 0) {
-    return (
-      <Alert severity="info">No workout data found in this document.</Alert>
-    )
-  }
-
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
       {onRefresh && (
@@ -95,23 +77,34 @@ export default function WorkoutTableHeader({
           <RefreshIcon fontSize="small" />
         </IconButton>
       )}
-      <TableContainer
-        component={Paper}
-        elevation={2}
-        data-testid="workout-table-header"
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="workout table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
-                  {header}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-        </Table>
-      </TableContainer>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" p={4}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : !data || data.headers.length === 0 ? (
+        <Alert severity="info">No workout data found in this document.</Alert>
+      ) : (
+        <TableContainer
+          component={Paper}
+          elevation={2}
+          data-testid="workout-table-header"
+        >
+          <Table sx={{ minWidth: 650 }} aria-label="workout table">
+            <TableHead>
+              <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                {data.headers.map((header, index) => (
+                  <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+          </Table>
+        </TableContainer>
+      )}
     </Box>
   )
 }

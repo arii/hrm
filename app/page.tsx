@@ -76,6 +76,15 @@ const Dashboard = () => {
     }
   }
 
+  // Determine if we should use the native table view.
+  // We check the environment variable and allow overriding via query parameter for testing.
+  const useNativeTable =
+    typeof window !== 'undefined'
+      ? window.location.search.includes('native=true') ||
+        (process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' &&
+          !window.location.search.includes('native=false'))
+      : process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
+
   return (
     <Container
       data-testid="dashboard"
@@ -104,7 +113,7 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
+        {useNativeTable ? (
           <WorkoutTableHeader
             docId={DOC_ID}
             refreshKey={refreshKey}

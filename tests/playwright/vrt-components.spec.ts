@@ -41,6 +41,10 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
+    // Ensure we are in non-native mode for this test
+    await dashboardPage.goto('/?native=false')
+    await waitForPageReady(dashboardPage)
+
     const toggleButton = dashboardPage.getByLabel('Collapse document')
     await toggleButton.click()
     const viewer = dashboardPage
@@ -50,19 +54,8 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Mock the workout API response for stable VRT
-    await dashboardPage.route('**/api/workout*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-        }),
-      })
-    })
-
-    // Reload to ensure the mock is applied and the component renders
-    await dashboardPage.reload()
+    // Ensure we are in native mode for this test
+    await dashboardPage.goto('/?native=true')
     await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')

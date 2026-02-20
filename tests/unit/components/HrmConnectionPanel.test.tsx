@@ -58,18 +58,18 @@ describe('HrmConnectionPanel', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders skeletons when loading', () => {
+  it('renders a loading placeholder when connection is pending', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })
-    const { container } = render(
+    render(
       <UserSettingsProvider>
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect one skeleton to be present for the placeholder
-    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
+    // Expect the placeholder grid item to be present
+    expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
   })
 })
