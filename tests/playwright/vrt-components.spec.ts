@@ -49,9 +49,25 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test.skip('WorkoutTableViewer rendering', async () => {
-    // Requires NEXT_PUBLIC_USE_NATIVE_TABLE=true which is a build-time/env-var.
-    // Skipping for now as it requires complex environment setup.
+  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+    // Mock the workout API response for stable VRT
+    await dashboardPage.route('**/api/workout*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
+        }),
+      })
+    })
+
+    // Reload to ensure the mock is applied and the component renders
+    await dashboardPage.reload()
+    await waitForPageReady(dashboardPage)
+
+    const tableHeader = dashboardPage.getByTestId('workout-table-header')
+    await expect(tableHeader).toBeVisible()
+    await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
