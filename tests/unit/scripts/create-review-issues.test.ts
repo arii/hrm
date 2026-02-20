@@ -265,7 +265,7 @@ describe('isLowQualityIssue', () => {
   const slopWords = ['delve', 'robust', 'leverage']
   const slopPattern = new RegExp(`\\b(?:${slopWords.join('|')})\\b`, 'i')
 
-  it('should flag issues with 3 or more "slop" words as low-quality', () => {
+  it('should flag issues with 3 or more unique "slop" words as low-quality', () => {
     const issue = {
       title: 'This is a robust solution',
       description:
@@ -276,11 +276,22 @@ describe('isLowQualityIssue', () => {
     expect(isLowQualityIssue(issue, slopPattern)).toBe(true)
   })
 
-  it('should NOT flag issues with only 1 or 2 "slop" words', () => {
+  it('should NOT flag issues with only 1 or 2 unique "slop" words', () => {
     const issue = {
       title: 'This is a robust solution',
       description:
         'We need to fix this issue in the authentication service. It should be long enough.',
+      type: 'refactor',
+      priority: 'medium',
+    }
+    expect(isLowQualityIssue(issue, slopPattern)).toBe(false)
+  })
+
+  it('should NOT flag issues with 3 identical "slop" words but fewer than 3 unique ones', () => {
+    const issue = {
+      title: 'Robust robust robust',
+      description:
+        'This is a robust description of a robust problem that requires a robust solution.',
       type: 'refactor',
       priority: 'medium',
     }

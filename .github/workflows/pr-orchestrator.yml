@@ -236,4 +236,4 @@ jobs:
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       run_id: ${{ github.run_id }}
     secrets:
-      gh_token: ${{ secrets.ARI_PAT }}
+      gh_token: ${{ secrets.GITHUB_TOKEN }}

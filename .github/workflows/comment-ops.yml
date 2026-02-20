@@ -58,7 +58,7 @@ jobs:
       pr_number: ${{ github.event.issue.number }}
       run_id: ${{ github.run_id }}
     secrets:
-      gh_token: ${{ secrets.ARI_PAT }}
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
 
   execute-squash:
     needs: [router]

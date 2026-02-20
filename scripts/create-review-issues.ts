@@ -382,9 +382,12 @@ export function checkIssueQuality(
   // 3. Check for "AI slop" patterns
   if (slopPattern) {
     const combinedText = `${issue.title} ${issue.description}`
-    const matches = combinedText.match(new RegExp(slopPattern, 'gi')) || []
-    if (matches.length >= 3) {
-      const uniqueMatches = [...new Set(matches.map((m) => m.toLowerCase()))]
+    // Ensure we use global and case-insensitive flags for counting matches
+    const globalSlopRegex = new RegExp(slopPattern.source, 'gi')
+    const matches = combinedText.match(globalSlopRegex) || []
+    const uniqueMatches = [...new Set(matches.map((m) => m.toLowerCase()))]
+
+    if (uniqueMatches.length >= 3) {
       return {
         isLowQuality: true,
         reason: `AI slop detected (${uniqueMatches.join(', ')})`,
