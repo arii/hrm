@@ -103,6 +103,13 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
+  // Expose connection status for VRT stability
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-connection-status', connectionStatus)
+    }
+  }, [connectionStatus])
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')

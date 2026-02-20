@@ -35,7 +35,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async () => {
-    await dashboardPage.goto(HRM_ROUTES.VIEWER)
+    await dashboardPage.goto(HRM_ROUTES.EXPERIMENTAL_DASHBOARD)
     await waitForPageReady(dashboardPage)
   })
 
