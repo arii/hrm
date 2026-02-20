@@ -23,7 +23,7 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       onClick={onReset}
       disabled={isResetting}
     >
-      {isResetting ? 'Resetting...' : 'Reset System & Device'}
+      {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
     </Button>
     <Typography
       variant="caption"
