@@ -200,6 +200,16 @@ export async function setupMinimalVisualRegressionTest(
     await mockGoogleDocIframe(page)
   }
   await navigateAndWait(page, path)
+
+  // Ensure WebSocket is disconnected to remove loading skeletons
+  // This uses the test control window object exposed when NEXT_PUBLIC_TESTING=true
+  await page.evaluate(() => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    if (window.__TEST_CONTROLS__) {
+      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+      window.__TEST_CONTROLS__.disconnect()
+    }
+  })
 }
 
 /**
