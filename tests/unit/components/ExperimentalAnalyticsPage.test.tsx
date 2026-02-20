@@ -33,6 +33,11 @@ jest.mock('@/lib/workout-session-storage', () => ({
   },
 }))
 
+// Mock fit-export to avoid ESM import issues with @garmin/fitsdk
+jest.mock('@/utils/fit-export', () => ({
+  generateFitFile: jest.fn(),
+}))
+
 describe('ExperimentalAnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
   const mockUseWebSocket = useWebSocket as jest.Mock
