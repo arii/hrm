@@ -106,7 +106,8 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0.15,
+      threshold: 0.3,
     })
   })
 

@@ -266,7 +266,7 @@ const SpotifyControls = () => {
               sx={{
                 textAlign: 'center',
                 mb: 2,
-                minHeight: '3.5rem',
+                minHeight: '4rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
