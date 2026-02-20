@@ -23,6 +23,9 @@ export const CartesianGrid = RechartsStub
 export const Tooltip = RechartsStub
 export const Legend = RechartsStub
 export const ResponsiveContainer = RechartsStub
+export const PieChart = RechartsStub
+export const Pie = RechartsStub
+export const Cell = RechartsStub
 
 // If there's a default export in recharts that's used, add:
 // export default RechartsStub;
