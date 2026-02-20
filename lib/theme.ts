@@ -89,6 +89,16 @@ const theme = createTheme({
     info: {
       main: '#2196F3', // Blue
     },
+    custom: {
+      running: HR_COLORS.ZONE_5_PEAK,
+      idle: HR_COLORS.ZONE_0_IDLE,
+      paused: HR_COLORS.ZONE_4_CARDIO,
+      finished: HR_COLORS.ZONE_3_FATBURN,
+      prepare: HR_COLORS.ZONE_4_CARDIO,
+      work: HR_COLORS.ZONE_5_PEAK,
+      rest: HR_COLORS.ZONE_3_FATBURN,
+      cooldown: HR_COLORS.ZONE_2_WARMUP,
+    },
     // Background colors
     background: {
       default: '#F5F5F5', // Light grey for main background
