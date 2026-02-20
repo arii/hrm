@@ -6,7 +6,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { alpha } from '@mui/material/styles'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import VolumeDown from '@mui/icons-material/VolumeDown'
@@ -198,11 +197,7 @@ const TimerDisplay = () => {
             lineHeight: 1,
             textAlign: 'center',
             color: phaseColor,
-            textShadow: `
-              0 0 20px ${alpha(phaseColor, 0.6)},
-              0 0 40px ${alpha(phaseColor, 0.3)}
-            `,
-            WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+            textShadow: `0 0 10px ${phaseColor}`,
             letterSpacing: '0.05em',
             transition: 'color 0.3s ease-in-out',
           }}
