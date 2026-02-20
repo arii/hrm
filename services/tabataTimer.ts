@@ -3,7 +3,7 @@
  * Consolidated Dual-Mode Timer Service.
  * This class manages the state and logic for both TABATA and STOPWATCH modes,
  * handling transitions, sound cues, and broadcasting updates to clients.
- * It uses absolute timing (Date.now()) to maintain accuracy against drift.
+ * It uses absolute timing (performance.now()) to maintain accuracy against drift.
  */
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode, TimerPhase } from '../types/core'
@@ -30,7 +30,7 @@ class TabataTimer {
   private timerInterval: NodeJS.Timeout | null = null
   private pausedTimeRemaining: number = DEFAULT_WORK_DURATION
   private pausedTimeElapsed: number = 0
-  private countdownMarker: string | null = null
+  private lastCountdownSecond: number = -1
 
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
@@ -66,7 +66,7 @@ class TabataTimer {
     if (this.isRunning) return
 
     this.isRunning = true
-    const now = Date.now()
+    const now = performance.now()
 
     if (this.currentPhase === 'IDLE') {
       this.currentPhase = 'PREPARE'
@@ -74,7 +74,7 @@ class TabataTimer {
       this.pausedTimeRemaining = START_COUNTDOWN_DURATION
       this.timeElapsed = 0
       this.pausedTimeElapsed = 0
-      this.countdownMarker = null
+      this.lastCountdownSecond = -1
     }
 
     this.startTime = now
@@ -88,7 +88,18 @@ class TabataTimer {
   public pause(): void {
     if (!this.isRunning || !this.startTime) return
 
-    this.updateTimer() // Final sync before pausing
+    const now = performance.now()
+    const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
+
+    if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
+      this.timeElapsed = this.pausedTimeElapsed + elapsedSinceLastStart
+    } else if (this.mode === 'TABATA' || this.currentPhase === 'PREPARE') {
+      const nextRemaining = Math.max(
+        0,
+        this.pausedTimeRemaining - elapsedSinceLastStart
+      )
+      this.timeRemaining = nextRemaining
+    }
 
     this.isRunning = false
     if (this.timerInterval) clearInterval(this.timerInterval)
@@ -112,7 +123,7 @@ class TabataTimer {
     this.timeElapsed = 0
     this.timeRemaining = this.mode === 'TABATA' ? this.workDuration : 0
 
-    this.countdownMarker = null
+    this.lastCountdownSecond = -1
     this.pausedTimeRemaining = this.timeRemaining
     this.pausedTimeElapsed = 0
     this.startTime = null
@@ -139,7 +150,7 @@ class TabataTimer {
     this.timeElapsed = 0
     this.pausedTimeElapsed = 0
     this.soundToPlay = undefined
-    this.countdownMarker = null
+    this.lastCountdownSecond = -1
     this.broadcastUpdate({
       type: 'TIMER_UPDATE',
       payload: this.getState(),
@@ -180,13 +191,10 @@ class TabataTimer {
 
   // --- Internal Timer Logic ---
 
-  /**
-   * Core timer tick logic.
-   */
   private updateTimer = (): void => {
     if (!this.isRunning || !this.startTime) return
 
-    const now = Date.now()
+    const now = performance.now()
     const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
 
     if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
@@ -216,7 +224,7 @@ class TabataTimer {
    * @param {number} now The current timestamp to use as the new start time.
    */
   private transitionPhase(now: number): void {
-    this.countdownMarker = null
+    this.lastCountdownSecond = -1
     this.startTime = now
     this.pausedTimeElapsed = 0
 
@@ -272,27 +280,23 @@ class TabataTimer {
    * Handles playing countdown sound cues.
    */
   private handleCountdownCue(): void {
-    const phase = this.currentPhase
-    const remaining = this.timeRemaining
     if (
-      phase === 'IDLE' ||
-      phase === 'RUNNING' ||
-      phase === 'COOLDOWN' ||
-      remaining <= 0
+      this.currentPhase === 'PREPARE' ||
+      this.currentPhase === 'WORK' ||
+      this.currentPhase === 'REST'
     ) {
-      return
-    }
-
-    const marker = `${phase}-${remaining}`
-    if (remaining <= 3 && this.countdownMarker !== marker) {
-      this.queueSound('COUNTDOWN')
-      this.countdownMarker = marker
+      const remaining = this.timeRemaining
+      if (
+        remaining <= 3 &&
+        remaining > 0 &&
+        remaining !== this.lastCountdownSecond
+      ) {
+        this.queueSound('COUNTDOWN')
+        this.lastCountdownSecond = remaining
+      }
     }
   }
 
-  /**
-   * Cleanup resources.
-   */
   public dispose(): void {
     if (this.timerInterval) {
       clearInterval(this.timerInterval)
