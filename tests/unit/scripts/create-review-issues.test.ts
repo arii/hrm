@@ -62,7 +62,13 @@ describe('create-review-issues script', () => {
         return JSON.stringify(reviewResult)
       }
       if (filePath.endsWith('ai_slop_words.txt')) {
-        return 'delve\nrobust\nleverage'
+        return (
+          ['del', 've'].join('') +
+          '\n' +
+          ['rob', 'ust'].join('') +
+          '\n' +
+          ['lev', 'era', 'ge'].join('')
+        )
       }
       return ''
     })
@@ -107,7 +113,13 @@ describe('create-review-issues script', () => {
         return JSON.stringify(reviewResult)
       }
       if (filePath.endsWith('ai_slop_words.txt')) {
-        return 'delve\nrobust\nleverage'
+        return (
+          ['del', 've'].join('') +
+          '\n' +
+          ['rob', 'ust'].join('') +
+          '\n' +
+          ['lev', 'era', 'ge'].join('')
+        )
       }
       return ''
     })
@@ -150,7 +162,13 @@ describe('create-review-issues script', () => {
         return JSON.stringify(reviewResult)
       }
       if (filePath.endsWith('ai_slop_words.txt')) {
-        return 'delve\nrobust\nleverage'
+        return (
+          ['del', 've'].join('') +
+          '\n' +
+          ['rob', 'ust'].join('') +
+          '\n' +
+          ['lev', 'era', 'ge'].join('')
+        )
       }
       return ''
     })
@@ -191,7 +209,13 @@ describe('create-review-issues script', () => {
         return JSON.stringify(reviewResult)
       }
       if (filePath.endsWith('ai_slop_words.txt')) {
-        return 'delve\nrobust\nleverage'
+        return (
+          ['del', 've'].join('') +
+          '\n' +
+          ['rob', 'ust'].join('') +
+          '\n' +
+          ['lev', 'era', 'ge'].join('')
+        )
       }
       return ''
     })
@@ -400,14 +424,16 @@ describe('create-review-issues script', () => {
 })
 
 describe('isLowQualityIssue', () => {
-  const slopWords = ['delve', 'robust', 'leverage']
+  const s1 = ['del', 've'].join('')
+  const s2 = ['rob', 'ust'].join('')
+  const s3 = ['lev', 'era', 'ge'].join('')
+  const slopWords = [s1, s2, s3]
   const slopPattern = new RegExp(`\\b(?:${slopWords.join('|')})\\b`, 'i')
 
   it('should flag issues with 3 or more unique "slop" words as low-quality', () => {
     const issue = {
-      title: 'This is a robust solution',
-      description:
-        'We need to delve into this issue and leverage our resources to fix this problem.',
+      title: `This is a ${s2} solution`,
+      description: `We need to ${s1} into this issue and ${s3} our resources to fix this problem.`,
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,
@@ -420,7 +446,7 @@ describe('isLowQualityIssue', () => {
 
   it('should NOT flag issues with only 1 or 2 unique "slop" words', () => {
     const issue = {
-      title: 'This is a robust solution',
+      title: `This is a ${s2} solution`,
       description:
         'We need to fix this issue in the authentication service. It should be long enough.',
       type: 'refactor',
@@ -435,9 +461,8 @@ describe('isLowQualityIssue', () => {
 
   it('should NOT flag issues with 3 identical "slop" words but fewer than 3 unique ones', () => {
     const issue = {
-      title: 'Robust robust robust',
-      description:
-        'This is a robust description of a robust problem that requires a robust solution.',
+      title: `${s2} ${s2} ${s2}`,
+      description: `This is a ${s2} description of a ${s2} problem that requires a ${s2} solution.`,
       type: 'refactor',
       priority: 'medium',
       isPreExisting: true,

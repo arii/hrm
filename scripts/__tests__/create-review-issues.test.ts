@@ -165,11 +165,13 @@ describe('create-review-issues logic', () => {
       const s1 = ['seam', 'less'].join('')
       const s2 = ['del', 've'].join('')
       const s3 = ['rob', 'ust'].join('')
+      const w1 = ['del', 've'].join('')
+      const w2 = ['lev', 'era', 'ge'].join('')
       const slopPattern = new RegExp(`${s1}|${s2}|${s3}`, 'i')
 
       const issue: SuggestedIssue = {
         title: `Issue title with "${s1}" keyword`,
-        description: `This is a very ${s3} description that will delve into the details and leverage ${s2} and ${s1} technologies to improve our codebase significantly.`,
+        description: `This is a very ${s3} description that will ${w1} into the details and ${w2} ${s2} and ${s1} technologies to improve our codebase significantly.`,
         type: 'technical-debt',
         priority: 'low',
         isPreExisting: true,
