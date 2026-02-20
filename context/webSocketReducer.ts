@@ -59,9 +59,11 @@ export const reducer = (
       // When the initial state is loaded, ensure all HRM data is marked as connected.
       // We use the client's current time for lastUpdated to prevent clock skew issues.
       const now = Date.now()
+      const offset = message.serverTimestamp ? now - message.serverTimestamp : 0
       const hrmDataWithConnection =
         message.payload.hrmData?.map((d) => ({
           ...d,
+          updatedAt: d.updatedAt ? d.updatedAt + offset : d.updatedAt,
           isConnected: true,
           lastUpdated: now,
         })) || []
@@ -74,6 +76,7 @@ export const reducer = (
     case 'HRM_UPDATE': {
       const payload = message.payload as ServerHrmData[]
       const now = Date.now()
+      const offset = message.serverTimestamp ? now - message.serverTimestamp : 0
 
       // Simplify: The HRM_UPDATE payload from the server is the single source of truth.
       // We map the payload to our local HrmData structure, preserving existing local state
@@ -86,6 +89,9 @@ export const reducer = (
         return {
           ...existingUser,
           ...newUser,
+          updatedAt: newUser.updatedAt
+            ? newUser.updatedAt + offset
+            : newUser.updatedAt,
           isConnected: true,
           lastUpdated: now,
         }
