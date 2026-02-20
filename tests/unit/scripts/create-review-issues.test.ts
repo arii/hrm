@@ -275,7 +275,8 @@ describe('create-review-issues script', () => {
         suggestedIssues: [
           {
             title: 'Test Issue',
-            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            description:
+              'Test Description that is long enough to pass the quality check threshold of fifty characters.',
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
@@ -295,7 +296,8 @@ describe('create-review-issues script', () => {
         suggestedIssues: [
           {
             title: 'Test Issue',
-            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            description:
+              'Test Description that is long enough to pass the quality check threshold of fifty characters.',
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
@@ -329,7 +331,8 @@ describe('create-review-issues script', () => {
         suggestedIssues: [
           {
             title: 'Test Issue',
-            description: 'Test Description that is long enough to pass the quality check threshold of fifty characters.',
+            description:
+              'Test Description that is long enough to pass the quality check threshold of fifty characters.',
             type: 'bug',
             priority: 'medium',
             isPreExisting: true,
