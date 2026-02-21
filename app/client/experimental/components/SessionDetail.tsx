@@ -6,7 +6,7 @@ import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import HeartRateTimeSeries from './AsyncHeartRateTimeSeries'
+import { AsyncHeartRateTimeSeries as HeartRateTimeSeries } from './HeartRateTimeSeries'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -79,10 +79,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           </Box>
 
           <Box sx={{ flex: 1 }}>
-            <ZoneDistribution
-              timeInZones={session.timeInZones}
-              totalDuration={durationInSeconds}
-            />
+            <ZoneDistribution timeInZones={session.timeInZones} />
           </Box>
         </Box>
         {session.hrHistory.length > 0 && (
