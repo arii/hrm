@@ -1,7 +1,14 @@
 // app/client/experimental/components/HeartRateTimeSeries.tsx
 'use client'
 import { useMemo } from 'react'
-import { Card, CardContent, Typography, Box, useTheme, Skeleton } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  useTheme,
+  Skeleton,
+} from '@mui/material'
 import dynamic from 'next/dynamic'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {

@@ -79,9 +79,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           </Box>
 
           <Box sx={{ flex: 1 }}>
-            <ZoneDistribution
-              timeInZones={session.timeInZones}
-            />
+            <ZoneDistribution timeInZones={session.timeInZones} />
           </Box>
         </Box>
         {session.hrHistory.length > 0 && (

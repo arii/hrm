@@ -246,9 +246,7 @@ const ExperimentalAnalyticsPage = () => {
               calorieHistory={activeSession?.calorieHistory || []}
             />
 
-            <ZoneDistribution
-              timeInZones={summaryData.timeInZones}
-            />
+            <ZoneDistribution timeInZones={summaryData.timeInZones} />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
               <HeartRateTimeSeries hrHistory={activeSession.hrHistory} />
