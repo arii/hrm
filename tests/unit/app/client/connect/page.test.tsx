@@ -28,16 +28,32 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
 )
 
 jest.mock('@/hooks/useWorkoutSessionManager', () => ({
+<<<<<<< HEAD
   useWorkoutSessionManager: jest.fn(() => ({
     addHrData: jest.fn(),
+=======
+  __esModule: true,
+  useWorkoutSessionManager: jest.fn(() => ({
+    workoutDuration: 0,
+    resetWorkout: jest.fn(),
+    hasStarted: false,
+>>>>>>> origin/leader
     startWorkout: jest.fn(),
     pauseWorkout: jest.fn(),
     resumeWorkout: jest.fn(),
     endWorkout: jest.fn(),
+<<<<<<< HEAD
     resetWorkout: jest.fn(),
     duration: 0,
     status: 'idle',
     totalCaloriesBurned: 0,
+=======
+    workoutStatus: 'idle',
+    addHrData: jest.fn(),
+    caloriesBurned: 0,
+    updateCalories: jest.fn(),
+    isInitialized: true,
+>>>>>>> origin/leader
   })),
 }))
 

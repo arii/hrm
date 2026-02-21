@@ -5,6 +5,10 @@ import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+<<<<<<< HEAD
+=======
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
+>>>>>>> origin/leader
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -12,6 +16,13 @@ import {
 } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+
+// Components
+import WorkoutSummary from './WorkoutSummary'
+import ZoneDistribution from './ZoneDistribution'
+import CalorieTracker from './CalorieTracker'
+import SessionList from './SessionList'
+import SessionDetail from './SessionDetail'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
@@ -22,14 +33,6 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_5: 0,
   ZONE_6: 0,
 }
-
-// Components
-import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
-import CalorieTracker from './CalorieTracker'
-import SessionList from './SessionList'
-import SessionDetail from './SessionDetail'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
@@ -50,21 +53,34 @@ type View = 'active' | 'list' | 'detail'
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
-  const isReady = useTestPageReady()
 
   // Use #5110's hooks
   const {
     session: activeSession,
     status,
     isInitialized,
-    duration,
     startWorkout,
+    pauseWorkout,
     resumeWorkout,
     endWorkout,
     addHrData,
+<<<<<<< HEAD
     totalCaloriesBurned,
   } = useWorkoutSessionManager()
 
+=======
+    caloriesBurned,
+  } = useWorkoutSessionManager()
+
+  const duration = useWorkoutTimer(
+    status,
+    activeSession?.startTime,
+    activeSession?.totalPaused,
+    activeSession?.pauseTime,
+    activeSession?.endTime
+  )
+
+>>>>>>> origin/leader
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
@@ -115,6 +131,7 @@ const ExperimentalAnalyticsPage = () => {
   useEffect(() => {
     if (status !== 'running') return
 
+<<<<<<< HEAD
     const currentData = hrmData[0]
     if (!currentData) return
 
@@ -126,6 +143,16 @@ const ExperimentalAnalyticsPage = () => {
 
     addHrData(dataPoint)
   }, [hrmData, status, addHrData])
+=======
+    const intervalId = setInterval(() => {
+      const currentHr = latestHrRef.current
+      // Add HR data point (handles calorie calc internally)
+      addHrData(currentHr)
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [status, addHrData])
+>>>>>>> origin/leader
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
@@ -133,9 +160,20 @@ const ExperimentalAnalyticsPage = () => {
     const weight = userSettings.userWeight || 70
     const gender = userSettings.gender
     const maxHr = calculateMaxHr(age)
+<<<<<<< HEAD
     startWorkout(age, weight, gender, maxHr)
     setView('active')
   }, [startWorkout, userSettings])
+=======
+
+    startWorkout(age, weight, { maxHr })
+    setView('active')
+  }, [startWorkout, userSettings])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
+>>>>>>> origin/leader
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
@@ -184,19 +222,14 @@ const ExperimentalAnalyticsPage = () => {
       avgHr,
       maxHr,
       timeInZones: activeSession.timeInZones,
-      totalCalories: totalCaloriesBurned,
+      totalCalories: caloriesBurned,
     }
-  }, [activeSession, totalCaloriesBurned])
+  }, [activeSession, caloriesBurned])
 
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{ mt: 4, mb: 4 }}
-      data-testid="dashboard"
-      data-ready={isReady ? 'true' : 'false'}
-    >
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
           <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
@@ -206,7 +239,7 @@ const ExperimentalAnalyticsPage = () => {
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handleEndWorkout}>
+              <Button variant="outlined" onClick={handlePauseWorkout}>
                 Pause
               </Button>
             )}
