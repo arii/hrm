@@ -26,6 +26,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   firstRow.find('td, th').each((_colIndex, cellElement) => {
     const text = $(cellElement)
       .text()
+      .replace(/\u00A0/g, ' ')
       .replace(/\r?\n|\r/g, ' ')
       .trim()
     headers.push(text)
