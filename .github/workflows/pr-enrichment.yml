@@ -258,35 +258,13 @@ jobs:
 
             try {
               const rawData = fs.readFileSync('pr_description.json', 'utf8');
+              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.cjs');
 
               let result;
               try {
-                result = JSON.parse(rawData);
-              } catch (parseError) {
-                // If parsing fails, try to extract JSON from markdown code blocks
-                // This is needed because LLMs sometimes wrap JSON in preamble/postamble
-                const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (jsonMatch) {
-                  try {
-                    result = JSON.parse(jsonMatch[1].trim());
-                  } catch (e) {
-                    // Manual extraction fallback for corrupted/truncated JSON
-                    const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
-                    if (descMatch) {
-                      result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
-                    } else {
-                      throw new Error(`Failed to parse extracted JSON and extract description: ${e.message}`);
-                    }
-                  }
-                } else {
-                  // Final fallback for raw text without blocks
-                  const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
-                  if (descMatch) {
-                    result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
-                  } else {
-                    throw new Error(`Failed to parse JSON and extract description: ${parseError.message}`);
-                  }
-                }
+                result = parseGeminiOutput(rawData);
+              } catch (e) {
+                throw new Error(`Failed to parse PR description: ${e.message}`);
               }
 
               // Support both 'description' (normal) and 'reviewComment' (fallback for errors)
