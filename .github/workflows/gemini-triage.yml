@@ -106,7 +106,6 @@ jobs:
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
               // The model may return a JSON object wrapped in markdown.
-              // We use a robust approach: try parsing the whole thing first.
               let result;
               try {
                 result = JSON.parse(rawData);

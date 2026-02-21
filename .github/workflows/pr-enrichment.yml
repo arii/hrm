@@ -259,7 +259,6 @@ jobs:
             try {
               const rawData = fs.readFileSync('pr_description.json', 'utf8');
 
-              // Try to parse as JSON first (robust approach)
               let result;
               try {
                 result = JSON.parse(rawData);
