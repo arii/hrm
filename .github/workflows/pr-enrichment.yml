@@ -232,8 +232,11 @@ jobs:
           - **Correct format:** \`## Change Type: 🐛 Bug fix (non-breaking change fixing an issue)\`
           - **Incorrect format:** Do NOT include the list of other options or checkboxes (\`- [ ] ...\`).
 
+          **No Checkboxes:**
+          Do NOT include any checkbox formatting (e.g., \`- [ ]\`) in any part of the generated description.
+
           **Section Relevance:**
-          Only include the "Testing" section if there is specific testing information to provide based on the PR data (e.g., tests added or updated). If no relevant testing information is available, you may omit this section to reduce slop.
+          Only include the "Changes Made" and "Testing" sections if there is specific, relevant information to provide based on the PR data. If a section has no relevant content, omit it entirely to reduce "template slop".
 
           ### Output Format
           You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
