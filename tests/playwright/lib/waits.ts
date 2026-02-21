@@ -47,6 +47,7 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
+<<<<<<< HEAD
   // 1. Wait for fonts to ensure text layout stability
   await waitForFontsLoaded(page).catch(() => {})
 
@@ -63,6 +64,28 @@ export async function waitForPageReady(
   await page
     .waitForSelector('.MuiSkeleton-root', { state: 'detached', timeout: 1000 })
     .catch(() => {})
+=======
+  // Wait for fonts to be ready
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+
+  // Wait for loading skeletons to disappear
+  await page
+    .waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout,
+    })
+    .catch(() => {
+      // Ignore errors if skeletons are not found (already hidden/removed)
+    })
+
+  // Wait for actual content to be present
+  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
+    state: 'visible',
+    timeout,
+  })
+>>>>>>> origin/leader
 }
 
 /**
