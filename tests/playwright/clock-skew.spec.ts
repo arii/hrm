@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('should handle clock skew correctly', async ({ page }) => {
   // Use a long timeout for the initial load and build
   await page.goto('/?testing=true')
-  await page.waitForSelector('[data-ready="true"]', { timeout: 30000 })
+  await page.waitForSelector('[data-testid="dashboard"]', { timeout: 30000 })
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: unknown) => {
