@@ -1,6 +1,5 @@
 // app/api/internal/reset/route.ts
 import { NextResponse } from 'next/server'
-import { resetSocketManager } from '@/utils/socketManager'
 
 /**
  * Internal API to reset server state for testing.
@@ -23,7 +22,13 @@ export async function POST() {
     console.log('🔄 Internal reset requested...')
 
     // 1. Reset Socket Manager (clears HR data and sessions)
-    resetSocketManager()
+    if (global.resetSocketManager) {
+      global.resetSocketManager()
+    } else {
+      console.warn(
+        '⚠️ resetSocketManager not found on global scope during reset'
+      )
+    }
 
     // 2. Stop Tabata Timer
     if (global.tabataService) {

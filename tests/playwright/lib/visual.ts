@@ -80,7 +80,8 @@ export async function assertFixedDimensions(
     expect(bbox.height).toBeGreaterThanOrEqual(constraints.minHeight)
   }
   if (constraints.maxHeight !== undefined) {
-    expect(bbox.height).toBeLessThanOrEqual(constraints.maxHeight)
+    // Use Math.floor to handle sub-pixel differences in some environments
+    expect(Math.floor(bbox.height)).toBeLessThanOrEqual(constraints.maxHeight)
   }
   if (constraints.minWidth !== undefined) {
     expect(bbox.width).toBeGreaterThanOrEqual(constraints.minWidth)

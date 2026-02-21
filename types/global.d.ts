@@ -20,6 +20,7 @@ export interface TestControls {
 declare global {
   var spotifyService: SpotifyService | undefined
   var tabataService: TabataTimer | undefined
+  var resetSocketManager: (() => void) | undefined
 
   interface Window {
     __TEST_READY__?: boolean

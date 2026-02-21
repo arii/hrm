@@ -34,6 +34,7 @@ export {
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,
+  HRM_ROUTES,
   // Mock utilities
   mockGoogleDocIframe,
   mockMultipleHrDevices,

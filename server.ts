@@ -8,7 +8,7 @@ import { httpLogger } from './utils/logger.server.js'
 import logger from './utils/logger.server.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
-import { initSocketManager } from './utils/socketManager.js'
+import { initSocketManager, resetSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
@@ -121,6 +121,7 @@ app.prepare().then(async () => {
 
   if (env.NODE_ENV !== 'production' || process.env.TESTING === 'true') {
     global.tabataService = services.tabataService
+    global.resetSocketManager = resetSocketManager
   }
 
   // 3. Initialize Socket Logic (Controllers)
