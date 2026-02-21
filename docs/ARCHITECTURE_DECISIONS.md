@@ -19,6 +19,7 @@ This document records significant architectural decisions made during the develo
 - The server-side `socketManager` has been updated to accept the client-calculated calorie value. It also retains a fallback to the old server-side calculation method to ensure backward compatibility with older clients.
 - The `HrmConnectionPanel` component on the main dashboard now simply renders the calorie data it receives from the server, without performing any calculations of its own.
 
+<<<<<<< HEAD
 ## Simplified Bluetooth HRM Reconnection Strategy
 
 **Decision:** The Bluetooth HRM reconnection logic has been simplified from a randomized exponential backoff with nested retry loops to a predictable linear backoff strategy with centralized resilience.
@@ -32,3 +33,17 @@ This document records significant architectural decisions made during the develo
 **Implementation:**
 
 - See [ADR-0007: Simplified Bluetooth HRM Reconnection Strategy](./adr/0007-simplified-bluetooth-reconnection.md) for full technical details and trade-offs.
+=======
+## Consolidated Timer Service
+
+**Decision:** The workout timer logic has been consolidated from a fragmented CQRS-based implementation into a single, high-accuracy `TabataTimer` service.
+
+**Reasoning:**
+
+- **Simplification**: The CQRS pattern introduced excessive boilerplate for client-side state transitions. Consolidation improves readability and reduces the total lines of code by over 1,000.
+- **Accuracy**: Moving to absolute timing with `Date.now()` prevents the cumulative drift inherent in interval-based increment logic.
+
+**Implementation:**
+
+- See [ADR-0007: Consolidated Timer Service and CQRS Removal](./adr/0007-consolidated-timer-service.md) for details.
+>>>>>>> origin/leader
