@@ -39,11 +39,7 @@ export default function SpotifyDebugPage() {
   }, [])
 
   return (
-<<<<<<< HEAD
-    <Box sx={{ p: 4 }}>
-=======
     <Box sx={{ p: 2 }}>
->>>>>>> origin/leader
       <Typography variant="h4" gutterBottom>
         Spotify Debug
       </Typography>

@@ -17,6 +17,8 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
         position: 'absolute',
         top: 8,
         right: 8,
+        width: 48,
+        height: 48,
         zIndex: 10,
         backgroundColor: alpha(theme.palette.background.paper, 0.7),
         backdropFilter: 'blur(4px)',

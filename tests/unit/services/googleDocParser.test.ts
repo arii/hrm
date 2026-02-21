@@ -3,13 +3,13 @@ import { parseGoogleDocTable } from '@/services/googleDocParser'
 import { WorkoutTableDto } from '@/types/workout'
 
 describe('parseGoogleDocTable', () => {
-  it('should parse only headers from the first row of the table', () => {
+  it('should parse a simple HTML table into a WorkoutTableDto', () => {
     const html = `
       <html>
         <body>
           <table>
             <tr>
-              <th>Exercise\nName</th>
+              <th>Exercise</th>
               <th>Sets</th>
               <th>Reps</th>
             </tr>
@@ -18,14 +18,22 @@ describe('parseGoogleDocTable', () => {
               <td>3</td>
               <td>10</td>
             </tr>
+            <tr>
+              <td>Push-ups</td>
+              <td>3</td>
+              <td>15</td>
+            </tr>
           </table>
         </body>
       </html>
     `
 
     const expectedDto: WorkoutTableDto = {
-      headers: ['Exercise Name', 'Sets', 'Reps'],
-      rows: [],
+      headers: ['Exercise', 'Sets', 'Reps'],
+      rows: [
+        ['Squats', '3', '10'],
+        ['Push-ups', '3', '15'],
+      ],
     }
 
     const result = parseGoogleDocTable(html)

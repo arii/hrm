@@ -24,8 +24,8 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
-const WorkoutTableHeader = dynamic(
-  () => import('@/components/WorkoutTableHeader'),
+const WorkoutTableViewer = dynamic(
+  () => import('@/components/WorkoutTableViewer'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
@@ -64,11 +64,6 @@ const Dashboard = () => {
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
-
-  const useNativeTable =
-    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ||
-    (typeof window !== 'undefined' &&
-      window.location.search.includes('use-native-table=true'))
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
@@ -109,8 +104,8 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {useNativeTable ? (
-          <WorkoutTableHeader
+        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
+          <WorkoutTableViewer
             docId={DOC_ID}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
