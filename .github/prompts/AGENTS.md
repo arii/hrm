@@ -29,7 +29,7 @@ Security and Performance: Ensure the refactored code is performant, especially f
 
 **Code Quality and Maintainability:**
 
-- **No Magic Numbers**: Hardcoded values should be defined as constants in a dedicated constants file (`lib/constants.ts` or similar). This improves readability and maintainability.
+- **No Magic Numbers**: Hardcoded values should be defined as constants. While shared constants should be placed in the `constants/` directory, highly module-specific constants (e.g., timing intervals or internal parameters used only within a single hook or component) should be defined at the top of the relevant file. This maintains locality and reduces global namespace clutter.
 - **Modularity and Single Responsibility**: Avoid creating overly long scripts or components. Break down large files like `gemini-client.ts` and `page.tsx` into smaller, reusable functions or components with a single responsibility.
 - **Shared Helper Functions**: Encourage the creation and use of shared helper functions for common tasks. Place these in the `utils` or `lib` directory.
 - **Testing**:

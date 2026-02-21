@@ -12,7 +12,6 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -28,7 +27,6 @@ export default function MockPage() {
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('female') // Add gender state
-  const isReady = useTestPageReady()
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
@@ -127,11 +125,7 @@ export default function MockPage() {
 
   return (
     <>
-      <Container
-        maxWidth="sm"
-        sx={{ py: 3, pb: 10 }}
-        data-ready={isReady ? 'true' : 'false'}
-      >
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
         <Card sx={{ p: 3, textAlign: 'center' }}>
           <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
           <Typography
