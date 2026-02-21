@@ -505,7 +505,9 @@ describe('WebSocket Manager', () => {
         command: 'START',
       })
       mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith('START')
+      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
+        'START'
+      )
     })
 
     it('should handle TIMER_COMMAND PAUSE message', () => {
@@ -514,7 +516,9 @@ describe('WebSocket Manager', () => {
         command: 'PAUSE',
       })
       mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith('PAUSE')
+      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
+        'PAUSE'
+      )
     })
 
     it('should handle TIMER_COMMAND STOP message', () => {
@@ -523,7 +527,9 @@ describe('WebSocket Manager', () => {
         command: 'STOP',
       })
       mockWs.emit('message', message.toString())
-      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith('STOP')
+      expect(mockServices.tabataService.handleCommand).toHaveBeenCalledWith(
+        'STOP'
+      )
     })
 
     it('should send initial state on GET_STATE message', () => {

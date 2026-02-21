@@ -147,10 +147,13 @@ describe('ConnectPage', () => {
     expect(setUserSettings).toHaveBeenCalledWith(expect.any(Function))
 
     // Helper to check the updater function logic
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let capturedUpdater: any
     // Depending on how many times setUserSettings called (e.g. init), find the one with function
     const calls = setUserSettings.mock.calls
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const callWithFunction = calls.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (args: any[]) => typeof args[0] === 'function'
     )
     if (callWithFunction) {
@@ -176,7 +179,9 @@ describe('ConnectPage', () => {
     // Find the call that sets unitSystem
     const calls = setUserSettings.mock.calls
     // It might be a direct object set or function update. Page.tsx uses updater.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updaterCall = calls.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (args: any[]) => typeof args[0] === 'function'
     )
     if (updaterCall) {
@@ -205,8 +210,13 @@ describe('ConnectPage', () => {
         const weightInLbs = toDisplay(
           mockUserSettings.userWeight!,
           'IMPERIAL'
-        )
-        expect(weightInput).toHaveValue(weightInLbs)
+        ).toString()
+        // The weightInLbs (154.3) is string, but value might be parsed as number by DOM or library
+        // toHaveValue checks the 'value' property.
+        // If the input is type="number", it might return a number or string depending on implementation.
+        // Given the error: Expected "154.3" (string), Received 154.3 (number)
+        // We should expect a number or parse it.
+        expect(weightInput).toHaveValue(Number(weightInLbs))
       }
     }
   })

@@ -772,7 +772,8 @@ async function runReviewPreset(
                   },
                   filePath: {
                     type: SchemaType.STRING,
-                    description: 'The path to the file where the issue was found (relative to repo root).',
+                    description:
+                      'The path to the file where the issue was found (relative to repo root).',
                   },
                   lineNumber: {
                     type: SchemaType.NUMBER,
