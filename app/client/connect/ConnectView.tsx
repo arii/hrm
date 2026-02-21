@@ -16,6 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
+import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
@@ -76,40 +77,6 @@ interface ConnectViewProps {
   onPauseWorkout: () => void
   onEndWorkout: () => void
 }
-
-interface ResetSectionProps {
-  onReset: () => void
-  isResetting: boolean
-}
-
-const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
-  <Box
-    sx={{
-      textAlign: 'center',
-      mt: 4,
-      pt: 4,
-      borderTop: 1,
-      borderColor: 'divider',
-    }}
-  >
-    <Button
-      variant="contained"
-      color="error"
-      onClick={onReset}
-      disabled={isResetting}
-    >
-      {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
-    </Button>
-    <Typography
-      variant="caption"
-      display="block"
-      sx={{ mt: 1, color: 'text.secondary' }}
-    >
-      Resets stored permissions and device settings, including Bluetooth
-      connection.
-    </Typography>
-  </Box>
-)
 
 export default function ConnectView({
   isReady,
