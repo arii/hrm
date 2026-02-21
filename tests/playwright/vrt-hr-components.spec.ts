@@ -34,7 +34,7 @@ test.describe('Visual Regression Tests - HR Components', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -76,7 +76,7 @@ test.describe('Visual Regression Tests - HR Components', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -98,7 +98,7 @@ test.describe('Visual Regression Tests - HR Components', () => {
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
-          maxDiffPixelRatio: 0.1,
+          maxDiffPixelRatio: 0.05,
           mask: [
             ...getDynamicContentMasks(dashboardPage),
             ...getHrMasks(dashboardPage),
@@ -112,7 +112,7 @@ test.describe('Visual Regression Tests - HR Components', () => {
       await mockMultipleHrDevices(dashboardPage, [])
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),

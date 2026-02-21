@@ -20,7 +20,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -55,7 +55,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
 
       await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -93,7 +93,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
         'dashboard-active-timer-with-hr.png',
         {
           mask: [...getDynamicContentMasks(dashboardPage)],
-          maxDiffPixelRatio: 0.15,
+          maxDiffPixelRatio: 0.08, // Slightly higher for complex state
         }
       )
     })
@@ -106,7 +106,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -117,7 +117,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -128,7 +128,7 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.05,
       })
     })
   })
