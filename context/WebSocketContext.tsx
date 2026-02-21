@@ -108,6 +108,11 @@ export const WebSocketProvider = ({
     if (typeof document !== 'undefined') {
       document.body.setAttribute('data-connection-status', connectionStatus)
     }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.removeAttribute('data-connection-status')
+      }
+    }
   }, [connectionStatus])
 
   useEffect(() => {

@@ -43,24 +43,26 @@ export const WAIT_TIMEOUTS = {
  */
 export async function waitForPageReady(
   page: Page,
-  options: { timeout?: number } = {}
+  options: { timeout?: number; selector?: string } = {}
 ): Promise<void> {
-  const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
+  const {
+    timeout = WAIT_TIMEOUTS.TEST_READY,
+    selector = 'main, [role="main"]',
+  } = options
 
   // Wait for fonts to be loaded
   await waitForFontsLoaded(page)
 
   // Wait for a known stable element
   await page
-    .waitForSelector(
-      'main, [role="main"], [data-testid="dashboard"], [data-testid="control-panel"], [data-testid="mock-client-form"], [data-testid="connect-view"]',
-      {
-        state: 'visible',
-        timeout,
-      }
-    )
+    .waitForSelector(selector, {
+      state: 'visible',
+      timeout,
+    })
     .catch(() => {
-      console.warn('No main element found, continuing anyway')
+      console.warn(
+        `No main element found (selector: "${selector}"), continuing anyway`
+      )
     })
 
   // Wait for skeletons to disappear (dynamic content loading)

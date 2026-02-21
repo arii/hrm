@@ -26,7 +26,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
               <UserSettingsProvider>
                 <TimerSoundProvider>
                   <AnimatePresence mode="wait">
-                    <motion.div
+                    <motion.main
                       key={pathname}
                       variants={pageVariants}
                       initial="initial"
@@ -35,7 +35,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       data-testid="main-content-layout"
                     >
                       {children}
-                    </motion.div>
+                    </motion.main>
                   </AnimatePresence>
                 </TimerSoundProvider>
               </UserSettingsProvider>
