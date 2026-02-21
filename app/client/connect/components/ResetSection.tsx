@@ -13,7 +13,7 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       textAlign: 'center',
       mt: 4,
       pt: 4,
-      borderTop: 1,
+      borderTop: '1px solid',
       borderColor: 'divider',
     }}
   >
