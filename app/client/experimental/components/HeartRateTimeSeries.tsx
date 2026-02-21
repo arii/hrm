@@ -1,15 +1,7 @@
 // app/client/experimental/components/HeartRateTimeSeries.tsx
 'use client'
 import { useMemo } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  useTheme,
-  Skeleton,
-} from '@mui/material'
-import dynamic from 'next/dynamic'
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
@@ -73,13 +65,5 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
     </Card>
   )
 }
-
-export const AsyncHeartRateTimeSeries = dynamic(
-  () => Promise.resolve(HeartRateTimeSeries),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={300} />,
-  }
-)
 
 export default HeartRateTimeSeries

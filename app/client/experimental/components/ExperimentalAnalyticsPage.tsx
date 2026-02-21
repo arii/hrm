@@ -1,8 +1,8 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Container, Box, Button } from '@mui/material'
-import { AsyncHeartRateTimeSeries as HeartRateTimeSeries } from './HeartRateTimeSeries'
+import { Container, Box, Button, Skeleton } from '@mui/material'
+import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
@@ -20,6 +20,11 @@ import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
+
+const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
