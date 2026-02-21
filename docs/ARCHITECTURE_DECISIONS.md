@@ -32,3 +32,15 @@ This document records significant architectural decisions made during the develo
 **Implementation:**
 
 - See [ADR-0007: Simplified Bluetooth HRM Reconnection Strategy](./adr/0007-simplified-bluetooth-reconnection.md) for full technical details and trade-offs.
+## Consolidated Timer Service
+
+**Decision:** The workout timer logic has been consolidated from a fragmented CQRS-based implementation into a single, high-accuracy `TabataTimer` service.
+
+**Reasoning:**
+
+- **Simplification**: The CQRS pattern introduced excessive boilerplate for client-side state transitions. Consolidation improves readability and reduces the total lines of code by over 1,000.
+- **Accuracy**: Moving to absolute timing with `Date.now()` prevents the cumulative drift inherent in interval-based increment logic.
+
+**Implementation:**
+
+- See [ADR-0007: Consolidated Timer Service and CQRS Removal](./adr/0007-consolidated-timer-service.md) for details.
