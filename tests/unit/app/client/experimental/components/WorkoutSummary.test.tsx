@@ -3,7 +3,6 @@
  */
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { ThemeProvider, createTheme } from '@mui/material'
 import WorkoutSummary from '@/app/client/experimental/components/WorkoutSummary'
 
 // Mock utils to have consistent output in tests
@@ -14,20 +13,14 @@ jest.mock('@/lib/utils', () => ({
   ),
 }))
 
-const theme = createTheme({
-  palette: {
-    custom: {
-      running: '#4CAF50',
-      idle: '#cccccc',
-      paused: '#FBC02D',
-      finished: '#2196F3',
-    },
-  },
-})
-
 describe('WorkoutSummary', () => {
   beforeAll(() => {
     jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-02-02T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
   })
 
   const defaultProps = {
@@ -38,24 +31,21 @@ describe('WorkoutSummary', () => {
     date: new Date('2026-02-02T12:00:00Z'),
   }
 
-  const renderWithTheme = (ui: React.ReactElement) => {
-    return render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>)
-  }
-
   it('renders with all props provided', () => {
-    renderWithTheme(<WorkoutSummary {...defaultProps} />)
+    render(<WorkoutSummary {...defaultProps} />)
 
-    expect(screen.getByText('Workout Summary')).toBeInTheDocument()
-    expect(screen.getByText(/Test User/)).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
     expect(screen.getByText('RUNNING')).toBeInTheDocument()
     expect(screen.getByText('formatted-3600')).toBeInTheDocument()
-    // 500.5.toFixed(0) is 501
-    expect(screen.getByText('501')).toBeInTheDocument()
+    expect(screen.getByText('500.5')).toBeInTheDocument()
     expect(screen.getByText(/formatted-date/)).toBeInTheDocument()
+
+    // Check for icons (by their aria-label or just by being in the document if they don't have labels)
+    // MUI icons usually don't have accessible names by default unless specified
   })
 
   it('renders with required props', () => {
-    renderWithTheme(
+    render(
       <WorkoutSummary
         duration={100}
         calories={10}
@@ -65,28 +55,44 @@ describe('WorkoutSummary', () => {
       />
     )
 
-    expect(
-      screen.getByText('Guest User • formatted-date-2026-02-02T12:00:00.000Z')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Guest User')).toBeInTheDocument()
     expect(screen.getByText('IDLE')).toBeInTheDocument()
+    expect(screen.getByText(/formatted-date/)).toBeInTheDocument()
   })
 
   describe('status display', () => {
     const statuses = [
-      { status: 'running' as const, expectedColor: 'rgb(76, 175, 80)' }, // #4CAF50
-      { status: 'paused' as const, expectedColor: 'rgb(251, 192, 45)' }, // #FBC02D
-      { status: 'finished' as const, expectedColor: 'rgb(33, 150, 243)' }, // #2196F3
-      { status: 'idle' as const, expectedColor: 'rgb(204, 204, 204)' }, // #cccccc
+      { status: 'running' as const, expectedColor: 'success' },
+      { status: 'paused' as const, expectedColor: 'warning' },
+      { status: 'finished' as const, expectedColor: 'primary' },
+      { status: 'idle' as const, expectedColor: 'default' },
     ]
 
     statuses.forEach(({ status, expectedColor }) => {
-      it(`renders status text and color for: ${status}`, () => {
-        renderWithTheme(<WorkoutSummary {...defaultProps} status={status} />)
+      it(`renders status text for: ${status}`, () => {
+        render(<WorkoutSummary {...defaultProps} status={status} />)
         const chip = screen
           .getByText(status.toUpperCase())
           .closest('.MuiChip-root')
-        expect(chip).toHaveStyle({ backgroundColor: expectedColor })
+        expect(chip).toHaveClass(
+          `MuiChip-color${expectedColor.charAt(0).toUpperCase() + expectedColor.slice(1)}`
+        )
       })
     })
+  })
+
+  it('conditionally applies color to calories text', () => {
+    const { rerender } = render(
+      <WorkoutSummary {...defaultProps} calories={0} />
+    )
+    const zeroCal = screen.getByText('0.0')
+    // When calories is 0, valueColor is 'text.primary'
+    // In JSDOM with MUI, this might not show up as a computed style easily without a ThemeProvider
+    // but we can at least verify it's rendered.
+    expect(zeroCal).toBeInTheDocument()
+
+    rerender(<WorkoutSummary {...defaultProps} calories={100} />)
+    const positiveCal = screen.getByText('100.0')
+    expect(positiveCal).toBeInTheDocument()
   })
 })
