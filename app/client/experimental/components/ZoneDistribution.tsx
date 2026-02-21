@@ -109,37 +109,41 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         </Box>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-          {data.map((item) => (
-            <Box key={item.zone}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  mb: 0.5,
-                }}
-              >
-                <Typography variant="body2" fontWeight={600}>
-                  {item.label}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {item.formattedTime} ({item.percentage.toFixed(1)}%)
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={item.percentage}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor: theme.palette.grey[200],
-                  '& .MuiLinearProgress-bar': {
-                    bgcolor: item.color,
+          {data.map((item) => {
+            const labelId = `zone-label-${item.zone}`
+            return (
+              <Box key={item.zone}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mb: 0.5,
+                  }}
+                >
+                  <Typography id={labelId} variant="body2" fontWeight={600}>
+                    {item.label}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {item.formattedTime} ({item.percentage.toFixed(1)}%)
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={item.percentage}
+                  aria-labelledby={labelId}
+                  sx={{
+                    height: 8,
                     borderRadius: 4,
-                  },
-                }}
-              />
-            </Box>
-          ))}
+                    bgcolor: theme.palette.grey[200],
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: item.color,
+                      borderRadius: 4,
+                    },
+                  }}
+                />
+              </Box>
+            )
+          })}
         </Box>
       </CardContent>
     </Card>
