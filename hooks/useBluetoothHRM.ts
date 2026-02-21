@@ -12,16 +12,22 @@ import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
-import {
-  HR_SERVICE_UUID,
-  HR_CHARACTERISTIC_UUID,
-  BATTERY_SERVICE_UUID,
-  BATTERY_LEVEL_CHARACTERISTIC_UUID,
-  ROLLING_AVG_HISTORY_LENGTH,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  HEARTBEAT_INTERVAL_MS,
-} from '@/constants/bluetooth-config'
+
+const HR_SERVICE_UUID = 'heart_rate'
+const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+const BATTERY_SERVICE_UUID = 'battery_service'
+const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+
+const ROLLING_AVG_HISTORY_LENGTH = 5
+const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+
+const HEARTBEAT_INTERVAL_MS_test = 500
+const HEARTBEAT_INTERVAL_MS_prod = 1000
+export const HEARTBEAT_INTERVAL_MS =
+  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+    ? HEARTBEAT_INTERVAL_MS_test
+    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -44,6 +50,7 @@ interface UseBluetoothHRMProps {
   userAge?: number | null
   onHeartRateUpdate?: (heartRate: number) => void
   onConnect?: () => void
+  heartbeatInterval?: number
 }
 
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
@@ -53,6 +60,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     userAge,
     onHeartRateUpdate,
     onConnect,
+    heartbeatInterval = HEARTBEAT_INTERVAL_MS,
   } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [status, setStatus] = useState<BluetoothConnectionStatus>(
@@ -198,10 +206,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         }
       }
-    }, HEARTBEAT_INTERVAL_MS)
+    }, heartbeatInterval)
 
     return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, isDataStale, updateSignalPeriod])
+  }, [
+    dataLivenessTimeoutMs,
+    isDataStale,
+    updateSignalPeriod,
+    heartbeatInterval,
+  ])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
