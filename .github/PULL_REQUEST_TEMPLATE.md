@@ -13,10 +13,6 @@ Fixes # (issue)
 - 📚 Documentation (changes only affecting documentation)
 - 🎨 Styling (changes that do not affect functionality)
 
-## Changes Made
-
-## Testing
-
 ## Related Issues
 
 Closes #(issue_number)
