@@ -28,6 +28,8 @@ export const BLUETOOTH_MESSAGES = {
   autoConnectFailed:
     'Auto-connect failed. Use Connect button to select device.',
   connectingToSavedDevice: 'Connecting to saved device...',
+  deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
+    `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
 
   // Error Messages
   error: 'Error',

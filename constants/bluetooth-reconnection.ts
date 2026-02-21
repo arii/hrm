@@ -11,7 +11,9 @@ export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
   typeof process !== 'undefined' &&
   process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
     ? parseInt(process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS, 10)
-    : 8
+    : 5
 
 // Reconnection Delay Parameters
-export const RECONNECT_BASE_DELAY_MS = 2000
+export const RECONNECT_BASE_DELAY_MS = 1000
+export const RECONNECT_DELAY_INCREMENT_MS = 500
+export const RECONNECT_RANDOM_DELAY_MS = 1000
