@@ -79,7 +79,7 @@ test.describe('Visual Regression Tests', () => {
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 300,
+        maxHeight: 400,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -108,7 +108,7 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 350,
+        maxHeight: 400,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')

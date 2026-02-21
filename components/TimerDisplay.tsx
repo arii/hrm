@@ -85,7 +85,8 @@ const TimerDisplay = () => {
       sx={{
         backgroundColor: '#000000',
         color: phaseColor, // Dynamic color based on phase
-        height: { xs: 200, sm: 250, md: 300 },
+        height: '100%',
+        minHeight: { xs: 200, sm: 250, md: 300 },
         display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a',

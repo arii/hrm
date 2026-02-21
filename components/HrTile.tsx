@@ -164,7 +164,6 @@ const HrTile = ({
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
           height: '100%',
-          maxHeight: 250,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
