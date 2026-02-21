@@ -232,6 +232,9 @@ jobs:
           - **Correct format:** \`## Change Type: 🐛 Bug fix (non-breaking change fixing an issue)\`
           - **Incorrect format:** Do NOT include the list of other options or checkboxes (\`- [ ] ...\`).
 
+          **Section Relevance:**
+          Only include the "Testing" section if there is specific testing information to provide based on the PR data (e.g., tests added or updated). If no relevant testing information is available, you may omit this section to reduce slop.
+
           ### Output Format
           You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
           {

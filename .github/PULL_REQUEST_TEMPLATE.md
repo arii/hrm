@@ -21,19 +21,8 @@ Fixes # (issue)
 
 ## Testing
 
-- [ ] Unit tests added/updated
-- [ ] Integration tests added/updated
-- [ ] Visual regression tests passed
-- [ ] Manual testing completed
-
-## Screenshots (if applicable)
-
-Please add screenshots to help explain your changes.
+Describe the tests you ran to verify your changes.
 
 ## Related Issues
 
 Closes #(issue_number)
-
-## Additional Notes
-
-Any additional information that might be helpful for reviewers.
