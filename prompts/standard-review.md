@@ -150,6 +150,7 @@ If you identify Technical Debt, Refactoring opportunities, or Improvements:
 1. **Create a 'suggestedIssue'** in the JSON output.
 2. **Criteria**:
    - MUST be specific, actionable, and non-trivial. Avoid generic suggestions like "Refactor code" or "Improve quality".
+   - **Description**: MUST be detailed and at least 50 characters long.
    - **Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`, `technical-debt`, `frontend-improvement`, `security`.
    - **Priority**: `high`, `medium`, `low`.
    - **Fingerprint**: Provide a stable, unique identifier for the issue. Format: `file_path:entity_name` (e.g., `lib/auth.ts:validateToken`). This is used for deduplication.
