@@ -116,6 +116,7 @@ export default function ConnectPage() {
     pauseWorkout,
     resumeWorkout,
     endWorkout,
+    resetWorkout,
     addHrData,
   } = useWorkoutSessionManager()
 
@@ -158,6 +159,7 @@ export default function ConnectPage() {
     connectAndStream,
     autoConnect,
     disconnect,
+    forgetDevice,
     deviceStatus,
     batteryLevel,
     isConnected,
@@ -171,6 +173,13 @@ export default function ConnectPage() {
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: handleStartWorkout,
   })
+
+  const handleForgetDevice = useCallback(async () => {
+    await forgetDevice()
+    if (hasStarted) {
+      resetWorkout()
+    }
+  }, [forgetDevice, hasStarted, resetWorkout])
 
   // Automatically start workout or resume when connected to maintain previous behavior
   useEffect(() => {
@@ -281,6 +290,7 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
+      onForgetDevice={handleForgetDevice}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}

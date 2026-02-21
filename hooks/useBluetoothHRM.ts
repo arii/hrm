@@ -305,14 +305,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isManualDisconnect.current
         ) {
-          connectToGattRef.current?.(device, true).catch((error) => {
-            const isAbort =
-              error instanceof DOMException && error.name === 'AbortError'
-            if (!isAbort && !isManualDisconnect.current) {
-              logger.warn({ error }, 'Reconnect attempt failed, retrying')
-              reconnect(device)
-            }
-          })
+          connectToGattRef
+            .current?.(device, true)
+            .then((success) => {
+              if (success) {
+                logger.info('Reconnection successful')
+              }
+            })
+            .catch((error) => {
+              const isAbort =
+                error instanceof DOMException && error.name === 'AbortError'
+              if (!isAbort && !isManualDisconnect.current) {
+                logger.warn({ error }, 'Reconnect attempt failed, retrying')
+                reconnect(device)
+              }
+            })
         }
       }, delay)
     },
@@ -534,6 +541,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
+        // Reset reconnect attempts on successful connection
         reconnectAttempts.current = 0
         onConnectRef.current?.()
         return true
