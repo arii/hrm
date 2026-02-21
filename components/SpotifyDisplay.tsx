@@ -144,12 +144,14 @@ const SpotifyDisplay = ({ onReady }: SpotifyDisplayProps) => {
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
 
-  // Signal readiness when hydration and initial state are complete
+  // Signal readiness when hydration and initial state are complete.
+  // If logged in, we wait for the Spotify SDK to be ready.
+  // If not logged in, we signal readiness immediately so as not to block the dashboard.
   useEffect(() => {
-    if (onReady) {
+    if (onReady && (!isLoggedIn || isReady)) {
       onReady()
     }
-  }, [onReady])
+  }, [onReady, isLoggedIn, isReady])
 
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
