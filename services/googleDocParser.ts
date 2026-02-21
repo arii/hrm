@@ -16,6 +16,11 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   }
 
   const firstRow = table.find('tr').first()
+
+  if (firstRow.length === 0) {
+    return { headers: [] }
+  }
+
   const headers: string[] = []
 
   firstRow.find('td, th').each((_colIndex, cellElement) => {

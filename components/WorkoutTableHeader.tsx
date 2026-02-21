@@ -11,11 +11,9 @@ import {
   CircularProgress,
   Alert,
   Box,
-  IconButton,
 } from '@mui/material'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import { alpha } from '@mui/material/styles'
 import { WorkoutTableDto } from '@/types/workout'
+import RefreshIconButton from './RefreshIconButton'
 
 interface WorkoutTableHeaderProps {
   docId: string
@@ -74,26 +72,11 @@ export default function WorkoutTableHeader({
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
       {onRefresh && (
-        <IconButton
+        <RefreshIconButton
           onClick={onRefresh}
           aria-label="refresh workout table"
           data-testid="refresh-icon-button"
-          sx={(theme) => ({
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 10,
-            backgroundColor: alpha(theme.palette.background.paper, 0.7),
-            backdropFilter: 'blur(4px)',
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.9),
-            },
-            width: 48,
-            height: 48,
-          })}
-        >
-          <RefreshIcon fontSize="small" />
-        </IconButton>
+        />
       )}
       <TableContainer
         component={Paper}
