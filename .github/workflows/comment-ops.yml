@@ -46,9 +46,33 @@ jobs:
       comment_body: ${{ github.event.comment.body }}
     secrets: inherit
 
+  prepare-review-issues:
+    name: 📝 Prepare Issue Context
+    needs: [router, execute-review]
+    if: |
+      always() &&
+      needs.execute-review.result == 'success' &&
+      needs.execute-review.outputs.review_performed == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      base_sha: ${{ steps.get_pr.outputs.base_sha }}
+    steps:
+      - name: Get PR Base SHA
+        id: get_pr
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('base_sha', pr.data.base.sha);
+
   create-review-issues:
     name: 🚀 Create Review Issues
-    needs: [execute-review]
+    needs: [execute-review, prepare-review-issues]
     if: |
       always() &&
       needs.execute-review.result == 'success' &&
@@ -56,6 +80,7 @@ jobs:
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
       pr_number: ${{ github.event.issue.number }}
+      base_sha: ${{ needs.prepare-review-issues.outputs.base_sha }}
       run_id: ${{ github.run_id }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}

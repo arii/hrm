@@ -122,17 +122,25 @@ echo "::endgroup::"
 
 # --- 3. REPORTING ---
 if [ -n "$FAILED_CHECKS_LIST" ]; then
-  echo "::group::Posting PR Comment"
-  # --- Post PR Comment ---
+  # Always generate Step Summary
   COMMIT_HASH_MSG="> Failed at commit: \`${GITHUB_SHA}\`"
   COMMENT_HEADER="CI checks failed: ${FAILED_CHECKS_LIST}.\n\n${COMMIT_HASH_MSG}\n\n"
   LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) for details.*"
   COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
+
   echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
-  if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
-    echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
+  echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" >> "$GITHUB_STEP_SUMMARY"
+
+  if [ "$ENABLE_PR_COMMENT" == "true" ]; then
+    echo "::group::Posting PR Comment"
+    # --- Post PR Comment ---
+    if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
+      echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
+    fi
+    echo "::endgroup::"
+  else
+    echo "PR commenting is disabled for quality reports."
   fi
-  echo "::endgroup::"
 
 
   echo "::group::Generating JSON Artifact"
