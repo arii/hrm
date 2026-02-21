@@ -45,7 +45,20 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - **Separate Refactoring**: Architectural changes and large-scale refactoring should be done in separate PRs from feature work or bug fixes.
 - **Focused Fixes**: Critical patches or hotfixes must be tightly focused on the issue at hand, without any unrelated changes.
 
-Refer to the PR template for a detailed scope validation checklist.
+#### PR Scope Checklist
+
+- **PR has a clear, single purpose:** The title and description of the PR clearly state the purpose of the change.
+- **All changes relate to the stated objective:** The code changes should be directly related to the purpose of the PR.
+- **No unrelated cleanup or refactoring:** The PR should not contain any changes that are not directly related to the stated objective.
+- **Title and description match the actual changes:** The title and description should accurately reflect the changes in the PR.
+- **Tests cover the specific change scope:** The tests should be focused on the changes in the PR and should not include unrelated tests.
+
+#### Impact Assessment
+
+- Changes are **backward compatible** (or breaking changes are documented).
+- **Tests** are added or updated for new functionality.
+- **Documentation** is updated if needed.
+- **ADR** is created or updated for significant architectural changes.
 
 ### Labeling Conventions
 
@@ -54,6 +67,7 @@ To ensure consistency across the project, we use a standardized set of GitHub la
 All managed labels are defined in [`.github/pr-labels.json`](../.github/pr-labels.json). Automated workflows ensure these labels exist in the repository.
 
 **Key Label Categories (Strictly Limited to 5 per Category):**
+
 - **Review Status**: `ai-reviewed`, `approved`, `changes-requested`
 - **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`
 - **Scope**: `scope:focused`, `scope:needs-review`
