@@ -26,12 +26,14 @@ interface WorkoutTableViewerProps {
   docId: string
   refreshKey?: number
   onRefresh?: () => void
+  onReady?: () => void
 }
 
 export default function WorkoutTableViewer({
   docId,
   refreshKey,
   onRefresh,
+  onReady,
 }: WorkoutTableViewerProps) {
   const [data, setData] = useState<WorkoutData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,13 +52,16 @@ export default function WorkoutTableViewer({
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         setLoading(false)
+        onReady?.()
       }
     }
 
     if (docId) {
       fetchData()
+    } else {
+      onReady?.()
     }
-  }, [docId, refreshKey])
+  }, [docId, refreshKey, onReady])
 
   if (loading) {
     return (

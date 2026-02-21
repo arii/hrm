@@ -22,6 +22,7 @@ interface GoogleDocViewerProps {
   onToggleShrink?: () => void // New callback prop
   refreshKey?: number
   onRefresh?: () => void
+  onReady?: () => void
 }
 
 const GoogleDocViewer = ({
@@ -32,6 +33,7 @@ const GoogleDocViewer = ({
   onToggleShrink,
   refreshKey,
   onRefresh,
+  onReady,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
@@ -50,9 +52,10 @@ const GoogleDocViewer = ({
     setIframeLoading(true) // Reset loading state on refresh
     const timeout = setTimeout(() => {
       setIframeLoading(false)
+      onReady?.()
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-  }, [refreshKey]) // Rerun on refresh
+  }, [refreshKey, onReady]) // Rerun on refresh
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
@@ -99,7 +102,10 @@ const GoogleDocViewer = ({
               left: 0,
               transition: 'height 0.3s ease-in-out',
             }}
-            onLoad={() => setIframeLoading(false)}
+            onLoad={() => {
+              setIframeLoading(false)
+              onReady?.()
+            }}
           />
         </Box>
         {onToggleShrink && (

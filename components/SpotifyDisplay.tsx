@@ -105,7 +105,11 @@ const spotifyDisplayReducer = (
   }
 }
 
-const SpotifyDisplay = () => {
+interface SpotifyDisplayProps {
+  onReady?: () => void
+}
+
+const SpotifyDisplay = ({ onReady }: SpotifyDisplayProps) => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
@@ -139,6 +143,13 @@ const SpotifyDisplay = () => {
   }
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
+
+  // Signal readiness when hydration and initial state are complete
+  useEffect(() => {
+    if (onReady) {
+      onReady()
+    }
+  }, [onReady])
 
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)

@@ -9,7 +9,7 @@ import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
@@ -63,7 +63,42 @@ const Dashboard = () => {
 
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-  const isReady = useTestPageReady()
+
+  // Track the readiness of dynamic components to ensure accurate VRT snapshots.
+  // data-ready will only be set to true once all critical sections are hydrated.
+  const [componentLoadStatus, setComponentLoadStatus] = useState({
+    spotify: false,
+    workoutTable: false,
+    googleDoc: false,
+  })
+
+  const handleComponentReady = useCallback(
+    (name: keyof typeof componentLoadStatus) => {
+      setComponentLoadStatus((prev) => ({ ...prev, [name]: true }))
+    },
+    []
+  )
+
+  const onSpotifyReady = useCallback(
+    () => handleComponentReady('spotify'),
+    [handleComponentReady]
+  )
+  const onWorkoutTableReady = useCallback(
+    () => handleComponentReady('workoutTable'),
+    [handleComponentReady]
+  )
+  const onGoogleDocReady = useCallback(
+    () => handleComponentReady('googleDoc'),
+    [handleComponentReady]
+  )
+
+  const allComponentsReady =
+    componentLoadStatus.spotify &&
+    (process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
+      ? componentLoadStatus.workoutTable
+      : componentLoadStatus.googleDoc)
+
+  const isReady = useTestPageReady(allComponentsReady)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
@@ -98,7 +133,7 @@ const Dashboard = () => {
          * be told to occupy that full height.
          */}
         <Box sx={{ height: '100%' }}>
-          <TimerDisplay />
+          <TimerDisplay onReady={() => {}} />
         </Box>
         {/*
          * HrmConnectionPanel does not need a height wrapper because
@@ -112,6 +147,7 @@ const Dashboard = () => {
             docId={DOC_ID}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
+            onReady={onWorkoutTableReady}
           />
         ) : (
           <GoogleDocViewer
@@ -122,11 +158,12 @@ const Dashboard = () => {
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
+            onReady={onGoogleDocReady}
           />
         )}
       </Box>
 
-      <SpotifyDisplay />
+      <SpotifyDisplay onReady={onSpotifyReady} />
     </Container>
   )
 }

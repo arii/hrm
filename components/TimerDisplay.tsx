@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import { alpha } from '@mui/material/styles'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
@@ -20,9 +20,18 @@ import { formatDuration } from '@/lib/utils'
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
-const TimerDisplay = () => {
+interface TimerDisplayProps {
+  onReady?: () => void
+}
+
+const TimerDisplay = ({ onReady }: TimerDisplayProps) => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
+
+  useEffect(() => {
+    onReady?.()
+  }, [onReady])
+
   const {
     currentPhase,
     timeRemaining,
@@ -193,16 +202,12 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
+            fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',
             color: phaseColor,
-            textShadow: `
-              0 0 20px ${alpha(phaseColor, 0.6)},
-              0 0 40px ${alpha(phaseColor, 0.3)}
-            `,
-            WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+            textShadow: `0 0 10px ${alpha(phaseColor, 0.5)}`,
             letterSpacing: '0.05em',
             transition: 'color 0.3s ease-in-out',
           }}

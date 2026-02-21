@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import React from 'react'
 import TimerDisplay from '@/components/TimerDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import { AudioProvider } from '@/context/AudioContext'
@@ -9,11 +10,11 @@ import {
 import { TimerData } from '@/types/websocket'
 import { userEvent, within } from '@storybook/testing-library'
 
-const meta: Meta<typeof TimerDisplay> = {
+const meta: Meta<typeof TimerDisplay & { timerData?: TimerData }> = {
   title: 'Components/TimerDisplay',
   component: TimerDisplay,
   decorators: [
-    (Story, { args }: { args: { timerData?: TimerData } }) => (
+    (Story, { args }: { args: any }) => (
       <WebSocketContext.Provider
         value={{
           ...mockWebSocketContext,
@@ -35,7 +36,7 @@ const meta: Meta<typeof TimerDisplay> = {
 }
 
 export default meta
-type Story = StoryObj<typeof TimerDisplay>
+type Story = StoryObj<React.ComponentProps<typeof TimerDisplay> & { timerData?: TimerData }>
 
 export const Active: Story = {
   args: {
