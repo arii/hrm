@@ -1,3 +1,4 @@
+// tests/playwright/vrt-connect-page.spec.ts
 import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { takeScreenshot } from './lib/visual'
@@ -6,8 +7,10 @@ import { resetServerState } from './test-helpers'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test.beforeEach(async ({ connectPage }) => {
@@ -81,7 +84,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
-      maxDiffPixelRatio: 0.05,
       // Performance: Skip repeated a11y checks for error states as the core UI is already validated
       skipA11y: true,
     })
@@ -114,7 +116,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
-      maxDiffPixelRatio: 0.05,
       // Performance: Skip a11y check for this specific error variant; primary state is covered
       skipA11y: true,
     })

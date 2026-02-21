@@ -10,8 +10,10 @@ import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 test.describe('Component-Specific VRT', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test.beforeEach(async ({ dashboardPage }) => {

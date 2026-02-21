@@ -6,13 +6,15 @@ import {
   setupMinimalVisualRegressionTest,
   resetServerState,
 } from './test-helpers'
-import { takeScreenshot, assertFixedDimensions } from './lib/visual'
+import { takeScreenshot, assertFixedDimensions, VIEWPORTS } from './lib/visual'
 
 // Test suite for VRT
 test.describe('Visual Regression Tests - Dashboard', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
     // Reset server state after each test to ensure no leakage (timer, HR data)
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test.describe('Dashboard Component', () => {
@@ -20,7 +22,6 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -55,7 +56,6 @@ test.describe('Visual Regression Tests - Dashboard', () => {
 
       await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -100,35 +100,32 @@ test.describe('Visual Regression Tests - Dashboard', () => {
 
     test('mobile viewport', async ({ dashboardPage }) => {
       // Use exact viewport from expected snapshots to minimize diffs
-      await dashboardPage.setViewportSize({ width: 383, height: 1071 })
+      await dashboardPage.setViewportSize(VIEWPORTS.MOBILE)
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.05,
       })
     })
 
     test('tablet viewport', async ({ dashboardPage }) => {
-      await dashboardPage.setViewportSize({ width: 768, height: 1166 })
+      await dashboardPage.setViewportSize(VIEWPORTS.TABLET)
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.05,
       })
     })
 
-    test('large desktop viewport', async ({ dashboardPage }) => {
-      await dashboardPage.setViewportSize({ width: 2560, height: 1494 })
+    test('desktop viewport', async ({ dashboardPage }) => {
+      await dashboardPage.setViewportSize(VIEWPORTS.DESKTOP)
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.05,
       })
     })
   })

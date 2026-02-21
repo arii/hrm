@@ -7,7 +7,7 @@
  * - Stable content injection for VRT
  * - Test environment configuration
  */
-import type { Browser, BrowserContext, Page } from '@playwright/test'
+import type { Browser, BrowserContext, Page, APIRequestContext } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { mockGoogleDocIframe } from './mocks'
@@ -125,10 +125,10 @@ export async function navigateAndWait(
  * Call the internal reset endpoint to clear server state.
  * This ensures no leftover state from previous tests (e.g. HR data, timer).
  */
-export async function resetServerState(page: Page): Promise<void> {
+export async function resetServerState(request: APIRequestContext): Promise<void> {
   const baseUrl = getBaseURL()
   try {
-    const response = await page.request.post(`${baseUrl}/api/internal/reset`, {
+    const response = await request.post(`${baseUrl}/api/internal/reset`, {
       timeout: 30000, // Increase timeout to 30s
     })
     if (!response.ok()) {
@@ -158,10 +158,8 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     storageState: undefined, // Ensure no cookies or storage state from previous tests
   })
 
-  // Create a temporary page to reset the server state
-  const tempPage = await context.newPage()
-  await resetServerState(tempPage)
-  await tempPage.close()
+  // Reset server state directly using context request (Performance fix)
+  await resetServerState(context.request)
 
   // Mock the dynamic Google Doc iframe with static, stable content
   await mockGoogleDocIframe(context)
@@ -202,7 +200,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     waitForFontsLoaded(mockPage),
   ])
 
-  // Stop any running timers to ensure a consistent initial state
   await stopTimer(controlPage, dashboardPage)
 
   return { context, dashboardPage, controlPage, mockPage }
@@ -299,7 +296,6 @@ export async function stopTimer(
   controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  // Use data-testid for more reliable selection
   const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {

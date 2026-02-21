@@ -11,9 +11,11 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 
 // Test suite for VRT
 test.describe('Visual Regression Tests - HR Components', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
     // Reset server state after each test
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test.describe('HR-Related Components', () => {
@@ -34,7 +36,6 @@ test.describe('Visual Regression Tests - HR Components', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
-        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -76,7 +77,6 @@ test.describe('Visual Regression Tests - HR Components', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
-        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -98,7 +98,6 @@ test.describe('Visual Regression Tests - HR Components', () => {
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
-          maxDiffPixelRatio: 0.05,
           mask: [
             ...getDynamicContentMasks(dashboardPage),
             ...getHrMasks(dashboardPage),
@@ -112,7 +111,6 @@ test.describe('Visual Regression Tests - HR Components', () => {
       await mockMultipleHrDevices(dashboardPage, [])
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
-        maxDiffPixelRatio: 0.05,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),

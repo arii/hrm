@@ -8,9 +8,11 @@ import { takeScreenshot } from './lib/visual'
 
 // Test suite for VRT
 test.describe('Visual Regression Tests - Spotify Controls', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
     // Reset server state after each test
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test.describe('SpotifyControls Component', () => {

@@ -17,6 +17,15 @@ import { checkAccessibility } from './accessibility'
 import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
 
 /**
+ * Standard viewports for responsive testing.
+ */
+export const VIEWPORTS = {
+  MOBILE: { width: 375, height: 812 }, // iPhone X/12 Mini
+  TABLET: { width: 768, height: 1024 }, // iPad
+  DESKTOP: { width: 1920, height: 1080 }, // standard desktop
+} as const
+
+/**
  * Default options for `toHaveScreenshot` to ensure consistency.
  *
  * @property {boolean} fullPage - Capture the entire page.
@@ -30,7 +39,7 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.05,
+  maxDiffPixelRatio: 0.02, // Lowered to be more strict
 }
 
 /**

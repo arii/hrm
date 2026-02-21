@@ -9,9 +9,11 @@ import { takeScreenshot } from './lib/visual'
 
 // Test suite for VRT
 test.describe('Visual Regression Tests - Workout Summary', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
     // Reset server state after each test
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test('active state', async ({ dashboardPage }) => {

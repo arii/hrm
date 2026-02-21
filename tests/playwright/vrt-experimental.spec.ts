@@ -7,8 +7,10 @@ import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 test.describe('Experimental Analytics Page VRT', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.afterEach(async ({ page }) => {
-    await resetServerState(page)
+    await resetServerState(page.request)
   })
 
   test('initial state', async ({ dashboardPage }) => {
