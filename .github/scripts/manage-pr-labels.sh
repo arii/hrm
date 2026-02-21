@@ -15,7 +15,8 @@ done
 echo "Label check complete."
 
 if [ -f "review_result.json" ] && [ "$(jq 'has("labels")' review_result.json)" == "true" ]; then
-  NEW_LABELS=$(jq -r '.labels | .[]' review_result.json | tr '\n' ',' | sed 's/,$//')
+  # Extract labels, trim whitespace, and join with commas
+  NEW_LABELS=$(jq -r '.labels | map(tostring | sub("^\\s+"; "") | sub("\\s+$"; "")) | join(",")' review_result.json)
 else
   echo "::warning::review_result.json not found or is missing the 'labels' key. Skipping label management."
   exit 0
@@ -41,19 +42,12 @@ if [ -n "$NEW_LABELS" ]; then
   echo "Ensuring new labels exist before applying..."
   IFS=',' read -ra LABELS <<< "$NEW_LABELS"
   for label in "${LABELS[@]}"; do
-    clean_label=$(echo "$label" | xargs)
-    if [ -n "$clean_label" ]; then
-      gh label create "$clean_label" || true
+    if [ -n "$label" ]; then
+      gh label create "$label" || true
     fi
   done
   echo "Label check complete."
 
-  echo "Adding labels: $NEW_LABELS"
-  for label in "${LABELS[@]}"; do
-    clean_label=$(echo "$label" | xargs)
-    if [ -n "$clean_label" ]; then
-      echo "Applying label: $clean_label"
-      gh pr edit "$PR_NUMBER" --add-label "$clean_label" || echo "::warning::Failed to apply label: $clean_label"
-    fi
-  done
+  echo "Applying labels: $NEW_LABELS"
+  gh pr edit "$PR_NUMBER" --add-label "$NEW_LABELS" || echo "::warning::Failed to apply labels: $NEW_LABELS"
 fi
