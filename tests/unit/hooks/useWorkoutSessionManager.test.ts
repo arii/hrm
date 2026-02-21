@@ -179,6 +179,39 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(0)
       expect(result.current.session?.averageHr).toBe(0)
     })
+
+    it('should skip calorie calculation if time delta is too large (signal loss)', async () => {
+      const { result } = renderHook(() => useWorkoutSessionManager())
+      await waitFor(() => expect(result.current.isInitialized).toBe(true))
+
+      act(() => {
+        result.current.startWorkout(30, 80)
+      })
+
+      // Add first data point
+      act(() => {
+        result.current.addHrData({ time: 1001000, hr: 140 })
+      })
+      const initialCalories = result.current.session?.totalCaloriesBurned || 0
+
+      // Add second data point with a 15 second gap (simulated signal loss)
+      act(() => {
+        result.current.addHrData({ time: 1016000, hr: 140 })
+      })
+
+      // Assert calories did NOT increase for this large gap
+      expect(result.current.session?.totalCaloriesBurned).toBe(initialCalories)
+
+      // Add third data point with normal gap (1 sec)
+      act(() => {
+        result.current.addHrData({ time: 1017000, hr: 140 })
+      })
+
+      // Assert calories resumed
+      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(
+        initialCalories
+      )
+    })
   })
 
   describe('Stale Session Handling', () => {

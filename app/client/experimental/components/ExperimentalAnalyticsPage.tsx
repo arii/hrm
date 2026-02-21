@@ -1,6 +1,6 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -111,34 +111,21 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  /**
-   * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
-   * This prevents the interval from being recreated on every hrmData change
-   */
-  const latestHrRef = useRef(0)
-
-  useEffect(() => {
-    latestHrRef.current = hrmData[0]?.value ?? 0
-  }, [hrmData])
-
-  // Recording interval - only depends on status, not hrmData
+  // Ingest data from WebSocket updates (Event-driven)
   useEffect(() => {
     if (status !== 'running') return
 
-    const intervalId = setInterval(() => {
-      const currentHr = latestHrRef.current
+    const currentData = hrmData[0]
+    if (!currentData) return
 
-      // Add HR data point with zone calculation (calories processed internally by hook)
-      const dataPoint = {
-        time: Date.now(),
-        hr: currentHr,
-      }
+    // Add HR data point with zone calculation (calories processed internally by hook)
+    const dataPoint = {
+      time: Date.now(),
+      hr: currentData.value,
+    }
 
-      addHrData(dataPoint)
-    }, 1000)
-
-    return () => clearInterval(intervalId)
-  }, [status, addHrData])
+    addHrData(dataPoint)
+  }, [hrmData, status, addHrData])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
