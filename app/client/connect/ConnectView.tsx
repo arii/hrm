@@ -61,6 +61,7 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
+  onForgetDevice: () => void
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
@@ -103,6 +104,7 @@ export default function ConnectView({
   batteryLevel,
   onConnect,
   onDisconnect,
+  onForgetDevice,
   isSupported,
   signalPeriodMs,
   currentHR,
@@ -318,6 +320,15 @@ export default function ConnectView({
                   Status: {deviceStatus}
                 </Typography>
               )}
+              <Button
+                variant="text"
+                size="small"
+                onClick={onForgetDevice}
+                color="warning"
+                sx={{ mt: 1 }}
+              >
+                Reset Permissions & Settings
+              </Button>
             </Stack>
           )}
         </Box>
