@@ -65,7 +65,7 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 
 const SuggestedIssueSchema = z.object({
   title: z.string(),
-  description: z.string(),
+  description: z.string().min(50, 'Description must be at least 50 characters long.'),
   type: z.enum([
     'bug',
     'enhancement',
@@ -77,7 +77,10 @@ const SuggestedIssueSchema = z.object({
     'security',
   ]),
   priority: z.enum(['high', 'medium', 'low']),
-  fingerprint: z.string().optional(),
+  fingerprint: z.string(),
+  isPreExisting: z.boolean(),
+  filePath: z.string(),
+  lineNumber: z.number(),
 })
 
 const PRContextSchema = z.object({
@@ -472,6 +475,47 @@ export function isDuplicate(
   return checkDuplicate(newIssue, existingIssues).isDuplicate
 }
 
+function verifyIsPreExisting(
+  issue: SuggestedIssue,
+  baseSha: string | undefined
+): boolean {
+  try {
+    const range = `${issue.lineNumber},${issue.lineNumber}`
+    // Use git blame to see if the line was modified since baseSha
+    const result = spawnSync(
+      'git',
+      ['blame', '-L', range, '--porcelain', issue.filePath],
+      { encoding: 'utf-8' }
+    )
+
+    if (result.status !== 0 || !result.stdout) return false
+
+    const output = result.stdout.trim()
+    if (!output) return false
+
+    // The first line of porcelain output is the commit hash
+    const commitHash = output.split('\n')[0]?.split(' ')[0]
+    if (!commitHash) return false
+
+    if (!baseSha) {
+      console.warn(
+        `Warning: BASE_SHA environment variable is missing. Cannot verify pre-existing status for ${issue.filePath}:${issue.lineNumber}. Assuming not pre-existing to be safe.`
+      )
+      return false
+    }
+
+    const isAncestor =
+      spawnSync('git', ['merge-base', '--is-ancestor', commitHash, baseSha])
+        .status === 0
+    return isAncestor
+  } catch (e) {
+    console.warn(
+      `Warning: Git command failed to verify pre-existing status for ${issue.filePath}:${issue.lineNumber}: ${e instanceof Error ? e.message : e}`
+    )
+    return false
+  }
+}
+
 // --- Core Logic ---
 
 export async function run(
@@ -503,8 +547,18 @@ export async function run(
     )
   }
 
-  if (!result.suggestedIssues || result.suggestedIssues.length === 0) {
-    console.log('✨ No suggested issues found in the review result.')
+  const baseSha = process.env.BASE_SHA
+
+  // Filter: ONLY create issues for items identified as pre-existing on the base branch
+  const outOfScopeIssues = (result.suggestedIssues || []).filter((issue) => {
+    if (issue.isPreExisting !== true) return false
+    return verifyIsPreExisting(issue, baseSha)
+  })
+
+  if (outOfScopeIssues.length === 0) {
+    console.log(
+      '✨ No pre-existing base branch issues identified for extraction.'
+    )
     return
   }
 
@@ -543,7 +597,7 @@ export async function run(
   let skippedDuplicates = 0
   let skippedLowQuality = 0
 
-  for (const issue of result.suggestedIssues) {
+  for (const issue of outOfScopeIssues) {
     const duplicate = checkDuplicate(issue, preparedExistingIssues)
     if (duplicate.isDuplicate) {
       console.log(
