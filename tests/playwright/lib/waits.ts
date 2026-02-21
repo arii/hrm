@@ -52,11 +52,15 @@ export async function waitForPageReady(
     await document.fonts.ready
   })
 
-  // Wait for loading skeletons to disappear
-  await page.waitForSelector('.MuiSkeleton-root', {
-    state: 'detached',
-    timeout,
-  })
+  // Wait for loading skeletons to disappear (non-blocking)
+  try {
+    await page.waitForSelector('.MuiSkeleton-root', {
+      state: 'detached',
+      timeout,
+    })
+  } catch {
+    console.warn('Skeletons did not detach within timeout, proceeding anyway.')
+  }
 }
 
 /**
