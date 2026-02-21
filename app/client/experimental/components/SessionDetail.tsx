@@ -6,19 +6,13 @@ import {
   Typography,
   Button,
   Box,
-  Skeleton,
 } from '@mui/material'
-import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
+import HeartRateTimeSeries from './AsyncHeartRateTimeSeries'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -34,7 +28,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           ?.totalToThisPoint ?? 0)
       : 0
   const durationInSeconds = session.endTime
-    ? (session.endTime - session.startTime) / 1000
+    ? (session.endTime - session.startTime - session.totalPaused) / 1000
     : 0
   const avgHr =
     session.hrHistory.reduce((sum, dp) => sum + dp.hr, 0) /
@@ -91,7 +85,10 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           </Box>
 
           <Box sx={{ flex: 1 }}>
-            <ZoneDistribution timeInZones={session.timeInZones} />
+            <ZoneDistribution
+              timeInZones={session.timeInZones}
+              totalDuration={durationInSeconds}
+            />
           </Box>
         </Box>
         {session.hrHistory.length > 0 && (

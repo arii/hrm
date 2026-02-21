@@ -30,7 +30,8 @@ const WorkoutSummary = ({
   const statusColor =
     (theme.palette as unknown as { custom?: Record<string, string> }).custom?.[
       status
-    ] || theme.palette.grey[500]
+    ] ||
+    (status === 'running' ? theme.palette.success.main : theme.palette.grey[500])
 
   const formattedDate = formatDate(date)
 
@@ -136,7 +137,10 @@ const WorkoutSummary = ({
                 fontWeight: 700,
               }}
             >
-              {calories.toFixed(0)}
+              {calories.toFixed(0)}{' '}
+              <Typography component="span" variant="caption">
+                kcal
+              </Typography>
             </Typography>
           </Grid>
         </Grid>

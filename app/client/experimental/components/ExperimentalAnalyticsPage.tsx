@@ -1,8 +1,8 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Container, Box, Button, Skeleton } from '@mui/material'
-import dynamic from 'next/dynamic'
+import { Container, Box, Button } from '@mui/material'
+import HeartRateTimeSeries from './AsyncHeartRateTimeSeries'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
@@ -31,11 +31,6 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_5: 0,
   ZONE_6: 0,
 }
-
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
 
 type View = 'active' | 'list' | 'detail'
 
@@ -251,7 +246,10 @@ const ExperimentalAnalyticsPage = () => {
               calorieHistory={activeSession?.calorieHistory || []}
             />
 
-            <ZoneDistribution timeInZones={summaryData.timeInZones} />
+            <ZoneDistribution
+              timeInZones={summaryData.timeInZones}
+              totalDuration={duration}
+            />
 
             {activeSession && activeSession.hrHistory.length > 0 && (
               <HeartRateTimeSeries hrHistory={activeSession.hrHistory} />
