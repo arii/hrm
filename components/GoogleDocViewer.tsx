@@ -49,7 +49,6 @@ const GoogleDocViewer = ({
   useEffect(() => {
     // The loading skeleton must be shown on each refresh, so we reset the
     // loading state here. This is a deliberate and safe use case.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIframeLoading(true) // Reset loading state on refresh
     hasSignaledReady.current = false // Reset readiness signal on refresh
 

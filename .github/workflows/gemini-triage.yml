@@ -105,7 +105,7 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.js');
+              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.cjs');
 
               let result;
               try {

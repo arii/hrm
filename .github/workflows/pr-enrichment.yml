@@ -258,7 +258,7 @@ jobs:
 
             try {
               const rawData = fs.readFileSync('pr_description.json', 'utf8');
-              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.js');
+              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.cjs');
 
               let result;
               try {
