@@ -151,8 +151,7 @@ const SpotifyDisplay = ({ onReady }: SpotifyDisplayProps) => {
     if (onReady && (!isLoggedIn || isReady)) {
       onReady()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, isReady])
+  }, [onReady, isLoggedIn, isReady])
 
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)

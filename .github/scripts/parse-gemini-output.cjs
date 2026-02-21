@@ -1,6 +1,5 @@
 /**
- * Robustly parses JSON output from an LLM.
- * Handles markdown code blocks, pre/postamble, and truncated JSON.
+ * Parses JSON output from an LLM, handling markdown code blocks and truncated JSON.
  *
  * @param {string} rawData - The raw output string from the LLM.
  * @returns {any} The parsed JSON object.

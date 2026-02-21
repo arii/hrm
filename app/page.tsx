@@ -79,6 +79,19 @@ const Dashboard = () => {
     []
   )
 
+  const onSpotifyReady = useCallback(
+    () => handleComponentReady('spotify'),
+    [handleComponentReady]
+  )
+  const onWorkoutTableReady = useCallback(
+    () => handleComponentReady('workoutTable'),
+    [handleComponentReady]
+  )
+  const onGoogleDocReady = useCallback(
+    () => handleComponentReady('googleDoc'),
+    [handleComponentReady]
+  )
+
   const allComponentsReady =
     componentLoadStatus.spotify &&
     (process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
@@ -134,7 +147,7 @@ const Dashboard = () => {
             docId={DOC_ID}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
-            onReady={() => handleComponentReady('workoutTable')}
+            onReady={onWorkoutTableReady}
           />
         ) : (
           <GoogleDocViewer
@@ -145,12 +158,12 @@ const Dashboard = () => {
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
-            onReady={() => handleComponentReady('googleDoc')}
+            onReady={onGoogleDocReady}
           />
         )}
       </Box>
 
-      <SpotifyDisplay onReady={() => handleComponentReady('spotify')} />
+      <SpotifyDisplay onReady={onSpotifyReady} />
     </Container>
   )
 }

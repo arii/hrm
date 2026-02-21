@@ -49,6 +49,7 @@ const GoogleDocViewer = ({
   useEffect(() => {
     // The loading skeleton must be shown on each refresh, so we reset the
     // loading state here. This is a deliberate and safe use case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIframeLoading(true) // Reset loading state on refresh
     hasSignaledReady.current = false // Reset readiness signal on refresh
 
@@ -60,8 +61,7 @@ const GoogleDocViewer = ({
       }
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]) // Rerun on refresh
+  }, [refreshKey, onReady]) // Rerun on refresh
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
