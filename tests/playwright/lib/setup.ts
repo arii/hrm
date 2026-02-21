@@ -303,7 +303,6 @@ export async function stopTimer(
   const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
-    // Check if stop button is visible with a short wait to allow UI sync
     if (await stopButton.isVisible({ timeout: 1000 })) {
       await stopButton.click()
 

@@ -1,4 +1,3 @@
-// app/api/internal/reset/route.ts
 import { NextResponse } from 'next/server'
 
 /**
