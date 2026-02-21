@@ -68,4 +68,26 @@ describe('ZoneDistribution', () => {
       screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
     ).not.toBeInTheDocument()
   })
+
+  it('provides accessible progress bars with aria-labelledby', () => {
+    const timeInZones: Record<HeartRateZone, number> = {
+      ...baseTimeInZones,
+      ZONE_2: 100,
+    }
+    render(<ZoneDistribution timeInZones={timeInZones} />)
+
+    const progressBar = screen.getByRole('progressbar')
+    const labelId = `zone-label-ZONE_2`
+    const valueId = `zone-value-ZONE_2`
+
+    expect(progressBar).toHaveAttribute('aria-labelledby', `${labelId} ${valueId}`)
+    // Use container.querySelector or similar to find the element with the ID
+    const labelElement = document.getElementById(labelId)
+    const valueElement = document.getElementById(valueId)
+
+    expect(labelElement).toBeInTheDocument()
+    expect(labelElement?.textContent).toBe(HR_ZONE_CONFIG.ZONE_2.label)
+    expect(valueElement).toBeInTheDocument()
+    expect(valueElement?.textContent).toContain('100.0%')
+  })
 })

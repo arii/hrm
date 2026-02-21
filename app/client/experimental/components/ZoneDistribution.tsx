@@ -111,6 +111,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
           {data.map((item) => {
             const labelId = `zone-label-${item.zone}`
+            const valueId = `zone-value-${item.zone}`
             return (
               <Box key={item.zone}>
                 <Box
@@ -123,14 +124,18 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({
                   <Typography id={labelId} variant="body2" fontWeight={600}>
                     {item.label}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography
+                    id={valueId}
+                    variant="body2"
+                    color="textSecondary"
+                  >
                     {item.formattedTime} ({item.percentage.toFixed(1)}%)
                   </Typography>
                 </Box>
                 <LinearProgress
                   variant="determinate"
                   value={item.percentage}
-                  aria-labelledby={labelId}
+                  aria-labelledby={`${labelId} ${valueId}`}
                   sx={{
                     height: 8,
                     borderRadius: 4,
