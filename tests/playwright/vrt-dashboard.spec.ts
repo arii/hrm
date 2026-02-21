@@ -98,35 +98,37 @@ test.describe('Visual Regression Tests - Dashboard', () => {
       )
     })
 
-    test.skip('mobile viewport', async ({ dashboardPage }) => {
-      // Skipping due to height inconsistencies after moving to isolated tests.
-      // Expected snapshots were taken on a shared page with different content height.
+    test('mobile viewport', async ({ dashboardPage }) => {
+      // Use exact viewport from expected snapshots to minimize diffs
+      await dashboardPage.setViewportSize({ width: 383, height: 1071 })
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
-      await dashboardPage.setViewportSize({ width: 375, height: 812 })
-      await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
+
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.2,
+        maxDiffPixelRatio: 0.1,
       })
     })
 
-    test.skip('tablet viewport', async ({ dashboardPage }) => {
-      // Skipping due to height inconsistencies after moving to isolated tests.
-      // Expected snapshots were taken on a shared page with different content height.
+    test('tablet viewport', async ({ dashboardPage }) => {
+      await dashboardPage.setViewportSize({ width: 768, height: 1166 })
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
-      await dashboardPage.setViewportSize({ width: 768, height: 1024 })
-      await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
+
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.2,
+        maxDiffPixelRatio: 0.1,
       })
     })
 
-    test.skip('large desktop viewport', async ({ dashboardPage }) => {
-      // Skipping due to height inconsistencies after moving to isolated tests.
+    test('large desktop viewport', async ({ dashboardPage }) => {
+      await dashboardPage.setViewportSize({ width: 2560, height: 1494 })
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
-      await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
-      await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
+
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.2,
+        maxDiffPixelRatio: 0.1,
       })
     })
   })

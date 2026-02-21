@@ -128,7 +128,9 @@ export async function navigateAndWait(
 export async function resetServerState(page: Page): Promise<void> {
   const baseUrl = getBaseURL()
   try {
-    const response = await page.request.post(`${baseUrl}/api/internal/reset`)
+    const response = await page.request.post(`${baseUrl}/api/internal/reset`, {
+      timeout: 30000, // Increase timeout to 30s
+    })
     if (!response.ok()) {
       console.error(`Failed to reset server state: ${response.status()}`)
     }

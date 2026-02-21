@@ -22,6 +22,14 @@ declare global {
   var tabataService: TabataTimer | undefined
   var resetSocketManager: (() => void) | undefined
 
+  namespace NodeJS {
+    interface Global {
+      spotifyService: SpotifyService | undefined
+      tabataService: TabataTimer | undefined
+      resetSocketManager: (() => void) | undefined
+    }
+  }
+
   interface Window {
     __TEST_READY__?: boolean
     __TEST_WEBSOCKET_READY__?: boolean
