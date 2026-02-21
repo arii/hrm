@@ -257,12 +257,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
   await waitForPageReady(page)
 
   // Wait for WebSocket connection
-  await page.waitForFunction(
-    () => {
-      return window.__TEST_WEBSOCKET_READY__ === true
-    },
-    { timeout: 10000 }
-  )
+  await waitForWebSocketConnection(page, { timeout: 10000 })
 }
 
 /**
