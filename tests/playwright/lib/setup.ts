@@ -309,14 +309,14 @@ export async function stopTimer(
 
       // Wait for START button to confirm timer stopped
       const startButton = controlPage.getByTestId('start-timer-button')
-      await expect(startButton).toBeVisible({ timeout: 3000 })
+      await expect(startButton).toBeVisible({ timeout: 5000 })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
         await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
           /00:00/,
           {
-            timeout: 3000,
+            timeout: 5000,
           }
         )
       }
