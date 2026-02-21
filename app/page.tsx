@@ -13,6 +13,7 @@ import { useState, useCallback } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
+import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -62,7 +63,6 @@ const Dashboard = () => {
 
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-<<<<<<< HEAD
 
   // Track the readiness of dynamic components to ensure accurate VRT snapshots.
   // data-ready will only be set to true once all critical sections are hydrated.
@@ -79,28 +79,14 @@ const Dashboard = () => {
     []
   )
 
-  const onSpotifyReady = useCallback(
-    () => handleComponentReady('spotify'),
-    [handleComponentReady]
-  )
-  const onWorkoutTableReady = useCallback(
-    () => handleComponentReady('workoutTable'),
-    [handleComponentReady]
-  )
-  const onGoogleDocReady = useCallback(
-    () => handleComponentReady('googleDoc'),
-    [handleComponentReady]
-  )
-
   const allComponentsReady =
     componentLoadStatus.spotify &&
     (process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
       ? componentLoadStatus.workoutTable
       : componentLoadStatus.googleDoc)
 
-  const isReady = useTestPageReady(allComponentsReady)
-=======
->>>>>>> origin/leader
+  useTestPageReady(allComponentsReady)
+
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
@@ -148,7 +134,7 @@ const Dashboard = () => {
             docId={DOC_ID}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
-            onReady={onWorkoutTableReady}
+            onReady={() => handleComponentReady('workoutTable')}
           />
         ) : (
           <GoogleDocViewer
@@ -159,12 +145,12 @@ const Dashboard = () => {
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
-            onReady={onGoogleDocReady}
+            onReady={() => handleComponentReady('googleDoc')}
           />
         )}
       </Box>
 
-      <SpotifyDisplay onReady={onSpotifyReady} />
+      <SpotifyDisplay onReady={() => handleComponentReady('spotify')} />
     </Container>
   )
 }

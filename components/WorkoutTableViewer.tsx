@@ -61,7 +61,8 @@ export default function WorkoutTableViewer({
     } else {
       onReady?.()
     }
-  }, [docId, refreshKey, onReady])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docId, refreshKey])
 
   if (loading) {
     return (

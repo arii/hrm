@@ -61,7 +61,8 @@ const GoogleDocViewer = ({
       }
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
-  }, [refreshKey, onReady]) // Rerun on refresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]) // Rerun on refresh
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>

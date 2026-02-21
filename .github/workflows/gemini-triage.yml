@@ -105,24 +105,13 @@ jobs:
                 return;
               }
               const rawData = fs.readFileSync(filePath, 'utf8');
-              // The model may return a JSON object wrapped in markdown.
+              const parseGeminiOutput = require('./.github/scripts/parse-gemini-output.js');
+
               let result;
               try {
-                result = JSON.parse(rawData);
+                result = parseGeminiOutput(rawData);
               } catch (e) {
-                // If direct parsing fails, try to extract from markdown code blocks
-                const cleanedData = rawData.trim().replace(/^```json|```$/g, '').trim();
-                try {
-                  result = JSON.parse(cleanedData);
-                } catch (innerError) {
-                  // Final fallback: regex match for the first block
-                  const match = rawData.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-                  if (match) {
-                    result = JSON.parse(match[1].trim());
-                  } else {
-                    throw innerError;
-                  }
-                }
+                throw new Error(`Failed to parse triage result: ${e.message}`);
               }
 
               // ---- Start of Validation Block ----
