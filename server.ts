@@ -119,6 +119,10 @@ app.prepare().then(async () => {
   )
   global.spotifyService = services.spotifyService
 
+  if (env.NODE_ENV !== 'production' || process.env.TESTING === 'true') {
+    global.tabataService = services.tabataService
+  }
+
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({
     timerData: services.tabataService.getState(),

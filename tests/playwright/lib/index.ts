@@ -104,6 +104,7 @@ export {
   warmupEndpoints,
   createTestPage,
   navigateAndWait,
+  resetServerState,
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,

@@ -122,6 +122,22 @@ export async function navigateAndWait(
 }
 
 /**
+ * Call the internal reset endpoint to clear server state.
+ * This ensures no leftover state from previous tests (e.g. HR data, timer).
+ */
+export async function resetServerState(page: Page): Promise<void> {
+  const baseUrl = getBaseURL()
+  try {
+    const response = await page.request.post(`${baseUrl}/api/internal/reset`)
+    if (!response.ok()) {
+      console.error(`Failed to reset server state: ${response.status()}`)
+    }
+  } catch (error) {
+    console.error('Error calling reset endpoint:', error)
+  }
+}
+
+/**
  * Comprehensive setup for visual regression tests.
  * Creates a clean browser context, initializes all required pages,
  * and prepares them for snapshot testing.
@@ -139,6 +155,11 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   const context = await browser.newContext({
     storageState: undefined, // Ensure no cookies or storage state from previous tests
   })
+
+  // Create a temporary page to reset the server state
+  const tempPage = await context.newPage()
+  await resetServerState(tempPage)
+  await tempPage.close()
 
   // Mock the dynamic Google Doc iframe with static, stable content
   await mockGoogleDocIframe(context)
@@ -276,27 +297,24 @@ export async function stopTimer(
   controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = controlPage.getByRole('button', {
-    name: 'STOP',
-    exact: true,
-  })
+  // Use data-testid for more reliable selection
+  const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
-    // If timer is running, stop it
-    if (await stopButton.isVisible({ timeout: 2000 })) {
+    // Check if stop button is visible with a short wait to allow UI sync
+    if (await stopButton.isVisible({ timeout: 1000 })) {
       await stopButton.click()
 
       // Wait for START button to confirm timer stopped
-      await expect(
-        controlPage.getByRole('button', { name: 'START', exact: true })
-      ).toBeVisible({ timeout: 5000 })
+      const startButton = controlPage.getByTestId('start-timer-button')
+      await expect(startButton).toBeVisible({ timeout: 3000 })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
         await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
           /00:00/,
           {
-            timeout: 5000,
+            timeout: 3000,
           }
         )
       }

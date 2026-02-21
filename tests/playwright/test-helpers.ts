@@ -33,6 +33,7 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  resetServerState,
   // Mock utilities
   mockGoogleDocIframe,
   mockMultipleHrDevices,

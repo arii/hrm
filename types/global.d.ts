@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react'
 import { SpotifyService } from './interfaces'
+import TabataTimer from '../services/tabataTimer'
 import { BluetoothConnectionStatus } from './bluetooth'
 import { ServerMessage } from './websocket'
 
@@ -18,6 +19,7 @@ export interface TestControls {
 
 declare global {
   var spotifyService: SpotifyService | undefined
+  var tabataService: TabataTimer | undefined
 
   interface Window {
     __TEST_READY__?: boolean

@@ -1,45 +1,27 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+// tests/playwright/vrt-timer-controls.spec.ts
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest } from './test-helpers'
+import {
+  setupMinimalVisualRegressionTest,
+  resetServerState,
+} from './test-helpers'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
-
-// Test suite configuration
-test.describe.configure({ mode: 'serial' })
-
-// Reusable page objects
-let controlPage: Page
-let dashboardPage: Page
-let context: BrowserContext
 
 // Test suite for VRT
-test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    controlPage = setup.controlPage
-    dashboardPage = setup.dashboardPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  // Add a beforeEach hook to wait for the page to be ready before each test
-  test.beforeEach(async () => {
-    await waitForPageReady(controlPage)
-    await waitForPageReady(dashboardPage)
+test.describe('Visual Regression Tests - Timer Controls', () => {
+  test.afterEach(async ({ page }) => {
+    // Reset server state after each test
+    await resetServerState(page)
   })
 
   test.describe('TimerControls Component', () => {
-    test('initial state', async () => {
+    test('initial state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-idle.png')
     })
 
-    test('with configured inputs', async () => {
+    test('with configured inputs', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
       // Ensure Tabata mode is active to see inputs
       await controlPage.getByTestId('tabata-mode-button').click()
 
@@ -60,12 +42,12 @@ test.describe('Visual Regression Tests', () => {
 
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-configured.png', {
-        // Performance: Skip a11y check as configuration inputs are covered in other tests
         skipA11y: true,
       })
     })
 
-    test('in active state', async () => {
+    test('in active state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
       await controlPage.getByTestId('start-timer-button').click()
       await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible()
 
@@ -73,29 +55,24 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
       })
-
-      // Stop the timer to reset for the next test
-      await controlPage.getByTestId('stop-timer-button').click()
     })
 
-    test('start button hover state', async () => {
+    test('start button hover state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
       const startButton = controlPage.getByTestId('start-timer-button')
       await startButton.hover()
       await takeScreenshot(startButton, 'start-button-hover.png', {
-        // Performance: Skip a11y check for hover state
         skipA11y: true,
       })
     })
 
-    test('in stopwatch mode', async () => {
+    test('in stopwatch mode', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
       await controlPage.getByTestId('stopwatch-mode-button').click()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
-        // Performance: Skip a11y check for alternate mode; main mode is fully covered
         skipA11y: true,
       })
-      // Switch back to Tabata for subsequent tests
-      await controlPage.getByTestId('tabata-mode-button').click()
     })
   })
 })

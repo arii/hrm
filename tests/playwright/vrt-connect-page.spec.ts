@@ -2,9 +2,14 @@ import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { resetServerState } from './test-helpers'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
+  test.afterEach(async ({ page }) => {
+    await resetServerState(page)
+  })
+
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
     await connectPage.goto('/client/connect')

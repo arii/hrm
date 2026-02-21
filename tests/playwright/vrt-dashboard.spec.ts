@@ -1,64 +1,36 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+// tests/playwright/vrt-dashboard.spec.ts
+import { expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
-  setupVisualRegressionTest,
+  setupMinimalVisualRegressionTest,
+  resetServerState,
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
-import { stopTimer } from './lib/setup'
-
-// Test suite configuration
-test.describe.configure({ mode: 'serial' })
-
-// Reusable page objects
-let dashboardPage: Page
-let controlPage: Page
-let mockPage: Page
-let context: BrowserContext
 
 // Test suite for VRT
-test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    dashboardPage = setup.dashboardPage
-    controlPage = setup.controlPage
-    mockPage = setup.mockPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  test.afterEach(async () => {
-    // Ensure timer is stopped after each test to maintain a clean state
-    await stopTimer(controlPage, dashboardPage)
-  })
-
-  test.beforeEach(async () => {
-    await waitForPageReady(dashboardPage)
-    await waitForPageReady(controlPage)
-    await waitForPageReady(mockPage)
-
-    // Force visibility to avoid flaky screenshots due to animations
-    await dashboardPage.addStyleTag({
-      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
-    })
+test.describe('Visual Regression Tests - Dashboard', () => {
+  test.afterEach(async ({ page }) => {
+    // Reset server state after each test to ensure no leakage (timer, HR data)
+    await resetServerState(page)
   })
 
   test.describe('Dashboard Component', () => {
-    test('initial, empty state', async () => {
+    test('initial, empty state', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
     })
 
-    // NEW: Active timer with no HR data
-    test('active timer without HR data', async () => {
+    test('active timer without HR data', async ({
+      dashboardPage,
+      controlPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
+
       // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
@@ -67,7 +39,7 @@ test.describe('Visual Regression Tests', () => {
 
       await controlPage.getByTestId('start-timer-button').click()
 
-      // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
+      // Wait for timer to transition from idle (00:00) to prepare
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
@@ -87,8 +59,15 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    // NEW: Active timer WITH HR data (the regression scenario)
-    test('active timer with HR data', async () => {
+    test('active timer with HR data', async ({
+      dashboardPage,
+      controlPage,
+      mockPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, '/client/control')
+      await setupMinimalVisualRegressionTest(mockPage, '/client/mock')
+
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
@@ -114,30 +93,32 @@ test.describe('Visual Regression Tests', () => {
         'dashboard-active-timer-with-hr.png',
         {
           mask: [...getDynamicContentMasks(dashboardPage)],
-          maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
+          maxDiffPixelRatio: 0.15,
         }
       )
     })
 
-    // NEW: Responsive breakpoint tests
-    test('mobile viewport', async () => {
+    test('mobile viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 375, height: 812 })
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
     })
 
-    test('tablet viewport', async () => {
+    test('tablet viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 768, height: 1024 })
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
     })
 
-    test('large desktop viewport', async () => {
+    test('large desktop viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,

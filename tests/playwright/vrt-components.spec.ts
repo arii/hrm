@@ -4,11 +4,16 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
+  resetServerState,
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 test.describe('Component-Specific VRT', () => {
+  test.afterEach(async ({ page }) => {
+    await resetServerState(page)
+  })
+
   test.beforeEach(async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
     await waitForPageReady(dashboardPage)
