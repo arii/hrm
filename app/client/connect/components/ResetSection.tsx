@@ -2,22 +2,19 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-export interface ResetSectionProps {
+interface ResetSectionProps {
   onReset: () => void
   isResetting: boolean
 }
 
-/**
- * ResetSection component handles resetting the server state and forgetting the Bluetooth device.
- * Extracted from ConnectView to reduce duplication and improve maintainability.
- */
 const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
   <Box
     sx={{
       textAlign: 'center',
       mt: 4,
       pt: 4,
-      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+      borderTop: '1px solid',
+      borderColor: 'divider',
     }}
   >
     <Button
