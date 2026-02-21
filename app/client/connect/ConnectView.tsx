@@ -88,7 +88,8 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       textAlign: 'center',
       mt: 4,
       pt: 4,
-      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+      borderTop: 1,
+      borderColor: 'divider',
     }}
   >
     <Button
