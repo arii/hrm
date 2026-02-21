@@ -26,16 +26,17 @@ export default function Main({ children }: { children: React.ReactNode }) {
               <UserSettingsProvider>
                 <TimerSoundProvider>
                   <AnimatePresence mode="wait">
-                    <motion.div
+                    <motion.main
                       key={pathname}
                       variants={pageVariants}
                       initial="initial"
                       animate="in"
                       exit="out"
                       data-testid="main-content-layout"
+                      role="main"
                     >
                       {children}
-                    </motion.div>
+                    </motion.main>
                   </AnimatePresence>
                 </TimerSoundProvider>
               </UserSettingsProvider>

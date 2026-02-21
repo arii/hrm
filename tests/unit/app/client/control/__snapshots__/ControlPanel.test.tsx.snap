@@ -4,7 +4,6 @@ exports[`ControlPanel Component should match snapshot 1`] = `
 <DocumentFragment>
   <div
     class="MuiContainer-root MuiContainer-maxWidthXs css-n697ne-MuiContainer-root"
-    data-ready="true"
     data-testid="control-panel"
   >
     <div
