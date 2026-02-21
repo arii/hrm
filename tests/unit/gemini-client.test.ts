@@ -49,7 +49,8 @@ describe('JsonProcessor', () => {
 
   it('should parse valid JSON containing markdown code blocks in its values', () => {
     const jsonWithNestedBlocks = {
-      description: 'Here is some code:\n```javascript\nconsole.log("hello");\n```',
+      description:
+        'Here is some code:\n```javascript\nconsole.log("hello");\n```',
       labels: [],
     }
     const rawInput = JSON.stringify(jsonWithNestedBlocks)
