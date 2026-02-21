@@ -20,7 +20,6 @@ describe('RefreshIconButton', () => {
 
     const button = screen.getByRole('button', { name: /test refresh button/i })
     expect(button).toBeInTheDocument()
-    expect(button).toHaveStyle({ width: '48px', height: '48px' })
   })
 
   it('calls onClick handler when clicked', () => {

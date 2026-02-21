@@ -1,8 +1,9 @@
 import RefreshIcon from '@mui/icons-material/Refresh'
 import { IconButton, IconButtonProps } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import { memo } from 'react'
 
-interface RefreshIconButtonProps extends Omit<IconButtonProps, 'size'> {
+interface RefreshIconButtonProps extends IconButtonProps {
   onClick: () => void
   'aria-label': string
 }
@@ -22,8 +23,6 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
         '&:hover': {
           backgroundColor: alpha(theme.palette.background.paper, 0.9),
         },
-        width: 48,
-        height: 48,
       })}
       {...props}
     >
@@ -32,4 +31,4 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
   )
 }
 
-export default RefreshIconButton
+export default memo(RefreshIconButton)

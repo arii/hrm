@@ -13,7 +13,6 @@ import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
-import { useTestPageReady } from '@/hooks/useTestPageReady'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -25,8 +24,8 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
-const WorkoutTableViewer = dynamic(
-  () => import('@/components/WorkoutTableViewer'),
+const WorkoutTableHeader = dynamic(
+  () => import('@/components/WorkoutTableHeader'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
@@ -63,9 +62,10 @@ const Dashboard = () => {
 
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-  const isReady = useTestPageReady()
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
+
+  const useNativeTable = process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
@@ -81,7 +81,6 @@ const Dashboard = () => {
   return (
     <Container
       data-testid="dashboard"
-      data-ready={isReady ? 'true' : 'false'}
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{
@@ -107,8 +106,8 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
-          <WorkoutTableViewer
+        {useNativeTable ? (
+          <WorkoutTableHeader
             docId={DOC_ID}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
