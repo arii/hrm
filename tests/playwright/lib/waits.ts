@@ -61,6 +61,12 @@ export async function waitForPageReady(
     .catch(() => {
       // Ignore errors if skeletons are not found (already hidden/removed)
     })
+
+  // Wait for actual content to be present
+  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
+    state: 'visible',
+    timeout,
+  })
 }
 
 /**
