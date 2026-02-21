@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
-import HeartRateTimeSeries from './AsyncHeartRateTimeSeries'
+import { AsyncHeartRateTimeSeries as HeartRateTimeSeries } from './HeartRateTimeSeries'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
@@ -248,7 +248,6 @@ const ExperimentalAnalyticsPage = () => {
 
             <ZoneDistribution
               timeInZones={summaryData.timeInZones}
-              totalDuration={duration}
             />
 
             {activeSession && activeSession.hrHistory.length > 0 && (

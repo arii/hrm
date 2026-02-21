@@ -193,7 +193,7 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
+            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',
