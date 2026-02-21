@@ -65,7 +65,10 @@ const Dashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
-  const useNativeTable = process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true'
+  const useNativeTable =
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ||
+    (typeof window !== 'undefined' &&
+      window.location.search.includes('use-native-table=true'))
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
