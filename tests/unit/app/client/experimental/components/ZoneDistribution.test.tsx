@@ -80,7 +80,10 @@ describe('ZoneDistribution', () => {
     const labelId = `zone-label-ZONE_2`
     const valueId = `zone-value-ZONE_2`
 
-    expect(progressBar).toHaveAttribute('aria-labelledby', `${labelId} ${valueId}`)
+    expect(progressBar).toHaveAttribute(
+      'aria-labelledby',
+      `${labelId} ${valueId}`
+    )
     // Use container.querySelector or similar to find the element with the ID
     const labelElement = document.getElementById(labelId)
     const valueElement = document.getElementById(valueId)
