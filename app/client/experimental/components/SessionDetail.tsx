@@ -1,12 +1,17 @@
 // app/client/experimental/components/SessionDetail.tsx
 'use client'
-import { Card, CardContent, Typography, Button, Box } from '@mui/material'
+import { Card, CardContent, Typography, Button, Box, Skeleton } from '@mui/material'
+import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import ZoneDistribution from './ZoneDistribution'
 import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { AsyncHeartRateTimeSeries as HeartRateTimeSeries } from './HeartRateTimeSeries'
+
+const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
 
 interface SessionDetailProps {
   session: WorkoutSessionData
@@ -22,7 +27,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           ?.totalToThisPoint ?? 0)
       : 0
   const durationInSeconds = session.endTime
-    ? (session.endTime - session.startTime - session.totalPaused) / 1000
+    ? (session.endTime - session.startTime) / 1000
     : 0
   const avgHr =
     session.hrHistory.reduce((sum, dp) => sum + dp.hr, 0) /

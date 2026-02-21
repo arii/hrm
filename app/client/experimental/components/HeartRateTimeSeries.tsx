@@ -7,9 +7,7 @@ import {
   Typography,
   Box,
   useTheme,
-  Skeleton,
 } from '@mui/material'
-import dynamic from 'next/dynamic'
 import { HrDataPoint } from '@/lib/workout-session-storage'
 import {
   LineChart,
@@ -73,13 +71,5 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
     </Card>
   )
 }
-
-export const AsyncHeartRateTimeSeries = dynamic(
-  () => Promise.resolve(HeartRateTimeSeries),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={300} />,
-  }
-)
 
 export default HeartRateTimeSeries
