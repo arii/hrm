@@ -11,6 +11,10 @@ on:
         description: 'The PR number to associate the issues with'
         required: true
         type: string
+      base_sha:
+        description: 'The base SHA of the PR'
+        required: false
+        type: string
       run_id:
         description: 'The explicit workflow run ID to source artifacts from'
         required: true
@@ -61,6 +65,7 @@ jobs:
         if: steps.verify_artifact.outputs.artifact_found == 'true'
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
+          BASE_SHA: ${{ inputs.base_sha }}
           GH_TOKEN: ${{ secrets.gh_token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |

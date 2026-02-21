@@ -8,6 +8,7 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -22,6 +23,16 @@ jest.mock('next/navigation', () => ({
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
+}))
+
+// Mock the Spotify Web Playback hook
+jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
+    player: null,
+    isReady: false,
+    deviceId: null,
+  })),
 }))
 
 // Mock the volume preference hook
@@ -180,5 +191,20 @@ describe('components/SpotifyControls', () => {
       const deviceSelect = screen.getByRole('combobox')
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
     })
+  })
+
+  it('shows registration status when player is initializing', () => {
+    // Mock useSpotifyWebPlayback to return a player but not ready
+    const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+    mockedUseSpotifyWebPlayback.mockReturnValue({
+      player: { disconnect: jest.fn() },
+      isReady: false,
+      deviceId: null,
+    })
+
+    render(<SpotifyControls />)
+    expect(
+      screen.getByText('Registering HRM Web Player...')
+    ).toBeInTheDocument()
   })
 })

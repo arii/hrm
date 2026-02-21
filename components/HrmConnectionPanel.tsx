@@ -5,7 +5,7 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
-import HrTileWrapper from '@/components/HrTileWrapper'
+import HrTile from '@/components/HrTile'
 import { getActiveHrmData } from '@/utils/hrm'
 
 const HrmConnectionPanel = () => {
@@ -91,7 +91,7 @@ const HrmConnectionPanel = () => {
                 },
               }}
             >
-              <HrTileWrapper {...tileProps} />
+              <HrTile {...tileProps} />
             </Box>
           )
         })

@@ -5,13 +5,15 @@ import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCalculator } from '@/hooks/useCalorieCalculator'
-import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
-import { calculateMaxHr } from '@/utils/hrCalculations'
+import {
+  calculateZoneFromMaxHr,
+  calculateMaxHr,
+  toHeartRateZone,
+} from '@/lib/shared/hr-zones'
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -22,6 +24,12 @@ import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 
 export default function ConnectPage() {
+  const [isReady, setIsReady] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 0)
+    return () => clearTimeout(timer)
+  }, [])
+
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
@@ -90,15 +98,6 @@ export default function ConnectPage() {
     }
   }, [connectionStatus, userName, userAge, sendData])
 
-  const {
-    calories,
-    processHeartRate,
-    reset: resetCalculator,
-  } = useCalorieCalculator({
-    age: userAge || 30,
-    weightKg: userWeight || 70,
-  })
-
   const throttledSend = useMemo(
     () =>
       throttle((message: HrmInputMessage) => {
@@ -112,43 +111,42 @@ export default function ConnectPage() {
   )
 
   const {
-    workoutDuration,
-    resetWorkout: resetWorkoutSession,
+    session,
+    workoutStatus,
+    isInitialized,
     hasStarted,
+    caloriesBurned,
     startWorkout,
     pauseWorkout,
+    resumeWorkout,
     endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected: false, // This will be updated by the useBluetoothHRM hook
-    totalCalories: calories,
-  })
-
-  const {
+    resetWorkout,
     addHrData,
-    startWorkout: startPersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
   } = useWorkoutSessionManager()
 
+  const workoutDuration = useWorkoutTimer(
+    workoutStatus,
+    session?.startTime,
+    session?.totalPaused,
+    session?.pauseTime,
+    session?.endTime
+  )
+
   const handleStartWorkout = useCallback(() => {
-    startWorkout()
-    if (userAge && userWeight) {
-      startPersistentWorkout(userAge, userWeight)
+    if (workoutStatus === 'idle') {
+      startWorkout(userAge || 30, userWeight || 70, { gender })
+    } else if (workoutStatus === 'paused') {
+      resumeWorkout()
     }
-  }, [startWorkout, startPersistentWorkout, userAge, userWeight])
+  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
-    endPersistentWorkout()
-    resetCalculator() // Reset calories on workout end
-  }, [endWorkout, endPersistentWorkout, resetCalculator])
+  }, [endWorkout])
 
   const handleResetWorkout = useCallback(() => {
-    resetWorkoutSession()
-    resetCalculator()
-    resetPersistentWorkout()
-  }, [resetWorkoutSession, resetCalculator, resetPersistentWorkout])
+    resetWorkout()
+  }, [resetWorkout])
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -159,16 +157,12 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
 
       if (workoutStatus === 'running') {
-        processHeartRate(heartRate)
-
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
+        addHrData(heartRate)
       }
     },
-    [processHeartRate, workoutStatus, setCurrentHR, addHrData]
+    [workoutStatus, setCurrentHR, addHrData]
   )
+
   const {
     connectAndStream,
     autoConnect,
@@ -185,8 +179,28 @@ export default function ConnectPage() {
     userName,
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
-    onConnect: handleStartWorkout, // Use the wrapped function
+    onConnect: handleStartWorkout,
   })
+
+  // Automatically start workout or resume when connected to maintain previous behavior
+  useEffect(() => {
+    if (isInitialized && isConnected) {
+      if (workoutStatus === 'idle') {
+        startWorkout(userAge || 30, userWeight || 70, { gender })
+      } else if (workoutStatus === 'paused') {
+        resumeWorkout()
+      }
+    }
+  }, [
+    isInitialized,
+    isConnected,
+    workoutStatus,
+    startWorkout,
+    resumeWorkout,
+    userAge,
+    userWeight,
+    gender,
+  ])
 
   useEffect(() => {
     if (
@@ -223,12 +237,12 @@ export default function ConnectPage() {
       type: 'HRM_INPUT',
       data: {
         value: currentHR,
-        calories: calories,
+        calories: caloriesBurned,
         percentage,
         zone: heartRateZone,
       },
     })
-  }, [currentHR, calories, percentage, heartRateZone, throttledSend])
+  }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -247,7 +261,7 @@ export default function ConnectPage() {
         unit: 'seconds',
         format: 'HH:MM:SS',
       })}
-      caloriesBurned={calories}
+      caloriesBurned={caloriesBurned}
       userName={userName}
       setUserName={(name) =>
         setUserSettings((prev) => ({ ...prev, userName: name }))

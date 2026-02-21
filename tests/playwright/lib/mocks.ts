@@ -84,27 +84,44 @@ export async function mockSpotifyPlaybackState(
   state: Partial<SpotifyPlaybackState>
 ): Promise<void> {
   const defaultState: SpotifyPlaybackState = {
-    trackId: 'track-1',
-    trackName: 'Mock Track',
-    artist: 'Mock Artist',
-    albumName: 'Mock Album',
-    albumArtUrl: 'https://via.placeholder.com/150',
-    isPlaying: true,
     devices: [],
-    volume: 50,
-    isMuted: false,
+    playback: {
+      track: {
+        id: 'track-1',
+        name: 'Mock Track',
+        artist: 'Mock Artist',
+        albumName: 'Mock Album',
+        albumArtUrl: 'https://via.placeholder.com/150',
+      },
+      is_playing: true,
+      volume_percent: 50,
+      isMuted: false,
+      progress_ms: 0,
+    },
   }
 
-  await page.evaluate(
-    (payload) => {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__?.dispatch({
-        type: 'SPOTIFY_UPDATE',
-        payload,
-      })
-    },
-    { ...defaultState, ...state }
-  )
+  // Deep merge state into defaultState to allow overriding nested playback properties
+  const payload = {
+    ...defaultState,
+    ...state,
+    playback: state.playback
+      ? {
+          ...defaultState.playback,
+          ...state.playback,
+          track: state.playback.track
+            ? { ...defaultState.playback.track, ...state.playback.track }
+            : defaultState.playback.track,
+        }
+      : defaultState.playback,
+  }
+
+  await page.evaluate((payload) => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    window.__TEST_CONTROLS__?.dispatch({
+      type: 'SPOTIFY_UPDATE',
+      payload,
+    })
+  }, payload)
 }
 
 /**
@@ -115,6 +132,7 @@ export async function mockSpotifyPlaybackState(
 export async function mockLoggedInSession(
   context: BrowserContext
 ): Promise<void> {
+  // Mock the session endpoint
   await context.route('**/api/auth/session', (route) => {
     route.fulfill({
       status: 200,
@@ -127,6 +145,30 @@ export async function mockLoggedInSession(
         },
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         accessToken: 'mock-access-token',
+      }),
+    })
+  })
+
+  // Mock the Spotify access token endpoint as it's required for the control panel
+  await mockSpotifyAccessToken(context)
+}
+
+/**
+ * Mocks the Spotify access token endpoint.
+ *
+ * @param context - The Playwright BrowserContext object.
+ * @param accessToken - The mock access token to return.
+ */
+export async function mockSpotifyAccessToken(
+  context: BrowserContext,
+  accessToken: string = 'mock-spotify-access-token'
+): Promise<void> {
+  await context.route('**/api/spotify/access-token', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken,
       }),
     })
   })

@@ -286,6 +286,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
+          minHeight: '64px',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -324,6 +325,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
+          minHeight: '64px',
         }}
       >
         <Box
@@ -332,6 +334,7 @@ const SpotifyDisplay = () => {
             alignItems: 'center',
             justifySelf: 'start',
             gap: 2,
+            minHeight: '32px',
           }}
         >
           <Typography
@@ -351,6 +354,7 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                whiteSpace: 'nowrap',
               }}
             >
               🔄 Connecting Player...
@@ -366,6 +370,7 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                whiteSpace: 'nowrap',
               }}
             >
               🎵 Browser Player Active

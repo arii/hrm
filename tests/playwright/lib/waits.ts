@@ -50,6 +50,7 @@ export async function waitForPageReady(
     selector = 'main, [role="main"]',
   } = options
 
+<<<<<<< HEAD
   // Wait for fonts to be loaded
   await waitForFontsLoaded(page)
 
@@ -76,6 +77,28 @@ export async function waitForPageReady(
       // It's possible skeletons were never there or are stubborn, continue
       // console.warn('Skeletons still visible or timeout waiting for them')
     })
+=======
+  // Wait for fonts to be ready
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+
+  // Wait for loading skeletons to disappear
+  await page
+    .waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout,
+    })
+    .catch(() => {
+      // Ignore errors if skeletons are not found (already hidden/removed)
+    })
+
+  // Wait for actual content to be present
+  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
+    state: 'visible',
+    timeout,
+  })
+>>>>>>> origin/leader
 }
 
 /**
