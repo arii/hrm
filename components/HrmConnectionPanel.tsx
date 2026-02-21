@@ -32,36 +32,25 @@ const HrmConnectionPanel = () => {
         height: '100%',
       }}
     >
-      {isLoading || tileData.length === 0 ? (
+      {isLoading ? (
         <>
           <Box
+            data-testid="hr-tile-grid-item"
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%', // Ensure the container fills the grid cell
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
             }}
           >
-            <Typography variant="h6" gutterBottom>
-              No Heart Rate Data
-            </Typography>
-            <Typography variant="body1" color="text.secondary" align="center">
-              Heart rate data will be displayed here once a monitor is connected
-              and streaming.
-            </Typography>
+            <Skeleton
+              variant="rectangular"
+              height={220}
+              sx={{ borderRadius: 3 }}
+            />
           </Box>
           <Box
             data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
+              width: { sm: 'calc(50% - 8px)' },
             }}
           >
             <Skeleton
@@ -71,6 +60,30 @@ const HrmConnectionPanel = () => {
             />
           </Box>
         </>
+      ) : tileData.length === 0 ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%', // Ensure the container fills the grid cell
+            gap: 2,
+            p: 2,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            No Heart Rate Data
+          </Typography>
+          <Typography variant="body1" color="text.secondary" align="center">
+            Heart rate data will be displayed here once a monitor is connected
+            and streaming.
+          </Typography>
+        </Box>
       ) : (
         tileData.map((user) => {
           // Destructure to remove volatile timestamps causing re-renders

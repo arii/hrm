@@ -69,7 +69,9 @@ describe('HrmConnectionPanel', () => {
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect one skeleton to be present for the placeholder
-    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(1)
+    // Expect two skeletons to be present for the loading state
+    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(2)
+    // Expect "No Heart Rate Data" message NOT to be present when loading
+    expect(screen.queryByText('No Heart Rate Data')).not.toBeInTheDocument()
   })
 })
