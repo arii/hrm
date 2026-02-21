@@ -49,7 +49,7 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+  test('WorkoutTableViewer rendering', async ({ dashboardPage }) => {
     // Mock the workout API to return headers
     await dashboardPage.route('**/api/workout?docId=**', async (route) => {
       await route.fulfill({
@@ -66,9 +66,9 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?testing=true&use-native-table=true')
     await waitForPageReady(dashboardPage)
 
-    const tableHeader = dashboardPage.getByTestId('workout-table-header')
+    const tableHeader = dashboardPage.getByTestId('workout-table-viewer')
     await expect(tableHeader).toBeVisible()
-    await takeScreenshot(tableHeader, 'workout-table-header.png')
+    await takeScreenshot(tableHeader, 'workout-table-viewer.png')
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {

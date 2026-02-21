@@ -65,6 +65,11 @@ const Dashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
 
+  const useNativeTable =
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ||
+    (typeof window !== 'undefined' &&
+      window.location.search.includes('use-native-table=true'))
+
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
   }
@@ -104,7 +109,7 @@ const Dashboard = () => {
         <HrmConnectionPanel />
       </Box>
       <Box sx={{ width: '100%', mt: 2 }}>
-        {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' ? (
+        {useNativeTable ? (
           <WorkoutTableViewer
             docId={DOC_ID}
             refreshKey={refreshKey}
