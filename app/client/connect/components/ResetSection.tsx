@@ -2,7 +2,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-interface ResetSectionProps {
+export interface ResetSectionProps {
   onReset: () => void
   isResetting: boolean
 }
