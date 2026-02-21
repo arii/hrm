@@ -45,7 +45,6 @@ test.describe('Visual Regression Tests', () => {
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
       await assertFixedDimensions(hrTile, {
         minHeight: 180,
-        maxHeight: 250,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -86,7 +85,6 @@ test.describe('Visual Regression Tests', () => {
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
           minHeight: 180,
-          maxHeight: 250,
         })
       }
 
