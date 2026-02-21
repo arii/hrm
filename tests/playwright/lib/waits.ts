@@ -47,12 +47,17 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
+<<<<<<< HEAD
   // Wait for fonts to be loaded
+=======
+  // Wait for fonts to be ready
+>>>>>>> origin/leader
   await page.evaluate(async () => {
     await document.fonts.ready
   })
 
   // Wait for loading skeletons to disappear
+<<<<<<< HEAD
   // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
   // In some CI environments, dynamic content loading (like Spotify or Google Docs)
   // or WebSocket connection states might cause skeletons to persist longer than expected.
@@ -69,6 +74,22 @@ export async function waitForPageReady(
       error
     )
   }
+=======
+  await page
+    .waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout,
+    })
+    .catch(() => {
+      // Ignore errors if skeletons are not found (already hidden/removed)
+    })
+
+  // Wait for actual content to be present
+  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
+    state: 'visible',
+    timeout,
+  })
+>>>>>>> origin/leader
 }
 
 /**
