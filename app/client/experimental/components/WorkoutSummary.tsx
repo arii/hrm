@@ -31,7 +31,9 @@ const WorkoutSummary = ({
     (theme.palette as unknown as { custom?: Record<string, string> }).custom?.[
       status
     ] ||
-    (status === 'running' ? theme.palette.success.main : theme.palette.grey[500])
+    (status === 'running'
+      ? theme.palette.success.main
+      : theme.palette.grey[500])
 
   const formattedDate = formatDate(date)
 
