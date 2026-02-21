@@ -64,7 +64,7 @@ const GoogleDocViewer = ({
             overflow: 'hidden',
             borderRadius: 1,
             border: '1px solid',
-            borderColor: 'grey.300',
+            borderColor: 'divider',
             position: 'relative',
           }}
         >
