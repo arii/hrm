@@ -2,9 +2,13 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
+<<<<<<< HEAD
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-config'
 import { RECONNECT_BASE_DELAY_MS } from '@/constants/bluetooth-reconnection'
+=======
+import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+>>>>>>> origin/leader
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
 import { env } from '@/lib/env'
@@ -439,7 +443,9 @@ describe('useBluetoothHRM', () => {
     it('should detect data staleness and attempt to reconnect', async () => {
       const dataLivenessTimeoutMs = 5000
       const { result } = renderHook(() =>
-        useBluetoothHRM({ dataLivenessTimeoutMs })
+        useBluetoothHRM({
+          dataLivenessTimeoutMs,
+        })
       )
       let characteristicValueChangedCallback: (event: {
         target: { value: DataView }
