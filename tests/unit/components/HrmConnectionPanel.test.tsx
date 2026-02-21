@@ -64,12 +64,14 @@ describe('HrmConnectionPanel', () => {
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })
-    render(
+    const { container } = render(
       <UserSettingsProvider>
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect the placeholder grid item to be present
-    expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
+    // Expect two skeletons to be present for the loading state
+    expect(container.querySelectorAll('.MuiSkeleton-root').length).toBe(2)
+    // Expect "No Heart Rate Data" message NOT to be present when loading
+    expect(screen.queryByText('No Heart Rate Data')).not.toBeInTheDocument()
   })
 })
