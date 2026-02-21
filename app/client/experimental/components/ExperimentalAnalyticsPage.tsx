@@ -5,10 +5,7 @@ import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-<<<<<<< HEAD
-=======
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
->>>>>>> origin/leader
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -64,11 +61,6 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout,
     endWorkout,
     addHrData,
-<<<<<<< HEAD
-    totalCaloriesBurned,
-  } = useWorkoutSessionManager()
-
-=======
     caloriesBurned,
   } = useWorkoutSessionManager()
 
@@ -80,7 +72,6 @@ const ExperimentalAnalyticsPage = () => {
     activeSession?.endTime
   )
 
->>>>>>> origin/leader
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
@@ -131,28 +122,12 @@ const ExperimentalAnalyticsPage = () => {
   useEffect(() => {
     if (status !== 'running') return
 
-<<<<<<< HEAD
     const currentData = hrmData[0]
     if (!currentData) return
 
-    // Add HR data point with zone calculation (calories processed internally by hook)
-    const dataPoint = {
-      time: Date.now(),
-      hr: currentData.value,
-    }
-
-    addHrData(dataPoint)
+    // Add HR data point (handles calorie calc internally via hook)
+    addHrData(currentData.value)
   }, [hrmData, status, addHrData])
-=======
-    const intervalId = setInterval(() => {
-      const currentHr = latestHrRef.current
-      // Add HR data point (handles calorie calc internally)
-      addHrData(currentHr)
-    }, 1000)
-
-    return () => clearInterval(intervalId)
-  }, [status, addHrData])
->>>>>>> origin/leader
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
@@ -160,20 +135,14 @@ const ExperimentalAnalyticsPage = () => {
     const weight = userSettings.userWeight || 70
     const gender = userSettings.gender
     const maxHr = calculateMaxHr(age)
-<<<<<<< HEAD
-    startWorkout(age, weight, gender, maxHr)
-    setView('active')
-  }, [startWorkout, userSettings])
-=======
 
-    startWorkout(age, weight, { maxHr })
+    startWorkout(age, weight, { maxHr, gender })
     setView('active')
   }, [startWorkout, userSettings])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
   }, [pauseWorkout])
->>>>>>> origin/leader
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()

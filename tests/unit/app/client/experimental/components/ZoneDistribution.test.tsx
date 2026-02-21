@@ -68,7 +68,7 @@ describe('ZoneDistribution', () => {
     expect(progressBars[2]).toHaveAttribute('aria-valuenow', '60') // Warm Up
   })
 
-  it('does not display zones with less than 1% time in the list', () => {
+  it('displays zones with less than 1% time in the list', () => {
     const timeInZones = {
       ...baseTimeInZones,
       ZONE_2: 100, // 99.5% roughly
@@ -81,9 +81,9 @@ describe('ZoneDistribution', () => {
       screen.getAllByText(HR_ZONE_CONFIG.ZONE_2.label).length
     ).toBeGreaterThanOrEqual(1)
 
-    // Zone 3 (Fat Burn) should NOT be in the list (filtered out)
+    // Zone 3 (Fat Burn) should ALSO be in the list
     expect(
-      screen.queryByText(HR_ZONE_CONFIG.ZONE_3.label)
-    ).not.toBeInTheDocument()
+      screen.getAllByText(HR_ZONE_CONFIG.ZONE_3.label).length
+    ).toBeGreaterThanOrEqual(1)
   })
 })

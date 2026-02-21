@@ -8,17 +8,12 @@ import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { MeasurementSystem } from '../../../types/core'
 import { toKg, toDisplay } from '../../../utils/units'
-<<<<<<< HEAD
-import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
-import { calculateMaxHr } from '@/utils/hrCalculations'
-=======
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
->>>>>>> origin/leader
 import { useHeightInput } from '@/hooks/useHeightInput'
 import {
   validateAgeValue,
@@ -116,17 +111,6 @@ export default function ConnectPage() {
   )
 
   const {
-<<<<<<< HEAD
-    addHrData,
-    startWorkout: startPersistentWorkout,
-    pauseWorkout: pausePersistentWorkout,
-    resumeWorkout: resumePersistentWorkout,
-    endWorkout: endPersistentWorkout,
-    resetWorkout: resetPersistentWorkout,
-    duration: workoutDuration,
-    status: workoutStatus,
-    totalCaloriesBurned: calories,
-=======
     session,
     workoutStatus,
     isInitialized,
@@ -138,7 +122,6 @@ export default function ConnectPage() {
     endWorkout,
     resetWorkout,
     addHrData,
->>>>>>> origin/leader
   } = useWorkoutSessionManager()
 
   const workoutDuration = useWorkoutTimer(
@@ -150,39 +133,16 @@ export default function ConnectPage() {
   )
 
   const handleStartWorkout = useCallback(() => {
-<<<<<<< HEAD
-    if (workoutStatus === 'paused') {
-      resumePersistentWorkout()
-    } else if (userAge && userWeight) {
-      startPersistentWorkout(userAge, userWeight, gender)
-    }
-  }, [
-    workoutStatus,
-    resumePersistentWorkout,
-    startPersistentWorkout,
-    userAge,
-    userWeight,
-    gender,
-  ])
-
-  const handlePauseWorkout = useCallback(() => {
-    pausePersistentWorkout()
-  }, [pausePersistentWorkout])
-
-  const handleEndWorkout = useCallback(() => {
-    endPersistentWorkout()
-  }, [endPersistentWorkout])
-
-  const handleResetWorkout = useCallback(() => {
-    resetPersistentWorkout()
-  }, [resetPersistentWorkout])
-=======
     if (workoutStatus === 'idle') {
       startWorkout(userAge || 30, userWeight || 70, { gender })
     } else if (workoutStatus === 'paused') {
       resumeWorkout()
     }
   }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
+
+  const handlePauseWorkout = useCallback(() => {
+    pauseWorkout()
+  }, [pauseWorkout])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -191,7 +151,6 @@ export default function ConnectPage() {
   const handleResetWorkout = useCallback(() => {
     resetWorkout()
   }, [resetWorkout])
->>>>>>> origin/leader
 
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
@@ -202,14 +161,7 @@ export default function ConnectPage() {
       setCurrentHR(heartRate)
 
       if (workoutStatus === 'running') {
-<<<<<<< HEAD
-        addHrData({
-          time: Date.now(),
-          hr: heartRate,
-        })
-=======
         addHrData(heartRate)
->>>>>>> origin/leader
       }
     },
     [workoutStatus, setCurrentHR, addHrData]
@@ -306,8 +258,6 @@ export default function ConnectPage() {
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
-
-  const hasStarted = workoutStatus !== 'idle'
 
   return (
     <ConnectView

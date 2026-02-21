@@ -20,14 +20,7 @@ describe('TabataTimer (Refactored)', () => {
     // Clear any previous mocks and timers
     broadcastUpdate.mockClear()
     jest.clearAllTimers()
-<<<<<<< HEAD
     jest.setSystemTime(1000000) // Set a fixed start time
-=======
-
-    // Mock performance.now to use Date.now() so it syncs with jest.advanceTimersByTime
-    jest.spyOn(performance, 'now').mockImplementation(() => Date.now())
-
->>>>>>> origin/leader
     timer = new TabataTimer(broadcastUpdate)
   })
 

@@ -6,7 +6,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { alpha } from '@mui/material/styles'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import VolumeDown from '@mui/icons-material/VolumeDown'
@@ -212,30 +211,14 @@ const TimerDisplay = () => {
           aria-live="polite"
           aria-atomic="true"
           sx={{
-<<<<<<< HEAD
             fontFamily: 'var(--font-roboto-mono), monospace',
             fontSize: { xs: '4rem', sm: '6rem', md: '6rem' },
             fontWeight: 800,
             letterSpacing: '0.12rem',
-=======
-            fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
-            fontWeight: 900,
->>>>>>> origin/leader
             lineHeight: 1,
             textAlign: 'center',
             color: phaseColor,
-<<<<<<< HEAD
             textShadow: `0 0 20px ${alpha(phaseColor, 0.5)}`,
-=======
-            textShadow: `
-              0 0 20px ${alpha(phaseColor, 0.6)},
-              0 0 40px ${alpha(phaseColor, 0.3)}
-            `,
-            WebkitTextStroke: '1px rgba(0,0,0,0.5)',
-            letterSpacing: '0.05em',
-            transition: 'color 0.3s ease-in-out',
->>>>>>> origin/leader
           }}
         >
           {displayTime}

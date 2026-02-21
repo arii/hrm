@@ -58,6 +58,7 @@ describe('useWorkoutSessionManager', () => {
       })
       expect(result.current.status).toBe('running')
       expect(result.current.session).not.toBeNull()
+      // startTime is set using Date.now() inside reducer/action, which is mocked
       expect(result.current.session?.startTime).toBe(1000000)
       expect(result.current.session?.status).toBe('running')
 
@@ -76,15 +77,12 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('running')
       expect(result.current.session?.status).toBe('running')
 
-<<<<<<< HEAD
-      // Pause again before finishing
+      // Pause again before finishing (from HEAD block, seems valid test case)
       act(() => {
         result.current.pauseWorkout()
       })
       expect(result.current.status).toBe('paused')
 
-=======
->>>>>>> origin/leader
       // Finish
       mockDateNow.mockReturnValue(1005000) // Advance time
       act(() => {
@@ -145,18 +143,10 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-<<<<<<< HEAD
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
-      // Verify calories are accumulating (exact value depends on formula, checking > 0 is sufficient for integration)
-      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
-      const caloriesAfterSecondPoint =
-        result.current.session?.totalCaloriesBurned || 0
-=======
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1) // 1 second elapsed since last point
 
       // Calories should have increased by mocked amount (5)
       expect(result.current.session?.totalCaloriesBurned).toBe(5)
->>>>>>> origin/leader
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       mockDateNow.mockReturnValue(1004000) // +2 seconds
@@ -169,11 +159,6 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
       // Zone 1 gets +2 seconds
       expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
-<<<<<<< HEAD
-      // Verify calories continue to accumulate
-      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(
-        caloriesAfterSecondPoint
-=======
 
       // Calories should have increased by mocked amount again (5 + 5 = 10)
       expect(result.current.session?.totalCaloriesBurned).toBe(10)
@@ -243,7 +228,6 @@ describe('useWorkoutSessionManager', () => {
         expect.objectContaining({
           gender: 'MALE',
         })
->>>>>>> origin/leader
       )
     })
 
@@ -273,6 +257,7 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.averageHr).toBe(0)
     })
 
+    // I need to adapt this test to use number input for addHrData
     it('should skip calorie calculation if time delta is too large (signal loss)', async () => {
       const { result } = renderHook(() => useWorkoutSessionManager())
       await waitFor(() => expect(result.current.isInitialized).toBe(true))
@@ -282,22 +267,25 @@ describe('useWorkoutSessionManager', () => {
       })
 
       // Add first data point
+      mockDateNow.mockReturnValue(1001000)
       act(() => {
-        result.current.addHrData({ time: 1001000, hr: 140 })
+        result.current.addHrData(140)
       })
       const initialCalories = result.current.session?.totalCaloriesBurned || 0
 
       // Add second data point with a 15 second gap (simulated signal loss)
+      mockDateNow.mockReturnValue(1016000)
       act(() => {
-        result.current.addHrData({ time: 1016000, hr: 140 })
+        result.current.addHrData(140)
       })
 
       // Assert calories did NOT increase for this large gap
       expect(result.current.session?.totalCaloriesBurned).toBe(initialCalories)
 
       // Add third data point with normal gap (1 sec)
+      mockDateNow.mockReturnValue(1017000)
       act(() => {
-        result.current.addHrData({ time: 1017000, hr: 140 })
+        result.current.addHrData(140)
       })
 
       // Assert calories resumed
@@ -319,6 +307,7 @@ describe('useWorkoutSessionManager', () => {
         averageHr: 0,
         maxHr: 0,
         totalPaused: 0,
+        pauseTime: null, // Added missing property
         calorieHistory: [],
         totalCaloriesBurned: 0,
         userSettings: { age: 30, weight: 80, maxHr: 190, gender: 'MALE' },

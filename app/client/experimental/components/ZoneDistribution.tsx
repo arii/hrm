@@ -1,3 +1,5 @@
+// app/client/experimental/components/ZoneDistribution.tsx
+
 'use client'
 
 import React, { useMemo } from 'react'
@@ -49,15 +51,10 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
     }).filter((item) => item.time > 0) // Basic filter for non-zero time
   }, [timeInZones, calculatedTotalDuration])
 
-  const filteredEntries = useMemo(() => {
-    return allRelevantEntries.filter((item) => item.percentage >= 1)
-  }, [allRelevantEntries])
+  // Show all entries that have any time recorded
+  const filteredEntries = allRelevantEntries
 
-  const hasNegligibleData =
-    allRelevantEntries.length > filteredEntries.length &&
-    filteredEntries.length > 0
-
-  if (allRelevantEntries.length === 0) {
+  if (filteredEntries.length === 0) {
     return (
       <Card elevation={2}>
         <CardContent>
@@ -143,15 +140,6 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
               />
             </Box>
           ))}
-          {hasNegligibleData && (
-            <Typography
-              variant="caption"
-              color="textSecondary"
-              sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}
-            >
-              Zones with less than 1% duration are hidden for clarity.
-            </Typography>
-          )}
         </Box>
       </CardContent>
     </Card>

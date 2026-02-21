@@ -370,19 +370,7 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND':
-        switch (message.command) {
-          case 'START':
-            services.tabataService.start()
-            break
-          case 'PAUSE':
-            services.tabataService.pause()
-            break
-          case 'STOP':
-            services.tabataService.stop()
-            break
-          default:
-            logger.warn({ clientId, message }, 'Unknown timer command received')
-        }
+        services.tabataService.handleCommand(message.command)
         break
 
       case 'SET_MODE':
