@@ -24,12 +24,6 @@ import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 
 export default function ConnectPage() {
-  const [isReady, setIsReady] = useState(false)
-  useEffect(() => {
-    const timer = setTimeout(() => setIsReady(true), 0)
-    return () => clearTimeout(timer)
-  }, [])
-
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
