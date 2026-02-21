@@ -30,7 +30,8 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       display="block"
       sx={{ mt: 1, color: 'text.secondary' }}
     >
-      Resets stored permissions and device settings, including Bluetooth connection.
+      Resets stored permissions and device settings, including Bluetooth
+      connection.
     </Typography>
   </Box>
 )
