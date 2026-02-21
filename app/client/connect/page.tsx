@@ -24,7 +24,6 @@ import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 
 export default function ConnectPage() {
-
   const [userSettings, setUserSettings] = useUserSettings()
   const { userName, userAge, userWeight, gender, unitSystem } = userSettings
 
