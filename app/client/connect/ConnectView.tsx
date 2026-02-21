@@ -88,7 +88,7 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       textAlign: 'center',
       mt: 4,
       pt: 4,
-      borderTop: '1px solid #eee',
+      borderTop: (theme) => `1px solid ${theme.palette.divider}`,
     }}
   >
     <Button
@@ -97,14 +97,15 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
       onClick={onReset}
       disabled={isResetting}
     >
-      {isResetting ? 'Resetting...' : 'Reset System & Device'}
+      {isResetting ? 'Resetting...' : 'Reset Permissions & Settings'}
     </Button>
     <Typography
       variant="caption"
       display="block"
       sx={{ mt: 1, color: 'text.secondary' }}
     >
-      Resets server state AND forgets Bluetooth device connection.
+      Resets stored permissions and device settings, including Bluetooth
+      connection.
     </Typography>
   </Box>
 )
