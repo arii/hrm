@@ -47,49 +47,24 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-<<<<<<< HEAD
-  // Wait for fonts to be loaded
-=======
   // Wait for fonts to be ready
->>>>>>> origin/leader
   await page.evaluate(async () => {
     await document.fonts.ready
   })
 
   // Wait for loading skeletons to disappear
-<<<<<<< HEAD
-  // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
-  // In some CI environments, dynamic content loading (like Spotify or Google Docs)
-  // or WebSocket connection states might cause skeletons to persist longer than expected.
-  // Proceeding allows visual regression tests to capture the state (even if loading)
-  // rather than failing with a timeout error.
-  try {
-    await page.waitForSelector('.MuiSkeleton-root', {
-      state: 'detached',
-      timeout,
-    })
-  } catch (error) {
-    console.warn(
-      `[waitForPageReady] Skeletons did not detach within ${timeout}ms. Proceeding anyway.`,
-      error
-    )
-  }
-=======
-  await page
-    .waitForSelector('.MuiSkeleton-root', {
-      state: 'hidden',
-      timeout,
-    })
-    .catch(() => {
-      // Ignore errors if skeletons are not found (already hidden/removed)
-    })
+  // We use detached state to ensure they are removed from DOM.
+  // This fails fast if skeletons persist beyond timeout.
+  await page.waitForSelector('.MuiSkeleton-root', {
+    state: 'detached',
+    timeout,
+  })
 
   // Wait for actual content to be present
   await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
     state: 'visible',
     timeout,
   })
->>>>>>> origin/leader
 }
 
 /**

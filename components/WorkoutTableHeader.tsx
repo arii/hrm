@@ -34,7 +34,7 @@ export default function WorkoutTableHeader({
     const fetchData = async () => {
       try {
         setLoading(true)
-        setError(null) // Reset error on re-fetch
+        setError(null)
         const res = await fetch(`/api/workout?docId=${docId}`)
         if (!res.ok) throw new Error('Failed to load workout data')
         const json = await res.json()
@@ -87,7 +87,11 @@ export default function WorkoutTableHeader({
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  key={index}
+                  sx={{ fontWeight: 'bold' }}
+                  scope="col"
+                >
                   {header}
                 </TableCell>
               ))}
