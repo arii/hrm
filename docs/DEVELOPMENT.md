@@ -45,20 +45,20 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - **Separate Refactoring**: Architectural changes and large-scale refactoring should be done in separate PRs from feature work or bug fixes.
 - **Focused Fixes**: Critical patches or hotfixes must be tightly focused on the issue at hand, without any unrelated changes.
 
-#### PR Scope Checklist
+#### PR Scope Guidelines
 
-- **PR has a clear, single purpose:** The title and description of the PR clearly state the purpose of the change.
-- **All changes relate to the stated objective:** The code changes should be directly related to the purpose of the PR.
-- **No unrelated cleanup or refactoring:** The PR should not contain any changes that are not directly related to the stated objective.
-- **Title and description match the actual changes:** The title and description should accurately reflect the changes in the PR.
-- **Tests cover the specific change scope:** The tests should be focused on the changes in the PR and should not include unrelated tests.
+- **Clear, single purpose:** The title and description of the PR should clearly state the purpose of the change.
+- **Relevant changes:** All code changes should be directly related to the stated objective.
+- **No unrelated cleanup:** Avoid including unrelated cleanup or refactoring in the same PR.
+- **Accurate description:** Ensure the title and description match the actual code changes.
+- **Focused testing:** Tests should cover the specific scope of the change.
 
-#### Impact Assessment
+#### Impact Assessment Guidelines
 
-- Changes are **backward compatible** (or breaking changes are documented).
-- **Tests** are added or updated for new functionality.
-- **Documentation** is updated if needed.
-- **ADR** is created or updated for significant architectural changes.
+- Ensure changes are **backward compatible** or that any breaking changes are clearly documented.
+- Add or update **tests** to cover new or modified functionality.
+- Update **documentation** if the changes affect project usage or architecture.
+- Create or update an **ADR** for significant architectural decisions.
 
 ### Labeling Conventions
 
