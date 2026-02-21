@@ -98,7 +98,7 @@ const Dashboard = () => {
       ? componentLoadStatus.workoutTable
       : componentLoadStatus.googleDoc)
 
-  useTestPageReady(allComponentsReady)
+  const isReady = useTestPageReady(allComponentsReady)
 
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
@@ -117,6 +117,7 @@ const Dashboard = () => {
   return (
     <Container
       data-testid="dashboard"
+      data-ready={isReady}
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{
