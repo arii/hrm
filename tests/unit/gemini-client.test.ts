@@ -46,6 +46,17 @@ describe('JsonProcessor', () => {
     expect(result.success).toBe(false)
     expect(result.data.error).toBe('JSON Parse Error')
   })
+
+  it('should parse valid JSON containing markdown code blocks in its values', () => {
+    const jsonWithNestedBlocks = {
+      description: 'Here is some code:\n```javascript\nconsole.log("hello");\n```',
+      labels: [],
+    }
+    const rawInput = JSON.stringify(jsonWithNestedBlocks)
+    const result = processor.process(rawInput)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(jsonWithNestedBlocks)
+  })
 })
 
 describe('getModelFallbacks', () => {

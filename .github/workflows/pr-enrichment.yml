@@ -257,30 +257,43 @@ jobs:
             const fs = require('fs');
 
             try {
-              let rawData = fs.readFileSync('pr_description.json', 'utf8');
+              const rawData = fs.readFileSync('pr_description.json', 'utf8');
 
-              // Extract JSON from markdown code blocks if present
-              const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
-              if (jsonMatch) {
-                rawData = jsonMatch[1].trim();
-              }
-
-              // Try to parse as JSON, handling potential control characters
+              // Try to parse as JSON first (robust approach)
               let result;
               try {
                 result = JSON.parse(rawData);
               } catch (parseError) {
-                // If parsing fails, try to extract the description field manually
-                const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
-                if (descMatch) {
-                  result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
+                // If parsing fails, try to extract JSON from markdown code blocks
+                // This is needed because LLMs sometimes wrap JSON in preamble/postamble
+                const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                  try {
+                    result = JSON.parse(jsonMatch[1].trim());
+                  } catch (e) {
+                    // Manual extraction fallback for corrupted/truncated JSON
+                    const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
+                    if (descMatch) {
+                      result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
+                    } else {
+                      throw new Error(`Failed to parse extracted JSON and extract description: ${e.message}`);
+                    }
+                  }
                 } else {
-                  throw new Error(`Failed to parse JSON and extract description: ${parseError.message}`);
+                  // Final fallback for raw text without blocks
+                  const descMatch = rawData.match(/"description"\s*:\s*"([\s\S]*?)(?<!\\)"/);
+                  if (descMatch) {
+                    result = { description: descMatch[1].replace(/\\n/g, '\n').replace(/\\\//g, '/') };
+                  } else {
+                    throw new Error(`Failed to parse JSON and extract description: ${parseError.message}`);
+                  }
                 }
               }
 
-              if (result.description) {
-                const newBody = result.description;
+              // Support both 'description' (normal) and 'reviewComment' (fallback for errors)
+              const newBody = result.description || result.reviewComment;
+
+              if (newBody) {
                 const prNumber = parseInt(process.env.PR_NUMBER);
                 const pr = await github.rest.pulls.get({
                   owner: context.repo.owner,
