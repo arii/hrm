@@ -133,7 +133,7 @@ const Dashboard = () => {
          * be told to occupy that full height.
          */}
         <Box sx={{ height: '100%' }}>
-          <TimerDisplay onReady={() => {}} />
+          <TimerDisplay />
         </Box>
         {/*
          * HrmConnectionPanel does not need a height wrapper because

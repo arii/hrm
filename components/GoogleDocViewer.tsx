@@ -10,7 +10,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import RefreshIconButton from '@/components/RefreshIconButton'
 
 interface GoogleDocViewerProps {
@@ -36,6 +36,7 @@ const GoogleDocViewer = ({
   onReady,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
+  const hasSignaledReady = useRef(false)
 
   // Ensure embedUrl always includes ?embedded=true
   const url = new URL(embedUrl)
@@ -50,9 +51,14 @@ const GoogleDocViewer = ({
     // loading state here. This is a deliberate and safe use case.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIframeLoading(true) // Reset loading state on refresh
+    hasSignaledReady.current = false // Reset readiness signal on refresh
+
     const timeout = setTimeout(() => {
-      setIframeLoading(false)
-      onReady?.()
+      if (!hasSignaledReady.current) {
+        hasSignaledReady.current = true
+        setIframeLoading(false)
+        onReady?.()
+      }
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
   }, [refreshKey, onReady]) // Rerun on refresh
@@ -103,8 +109,11 @@ const GoogleDocViewer = ({
               transition: 'height 0.3s ease-in-out',
             }}
             onLoad={() => {
-              setIframeLoading(false)
-              onReady?.()
+              if (!hasSignaledReady.current) {
+                hasSignaledReady.current = true
+                setIframeLoading(false)
+                onReady?.()
+              }
             }}
           />
         </Box>
