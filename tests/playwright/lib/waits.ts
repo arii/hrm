@@ -47,58 +47,25 @@ export async function waitForPageReady(
 ): Promise<void> {
   const {
     timeout = WAIT_TIMEOUTS.TEST_READY,
-    selector = 'main, [role="main"]',
+    selector = 'main, [data-testid="dashboard"], [role="main"]',
   } = options
 
-<<<<<<< HEAD
-  // Wait for fonts to be loaded
+  // Wait for fonts
   await waitForFontsLoaded(page)
 
-  // Wait for a known stable element
-  await page
-    .waitForSelector(selector, {
-      state: 'visible',
-      timeout,
-    })
-    .catch(() => {
-      console.warn(
-        `No main element found (selector: "${selector}"), continuing anyway`
-      )
-    })
-
-  // Wait for skeletons to disappear (dynamic content loading)
-  // This ensures Spotify/Doc viewers are loaded before snapshot
+  // Wait for skeletons (swallow error if none)
   await page
     .waitForSelector('.MuiSkeleton-root', {
       state: 'hidden',
-      timeout: WAIT_TIMEOUTS.LONG, // Skeletons might stay longer
+      timeout: WAIT_TIMEOUTS.LONG,
     })
-    .catch(() => {
-      // It's possible skeletons were never there or are stubborn, continue
-      // console.warn('Skeletons still visible or timeout waiting for them')
-    })
-=======
-  // Wait for fonts to be ready
-  await page.evaluate(async () => {
-    await document.fonts.ready
-  })
+    .catch(() => {})
 
-  // Wait for loading skeletons to disappear
-  await page
-    .waitForSelector('.MuiSkeleton-root', {
-      state: 'hidden',
-      timeout,
-    })
-    .catch(() => {
-      // Ignore errors if skeletons are not found (already hidden/removed)
-    })
-
-  // Wait for actual content to be present
-  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
+  // Wait for main content (fail fast)
+  await page.waitForSelector(selector, {
     state: 'visible',
     timeout,
   })
->>>>>>> origin/leader
 }
 
 /**
