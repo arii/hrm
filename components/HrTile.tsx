@@ -163,6 +163,7 @@ const HrTile = ({
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
+          // Ensure the tile fills the container height in the grid
           height: '100%',
           display: 'flex',
           flexDirection: 'column',

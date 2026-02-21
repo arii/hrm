@@ -85,6 +85,7 @@ const TimerDisplay = () => {
       sx={{
         backgroundColor: '#000000',
         color: phaseColor, // Dynamic color based on phase
+        // Ensure the card fills the grid cell height
         height: '100%',
         minHeight: { xs: 200, sm: 250, md: 300 },
         display: 'flex',
