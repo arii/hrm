@@ -1,6 +1,13 @@
 // app/client/experimental/components/SessionDetail.tsx
 'use client'
-import { Card, CardContent, Typography, Button, Box, Skeleton } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  Skeleton,
+} from '@mui/material'
 import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
