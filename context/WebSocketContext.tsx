@@ -105,13 +105,9 @@ export const WebSocketProvider = ({
 
   // Expose connection status for VRT stability
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.body.setAttribute('data-connection-status', connectionStatus)
-    }
+    document.body.setAttribute('data-connection-status', connectionStatus)
     return () => {
-      if (typeof document !== 'undefined') {
-        document.body.removeAttribute('data-connection-status')
-      }
+      document.body.removeAttribute('data-connection-status')
     }
   }, [connectionStatus])
 

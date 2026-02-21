@@ -9,11 +9,8 @@ import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
-<<<<<<< HEAD
 import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
-=======
 import { HrTileProps } from '@/types'
->>>>>>> origin/leader
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
