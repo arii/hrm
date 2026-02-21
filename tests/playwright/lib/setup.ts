@@ -7,7 +7,12 @@
  * - Stable content injection for VRT
  * - Test environment configuration
  */
-import type { Browser, BrowserContext, Page, APIRequestContext } from '@playwright/test'
+import type {
+  Browser,
+  BrowserContext,
+  Page,
+  APIRequestContext,
+} from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { mockGoogleDocIframe } from './mocks'
@@ -125,7 +130,9 @@ export async function navigateAndWait(
  * Call the internal reset endpoint to clear server state.
  * This ensures no leftover state from previous tests (e.g. HR data, timer).
  */
-export async function resetServerState(request: APIRequestContext): Promise<void> {
+export async function resetServerState(
+  request: APIRequestContext
+): Promise<void> {
   const baseUrl = getBaseURL()
   try {
     const response = await request.post(`${baseUrl}/api/internal/reset`, {

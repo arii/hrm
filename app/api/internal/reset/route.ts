@@ -33,6 +33,8 @@ export async function POST() {
       message: 'Server state reset successfully',
     })
   } catch (error) {
+    // Avoid unused-variable error for 'error'
+    console.error('Failed to reset server state', error)
     return NextResponse.json(
       { error: 'Failed to reset server state' },
       { status: 500 }
