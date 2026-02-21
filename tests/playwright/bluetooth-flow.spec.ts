@@ -31,12 +31,12 @@ test.describe('Bluetooth HRM Connection', () => {
 
     // The "Forget" logic is part of the "Reset" button, which should be visible after connection.
     const resetButton = connectPage.getByRole('button', {
-      name: 'Reset Permissions & Settings',
+      name: 'Reset System & Device',
     })
     await expect(resetButton).toBeVisible()
   })
 
-  test('reliability: handles connection loss by forgetting and prompting for reconnection', async ({
+  test('robustness: handles stale connection by forgetting and prompting', async ({
     connectPage,
   }) => {
     // 1. Setup a "saved" device that will fail to connect
@@ -103,7 +103,7 @@ test.describe('Bluetooth HRM Connection', () => {
 
     // 2. Click Reset
     const resetButton = connectPage.getByRole('button', {
-      name: 'Reset Permissions & Settings',
+      name: 'Reset System & Device',
     })
     await resetButton.scrollIntoViewIfNeeded()
     await resetButton.click()
