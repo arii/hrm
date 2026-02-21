@@ -3,20 +3,20 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import Dashboard from '@/app/page'
 
 // Mock child components to isolate the Dashboard component
-jest.mock('@/components/WorkoutTableHeader', () => {
-  const WorkoutTableHeader = ({
+jest.mock('@/components/WorkoutTableViewer', () => {
+  const WorkoutTableViewer = ({
     refreshKey,
     onRefresh,
   }: {
     refreshKey: number
     onRefresh?: () => void
   }) => (
-    <div data-testid="workout-table-header" data-refresh-key={refreshKey}>
+    <div data-testid="workout-table-viewer" data-refresh-key={refreshKey}>
       <button aria-label="refresh workout table" onClick={onRefresh} />
     </div>
   )
-  WorkoutTableHeader.displayName = 'WorkoutTableHeader'
-  return WorkoutTableHeader
+  WorkoutTableViewer.displayName = 'WorkoutTableViewer'
+  return WorkoutTableViewer
 })
 jest.mock('@/components/GoogleDocViewer', () => {
   const GoogleDocViewer = ({
@@ -69,21 +69,21 @@ describe('Dashboard', () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
     render(<Dashboard />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
   it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is not set', async () => {
     delete process.env.NEXT_PUBLIC_USE_NATIVE_TABLE
     render(<Dashboard />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('workout-table-viewer')).not.toBeInTheDocument()
   })
 
-  it('renders WorkoutTableHeader when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
+  it('renders WorkoutTableViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
     render(<Dashboard />)
     expect(
-      await screen.findByTestId('workout-table-header')
+      await screen.findByTestId('workout-table-viewer')
     ).toBeInTheDocument()
     expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
   })
@@ -92,20 +92,20 @@ describe('Dashboard', () => {
     process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
     render(<Dashboard />)
 
-    const workoutTableHeader = await screen.findByTestId('workout-table-header')
+    const workoutTableViewer = await screen.findByTestId('workout-table-viewer')
     const initialRefreshKey =
-      workoutTableHeader.getAttribute('data-refresh-key')
+      workoutTableViewer.getAttribute('data-refresh-key')
 
     const refreshButton = screen.getByRole('button', {
       name: /refresh workout table/i,
     })
     fireEvent.click(refreshButton)
 
-    const updatedWorkoutTableHeader = await screen.findByTestId(
-      'workout-table-header'
+    const updatedWorkoutTableViewer = await screen.findByTestId(
+      'workout-table-viewer'
     )
     const updatedRefreshKey =
-      updatedWorkoutTableHeader.getAttribute('data-refresh-key')
+      updatedWorkoutTableViewer.getAttribute('data-refresh-key')
 
     expect(updatedRefreshKey).not.toBe(initialRefreshKey)
     expect(parseInt(updatedRefreshKey as string)).toBe(
