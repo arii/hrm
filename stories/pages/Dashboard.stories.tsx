@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import Dashboard from '@/app/page' // Adjust based on your actual export
+import Dashboard from '@/components/DashboardClient'
 import { MockWebSocketProvider } from '../mocks/MockWebSocketProvider'
 import { ServerMessage } from '@/types/websocket'
 
@@ -33,9 +33,12 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const LiveSimulation: Story = {
-  render: () => (
+  args: {
+    useNativeTable: false,
+  },
+  render: (args) => (
     <MockWebSocketProvider scenario={RACE_SCENARIO} interval={800}>
-      <Dashboard />
+      <Dashboard {...args} />
     </MockWebSocketProvider>
   ),
 }

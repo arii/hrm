@@ -47,26 +47,11 @@ export async function waitForPageReady(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
-<<<<<<< HEAD
-  // Wait for fonts to be loaded
-=======
   // Wait for fonts to be ready
->>>>>>> origin/leader
   await page.evaluate(async () => {
     await document.fonts.ready
   })
 
-<<<<<<< HEAD
-  // Wait for loading skeletons to disappear (non-blocking)
-  try {
-    await page.waitForSelector('.MuiSkeleton-root', {
-      state: 'detached',
-      timeout,
-    })
-  } catch {
-    console.warn('Skeletons did not detach within timeout, proceeding anyway.')
-  }
-=======
   // Wait for loading skeletons to disappear
   await page
     .waitForSelector('.MuiSkeleton-root', {
@@ -82,7 +67,6 @@ export async function waitForPageReady(
     state: 'visible',
     timeout,
   })
->>>>>>> origin/leader
 }
 
 /**

@@ -1,8 +1,8 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
-import Dashboard from '@/app/page'
+import DashboardClient from '@/components/DashboardClient'
 
-// Mock child components to isolate the Dashboard component
+// Mock child components to isolate the DashboardClient component
 jest.mock('@/components/WorkoutTableHeader', () => {
   const WorkoutTableHeader = ({
     refreshKey,
@@ -54,34 +54,15 @@ jest.mock('@/hooks/useAudio', () => ({
   }),
 }))
 
-describe('Dashboard', () => {
-  const originalEnv = process.env
-
-  beforeEach(() => {
-    process.env = { ...originalEnv }
-  })
-
-  afterEach(() => {
-    process.env = originalEnv
-  })
-
-  it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is "false"', async () => {
-    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
-    render(<Dashboard />)
+describe('DashboardClient', () => {
+  it('renders GoogleDocViewer when useNativeTable is false', async () => {
+    render(<DashboardClient useNativeTable={false} />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
   })
 
-  it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is not set', async () => {
-    delete process.env.NEXT_PUBLIC_USE_NATIVE_TABLE
-    render(<Dashboard />)
-    expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
-  })
-
-  it('renders WorkoutTableHeader when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
-    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
-    render(<Dashboard />)
+  it('renders WorkoutTableHeader when useNativeTable is true', async () => {
+    render(<DashboardClient useNativeTable={true} />)
     expect(
       await screen.findByTestId('workout-table-header')
     ).toBeInTheDocument()
@@ -89,8 +70,7 @@ describe('Dashboard', () => {
   })
 
   it('passes a new refreshKey to child components when refresh button is clicked', async () => {
-    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
-    render(<Dashboard />)
+    render(<DashboardClient useNativeTable={true} />)
 
     const workoutTableHeader = await screen.findByTestId('workout-table-header')
     const initialRefreshKey =
@@ -114,8 +94,7 @@ describe('Dashboard', () => {
   })
 
   it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
-    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'false'
-    render(<Dashboard />)
+    render(<DashboardClient useNativeTable={false} />)
 
     const googleDocViewer = await screen.findByTestId('google-doc-viewer')
     const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')
