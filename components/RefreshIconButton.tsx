@@ -10,10 +10,6 @@ interface RefreshIconButtonProps {
   'aria-label': string
 }
 
-/**
- * Standardized refresh button used across the dashboard components.
- * Adheres to the 48px touch target requirement and consistent styling.
- */
 const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
   return (
     <IconButton
@@ -24,6 +20,8 @@ const RefreshIconButton = ({ onClick, ...props }: RefreshIconButtonProps) => {
         top: 8,
         right: 8,
         zIndex: 10,
+        width: 48,
+        height: 48,
         backgroundColor: alpha(theme.palette.background.paper, 0.7),
         backdropFilter: 'blur(4px)',
         '&:hover': {
