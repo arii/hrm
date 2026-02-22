@@ -19,42 +19,13 @@ import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
-import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
-import {
-  ToggleButtonGroup,
-  ToggleButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-} from '@mui/material'
+import { UserProfileState, HrZoneData } from '@/types/connect'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  gender: Gender
-  setGender: (gender: Gender) => void
-  unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
+  userProfile: UserProfileState
   isConnected: boolean
   isDataStale?: boolean
   deviceStatus: string
@@ -65,8 +36,7 @@ interface ConnectViewProps {
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
-  hrZoneProps: { percentage: number }
-  zone: HeartRateZone
+  hrZoneData: HrZoneData
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
@@ -80,24 +50,7 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  gender,
-  setGender,
-  unitSystem,
-  onUnitChange,
+  userProfile,
   isConnected,
   isDataStale = false,
   deviceStatus,
@@ -108,8 +61,7 @@ export default function ConnectView({
   isSupported,
   signalPeriodMs,
   currentHR,
-  hrZoneProps,
-  zone,
+  hrZoneData,
   connectionStatus,
   bluetoothConnected,
   hasStarted,
@@ -120,15 +72,16 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+  const { data } = userProfile
 
   useEffect(() => {
     if (isConnected) {
       logger.debug(
-        { currentHR, isDataStale, userName },
+        { currentHR, isDataStale, userName: data.userName },
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected, isDataStale, userName])
+  }, [currentHR, isConnected, isDataStale, data.userName])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -178,63 +131,7 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
-
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Stack>
+          <UserSettings profile={userProfile} />
         ) : (
           <Box
             sx={{
@@ -250,10 +147,10 @@ export default function ConnectView({
               Connected as
             </Typography>
             <Typography variant="h5" fontWeight="bold">
-              {userName}
+              {data.userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {userAge}
+              Age: {data.userAge}
             </Typography>
           </Box>
         )}
@@ -277,8 +174,8 @@ export default function ConnectView({
               size="large"
               onClick={onConnect}
               disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
+                !data.userName.trim() ||
+                !data.userAge.trim() ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -349,12 +246,12 @@ export default function ConnectView({
         )}
 
         {isConnected && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2 }} data-testid="hr-tile">
             <HrTile
-              name={userName}
+              name={data.userName}
               value={currentHR}
-              percentage={hrZoneProps.percentage}
-              zone={zone}
+              percentage={hrZoneData.percentage}
+              zone={hrZoneData.zone}
               calories={caloriesBurned}
               isDataStale={isDataStale}
             />

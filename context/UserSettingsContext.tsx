@@ -14,6 +14,7 @@ export interface UserPreferences {
   userName: string
   userAge: number | null
   userWeight: number | null // Note: userWeight is always stored in KG
+  userHeight: number | null // Note: userHeight is always stored in CM
   autoConnect: boolean
   gender: Gender
   unitSystem: MeasurementSystem
@@ -28,6 +29,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   userName: '',
   userAge: null,
   userWeight: null,
+  userHeight: null,
   autoConnect: false,
   gender: 'FEMALE',
   unitSystem: 'IMPERIAL',
