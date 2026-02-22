@@ -12,6 +12,7 @@ import {
 } from './spotifyApiErrorHandling.js'
 import { SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
+import { ServiceInitializationError } from '../lib/errors.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
@@ -52,7 +53,9 @@ export class SpotifyPolling implements SpotifyService {
     logger.debug('Spotify Polling Service Initialized.')
 
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error('Spotify client ID or secret not configured.')
+      throw new ServiceInitializationError(
+        'Spotify client ID or secret not configured.'
+      )
     }
 
     this.tokenManager = new SpotifyTokenManager(

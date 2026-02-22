@@ -22,3 +22,10 @@ export class ApiError extends Error {
     this.statusCode = statusCode
   }
 }
+
+export class ServiceInitializationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ServiceInitializationError'
+  }
+}
