@@ -3,6 +3,7 @@ set -e # Exit immediately if a command exits with a non-zero status.
 set -o pipefail # Return value of a pipeline is the value of the last command to exit with a non-zero status
 
 # Logging functions
+# To enable debug logging (using the debug() function), set the DEBUG environment variable to "true".
 log() { echo "$*"; }
 warn() { echo "::warning::$*"; }
 error() { echo "::error::$*"; exit 1; }
