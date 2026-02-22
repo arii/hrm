@@ -11,23 +11,21 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
-import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
-
-const HR_SERVICE_UUID = 'heart_rate'
-const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
-const BATTERY_SERVICE_UUID = 'battery_service'
-const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+import {
+  BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_BASE_DELAY_MS,
+} from '@/constants/bluetooth-reconnection'
+import {
+  HR_SERVICE_UUID,
+  HR_CHARACTERISTIC_UUID,
+  BATTERY_SERVICE_UUID,
+  BATTERY_LEVEL_CHARACTERISTIC_UUID,
+  HEARTBEAT_INTERVAL_MS,
+} from '@/constants/bluetooth-config'
 
 const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
-
-const HEARTBEAT_INTERVAL_MS_test = 500
-const HEARTBEAT_INTERVAL_MS_prod = 1000
-export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_test
-    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -293,7 +291,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       reconnectAttempts.current++
-      const delay = Math.pow(2, reconnectAttempts.current) * 1000
+      /** Reconnects using linear backoff (see ADR-0007). */
+      const delay = RECONNECT_BASE_DELAY_MS * reconnectAttempts.current
       setStatus(BluetoothConnectionStatus.RECONNECTING)
       setCustomStatusMessage(
         BLUETOOTH_MESSAGES.reconnectingAttempt(
@@ -424,39 +423,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         abortControllerRef.current = new AbortController()
 
-        let server: BluetoothRemoteGATTServer | undefined
-        let attempt = 0
-        const maxRetries = 3
-
-        while (attempt < maxRetries) {
-          try {
-            server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 20000,
-              errorMessage: 'GATT connection timeout',
-              signal: abortControllerRef.current.signal,
-            })
-            break
-          } catch (error) {
-            attempt++
-            const isBusy =
-              String(error).includes('busy') ||
-              String(error).includes('NetworkError')
-            if (isBusy && attempt < maxRetries) {
-              const delay = Math.pow(2, attempt) * 1000
-              logger.warn(
-                { device: device.name, attempt, delay, error },
-                'Device likely busy. Retrying...'
-              )
-              setStatus(BluetoothConnectionStatus.CONNECTING)
-              setCustomStatusMessage(
-                BLUETOOTH_MESSAGES.deviceBusy(delay, attempt, maxRetries)
-              )
-              await new Promise((res) => setTimeout(res, delay))
-              continue
-            }
-            throw error
-          }
-        }
+        const server = await cancellablePromise(device.gatt!.connect(), {
+          timeoutMs: 20000,
+          errorMessage: 'GATT connection timeout',
+          signal: abortControllerRef.current.signal,
+        })
 
         if (abortControllerRef.current?.signal.aborted) {
           server?.disconnect()
