@@ -132,7 +132,14 @@ export default function ConnectPage() {
     } else if (workoutStatus === 'paused') {
       resumeWorkout()
     }
-  }, [startPersistentWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
+  }, [
+    startPersistentWorkout,
+    resumeWorkout,
+    workoutStatus,
+    userAge,
+    userWeight,
+    gender,
+  ])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
