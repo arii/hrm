@@ -15,23 +15,23 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-  TEST_READY: 5000,
+  TEST_READY: 2000,
   /** Default timeout for WebSocket connection */
-  WEBSOCKET: 5000,
+  WEBSOCKET: 3000,
   /** Default timeout for element visibility */
-  ELEMENT_VISIBLE: 3000,
+  ELEMENT_VISIBLE: 2000,
   /** Default timeout for network idle */
-  NETWORK_IDLE: 5000,
+  NETWORK_IDLE: 3000,
   /** Default timeout for navigation */
-  NAVIGATION: 8000,
+  NAVIGATION: 5000,
   /** Short timeout for quick checks */
-  SHORT: 1000,
+  SHORT: 500,
   /** Medium timeout for normal operations */
-  MEDIUM: 3000,
+  MEDIUM: 2000,
   /** Long timeout for complex operations */
-  LONG: 8000,
+  LONG: 5000,
   /** Infrastructure/server startup timeout */
-  INFRASTRUCTURE: 10000,
+  INFRASTRUCTURE: 8000,
 } as const
 
 /**
@@ -63,10 +63,11 @@ export async function waitForPageReady(
   // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
   // If skeletons persist (e.g. infinite loading or bug), we want VRT to capture that state
   // rather than crashing with a generic TimeoutError.
+  // We use a much shorter timeout for skeletons to avoid blocking tests unnecessarily.
   try {
     await page.waitForSelector('.MuiSkeleton-root', {
       state: 'hidden',
-      timeout,
+      timeout: Math.min(timeout, 500),
     })
   } catch (error) {
     console.warn(

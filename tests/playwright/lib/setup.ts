@@ -123,7 +123,7 @@ export async function navigateAndWait(
   // This is a minimal wait to ensure JS has executed
   await page
     .waitForFunction(() => !!window.__TEST_CONTROLS__, {
-      timeout: 5000,
+      timeout: 3000,
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
