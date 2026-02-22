@@ -256,28 +256,34 @@ export default function ConnectPage() {
         format: 'HH:MM:SS',
       })}
       caloriesBurned={caloriesBurned}
-      userName={userName}
-      setUserName={(name) =>
-        setUserSettings((prev) => ({ ...prev, userName: name }))
-      }
-      userAge={String(userAge || '')}
-      setUserAge={(age) =>
-        setUserSettings((prev) => ({ ...prev, userAge: Number(age) }))
-      }
-      onAgeBlur={handleAgeBlur}
-      ageError={ageError}
-      userHeight={displayHeight}
-      setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
-      heightError={heightError}
-      userWeight={displayWeight || ''}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      weightError={weightError}
-      gender={gender}
-      setGender={(g) => setUserSettings((prev) => ({ ...prev, gender: g }))}
-      unitSystem={unitSystem}
-      onUnitChange={handleUnitChange}
+      userProfile={{
+        data: {
+          userName,
+          userAge: String(userAge || ''),
+          userHeight: displayHeight,
+          userWeight: displayWeight || '',
+          gender,
+          unitSystem,
+        },
+        errors: {
+          ageError,
+          heightError,
+          weightError,
+        },
+        handlers: {
+          setUserName: (name) =>
+            setUserSettings((prev) => ({ ...prev, userName: name })),
+          setUserAge: (age) =>
+            setUserSettings((prev) => ({ ...prev, userAge: Number(age) })),
+          onAgeBlur: handleAgeBlur,
+          setUserHeight: handleHeightChange,
+          onHeightBlur: handleHeightBlur,
+          setUserWeight: handleWeightChange,
+          onWeightBlur: handleWeightBlur,
+          setGender: (g) => setUserSettings((prev) => ({ ...prev, gender: g })),
+          onUnitChange: handleUnitChange,
+        },
+      }}
       isConnected={isConnected}
       isDataStale={isDataStale}
       deviceStatus={deviceStatus}
@@ -288,10 +294,10 @@ export default function ConnectPage() {
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
-      hrZoneProps={{
+      hrZoneData={{
         percentage,
+        zone: heartRateZone,
       }}
-      zone={heartRateZone}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

@@ -5,29 +5,40 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from './ConnectView'
 import { WorkoutStatus } from '../../../types/workout'
 import { MeasurementSystem, Gender } from '../../../types/core'
+import { UserProfileState } from './types'
 
 describe('ConnectView', () => {
+  const defaultUserProfile: UserProfileState = {
+    data: {
+      userName: 'Test User',
+      userAge: '30',
+      userHeight: { cm: '180', feet: '5', inches: '11' },
+      userWeight: '154',
+      gender: 'MALE' as Gender,
+      unitSystem: 'IMPERIAL' as MeasurementSystem,
+    },
+    handlers: {
+      setUserName: jest.fn(),
+      setUserAge: jest.fn(),
+      onAgeBlur: jest.fn(),
+      setUserHeight: jest.fn(),
+      onHeightBlur: jest.fn(),
+      setUserWeight: jest.fn(),
+      onWeightBlur: jest.fn(),
+      setGender: jest.fn(),
+      onUnitChange: jest.fn(),
+    },
+    errors: {
+      ageError: null,
+      heightError: null,
+      weightError: null,
+    },
+  }
+
   const defaultProps = {
     duration: '00:00:00',
     caloriesBurned: 0,
-    userName: 'Test User',
-    setUserName: jest.fn(),
-    userAge: '30',
-    setUserAge: jest.fn(),
-    onAgeBlur: jest.fn(),
-    ageError: null,
-    userHeight: { cm: '180', feet: '5', inches: '11' },
-    setUserHeight: jest.fn(),
-    onHeightBlur: jest.fn(),
-    heightError: null,
-    userWeight: '154',
-    setUserWeight: jest.fn(),
-    onWeightBlur: jest.fn(),
-    weightError: null,
-    gender: 'MALE' as Gender,
-    setGender: jest.fn(),
-    unitSystem: 'IMPERIAL' as MeasurementSystem,
-    onUnitChange: jest.fn(),
+    userProfile: defaultUserProfile,
     isConnected: false,
     deviceStatus: 'Disconnected',
     batteryLevel: null,
@@ -37,8 +48,7 @@ describe('ConnectView', () => {
     isSupported: true,
     signalPeriodMs: 1000,
     currentHR: 0,
-    hrZoneProps: { percentage: 0 },
-    zone: { min: 0, max: 0, name: 'Rest', color: 'grey' },
+    hrZoneData: { percentage: 0, zone: 'ZONE_0' as const },
     connectionStatus: 'Disconnected',
     bluetoothConnected: false,
     hasStarted: false,
@@ -55,7 +65,13 @@ describe('ConnectView', () => {
     expect(screen.queryByText('Invalid age')).not.toBeInTheDocument()
 
     // Positive assertion: error appears when prop is set
-    const props = { ...defaultProps, ageError: 'Invalid age' }
+    const props = {
+      ...defaultProps,
+      userProfile: {
+        ...defaultUserProfile,
+        errors: { ...defaultUserProfile.errors, ageError: 'Invalid age' },
+      },
+    }
     rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid age')).toBeInTheDocument()
   })
@@ -64,7 +80,13 @@ describe('ConnectView', () => {
     const { rerender } = render(<ConnectView {...defaultProps} />)
     expect(screen.queryByText('Invalid height')).not.toBeInTheDocument()
 
-    const props = { ...defaultProps, heightError: 'Invalid height' }
+    const props = {
+      ...defaultProps,
+      userProfile: {
+        ...defaultUserProfile,
+        errors: { ...defaultUserProfile.errors, heightError: 'Invalid height' },
+      },
+    }
     rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid height')).toBeInTheDocument()
   })
@@ -73,20 +95,37 @@ describe('ConnectView', () => {
     const { rerender } = render(<ConnectView {...defaultProps} />)
     expect(screen.queryByText('Invalid weight')).not.toBeInTheDocument()
 
-    const props = { ...defaultProps, weightError: 'Invalid weight' }
+    const props = {
+      ...defaultProps,
+      userProfile: {
+        ...defaultUserProfile,
+        errors: { ...defaultUserProfile.errors, weightError: 'Invalid weight' },
+      },
+    }
     rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
 
   it('calls onUnitChange when the unit toggle is clicked', () => {
     render(<ConnectView {...defaultProps} />)
-    const metricButton = screen.getByLabelText('metric')
+    const metricButton = screen.getByLabelText('metric units')
     fireEvent.click(metricButton)
-    expect(defaultProps.onUnitChange).toHaveBeenCalledWith('METRIC')
+    expect(defaultUserProfile.handlers.onUnitChange).toHaveBeenCalledWith(
+      'METRIC'
+    )
   })
 
   it('renders metric inputs when unit is metric', () => {
-    const props = { ...defaultProps, unitSystem: 'METRIC' as MeasurementSystem }
+    const props = {
+      ...defaultProps,
+      userProfile: {
+        ...defaultUserProfile,
+        data: {
+          ...defaultUserProfile.data,
+          unitSystem: 'METRIC' as MeasurementSystem,
+        },
+      },
+    }
     render(<ConnectView {...props} />)
     expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()

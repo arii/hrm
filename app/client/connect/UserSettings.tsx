@@ -4,84 +4,61 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import FormControl from '@mui/material/FormControl'
+import FormLabel from '@mui/material/FormLabel'
+import RadioGroup from '@mui/material/RadioGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Radio from '@mui/material/Radio'
+import Typography from '@mui/material/Typography'
+import { UserProfileState } from './types'
+import { Gender } from '../../../types/core'
 
 interface UserSettingsProps {
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  unit: 'METRIC' | 'IMPERIAL'
-  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  profile: UserProfileState
 }
 
-const UserSettings: React.FC<UserSettingsProps> = ({
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  unit,
-  setUnit,
-}) => {
+const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
+  const { data, handlers, errors } = profile
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
         fullWidth
         label="Your Name"
         placeholder="e.g., Jane Doe"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
+        value={data.userName}
+        onChange={(e) => handlers.setUserName(e.target.value)}
       />
       <TextField
         fullWidth
         label="Your Age"
         placeholder="e.g., 30"
         type="number"
-        value={userAge}
+        value={data.userAge}
         onChange={(e) => {
           if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
+            handlers.setUserAge(e.target.value)
           }
         }}
-        onBlur={onAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
+        onBlur={handlers.onAgeBlur}
+        error={!!errors.ageError}
+        helperText={errors.ageError}
         inputProps={{ min: 1, max: 120 }}
       />
       <ToggleButtonGroup
-        value={unit}
+        value={data.unitSystem}
         exclusive
         onChange={(_, newUnit) => {
           if (newUnit) {
-            setUnit(newUnit)
+            handlers.onUnitChange(newUnit)
           }
         }}
         aria-label="Unit system"
         aria-describedby="unit-system-description"
+        fullWidth
       >
         <p id="unit-system-description" style={{ display: 'none' }}>
-          Currently selected unit system is {unit}.
+          Currently selected unit system is {data.unitSystem}.
         </p>
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
@@ -90,67 +67,93 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           Metric (kg, cm)
         </ToggleButton>
       </ToggleButtonGroup>
-      {unit === 'METRIC' ? (
+      {data.unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
-          value={userHeight.cm}
+          value={data.userHeight.cm}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight({ cm: e.target.value })
+              handlers.setUserHeight({ cm: e.target.value })
             }
           }}
-          onBlur={onHeightBlur}
-          error={!!heightError}
-          helperText={heightError}
+          onBlur={handlers.onHeightBlur}
+          error={!!errors.heightError}
+          helperText={errors.heightError}
         />
       ) : (
-        <Stack direction="row" spacing={2}>
-          <TextField
-            fullWidth
-            label="Feet"
-            placeholder="e.g., 5"
-            type="number"
-            value={userHeight.feet}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ feet: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
-          />
-          <TextField
-            fullWidth
-            label="Inches"
-            placeholder="e.g., 9"
-            type="number"
-            value={userHeight.inches}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ inches: e.target.value })
-              }
-            }}
-            onBlur={onHeightBlur}
-          />
+        <Stack direction="column">
+          <Stack direction="row" spacing={2}>
+            <TextField
+              fullWidth
+              label="Feet"
+              placeholder="e.g., 5"
+              type="number"
+              value={data.userHeight.feet}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  handlers.setUserHeight({ feet: e.target.value })
+                }
+              }}
+              onBlur={handlers.onHeightBlur}
+              error={!!errors.heightError}
+            />
+            <TextField
+              fullWidth
+              label="Inches"
+              placeholder="e.g., 9"
+              type="number"
+              value={data.userHeight.inches}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  handlers.setUserHeight({ inches: e.target.value })
+                }
+              }}
+              onBlur={handlers.onHeightBlur}
+              error={!!errors.heightError}
+            />
+          </Stack>
+          {errors.heightError && (
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{ mt: 0.5, ml: 1.5 }}
+            >
+              {errors.heightError}
+            </Typography>
+          )}
         </Stack>
       )}
       <TextField
         fullWidth
-        label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
-        placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
+        label={`Your Weight (${data.unitSystem === 'METRIC' ? 'kg' : 'lbs'})`}
+        placeholder={data.unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
-        value={userWeight}
+        value={data.userWeight}
         onChange={(e) => {
           if (/^\d*\.?\d*$/.test(e.target.value)) {
-            setUserWeight(e.target.value)
+            handlers.setUserWeight(e.target.value)
           }
         }}
-        onBlur={onWeightBlur}
-        error={!!weightError}
-        helperText={weightError}
+        onBlur={handlers.onWeightBlur}
+        error={!!errors.weightError}
+        helperText={errors.weightError}
       />
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Gender</FormLabel>
+        <RadioGroup
+          row
+          aria-label="gender"
+          name="gender"
+          value={data.gender}
+          onChange={(e) => handlers.setGender(e.target.value as Gender)}
+        >
+          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
+          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
+        </RadioGroup>
+      </FormControl>
     </Stack>
   )
 }
