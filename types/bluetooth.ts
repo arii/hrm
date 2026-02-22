@@ -7,6 +7,5 @@ export enum BluetoothConnectionStatus {
   CONNECTING,
   CONNECTED,
   RECONNECTING,
-  DISCONNECTING,
   ERROR,
 }

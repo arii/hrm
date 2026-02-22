@@ -120,7 +120,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               }
             }}
             onBlur={onHeightBlur}
-            error={!!heightError}
           />
           <TextField
             fullWidth
@@ -134,8 +133,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               }
             }}
             onBlur={onHeightBlur}
-            error={!!heightError}
-            helperText={heightError}
           />
         </Stack>
       )}
