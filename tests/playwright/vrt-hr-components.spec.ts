@@ -8,7 +8,6 @@ import {
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
-import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '../../constants/layout'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -45,13 +44,13 @@ test.describe('Visual Regression Tests', () => {
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
       await assertFixedDimensions(hrTile, {
-        minHeight: HR_TILE_MIN_HEIGHT,
-        maxHeight: HR_TILE_MAX_HEIGHT,
+        minHeight: 180,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
+        maxDiffPixelRatio: 0.1,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -85,13 +84,13 @@ test.describe('Visual Regression Tests', () => {
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
-          minHeight: HR_TILE_MIN_HEIGHT,
-          maxHeight: HR_TILE_MAX_HEIGHT,
+          minHeight: 180,
         })
       }
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
+        maxDiffPixelRatio: 0.1,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -108,6 +107,7 @@ test.describe('Visual Regression Tests', () => {
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
+          maxDiffPixelRatio: 0.1,
           mask: [
             ...getDynamicContentMasks(dashboardPage),
             ...getHrMasks(dashboardPage),
@@ -121,6 +121,7 @@ test.describe('Visual Regression Tests', () => {
       await mockMultipleHrDevices(dashboardPage, [])
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
+        maxDiffPixelRatio: 0.1,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),

@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+interface WindowWithTestFlags extends Window {
+  __TEST_WEBSOCKET_READY__?: boolean
+}
+
 test.describe('WebSocket Stability', () => {
   test('should maintain a stable WebSocket connection', async ({ page }) => {
     test.setTimeout(40000)
@@ -7,7 +11,7 @@ test.describe('WebSocket Stability', () => {
 
     // Wait for the WebSocket connection to be established
     await page.waitForFunction(
-      () => document.body.dataset.connectionStatus === 'connected',
+      () => (window as WindowWithTestFlags).__TEST_WEBSOCKET_READY__ === true,
       null,
       {
         timeout: 10000,

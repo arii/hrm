@@ -10,9 +10,9 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 import { HrTileProps } from '@/types'
-import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
+const HR_TILE_MIN_HEIGHT = 180
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
@@ -70,8 +70,8 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
-    <span data-testid={testId}>{value}</span>{' '}
+  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+    {value}{' '}
     <Typography
       component="span"
       variant="caption"
@@ -101,11 +101,7 @@ const DataTier = ({
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem
-      value={Math.floor(calories)}
-      label="KCAL"
-      testId="calories-value"
-    />
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
   </Box>
 )
 
@@ -167,14 +163,13 @@ const HrTile = ({
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
-          maxHeight: HR_TILE_MAX_HEIGHT,
           // Ensure the tile fills the container height in the grid
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          overflow: 'auto',
+          overflow: 'hidden',
           padding: 0,
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {

@@ -110,17 +110,17 @@ In our GitHub Actions workflows, we use `pnpm install --frozen-lockfile` to ensu
 
 ## Advanced Test Synchronization
 
-### WebSocket Synchronization
+### The `__TEST_WEBSOCKET_READY__` Flag
 
 To prevent flaky tests, especially in a real-time application like this, our Playwright test suite needs to reliably wait for the WebSocket connection to be established before proceeding with assertions or screenshots.
 
-- **Purpose**: A data attribute on `document.body` is used to synchronize tests with the connection state.
+- **Purpose**: The `window.__TEST_WEBSOCKET_READY__` flag is a global browser variable used exclusively for this synchronization.
 - **Implementation**:
-  - The attribute `data-connection-status` is set to `'connected'` inside the `onopen` event handler of the WebSocket connection in `context/WebSocketContext.tsx`.
-  - It is set to `'disconnected'` in the `onclose` handler.
+  - The flag is set to `true` inside the `onopen` event handler of the WebSocket connection in `context/WebSocketContext.tsx`.
+  - It is set to `false` in the `onclose` handler.
 - **Usage in Tests**:
-  - In Playwright tests, particularly in `visual-regression.spec.ts`, we use `waitForWebSocketConnection` from `tests/playwright/lib/waits.ts` which checks this attribute.
-  - Example: `await waitForWebSocketConnection(page)`
+  - In Playwright tests, particularly in `visual-regression.spec.ts`, we use `page.waitForFunction()` to pause the test's execution until this flag becomes `true`.
+  - Example: `await dashboardPage.waitForFunction(() => window.__TEST_WEBSOCKET_READY__ === true)`
 - **Benefit**: This mechanism provides a deterministic way to ensure that the application's client-side state has been hydrated with data from the server before any visual validation occurs, significantly improving the stability of the test suite.
 
 ---
