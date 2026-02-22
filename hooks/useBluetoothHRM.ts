@@ -426,6 +426,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
+        logger.warn(
+          { device: device.name },
+          'Aborting previous pending connection attempt'
+        )
         abortControllerRef.current.abort()
       }
 
