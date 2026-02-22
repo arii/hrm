@@ -16,8 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
-import ResetSection from './components/ResetSection'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
@@ -70,7 +69,6 @@ interface ConnectViewProps {
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
-  onReset: () => void
   workoutStatus: WorkoutStatus
   onStartWorkout: () => void
   onPauseWorkout: () => void
@@ -113,14 +111,11 @@ export default function ConnectView({
   connectionStatus,
   bluetoothConnected,
   hasStarted,
-  onReset,
   workoutStatus,
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
-
   useEffect(() => {
     if (isConnected) {
       logger.debug(
@@ -137,18 +132,6 @@ export default function ConnectView({
     return <BatteryAlertIcon color="error" />
   }
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
-
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -162,7 +145,15 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: 'divider' }}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => onForgetDevice()}
+          >
+            Reset Permissions & Settings
+          </Button>
+        </Box>
         <BottomNavBar />
       </Container>
     )
@@ -383,7 +374,15 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: 'divider' }}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => onForgetDevice()}
+          >
+            Reset Permissions & Settings
+          </Button>
+        </Box>
       </Container>
       <BottomNavBar />
     </>
