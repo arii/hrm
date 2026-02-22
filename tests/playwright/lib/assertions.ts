@@ -104,7 +104,7 @@ export async function assertWebSocketConnected(
   const isConnected = await page.evaluate((t) => {
     return new Promise<boolean>((resolve) => {
       const checkConnection = () => {
-        if (window.__TEST_WEBSOCKET_READY__ === true) {
+        if (document.body.dataset.connectionStatus === 'connected') {
           resolve(true)
           return
         }
