@@ -174,7 +174,7 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          overflow: 'hidden',
+          overflow: 'auto',
           padding: 0,
           opacity: isConnected && !isDataStale ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
