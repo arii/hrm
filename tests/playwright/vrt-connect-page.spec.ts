@@ -56,7 +56,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
-      maxDiffPixelRatio: 0.2, // Relaxed due to mask changes
     })
   })
 
@@ -73,7 +72,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
-      maxDiffPixelRatio: 0.05,
       // Performance: Skip repeated a11y checks for error states as the core UI is already validated
       skipA11y: true,
     })
@@ -106,7 +104,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       fullPage: false,
-      maxDiffPixelRatio: 0.05,
       // Performance: Skip a11y check for this specific error variant; primary state is covered
       skipA11y: true,
     })
