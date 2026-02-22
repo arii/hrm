@@ -494,7 +494,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current &&
         !abortControllerRef.current.signal.aborted
       ) {
-        logger.info(
+        logger.warn(
           { device: device.name },
           'Aborting existing connection attempt to start new one.'
         )
