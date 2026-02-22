@@ -1,4 +1,4 @@
-import * as cheerio from 'cheerio'
+import { parse } from 'node-html-parser'
 import { WorkoutTableDto } from '@/types/workout'
 
 /**
@@ -8,30 +8,33 @@ import { WorkoutTableDto } from '@/types/workout'
  * Replaces newlines within cells with spaces for UI consistency.
  */
 export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
-  const $ = cheerio.load(html)
-  const table = $('table').first()
+  const root = parse(html)
+  const table = root.querySelector('table')
 
-  if (!table.length) {
+  if (!table) {
     throw new Error('No table found in the Google Doc')
   }
 
-  const firstRow = table.find('tr').first()
+  const firstRow = table.querySelector('tr')
 
-  if (firstRow.length === 0) {
+  if (!firstRow) {
     return { headers: [] }
   }
 
   const headers: string[] = []
+  const cells = firstRow.querySelectorAll('td, th')
 
-  firstRow.find('td, th').each((_colIndex, cellElement) => {
-    const $cell = $(cellElement)
-
+  cells.forEach((cell) => {
     // Ensure block elements have spacing to prevent text merging
-    $cell.find('br').replaceWith(' ')
-    $cell.find('p').after(' ')
+    cell.querySelectorAll('br').forEach((br) => {
+      br.replaceWith(' ')
+    })
 
-    const text = $cell
-      .text()
+    cell.querySelectorAll('p').forEach((p) => {
+      p.insertAdjacentHTML('afterend', ' ')
+    })
+
+    const text = cell.textContent
       .replace(/\u00A0/g, ' ')
       .replace(/\r?\n|\r/g, ' ')
       .trim()
