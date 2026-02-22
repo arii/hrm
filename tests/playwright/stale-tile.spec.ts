@@ -5,7 +5,7 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
   page,
 }) => {
   await page.goto('/?testing=true')
-  await page.waitForSelector('[data-ready="true"]', { timeout: 15000 })
+  await page.waitForSelector('[data-testid="dashboard"]', { timeout: 15000 })
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
