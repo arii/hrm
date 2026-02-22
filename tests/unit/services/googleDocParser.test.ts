@@ -160,7 +160,8 @@ describe('parseGoogleDocTable', () => {
   })
 
   it('should handle compact HTML with nested block elements', () => {
-    const html = '<table><tr><td><div>A</div><div>B</div><p>C</p>D</td></tr></table>'
+    const html =
+      '<table><tr><td><div>A</div><div>B</div><p>C</p>D</td></tr></table>'
     const result = parseGoogleDocTable(html)
     // Should be "A B C D"
     expect(result.headers[0]).toBe('A B C D')
