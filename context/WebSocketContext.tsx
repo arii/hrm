@@ -193,7 +193,6 @@ export const WebSocketProvider = ({
 
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -230,7 +229,6 @@ export const WebSocketProvider = ({
       setConnectionStatus('Disconnected')
 
       if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
         document.body.dataset.connectionStatus = 'disconnected'
       }
 

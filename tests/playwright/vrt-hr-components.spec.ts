@@ -9,6 +9,7 @@ import {
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '../../constants/layout'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -71,7 +72,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert HR tile height is within limits
       await assertFixedDimensions(hrTile, {
-        minHeight: 180,
+        minHeight: HR_TILE_MIN_HEIGHT,
+        maxHeight: HR_TILE_MAX_HEIGHT,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -111,7 +113,8 @@ test.describe('Visual Regression Tests', () => {
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
-          minHeight: 180,
+          minHeight: HR_TILE_MIN_HEIGHT,
+          maxHeight: HR_TILE_MAX_HEIGHT,
         })
       }
 
