@@ -12,18 +12,24 @@ import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 
 // Correctly mock the hooks
+const mockConnectAndStream = jest.fn()
+const mockAutoConnect = jest.fn().mockResolvedValue(undefined)
+const mockDisconnect = jest.fn()
+const mockForgetDevice = jest.fn()
+
 jest.mock('@/hooks/useBluetoothHRM', () =>
   jest.fn(() => ({
-    connectAndStream: jest.fn(),
-    autoConnect: jest.fn().mockResolvedValue(undefined),
-    disconnect: jest.fn(),
-    forgetDevice: jest.fn(),
+    connectAndStream: mockConnectAndStream,
+    autoConnect: mockAutoConnect,
+    disconnect: mockDisconnect,
+    forgetDevice: mockForgetDevice,
     deviceStatus: 'disconnected',
     batteryLevel: null,
     isConnected: false,
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
+    connectionAttempted: false,
   }))
 )
 
@@ -184,5 +190,41 @@ describe('ConnectPage', () => {
         },
       })
     })
+  })
+
+  it('renders user settings form when not connected', () => {
+    renderWithProviders(<ConnectPage />, { providerProps })
+    expect(screen.getByTestId('user-settings-form')).toBeInTheDocument()
+  })
+
+  it('calls connectAndStream with correct user data when connect button is clicked', () => {
+    renderWithProviders(<ConnectPage />, { providerProps })
+    const connectButton = screen.getByRole('button', {
+      name: /Connect Bluetooth HRM/i,
+    })
+    fireEvent.click(connectButton)
+
+    expect(mockConnectAndStream).toHaveBeenCalledWith('Test User', 30)
+  })
+
+  it('displays heart rate tile when connected', () => {
+    const useBluetoothHRM = require('@/hooks/useBluetoothHRM')
+    useBluetoothHRM.mockReturnValue({
+      connectAndStream: mockConnectAndStream,
+      autoConnect: mockAutoConnect,
+      disconnect: mockDisconnect,
+      forgetDevice: mockForgetDevice,
+      deviceStatus: 'connected',
+      batteryLevel: 90,
+      isConnected: true,
+      isDataStale: false,
+      isSupported: true,
+      disconnectionReason: null,
+      connectionAttempted: true,
+    })
+
+    renderWithProviders(<ConnectPage />, { providerProps })
+    expect(screen.getByTestId('bpm-value')).toBeInTheDocument()
+    expect(screen.queryByTestId('user-settings-form')).not.toBeInTheDocument()
   })
 })
