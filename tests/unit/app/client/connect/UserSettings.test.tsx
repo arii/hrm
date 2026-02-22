@@ -50,7 +50,9 @@ describe('UserSettings', () => {
     render(<UserSettings profile={mockUserProfile} />)
     const nameInput = screen.getByLabelText('Your Name')
     fireEvent.change(nameInput, { target: { value: 'Jane Doe' } })
-    expect(mockUserProfile.handlers.setUserName).toHaveBeenCalledWith('Jane Doe')
+    expect(mockUserProfile.handlers.setUserName).toHaveBeenCalledWith(
+      'Jane Doe'
+    )
   })
 
   it('calls setUserAge and onAgeBlur', () => {
@@ -97,11 +99,15 @@ describe('UserSettings', () => {
 
     const feetInput = screen.getByLabelText('Feet')
     fireEvent.change(feetInput, { target: { value: '6' } })
-    expect(mockUserProfile.handlers.setUserHeight).toHaveBeenCalledWith({ feet: '6' })
+    expect(mockUserProfile.handlers.setUserHeight).toHaveBeenCalledWith({
+      feet: '6',
+    })
 
     const inchesInput = screen.getByLabelText('Inches')
     fireEvent.change(inchesInput, { target: { value: '2' } })
-    expect(mockUserProfile.handlers.setUserHeight).toHaveBeenCalledWith({ inches: '2' })
+    expect(mockUserProfile.handlers.setUserHeight).toHaveBeenCalledWith({
+      inches: '2',
+    })
 
     fireEvent.blur(feetInput)
     expect(mockUserProfile.handlers.onHeightBlur).toHaveBeenCalled()
@@ -111,7 +117,9 @@ describe('UserSettings', () => {
     render(<UserSettings profile={mockUserProfile} />)
     const imperialButton = screen.getByLabelText('imperial units')
     fireEvent.click(imperialButton)
-    expect(mockUserProfile.handlers.onUnitChange).toHaveBeenCalledWith('IMPERIAL')
+    expect(mockUserProfile.handlers.onUnitChange).toHaveBeenCalledWith(
+      'IMPERIAL'
+    )
   })
 
   it('calls setGender when gender is changed', () => {
