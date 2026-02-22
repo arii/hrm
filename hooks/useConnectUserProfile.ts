@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useHeightInput } from './useHeightInput'
 import { MeasurementSystem } from '@/types/core'
@@ -56,11 +56,13 @@ export const useConnectUserProfile = (): UserProfileState => {
       const numericValue = parseFloat(valueToValidate)
       if (!isNaN(numericValue) && numericValue > 0) {
         const newKgValue = toKg(numericValue, unitSystem)
-        setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+        if (newKgValue !== userWeight) {
+          setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+        }
       }
       setLocalDisplayWeight(null)
     }
-  }, [localDisplayWeight, displayWeight, unitSystem, setUserSettings])
+  }, [localDisplayWeight, displayWeight, unitSystem, setUserSettings, userWeight])
 
   const handleUnitChange = useCallback(
     (newUnit: MeasurementSystem) => {
@@ -71,6 +73,23 @@ export const useConnectUserProfile = (): UserProfileState => {
     },
     [unitSystem, setUserSettings]
   )
+
+  // Persistent commit on unmount/unload to handle cases where blur hasn't fired
+  const blurHandlersRef = useRef({ handleWeightBlur, handleHeightBlur })
+  blurHandlersRef.current = { handleWeightBlur, handleHeightBlur }
+
+  useEffect(() => {
+    const persist = () => {
+      blurHandlersRef.current.handleWeightBlur()
+      blurHandlersRef.current.handleHeightBlur()
+    }
+
+    window.addEventListener('beforeunload', persist)
+    return () => {
+      window.removeEventListener('beforeunload', persist)
+      persist()
+    }
+  }, [])
 
   return {
     data: {

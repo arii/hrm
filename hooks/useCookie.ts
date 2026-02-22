@@ -1,39 +1,50 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Cookies from 'js-cookie'
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null) return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === null || proto === Object.prototype
+}
 
 function useCookie<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
+  // 1. Initialize state with initialValue to match Server Side rendering.
+  const [storedValue, setStoredValue] = useState<T>(initialValue)
+
+  // 2. Sync with cookie inside useEffect (Client-side only).
+  useEffect(() => {
     try {
       const item = Cookies.get(key)
-      if (!item) return initialValue
+      if (item) {
+        const parsed = JSON.parse(item)
 
-      const parsed = JSON.parse(item)
+        // Handle object migration by merging stored data with initial defaults.
+        if (isPlainObject(parsed) && isPlainObject(initialValue)) {
+          const schemaKeys = Object.keys(initialValue)
+          const filteredParsed = Object.keys(parsed).reduce(
+            (acc, k) => {
+              if (schemaKeys.includes(k)) {
+                acc[k] = parsed[k]
+              }
+              return acc
+            },
+            {} as Record<string, unknown>
+          )
 
-      // Handle object type values
-      if (typeof initialValue === 'object' && initialValue !== null) {
-        if (typeof parsed === 'object' && parsed !== null) {
-          const initialValueKeys = Object.keys(initialValue)
-          if (Object.keys(parsed).every((k) => initialValueKeys.includes(k))) {
-            return { ...initialValue, ...parsed }
-          }
+          // Merge: Defaults -> Filtered Storage
+          const merged = { ...initialValue, ...filteredParsed } as T
+          setStoredValue(merged)
+        } else {
+          setStoredValue(parsed)
         }
-        return initialValue
       }
-
-      // Handle primitive types
-      if (typeof parsed === typeof initialValue) {
-        return parsed
-      }
-
-      return initialValue
     } catch (error) {
       console.error(`Error reading or parsing cookie key “${key}”:`, error)
-      return initialValue
     }
-  })
+  }, [key, initialValue])
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {

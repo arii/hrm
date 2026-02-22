@@ -1,27 +1,26 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
+import Cookies from 'js-cookie'
+import usePersistentStorage from '../../../hooks/usePersistentStorage'
 
-// Mock the underlying storage hooks
-jest.mock('../../../hooks/useLocalStorage', () => ({
-  __esModule: true,
-  default: jest.fn(() => [null, jest.fn()]),
-}))
-jest.mock('../../../hooks/useCookie', () => ({
-  __esModule: true,
-  default: jest.fn(() => [null, jest.fn()]),
+// Mock js-cookie
+jest.mock('js-cookie', () => ({
+  get: jest.fn(),
+  set: jest.fn(),
 }))
 
 describe('usePersistentStorage', () => {
   const originalLocalStorage = window.localStorage
+  const TEST_KEY = 'test-key'
+  const INITIAL_VALUE = { foo: 'bar' }
+  const UPDATED_VALUE = { foo: 'baz' }
 
   beforeEach(() => {
-    jest.resetModules() // This is crucial to re-evaluate the module-level logic
-  })
-
-  afterEach(() => {
-    // Restore localStorage after each test
+    jest.clearAllMocks()
+    window.localStorage.clear()
+    // Reset localStorage to original state
     Object.defineProperty(window, 'localStorage', {
       value: originalLocalStorage,
       writable: true,
@@ -29,54 +28,74 @@ describe('usePersistentStorage', () => {
     })
   })
 
-  it('should select useLocalStorage when localStorage is available', async () => {
-    // Ensure localStorage is functional
+  afterEach(() => {
     Object.defineProperty(window, 'localStorage', {
-      value: {
-        setItem: jest.fn(),
-        removeItem: jest.fn(),
-        getItem: jest.fn(),
-      },
+      value: originalLocalStorage,
       writable: true,
       configurable: true,
     })
-
-    // Dynamically import the mocks and the hook under test
-    const { default: useLocalStorage } =
-      await import('../../../hooks/useLocalStorage')
-    const { default: useCookie } = await import('../../../hooks/useCookie')
-    const { default: usePersistentStorage } =
-      await import('../../../hooks/usePersistentStorage')
-
-    renderHook(() => usePersistentStorage('test', ''))
-
-    expect(useLocalStorage).toHaveBeenCalled()
-    expect(useCookie).not.toHaveBeenCalled()
   })
 
-  it('should select useCookie when localStorage is not available', async () => {
-    // Break localStorage by making setItem throw an error
+  it('should use localStorage when available', () => {
+    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+
+    act(() => {
+      const [, setValue] = result.current
+      setValue(UPDATED_VALUE)
+    })
+
+    expect(JSON.parse(window.localStorage.getItem(TEST_KEY)!)).toEqual(UPDATED_VALUE)
+    expect(Cookies.set).not.toHaveBeenCalled()
+  })
+
+  it('should use cookies when localStorage is not available', () => {
+    // Mock localStorage to be unavailable
     Object.defineProperty(window, 'localStorage', {
       value: {
-        setItem: () => {
-          throw new Error('Access Denied')
-        },
+        setItem: () => { throw new Error('Storage full') },
         getItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
       },
       writable: true,
       configurable: true,
     })
 
-    // Dynamically import the mocks and the hook under test
-    const { default: useLocalStorage } =
-      await import('../../../hooks/useLocalStorage')
-    const { default: useCookie } = await import('../../../hooks/useCookie')
-    const { default: usePersistentStorage } =
-      await import('../../../hooks/usePersistentStorage')
+    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
 
-    renderHook(() => usePersistentStorage('test', ''))
+    act(() => {
+      const [, setValue] = result.current
+      setValue(UPDATED_VALUE)
+    })
 
-    expect(useCookie).toHaveBeenCalled()
-    expect(useLocalStorage).not.toHaveBeenCalled()
+    expect(Cookies.set).toHaveBeenCalledWith(TEST_KEY, JSON.stringify(UPDATED_VALUE), expect.any(Object))
+  })
+
+  it('should load initial value from localStorage if present', () => {
+    window.localStorage.setItem(TEST_KEY, JSON.stringify(UPDATED_VALUE))
+
+    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+
+    expect(result.current[0]).toEqual(UPDATED_VALUE)
+  })
+
+  it('should load initial value from cookies if localStorage is not available and cookies have value', () => {
+    // Mock localStorage to be unavailable
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        setItem: () => { throw new Error('Storage full') },
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(UPDATED_VALUE))
+
+    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+
+    expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
 })
