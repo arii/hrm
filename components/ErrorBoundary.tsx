@@ -21,6 +21,10 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Suppress logging for intentional VRT errors to keep test logs clean.
+    if (error.message === 'VRT Test Error') {
+      return
+    }
     console.error('Uncaught error:', error, errorInfo)
   }
 

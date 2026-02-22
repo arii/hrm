@@ -16,6 +16,17 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
 })
 
+// A component that always throws an error, used for VRT testing of the ErrorBoundary.
+// Dynamically imported with ssr: false to ensure the error only triggers on the client.
+const TestErrorTrigger = dynamic(
+  async () => {
+    return function TestErrorTrigger() {
+      throw new Error('VRT Test Error')
+    }
+  },
+  { ssr: false }
+)
+
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
@@ -46,9 +57,13 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
+  triggerError?: boolean
 }
 
-const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
+const DashboardClient = ({
+  useNativeTable,
+  triggerError,
+}: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -76,6 +91,7 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
         backgroundColor: 'background.default',
       }}
     >
+      {triggerError && <TestErrorTrigger />}
       <Box sx={mainGridStyles}>
         <Box sx={{ height: '100%' }}>
           <TimerDisplay />

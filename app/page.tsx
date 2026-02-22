@@ -20,9 +20,10 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     ? testErrorParam[0]
     : testErrorParam
 
-  if (testErrorValue === 'true') {
-    throw new Error('VRT Test Error')
-  }
-
-  return <DashboardClient useNativeTable={useNativeTable} />
+  return (
+    <DashboardClient
+      useNativeTable={useNativeTable}
+      triggerError={testErrorValue === 'true'}
+    />
+  )
 }

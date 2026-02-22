@@ -133,7 +133,7 @@ test.describe('Component-Specific VRT', () => {
 
   test('ErrorFallback UI', async ({ dashboardPage }) => {
     // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component.
-    // NOTE: This intentionally triggers an "Uncaught error" in the server-side render, which is expected.
+    // NOTE: This error is now triggered client-side to avoid noisy server logs and 500 responses.
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
