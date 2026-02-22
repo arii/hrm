@@ -24,7 +24,9 @@ export const useConnectUserProfile = (): UserProfileState => {
     updateHeight: handleHeightChange,
     commitHeight: handleHeightBlur,
     error: heightError,
-  } = useHeightInput(String(175), unitSystem)
+  } = useHeightInput(String(userSettings.userHeight || 175), unitSystem, (cm) =>
+    setUserSettings((prev) => ({ ...prev, userHeight: cm }))
+  )
 
   const displayWeight = useMemo(() => {
     if (localDisplayWeight !== null) {
