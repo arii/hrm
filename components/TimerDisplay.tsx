@@ -16,30 +16,10 @@ import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
-import { useTheme, alpha, Theme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
-
-interface PhaseConfig {
-  color: (theme: Theme) => string
-  label: string
-}
-
-const DEFAULT_PHASE_CONFIG: PhaseConfig = {
-  color: (theme) => theme.palette.text.secondary,
-  label: 'READY',
-}
-
-// Map timer phases to MUI theme palette colors using accessor functions for type safety
-const TIMER_PHASE_CONFIG: Record<string, PhaseConfig> = {
-  PREPARE: { color: (theme) => theme.palette.warning.main, label: 'GET READY' },
-  RUNNING: { color: (theme) => theme.palette.primary.main, label: 'RUNNING' },
-  WORK: { color: (theme) => theme.palette.error.main, label: 'WORK' },
-  REST: { color: (theme) => theme.palette.success.main, label: 'REST' },
-  COOLDOWN: { color: (theme) => theme.palette.info.main, label: 'COOLDOWN' },
-  IDLE: DEFAULT_PHASE_CONFIG,
-}
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -57,25 +37,23 @@ const TimerDisplay = () => {
 
   // Determine what to display based on mode and phase
   let displayTime: string
-  let configKey = 'IDLE'
+  let phaseLabel = 'READY'
+  let phaseColor = theme.palette.text.secondary
 
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    configKey = 'PREPARE'
+    phaseLabel = 'GET READY'
+    phaseColor = theme.palette.warning.main
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     displayTime = formatDuration(timeElapsed, {
       unit: 'seconds',
       format: 'MM:SS',
     })
-    configKey = 'RUNNING'
-  } else if (
-    mode === 'TABATA' &&
-    (currentPhase === 'WORK' ||
-      currentPhase === 'REST' ||
-      currentPhase === 'COOLDOWN')
-  ) {
+    phaseLabel = 'RUNNING'
+    phaseColor = theme.palette.primary.main
+  } else if (mode === 'TABATA') {
     // TABATA: Show remaining time MM:SS
     displayTime = formatDuration(timeRemaining, {
       unit: 'seconds',
@@ -83,21 +61,25 @@ const TimerDisplay = () => {
     })
 
     if (currentPhase === 'WORK') {
-      configKey = 'WORK'
+      phaseLabel = 'WORK'
+      phaseColor = theme.palette.error.main
     } else if (currentPhase === 'REST') {
-      configKey = 'REST'
+      phaseLabel = 'REST'
+      phaseColor = theme.palette.success.main
+    } else if (currentPhase === 'COOLDOWN') {
+      phaseLabel = 'COOLDOWN'
+      phaseColor = theme.palette.info.main
     } else {
-      configKey = 'COOLDOWN'
+      // IDLE in Tabata
+      phaseLabel = 'READY'
+      phaseColor = theme.palette.text.secondary
     }
   } else {
     // IDLE or default
     displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    configKey = 'IDLE'
+    phaseLabel = 'READY'
+    phaseColor = theme.palette.text.secondary
   }
-
-  const config = TIMER_PHASE_CONFIG[configKey] ?? DEFAULT_PHASE_CONFIG
-  const phaseLabel = config.label
-  const phaseColor = config.color(theme)
 
   return (
     <Card
@@ -212,30 +194,15 @@ const TimerDisplay = () => {
           aria-live="polite"
           aria-atomic="true"
           sx={{
-<<<<<<< HEAD
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '4rem', sm: '6rem', md: '6rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-=======
             fontFamily: 'var(--font-digital-7), monospace',
             fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
             fontWeight: 900,
->>>>>>> origin/leader
             lineHeight: 1,
             textAlign: 'center',
             color: phaseColor,
-<<<<<<< HEAD
-            textShadow: `0 0 20px ${alpha(phaseColor, 0.5)}`,
-=======
-            textShadow: `
-              0 0 20px ${alpha(phaseColor, 0.6)},
-              0 0 40px ${alpha(phaseColor, 0.3)}
-            `,
-            WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+            textShadow: `0 0 10px ${alpha(phaseColor, 0.5)}`,
             letterSpacing: '0.05em',
             transition: 'color 0.3s ease-in-out',
->>>>>>> origin/leader
           }}
         >
           {displayTime}

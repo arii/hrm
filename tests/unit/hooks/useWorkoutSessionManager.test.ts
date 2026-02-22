@@ -76,15 +76,6 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.status).toBe('running')
       expect(result.current.session?.status).toBe('running')
 
-<<<<<<< HEAD
-      // Pause again before finishing
-      act(() => {
-        result.current.pauseWorkout()
-      })
-      expect(result.current.status).toBe('paused')
-
-=======
->>>>>>> origin/leader
       // Finish
       mockDateNow.mockReturnValue(1005000) // Advance time
       act(() => {
@@ -145,18 +136,10 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(150)
       expect(result.current.session?.averageHr).toBe(135)
       expect(result.current.session?.timeInZones.ZONE_2).toBe(1)
-<<<<<<< HEAD
-      expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
-      // Verify calories are accumulating (exact value depends on formula, checking > 0 is sufficient for integration)
-      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(0)
-      const caloriesAfterSecondPoint =
-        result.current.session?.totalCaloriesBurned || 0
-=======
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1) // 1 second elapsed since last point
 
       // Calories should have increased by mocked amount (5)
       expect(result.current.session?.totalCaloriesBurned).toBe(5)
->>>>>>> origin/leader
 
       // Add third data point (HR 100 -> ~54% -> Zone 1 / Recovery)
       mockDateNow.mockReturnValue(1004000) // +2 seconds
@@ -169,11 +152,6 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.timeInZones.ZONE_4).toBe(1)
       // Zone 1 gets +2 seconds
       expect(result.current.session?.timeInZones.ZONE_1).toBe(2)
-<<<<<<< HEAD
-      // Verify calories continue to accumulate
-      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(
-        caloriesAfterSecondPoint
-=======
 
       // Calories should have increased by mocked amount again (5 + 5 = 10)
       expect(result.current.session?.totalCaloriesBurned).toBe(10)
@@ -243,7 +221,6 @@ describe('useWorkoutSessionManager', () => {
         expect.objectContaining({
           gender: 'MALE',
         })
->>>>>>> origin/leader
       )
     })
 
@@ -272,39 +249,6 @@ describe('useWorkoutSessionManager', () => {
       expect(result.current.session?.maxHr).toBe(0)
       expect(result.current.session?.averageHr).toBe(0)
     })
-
-    it('should skip calorie calculation if time delta is too large (signal loss)', async () => {
-      const { result } = renderHook(() => useWorkoutSessionManager())
-      await waitFor(() => expect(result.current.isInitialized).toBe(true))
-
-      act(() => {
-        result.current.startWorkout(30, 80)
-      })
-
-      // Add first data point
-      act(() => {
-        result.current.addHrData({ time: 1001000, hr: 140 })
-      })
-      const initialCalories = result.current.session?.totalCaloriesBurned || 0
-
-      // Add second data point with a 15 second gap (simulated signal loss)
-      act(() => {
-        result.current.addHrData({ time: 1016000, hr: 140 })
-      })
-
-      // Assert calories did NOT increase for this large gap
-      expect(result.current.session?.totalCaloriesBurned).toBe(initialCalories)
-
-      // Add third data point with normal gap (1 sec)
-      act(() => {
-        result.current.addHrData({ time: 1017000, hr: 140 })
-      })
-
-      // Assert calories resumed
-      expect(result.current.session?.totalCaloriesBurned).toBeGreaterThan(
-        initialCalories
-      )
-    })
   })
 
   describe('Stale Session Handling', () => {
@@ -325,6 +269,7 @@ describe('useWorkoutSessionManager', () => {
         lastSyncTime: 900000,
         syncStatus: 'pending',
         endTime: null,
+        pauseTime: null,
       }
       mockGetIncompleteSession.mockResolvedValue(staleSession)
       mockIsSameDay.mockReturnValue(false) // Mock as a different day

@@ -1,18 +1,11 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-<<<<<<< HEAD
-import { useState, useEffect, useMemo, useCallback } from 'react'
-=======
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
->>>>>>> origin/leader
 import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-<<<<<<< HEAD
-=======
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
->>>>>>> origin/leader
 import { useUserSettings } from '@/context/UserSettingsContext'
 import {
   workoutSessionStorage,
@@ -30,22 +23,6 @@ import SessionDetail from './SessionDetail'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
-
-const defaultTimeInZones: Record<HeartRateZone, number> = {
-  ZONE_0: 0,
-  ZONE_1: 0,
-  ZONE_2: 0,
-  ZONE_3: 0,
-  ZONE_4: 0,
-  ZONE_5: 0,
-  ZONE_6: 0,
-}
-
-<<<<<<< HEAD
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
   loading: () => (
     <Box sx={{ height: 300 }}>
       <Skeleton
@@ -58,8 +35,16 @@ const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ),
 })
 
-=======
->>>>>>> origin/leader
+const defaultTimeInZones: Record<HeartRateZone, number> = {
+  ZONE_0: 0,
+  ZONE_1: 0,
+  ZONE_2: 0,
+  ZONE_3: 0,
+  ZONE_4: 0,
+  ZONE_5: 0,
+  ZONE_6: 0,
+}
+
 type View = 'active' | 'list' | 'detail'
 
 const ExperimentalAnalyticsPage = () => {
@@ -76,11 +61,6 @@ const ExperimentalAnalyticsPage = () => {
     resumeWorkout,
     endWorkout,
     addHrData,
-<<<<<<< HEAD
-    totalCaloriesBurned,
-  } = useWorkoutSessionManager()
-
-=======
     caloriesBurned,
   } = useWorkoutSessionManager()
 
@@ -92,7 +72,6 @@ const ExperimentalAnalyticsPage = () => {
     activeSession?.endTime
   )
 
->>>>>>> origin/leader
   // Session list management (direct storage access)
   const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
   const [view, setView] = useState<View>(() =>
@@ -101,7 +80,10 @@ const ExperimentalAnalyticsPage = () => {
   const [selectedSession, setSelectedSession] =
     useState<WorkoutSessionData | null>(null)
 
-  // Load all sessions
+  // Ref to track latest HR for interval-based updates
+  const latestHrRef = useRef<number>(0)
+
+  // Load allSessions
   useEffect(() => {
     const loadSessions = async () => {
       const sessions = await workoutSessionStorage.getAllSessions()
@@ -139,44 +121,32 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  // Ingest data from WebSocket updates (Event-driven)
+  // Update latestHrRef whenever hrmData changes
+  useEffect(() => {
+    const currentData = hrmData[0]
+    if (currentData) {
+      latestHrRef.current = currentData.value
+    }
+  }, [hrmData])
+
+  // Ingest data via interval (throttling/smoothing)
   useEffect(() => {
     if (status !== 'running') return
 
-<<<<<<< HEAD
-    const currentData = hrmData[0]
-    if (!currentData) return
-
-    // Add HR data point with zone calculation (calories processed internally by hook)
-    const dataPoint = {
-      time: Date.now(),
-      hr: currentData.value,
-    }
-
-    addHrData(dataPoint)
-  }, [hrmData, status, addHrData])
-=======
     const intervalId = setInterval(() => {
       const currentHr = latestHrRef.current
-      // Add HR data point (handles calorie calc internally)
+      // Add HR data point (handles calorie calc internally in useWorkoutSessionManager)
       addHrData(currentHr)
     }, 1000)
 
     return () => clearInterval(intervalId)
   }, [status, addHrData])
->>>>>>> origin/leader
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
     const weight = userSettings.userWeight || 70
-    const gender = userSettings.gender
     const maxHr = calculateMaxHr(age)
-<<<<<<< HEAD
-    startWorkout(age, weight, gender, maxHr)
-    setView('active')
-  }, [startWorkout, userSettings])
-=======
 
     startWorkout(age, weight, { maxHr })
     setView('active')
@@ -185,7 +155,6 @@ const ExperimentalAnalyticsPage = () => {
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
   }, [pauseWorkout])
->>>>>>> origin/leader
 
   const handleResumeWorkout = useCallback(() => {
     resumeWorkout()
