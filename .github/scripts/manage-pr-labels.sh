@@ -26,7 +26,7 @@ jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json |
     debug "Label '$name' already exists."
   else
     log "Creating label '$name'..."
-    gh label create "$name" --description "$description" --color "$color" || true
+    gh label create "$name" --description "$description" --color "$color"
   fi
 done
 endgroup
@@ -81,7 +81,7 @@ if [ -n "$NEW_LABELS" ]; then
         debug "Label '$clean_label' already exists."
       else
         log "Creating label '$clean_label'..."
-        gh label create "$clean_label" || true
+        gh label create "$clean_label"
       fi
     fi
   done
