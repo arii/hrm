@@ -3,7 +3,10 @@ import { renderHook, act } from '@testing-library/react'
 import { useConnectUserProfile } from '../../../hooks/useConnectUserProfile'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useHeightInput } from '../../../hooks/useHeightInput'
-import { validateAgeValue, validateWeightValue } from '@/lib/validation/userMetrics'
+import {
+  validateAgeValue,
+  validateWeightValue,
+} from '@/lib/validation/userMetrics'
 
 // Mock dependencies
 jest.mock('@/context/UserSettingsContext')
@@ -27,7 +30,10 @@ describe('useConnectUserProfile', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(useUserSettings as jest.Mock).mockReturnValue([mockUserSettings, mockSetUserSettings])
+    ;(useUserSettings as jest.Mock).mockReturnValue([
+      mockUserSettings,
+      mockSetUserSettings,
+    ])
     ;(useHeightInput as jest.Mock).mockReturnValue({
       displayHeight: mockHeightState,
       updateHeight: mockUpdateHeight,
@@ -58,7 +64,9 @@ describe('useConnectUserProfile', () => {
 
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
-    expect(updater(mockUserSettings)).toEqual(expect.objectContaining({ userName: 'New Name' }))
+    expect(updater(mockUserSettings)).toEqual(
+      expect.objectContaining({ userName: 'New Name' })
+    )
   })
 
   it('should call setUserAge and validate on blur', () => {
@@ -95,7 +103,9 @@ describe('useConnectUserProfile', () => {
     expect(validateWeightValue).toHaveBeenCalledWith('75', 'METRIC')
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
-    expect(updater(mockUserSettings)).toEqual(expect.objectContaining({ userWeight: 75 }))
+    expect(updater(mockUserSettings)).toEqual(
+      expect.objectContaining({ userWeight: 75 })
+    )
   })
 
   it('should handle unit system changes', () => {
@@ -107,7 +117,9 @@ describe('useConnectUserProfile', () => {
 
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
-    expect(updater(mockUserSettings)).toEqual(expect.objectContaining({ unitSystem: 'IMPERIAL' }))
+    expect(updater(mockUserSettings)).toEqual(
+      expect.objectContaining({ unitSystem: 'IMPERIAL' })
+    )
   })
 
   it('should handle gender changes', () => {
@@ -119,7 +131,9 @@ describe('useConnectUserProfile', () => {
 
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
-    expect(updater(mockUserSettings)).toEqual(expect.objectContaining({ gender: 'MALE' }))
+    expect(updater(mockUserSettings)).toEqual(
+      expect.objectContaining({ gender: 'MALE' })
+    )
   })
 
   it('should delegate height operations to useHeightInput', () => {

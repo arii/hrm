@@ -28,9 +28,7 @@ jest.mock('@mui/icons-material/SignalCellularConnectedNoInternet0Bar', () => ({
 
 describe('SignalQualityIndicator', () => {
   it('should render the "excellent" state with correct tooltip', () => {
-    const { container } = render(
-      <SignalQualityIndicator periodMs={1000} isConnected={true} />
-    )
+    render(<SignalQualityIndicator periodMs={1000} isConnected={true} />)
     expect(screen.getByTestId('SignalCellularAltIcon')).toBeInTheDocument()
     expect(screen.getByText('1000ms')).toBeInTheDocument()
   })
