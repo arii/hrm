@@ -1,7 +1,6 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
-import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
@@ -11,8 +10,11 @@ import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
 =======
 import { getActiveHrmData } from '@/utils/hrm'
+<<<<<<< HEAD
 import { HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 >>>>>>> 625d7be3 (feat: standardizes layout constants and implements granular masking for VRT)
+=======
+>>>>>>> 90313f6a (make maksing more focused)
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -62,6 +64,7 @@ const HrmConnectionPanel = () => {
             </Typography>
           </Box>
           <Box
+            data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
               width: { sm: 'calc(50% - 12px)' },
@@ -69,13 +72,7 @@ const HrmConnectionPanel = () => {
               backgroundColor: 'action.hover',
               borderRadius: 3,
             }}
-          >
-            <Skeleton
-              variant="rectangular"
-              height={HR_TILE_MAX_HEIGHT}
-              sx={{ borderRadius: 3 }}
-            />
-          </Box>
+          />
         </>
       ) : (
         tileData.map((user: ClientHrmData) => {
@@ -88,6 +85,7 @@ const HrmConnectionPanel = () => {
           return (
             <Box
               key={user.clientId}
+              data-testid="hr-tile-grid-item"
               sx={{
                 width: {
                   xs: '100%',

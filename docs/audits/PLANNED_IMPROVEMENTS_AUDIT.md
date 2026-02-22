@@ -34,7 +34,7 @@ This document provides a consolidated overview of known issues, planned improvem
 ### Current State (from TESTING.md and TESTING_GUIDELINES.md)
 
 - The project uses a combination of Jest for unit tests and Playwright for E2E and visual regression testing.
-- A `data-connection-status` attribute on `document.body` is used to synchronize Playwright tests with the WebSocket connection, improving stability.
+- A `window.__TEST_WEBSOCKET_READY__` flag is used to synchronize Playwright tests with the WebSocket connection, improving stability.
 - Test artifacts are strictly excluded from version control via `.gitignore`.
 
 ### Planned Improvements (from TESTING.md and FRONTEND_IMPROVEMENT_PLAN.md)
