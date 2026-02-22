@@ -485,12 +485,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     }
-  }, [])
+  }, [cleanupGattConnection])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
       // If we're already connecting, abort the previous attempt
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+      if (
+        abortControllerRef.current &&
+        !abortControllerRef.current.signal.aborted
+      ) {
         logger.info(
           { device: device.name },
           'Aborting existing connection attempt to start new one.'
@@ -605,7 +608,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           onHeartRateUpdateRef.current?.(heartRate)
         }
 
-        characteristic.addEventListener('characteristicvaluechanged', hrListener)
+        characteristic.addEventListener(
+          'characteristicvaluechanged',
+          hrListener
+        )
         hrCharacteristicRef.current = characteristic
         hrListenerRef.current = hrListener
 

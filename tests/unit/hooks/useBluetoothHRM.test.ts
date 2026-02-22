@@ -186,7 +186,6 @@ describe('useBluetoothHRM', () => {
     expect(mockBluetooth.requestDevice).toHaveBeenCalled()
   })
 
-
   describe('Signal Quality Calculation', () => {
     it('should calculate the rolling average of signal period', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
