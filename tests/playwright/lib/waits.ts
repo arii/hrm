@@ -53,7 +53,6 @@ export async function waitForPageReady(
   // Wait for fonts
   await waitForFontsLoaded(page)
 
-<<<<<<< HEAD
   // Wait for skeletons (swallow error if none)
   await page
     .waitForSelector('.MuiSkeleton-root', {
@@ -64,30 +63,9 @@ export async function waitForPageReady(
 
   // Wait for main content (fail fast)
   await page.waitForSelector(selector, {
-=======
-  // Wait for actual content to be present first (Fail-Fast check)
-  await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
->>>>>>> origin/leader
     state: 'visible',
     timeout,
   })
-
-  // Wait for loading skeletons to disappear
-  // We use hidden state to ensure they are either removed or invisible.
-  // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
-  // If skeletons persist (e.g. infinite loading or bug), we want VRT to capture that state
-  // rather than crashing with a generic TimeoutError.
-  try {
-    await page.waitForSelector('.MuiSkeleton-root', {
-      state: 'hidden',
-      timeout,
-    })
-  } catch (error) {
-    console.warn(
-      `[waitForPageReady] Skeletons did not disappear within ${timeout}ms. Proceeding to snapshot/test.`,
-      error
-    )
-  }
 }
 
 /**
@@ -103,8 +81,6 @@ export async function waitForWebSocketConnection(
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.INFRASTRUCTURE } = options // Increased timeout for connection
 
-<<<<<<< HEAD
-  // Check for various UI indicators of connection status
   await page
     .waitForFunction(
       () => {
@@ -118,14 +94,6 @@ export async function waitForWebSocketConnection(
     .catch(() => {
       console.warn('WebSocket connection indicator not found or timed out')
     })
-=======
-  await page.waitForFunction(
-    () => {
-      return document.body.dataset.connectionStatus === 'connected'
-    },
-    { timeout }
-  )
->>>>>>> origin/leader
 }
 
 /**
