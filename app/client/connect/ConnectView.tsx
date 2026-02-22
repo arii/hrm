@@ -16,6 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
+import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
@@ -75,38 +76,6 @@ interface ConnectViewProps {
   onPauseWorkout: () => void
   onEndWorkout: () => void
 }
-
-interface ResetSectionProps {
-  onReset: () => void
-  isResetting: boolean
-}
-
-const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
-  <Box
-    sx={{
-      textAlign: 'center',
-      mt: 4,
-      pt: 4,
-      borderTop: '1px solid #eee',
-    }}
-  >
-    <Button
-      variant="contained"
-      color="error"
-      onClick={onReset}
-      disabled={isResetting}
-    >
-      {isResetting ? 'Resetting...' : 'Reset System & Device'}
-    </Button>
-    <Typography
-      variant="caption"
-      display="block"
-      sx={{ mt: 1, color: 'text.secondary' }}
-    >
-      Resets server state AND forgets Bluetooth device connection.
-    </Typography>
-  </Box>
-)
 
 export default function ConnectView({
   duration,
@@ -207,11 +176,15 @@ export default function ConnectView({
 
   return (
     <>
+<<<<<<< HEAD
       <Container
         data-testid="connect-view"
         maxWidth="sm"
         sx={{ py: 3, pb: 10 }}
       >
+=======
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+>>>>>>> origin/leader
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>

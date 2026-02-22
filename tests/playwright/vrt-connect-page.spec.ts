@@ -38,13 +38,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByTestId('connection-status-alert')
     ).toContainText('Checking saved devices...')
-    await takeScreenshot(
-      connectPage,
-      'connect-page-checking-saved-devices.png',
-      {
-        mask: [connectPage.getByTestId('user-settings-form')],
-      }
-    )
+    await takeScreenshot(connectPage, 'connect-page-scanning.png', {
+      mask: [connectPage.getByTestId('user-settings-form')],
+    })
   })
 
   test('connected state', async ({ connectPage }) => {

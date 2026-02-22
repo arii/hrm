@@ -146,7 +146,9 @@ Return a JSON object with:
 ```
 
 ## 🛠️ Issue Generation Instructions
+
 If you identify Technical Debt, Refactoring opportunities, or Improvements:
+
 1. **Create a 'suggestedIssue'** in the JSON output.
 2. **Criteria**:
    - MUST be specific, actionable, and non-trivial. Avoid generic suggestions like "Refactor code" or "Improve quality".
