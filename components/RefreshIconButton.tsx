@@ -8,13 +8,13 @@ interface RefreshIconButtonProps extends IconButtonProps {
   onClick: () => void
 }
 
-const RefreshIconButton = ({ onClick, sx, ...props }: RefreshIconButtonProps) => {
+const RefreshIconButton = ({
+  onClick,
+  sx,
+  ...props
+}: RefreshIconButtonProps) => {
   return (
-    <IconButton
-      onClick={onClick}
-      sx={sx}
-      {...props}
-    >
+    <IconButton onClick={onClick} sx={sx} {...props}>
       <RefreshIcon fontSize="small" />
     </IconButton>
   )
