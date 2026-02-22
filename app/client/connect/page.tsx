@@ -138,6 +138,10 @@ export default function ConnectPage() {
     endWorkout()
   }, [endWorkout])
 
+  const handleResetWorkout = useCallback(() => {
+    resetWorkout()
+  }, [resetWorkout])
+
   const handleHeartRateUpdate = useCallback(
     (heartRate: number) => {
       logger.debug(
@@ -245,11 +249,6 @@ export default function ConnectPage() {
     connectAndStream(userName, userAge || 0)
   }
 
-  const handleForgetDevice = async () => {
-    await forgetDevice()
-    resetWorkout()
-  }
-
   return (
     <ConnectView
       duration={formatDuration(workoutDuration, {
@@ -285,7 +284,7 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onForgetDevice={handleForgetDevice}
+      onForgetDevice={forgetDevice}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       currentHR={currentHR}
@@ -296,6 +295,7 @@ export default function ConnectPage() {
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
+      onReset={handleResetWorkout}
       workoutStatus={workoutStatus}
       onStartWorkout={handleStartWorkout}
       onPauseWorkout={pauseWorkout}
