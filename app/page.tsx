@@ -1,4 +1,5 @@
 import DashboardClient from '@/components/DashboardClient'
+import { env } from '@/lib/env'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -11,8 +12,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
   const useNativeTable =
     nativeValue === 'true' ||
-    (process.env.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true' &&
-      nativeValue !== 'false')
+    (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
 
   // Check for test-error
   const testErrorParam = params['test-error']
