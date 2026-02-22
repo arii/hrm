@@ -49,21 +49,32 @@ describe('ConnectView', () => {
     onEndWorkout: jest.fn(),
   }
 
-  it('displays an error message for invalid age', () => {
+  it('displays an error message for invalid age only when ageError is set', () => {
+    // Negative assertion: no error initially
+    const { rerender } = render(<ConnectView {...defaultProps} />)
+    expect(screen.queryByText('Invalid age')).not.toBeInTheDocument()
+
+    // Positive assertion: error appears when prop is set
     const props = { ...defaultProps, ageError: 'Invalid age' }
-    render(<ConnectView {...props} />)
+    rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid age')).toBeInTheDocument()
   })
 
-  it('displays an error message for invalid height', () => {
+  it('displays an error message for invalid height only when heightError is set', () => {
+    const { rerender } = render(<ConnectView {...defaultProps} />)
+    expect(screen.queryByText('Invalid height')).not.toBeInTheDocument()
+
     const props = { ...defaultProps, heightError: 'Invalid height' }
-    render(<ConnectView {...props} />)
+    rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid height')).toBeInTheDocument()
   })
 
-  it('displays an error message for invalid weight', () => {
+  it('displays an error message for invalid weight only when weightError is set', () => {
+    const { rerender } = render(<ConnectView {...defaultProps} />)
+    expect(screen.queryByText('Invalid weight')).not.toBeInTheDocument()
+
     const props = { ...defaultProps, weightError: 'Invalid weight' }
-    render(<ConnectView {...props} />)
+    rerender(<ConnectView {...props} />)
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
 
