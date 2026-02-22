@@ -10,7 +10,7 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 import { HrTileProps } from '@/types'
-import { HR_TILE_MIN_HEIGHT } from '@/constants/layout'
+import { HR_TILE_MIN_HEIGHT, HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 
@@ -70,7 +70,7 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography variant="h4" sx={{ fontWeight: 800 }}>
+  <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
     <span data-testid={testId}>{value}</span>{' '}
     <Typography
       component="span"
@@ -167,6 +167,7 @@ const HrTile = ({
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
           minHeight: HR_TILE_MIN_HEIGHT,
+          maxHeight: HR_TILE_MAX_HEIGHT,
           // Ensure the tile fills the container height in the grid
           height: '100%',
           display: 'flex',
