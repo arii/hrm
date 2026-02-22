@@ -32,7 +32,11 @@ export const sendWebSocketMessage = (
     return
   }
   try {
-    extWs.send(JSON.stringify(message))
+    const messageWithTimestamp = {
+      ...message,
+      serverTimestamp: message.serverTimestamp ?? Date.now(),
+    }
+    extWs.send(JSON.stringify(messageWithTimestamp))
   } catch (error) {
     logger.error(
       {
@@ -59,7 +63,11 @@ export const broadcast = (
   origin?: string,
   targetRole?: 'dashboard' | 'controller'
 ): void => {
-  const messageString = JSON.stringify(message)
+  const messageWithTimestamp = {
+    ...message,
+    serverTimestamp: message.serverTimestamp ?? Date.now(),
+  }
+  const messageString = JSON.stringify(messageWithTimestamp)
   wss.clients.forEach((client) => {
     const extClient = client as ExtWebSocket
     if (extClient.readyState === WebSocket.OPEN) {
