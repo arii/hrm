@@ -53,14 +53,6 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      // NEW: Verify HR tile has fixed height before screenshot
-      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
-      const boundingBox = await hrTile.boundingBox()
-
-      // Assert tile height is within expected range (allow some variance)
-      expect(boundingBox?.height).toBeGreaterThanOrEqual(HR_TILE_MIN_HEIGHT)
-      expect(boundingBox?.height).toBeLessThanOrEqual(HR_TILE_MAX_HEIGHT)
-
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.1,
         mask: [

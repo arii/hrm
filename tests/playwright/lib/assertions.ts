@@ -11,6 +11,13 @@
 import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
+const DEFAULT_SCREENSHOT_OPTIONS = {
+  threshold: 0.2,
+  maxDiffPixelRatio: 0.02,
+  animations: 'disabled' as const,
+  caret: 'hide' as const,
+}
+
 /**
  * Assert that a page matches its expected screenshot with standard masking.
  * Uses consistent options for visual regression testing.
@@ -101,21 +108,11 @@ export async function assertWebSocketConnected(
 ): Promise<void> {
   const { timeout = 10000 } = options
 
-  const isConnected = await page.evaluate((t) => {
-    return new Promise<boolean>((resolve) => {
-      const checkConnection = () => {
-        if (window.__TEST_WEBSOCKET_READY__ === true) {
-          resolve(true)
-          return
-        }
-        setTimeout(checkConnection, 100)
-      }
-      checkConnection()
-      setTimeout(() => resolve(false), t)
-    })
-  }, timeout)
-
-  expect(isConnected).toBe(true)
+  await expect(page.locator('body')).toHaveAttribute(
+    'data-connection-status',
+    'Connected',
+    { timeout }
+  )
 }
 
 /**
