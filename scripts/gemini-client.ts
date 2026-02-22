@@ -676,9 +676,7 @@ async function runReviewPreset(
     context.prLabels.includes('ai-reviewed') ||
     context.prLabels.includes('abandon')
   ) {
-    console.log(
-      'PR is marked as "ai-reviewed" or "abandon". Skipping review.'
-    )
+    console.log('PR is marked as "ai-reviewed" or "abandon". Skipping review.')
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
@@ -774,7 +772,8 @@ async function runReviewPreset(
                   },
                   filePath: {
                     type: SchemaType.STRING,
-                    description: 'The path to the file where the issue was found (relative to repo root).',
+                    description:
+                      'The path to the file where the issue was found (relative to repo root).',
                   },
                   lineNumber: {
                     type: SchemaType.NUMBER,

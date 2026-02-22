@@ -118,6 +118,24 @@ export async function navigateAndWait(
 ): Promise<void> {
   const baseUrl = getBaseURL()
   await page.goto(`${baseUrl}${route}`)
+
+  // Wait for the window object to be available and controls to attach
+  // This is a minimal wait to ensure JS has executed
+  await page
+    .waitForFunction(() => !!window.__TEST_CONTROLS__, {
+      timeout: 5000,
+    })
+    .catch(() => console.warn('Test controls not found within timeout'))
+
+  // Force disconnect to remove HrmConnectionPanel skeleton
+  await page.evaluate(() => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    if (window.__TEST_CONTROLS__) {
+      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+      window.__TEST_CONTROLS__.disconnect()
+    }
+  })
+
   await waitForPageReady(page)
 }
 
