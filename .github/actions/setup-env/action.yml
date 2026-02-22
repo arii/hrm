@@ -50,8 +50,6 @@ runs:
           cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-
           cache-${{ inputs.cache-type }}-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
-<<<<<<< HEAD
-=======
     - name: Install GitHub CLI
       shell: bash
       run: |
@@ -82,7 +80,6 @@ runs:
         # Add to PATH for this and future steps
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
->>>>>>> origin/leader
     - name: 'Install Dependencies'
       shell: bash
       run: |
