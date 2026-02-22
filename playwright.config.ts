@@ -68,8 +68,8 @@ export default defineConfig({
   use: {
     // Base URL for all tests
     baseURL,
-    actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
-    navigationTimeout: 15000, // Navigation timeout
+    actionTimeout: 5000, // Fails clicks/fills after 5s if element isn't found
+    navigationTimeout: 8000, // Navigation timeout
     headless: true,
 
     // Screenshot settings

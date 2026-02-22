@@ -7,6 +7,7 @@ import {
 } from './test-helpers'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
   test.beforeEach(async ({ dashboardPage }) => {
@@ -108,7 +109,9 @@ test.describe('Component-Specific VRT', () => {
     const selectorButton = dashboardPage.getByTestId(
       'spotify-device-selector-button'
     )
-    await expect(selectorButton).toBeVisible({ timeout: 15000 })
+    await expect(selectorButton).toBeVisible({
+      timeout: VRT_TIMEOUTS.COMPONENT_RENDER,
+    })
     await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
