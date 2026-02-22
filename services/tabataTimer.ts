@@ -1,4 +1,3 @@
-
 import { ServerMessage } from '../types/websocket.js'
 import { TimerData, TimerMode, TimerPhase } from '../types/core.js'
 import {
