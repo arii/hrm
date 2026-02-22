@@ -19,28 +19,49 @@ fi
 # =================================================================
 # Ensure all managed labels exist in the repository
 # =================================================================
+# Helper function to ensure a label exists
+ensure_label_exists() {
+  local name=$1
+  local description=$2
+  local color=$3
+
+  # Trim whitespace
+  local clean_name=$(echo "$name" | xargs)
+  if [ -z "$clean_name" ]; then return; fi
+
+  # GitHub labels are case-insensitive, so we use grep -i for the check.
+  # We assume EXISTING_LABELS is populated in the calling scope.
+  if echo "$EXISTING_LABELS" | grep -iFxq -- "$clean_name"; then
+    debug "Label '$clean_name' already exists."
+  else
+    log "Creating label '$clean_name'..."
+    # We capture errors and check for "already exists" specifically,
+    # providing a safety net if the existence check missed a label (e.g. due to race conditions).
+    local cmd=("gh" "label" "create" "$clean_name")
+    if [ -n "$description" ]; then cmd+=("--description" "$description"); fi
+    if [ -n "$color" ]; then cmd+=("--color" "$color"); fi
+
+    set +e
+    local error_msg
+    error_msg=$("${cmd[@]}" 2>&1)
+    local exit_code=$?
+    set -e
+
+    if [ $exit_code -ne 0 ] && ! echo "$error_msg" | grep -qi "already exists"; then
+      error "Failed to create label '$clean_name': $error_msg"
+    fi
+  fi
+}
+
+# =================================================================
+# Ensure all managed labels exist in the repository
+# =================================================================
 group "Ensuring all managed labels exist"
 # Get all existing labels once to avoid redundant API calls.
 # We strip quotes and carriage returns to ensure reliable matching regardless of gh version or environment.
 EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name' | tr -d '"\r')
 jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
-  # Trim whitespace just in case
-  clean_name=$(echo "$name" | xargs)
-  # GitHub labels are case-insensitive, so we use grep -i for the check.
-  if echo "$EXISTING_LABELS" | grep -iFxq -- "$clean_name"; then
-    debug "Label '$clean_name' already exists."
-  else
-    log "Creating label '$clean_name'..."
-    # We use a subshell to capture errors and check for "already exists" specifically,
-    # providing a safety net if the existence check missed a label (e.g. due to race conditions).
-    set +e
-    ERROR_MSG=$(gh label create "$clean_name" --description "$description" --color "$color" 2>&1)
-    EXIT_CODE=$?
-    set -e
-    if [ $EXIT_CODE -ne 0 ] && ! echo "$ERROR_MSG" | grep -qi "already exists"; then
-      error "Failed to create label '$clean_name': $ERROR_MSG"
-    fi
-  fi
+  ensure_label_exists "$name" "$description" "$color"
 done
 endgroup
 
@@ -87,23 +108,7 @@ if [ -n "$NEW_LABELS" ]; then
   # Refresh existing labels to include any created in the first step.
   EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name' | tr -d '"\r')
   for label in "${LABELS[@]}"; do
-    # Trim leading/trailing whitespace
-    clean_label=$(echo "$label" | xargs)
-    if [ -n "$clean_label" ]; then
-      # GitHub labels are case-insensitive, so we use grep -i for the check.
-      if echo "$EXISTING_LABELS" | grep -iFxq -- "$clean_label"; then
-        debug "Label '$clean_label' already exists."
-      else
-        log "Creating label '$clean_label'..."
-        set +e
-        ERROR_MSG=$(gh label create "$clean_label" 2>&1)
-        EXIT_CODE=$?
-        set -e
-        if [ $EXIT_CODE -ne 0 ] && ! echo "$ERROR_MSG" | grep -qi "already exists"; then
-          error "Failed to create label '$clean_label': $ERROR_MSG"
-        fi
-      fi
-    fi
+    ensure_label_exists "$label"
   done
   endgroup
 
