@@ -2,7 +2,11 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import DashboardClient from '@/components/DashboardClient'
 
+<<<<<<< HEAD:tests/unit/components/DashboardClient.test.tsx
 // Mock child components to isolate the DashboardClient component
+=======
+// Mock child components to isolate the Dashboard component
+>>>>>>> origin/leader:tests/unit/app/page.test.tsx
 jest.mock('@/components/WorkoutTableHeader', () => {
   const WorkoutTableHeader = ({
     refreshKey,
@@ -61,8 +65,21 @@ describe('DashboardClient', () => {
     expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
   })
 
+<<<<<<< HEAD:tests/unit/components/DashboardClient.test.tsx
   it('renders WorkoutTableHeader when useNativeTable is true', async () => {
     render(<DashboardClient useNativeTable={true} />)
+=======
+  it('renders GoogleDocViewer when NEXT_PUBLIC_USE_NATIVE_TABLE is not set', async () => {
+    delete process.env.NEXT_PUBLIC_USE_NATIVE_TABLE
+    render(<Dashboard />)
+    expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
+    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+  })
+
+  it('renders WorkoutTableHeader when NEXT_PUBLIC_USE_NATIVE_TABLE is "true"', async () => {
+    process.env.NEXT_PUBLIC_USE_NATIVE_TABLE = 'true'
+    render(<Dashboard />)
+>>>>>>> origin/leader:tests/unit/app/page.test.tsx
     expect(
       await screen.findByTestId('workout-table-header')
     ).toBeInTheDocument()

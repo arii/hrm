@@ -72,6 +72,7 @@ const GoogleDocViewer = ({
             <RefreshIconButton
               onClick={onRefresh}
               aria-label="refresh google doc"
+              data-testid="refresh-icon-button"
             />
           )}
           {iframeLoading && (
