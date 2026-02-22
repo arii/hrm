@@ -23,15 +23,7 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Error thrown when a service fails to initialize.
- */
 export class ServiceInitializationError extends Error {
-  /**
-   * Creates an instance of ServiceInitializationError.
-   *
-   * @param message The error message.
-   */
   constructor(message: string) {
     super(message)
     this.name = 'ServiceInitializationError'

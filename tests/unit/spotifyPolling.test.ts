@@ -164,26 +164,22 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should throw ServiceInitializationError if Spotify credentials are missing', async () => {
-      // We need to bypass the existing mock for this specific test
       const { env } = await import('../../lib/env.js')
-      const originalId = env.SPOTIFY_CLIENT_ID
-      const originalSecret = env.SPOTIFY_CLIENT_SECRET
+
+      const idSpy = jest.replaceProperty(env, 'SPOTIFY_CLIENT_ID', undefined)
+      const secretSpy = jest.replaceProperty(
+        env,
+        'SPOTIFY_CLIENT_SECRET',
+        undefined
+      )
 
       try {
-        // @ts-expect-error - Modifying readonly property for test
-        env.SPOTIFY_CLIENT_ID = undefined
-        // @ts-expect-error - Modifying readonly property for test
-        env.SPOTIFY_CLIENT_SECRET = undefined
-
         await expect(SpotifyPolling.create(broadcastMock)).rejects.toThrow(
           ServiceInitializationError
         )
       } finally {
-        // Restore
-        // @ts-expect-error - Modifying readonly property for test
-        env.SPOTIFY_CLIENT_ID = originalId
-        // @ts-expect-error - Modifying readonly property for test
-        env.SPOTIFY_CLIENT_SECRET = originalSecret
+        idSpy.restore()
+        secretSpy.restore()
       }
     })
   })
