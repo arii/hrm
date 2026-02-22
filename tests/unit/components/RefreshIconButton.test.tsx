@@ -7,6 +7,8 @@ describe('RefreshIconButton', () => {
     render(<RefreshIconButton onClick={() => {}} />)
     const button = screen.getByRole('button')
     expect(button).toBeInTheDocument()
+    // Check for icon
+    expect(button.querySelector('svg')).toBeInTheDocument()
   })
 
   it('calls onClick when clicked', () => {
@@ -14,18 +16,13 @@ describe('RefreshIconButton', () => {
     render(<RefreshIconButton onClick={handleClick} />)
     const button = screen.getByRole('button')
     fireEvent.click(button)
+
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
 
-  it('passes other props to IconButton', () => {
+  it('passes other props to IconButton (including aria-label)', () => {
     render(<RefreshIconButton onClick={() => {}} aria-label="custom label" />)
     const button = screen.getByRole('button', { name: 'custom label' })
     expect(button).toBeInTheDocument()
-  })
-
-  it('renders the refresh icon', () => {
-    render(<RefreshIconButton onClick={() => {}} />)
-    const button = screen.getByRole('button')
-    expect(button.querySelector('svg')).toBeInTheDocument()
   })
 })

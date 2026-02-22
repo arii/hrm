@@ -40,6 +40,10 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
+    // Ensure we are in non-native mode for this test
+    await dashboardPage.goto('/?native=false')
+    await waitForPageReady(dashboardPage)
+
     const toggleButton = dashboardPage.getByLabel('Collapse document')
     await toggleButton.click()
     const viewer = dashboardPage
@@ -48,9 +52,14 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test.skip('WorkoutTableHeader rendering', async () => {
-    // Requires NEXT_PUBLIC_USE_NATIVE_TABLE=true which is a build-time/env-var.
-    // Skipping for now as it requires complex environment setup.
+  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+    // Ensure we are in native mode for this test
+    await dashboardPage.goto('/?native=true')
+    await waitForPageReady(dashboardPage)
+
+    const tableHeader = dashboardPage.getByTestId('workout-table-header')
+    await expect(tableHeader).toBeVisible()
+    await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {

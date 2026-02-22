@@ -3,7 +3,7 @@ import { WorkoutTableDto } from '@/types/workout'
 
 /**
  * Parses raw HTML from a Google Doc export and extracts the first table.
- * Simplified logic: extracts the first row as headers.
+ * Extracts headers from the first row of the table.
  * Removes whitespace and formatting from each cell.
  * Replaces newlines within cells with spaces for UI consistency.
  */
@@ -24,7 +24,13 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
   const headers: string[] = []
 
   firstRow.find('td, th').each((_colIndex, cellElement) => {
-    const text = $(cellElement)
+    const $cell = $(cellElement)
+
+    // Ensure block elements have spacing to prevent text merging
+    $cell.find('br').replaceWith(' ')
+    $cell.find('p').after(' ')
+
+    const text = $cell
       .text()
       .replace(/\u00A0/g, ' ')
       .replace(/\r?\n|\r/g, ' ')
