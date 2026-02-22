@@ -7,6 +7,9 @@ export interface ResetSectionProps {
   isResetting: boolean
 }
 
+/**
+ * Component to display the reset permissions button and description.
+ */
 const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
   <Box
     sx={{

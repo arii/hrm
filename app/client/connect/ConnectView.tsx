@@ -16,12 +16,8 @@ import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
-<<<<<<< HEAD
-import { useEffect } from 'react'
-=======
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
->>>>>>> origin/leader
 import logger from '@/utils/logger'
 import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
@@ -65,7 +61,7 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onForgetDevice: () => void
+  onForgetDevice: () => void | Promise<void>
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
@@ -121,6 +117,14 @@ export default function ConnectView({
   onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
+  const [isResetting, setIsResetting] = useState(false)
+
+  const handleReset = async () => {
+    setIsResetting(true)
+    await onForgetDevice()
+    setIsResetting(false)
+  }
+
   useEffect(() => {
     if (isConnected) {
       logger.debug(
@@ -319,15 +323,6 @@ export default function ConnectView({
                   Status: {deviceStatus}
                 </Typography>
               )}
-              <Button
-                variant="text"
-                size="small"
-                onClick={onForgetDevice}
-                color="warning"
-                sx={{ mt: 1 }}
-              >
-                Reset Permissions & Settings
-              </Button>
             </Stack>
           )}
         </Box>
@@ -369,6 +364,8 @@ export default function ConnectView({
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
+
+        <ResetSection onReset={handleReset} isResetting={isResetting} />
 
         <Typography
           variant="body2"
