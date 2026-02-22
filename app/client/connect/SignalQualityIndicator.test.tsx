@@ -6,8 +6,13 @@ import '@testing-library/jest-dom'
 // Mock Tooltip to ensure title is rendered as an attribute for easy testing
 jest.mock('@mui/material', () => ({
   ...jest.requireActual('@mui/material'),
-  Tooltip: ({ children, title }: { children: React.ReactElement; title: string }) =>
-    React.cloneElement(children, { title }),
+  Tooltip: ({
+    children,
+    title,
+  }: {
+    children: React.ReactElement
+    title: string
+  }) => React.cloneElement(children, { title }),
 }))
 
 // Mock MUI icons
