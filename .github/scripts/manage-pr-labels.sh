@@ -21,14 +21,25 @@ fi
 # =================================================================
 group "Ensuring all managed labels exist"
 # Get all existing labels once to avoid redundant API calls.
-EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
+# We strip quotes and carriage returns to ensure reliable matching regardless of gh version or environment.
+EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name' | tr -d '"\r')
 jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
+  # Trim whitespace just in case
+  clean_name=$(echo "$name" | xargs)
   # GitHub labels are case-insensitive, so we use grep -i for the check.
-  if echo "$EXISTING_LABELS" | grep -iFxq -- "$name"; then
-    debug "Label '$name' already exists."
+  if echo "$EXISTING_LABELS" | grep -iFxq -- "$clean_name"; then
+    debug "Label '$clean_name' already exists."
   else
-    log "Creating label '$name'..."
-    gh label create "$name" --description "$description" --color "$color"
+    log "Creating label '$clean_name'..."
+    # We use a subshell to capture errors and check for "already exists" specifically,
+    # providing a safety net if the existence check missed a label (e.g. due to race conditions).
+    set +e
+    ERROR_MSG=$(gh label create "$clean_name" --description "$description" --color "$color" 2>&1)
+    EXIT_CODE=$?
+    set -e
+    if [ $EXIT_CODE -ne 0 ] && ! echo "$ERROR_MSG" | grep -qi "already exists"; then
+      error "Failed to create label '$clean_name': $ERROR_MSG"
+    fi
   fi
 done
 endgroup
@@ -74,7 +85,7 @@ if [ -n "$NEW_LABELS" ]; then
   group "Ensuring new labels exist before applying"
   IFS=',' read -ra LABELS <<< "$NEW_LABELS"
   # Refresh existing labels to include any created in the first step.
-  EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
+  EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name' | tr -d '"\r')
   for label in "${LABELS[@]}"; do
     # Trim leading/trailing whitespace
     clean_label=$(echo "$label" | xargs)
@@ -84,7 +95,13 @@ if [ -n "$NEW_LABELS" ]; then
         debug "Label '$clean_label' already exists."
       else
         log "Creating label '$clean_label'..."
-        gh label create "$clean_label"
+        set +e
+        ERROR_MSG=$(gh label create "$clean_label" 2>&1)
+        EXIT_CODE=$?
+        set -e
+        if [ $EXIT_CODE -ne 0 ] && ! echo "$ERROR_MSG" | grep -qi "already exists"; then
+          error "Failed to create label '$clean_label': $ERROR_MSG"
+        fi
       fi
     fi
   done
