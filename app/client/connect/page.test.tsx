@@ -12,12 +12,11 @@ jest.mock('@/hooks/useBluetoothHRM')
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
 
-const mockAutoConnect = jest.fn().mockResolvedValue(undefined)
-const mockConnectAndStream = jest.fn().mockResolvedValue(undefined)
+const mockAutoConnect = jest.fn()
+const mockConnectAndStream = jest.fn()
 
 describe('ConnectPage', () => {
   beforeEach(() => {
-    jest.useFakeTimers()
     jest.clearAllMocks()
     jest.spyOn(BluetoothHRMHook, 'default').mockReturnValue({
       connectAndStream: mockConnectAndStream,
@@ -27,15 +26,8 @@ describe('ConnectPage', () => {
       deviceStatus: 'Disconnected',
       batteryLevel: null,
       isConnected: false,
-      isDataStale: false,
       isSupported: true,
-      signalPeriodMs: 0,
-      connectionAttempted: false,
     })
-  })
-
-  afterEach(() => {
-    jest.useRealTimers()
   })
 
   it('should call autoConnect on mount when WebSocket is connected', () => {
@@ -63,7 +55,6 @@ describe('ConnectPage', () => {
       </UserSettingsProvider>
     )
 
-    jest.advanceTimersByTime(100)
     expect(mockAutoConnect).toHaveBeenCalledTimes(1)
   })
 
@@ -104,10 +95,7 @@ describe('ConnectPage', () => {
       deviceStatus: 'Connected',
       batteryLevel: null,
       isConnected: true,
-      isDataStale: false,
       isSupported: true,
-      signalPeriodMs: 1000,
-      connectionAttempted: false,
     })
 
     jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({

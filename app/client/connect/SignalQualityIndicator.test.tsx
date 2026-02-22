@@ -3,18 +3,6 @@ import { render, screen } from '@testing-library/react'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import '@testing-library/jest-dom'
 
-// Mock Tooltip to ensure title is rendered as an attribute for easy testing
-jest.mock('@mui/material', () => ({
-  ...jest.requireActual('@mui/material'),
-  Tooltip: ({
-    children,
-    title,
-  }: {
-    children: React.ReactElement<{ title?: string }>
-    title: string
-  }) => React.cloneElement(children, { title }),
-}))
-
 // Mock MUI icons
 jest.mock('@mui/icons-material/SignalCellularAlt', () => ({
   __esModule: true,

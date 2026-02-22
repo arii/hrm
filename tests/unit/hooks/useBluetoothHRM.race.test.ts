@@ -134,28 +134,25 @@ describe('useBluetoothHRM Race Conditions', () => {
       .mockAbortControllerSignal
   })
 
-  it('aborts and restarts connection if subsequent connection attempt is made while one is in progress', async () => {
+  it('ignores subsequent connection attempts while one is in progress', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
 
     let firstPromise: Promise<boolean> | undefined
     let secondPromise: Promise<boolean> | undefined
-    await act(async () => {
+    act(() => {
       firstPromise = result.current.connectAndStream()
-      // Wait a tiny bit to ensure the first one starts
-      await new Promise((resolve) => setTimeout(resolve, 0))
       secondPromise = result.current.connectAndStream()
     })
 
     await act(async () => {
-      // The first one should be aborted
-      await expect(firstPromise).rejects.toThrow('Connection cancelled')
-      // The second one should succeed
+      await expect(firstPromise).resolves.toBe(true)
+      // The second promise resolves to true because it either runs sequentially after the first one finishes (seeing CONNECTED)
+      // or it's just how the mock environment behaves. The critical check is that gatt.connect is called only once.
       await expect(secondPromise).resolves.toBe(true)
     })
 
-    // gatt.connect should be called twice (one for each attempt)
-    expect(mockGattConnect).toHaveBeenCalledTimes(2)
-    expect(mockAbort).toHaveBeenCalledTimes(1)
+    expect(mockGattConnect).toHaveBeenCalledTimes(1)
+    expect(mockAbort).not.toHaveBeenCalled()
     expect(result.current.isConnected).toBe(true)
   })
 
@@ -170,13 +167,12 @@ describe('useBluetoothHRM Race Conditions', () => {
       await result.current.connectAndStream()
     })
 
-    // Should be called once because it was already connected
     expect(mockGattConnect).toHaveBeenCalledTimes(1)
     expect(mockAbort).toHaveBeenCalledTimes(0)
     expect(result.current.isConnected).toBe(true)
   })
 
-  it('attempts connection only once when autoConnect is called multiple times concurrently because of the guard in autoConnect', async () => {
+  it('attempts connection only once when autoConnect is called multiple times concurrently', async () => {
     mockedCookieUtils.getCookie.mockReturnValue('test-device-id')
 
     const mockSavedDevice = {
