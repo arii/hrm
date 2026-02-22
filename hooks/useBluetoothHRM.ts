@@ -450,7 +450,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // Start the reconnection process
       // We don't reset reconnectAttempts here because this could be a disconnect
       // that happened during a reconnection attempt or a stable connection.
-      // If it was a stable connection, reconnectAttempts should be 0 anyway.
+      // Note: reconnectAttempts is reset to 0 on a successful connection (connectToGatt)
+      // or a manual disconnect.
       reconnect(device)
     },
     [reconnect]
