@@ -1,4 +1,3 @@
-// app/api/workout/route.ts
 import { NextResponse } from 'next/server'
 import { parseGoogleDocTable } from '@/services/googleDocParser'
 import logger from '@/utils/logger'
@@ -15,12 +14,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    // We use the export endpoint to get raw HTML.
     // NOTE: The Google Doc must be shared as "Anyone with the link can view"
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`
 
     const response = await fetch(exportUrl, {
-      next: { revalidate: 60 }, // Cache for 60 seconds to avoid hitting Google limits
+      next: { revalidate: 60 },
     })
 
     if (!response.ok) {

@@ -53,6 +53,34 @@ describe('ConnectView', () => {
 
   it('renders not supported message when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
+<<<<<<< HEAD
     expect(screen.getByText(/Bluetooth Not Supported/i)).toBeInTheDocument()
+=======
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    expect(resetButton).toBeInTheDocument()
+  })
+
+  it('renders the reset button as enabled by default', () => {
+    render(<ConnectView {...mockProps} />)
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    expect(resetButton).toBeEnabled()
+  })
+
+  it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
+    render(<ConnectView {...mockProps} />)
+    const resetButton = screen.getByRole('button', {
+      name: /Reset Permissions & Settings/i,
+    })
+    fireEvent.click(resetButton)
+
+    await waitFor(() => {
+      expect(mockProps.onForgetDevice).toHaveBeenCalled()
+      expect(mockProps.onReset).toHaveBeenCalled()
+    })
+>>>>>>> origin/leader
   })
 })

@@ -166,6 +166,102 @@ describe('webSocketReducer', () => {
       expect(state.hrmData.find((d) => d.clientId === '2')).toBeUndefined()
       expect(state.hrmData[0].clientId).toBe('1')
     })
+
+    it('should compensate for clock skew using serverTimestamp', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000 // Client is 60s ahead
+      const updatedAt = 990000 // Data is 10s old on server
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [{ ...baseUser, updatedAt }],
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+
+      // Expected updatedAt: 990000 + (1060000 - 1000000) = 990000 + 60000 = 1050000
+      // 1050000 is 10s before clientNow, so it correctly preserves the 10s age.
+      expect(state.hrmData[0].updatedAt).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
+
+    it('should compensate for clock skew for NEW users in HRM_UPDATE', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000
+      const updatedAt = 990000
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'HRM_UPDATE',
+        payload: [{ ...baseUser, clientId: 'new-user', updatedAt }],
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+      expect(state.hrmData[0].clientId).toBe('new-user')
+      expect(state.hrmData[0].updatedAt).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
+  })
+
+  describe('INITIAL_STATE action clock skew', () => {
+    it('should compensate for clock skew in INITIAL_STATE', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000
+      const updatedAt = 990000
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'INITIAL_STATE',
+        payload: {
+          hrmData: [{ ...baseUser, updatedAt }] as HrmStreamData[],
+          timerData: INITIAL_STATE.timerData,
+          spotifyData: INITIAL_STATE.spotifyData,
+        },
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+      expect(state.hrmData[0].updatedAt).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
+  })
+
+  describe('ACTIVE_ALERTS_UPDATE action clock skew', () => {
+    it('should compensate for clock skew in active alerts', () => {
+      const serverNow = 1000000
+      const clientNow = 1060000
+      const alertTimestamp = 990000
+
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(clientNow)
+
+      const action: ServerMessage = {
+        type: 'ACTIVE_ALERTS_UPDATE',
+        payload: [
+          {
+            clientId: '1',
+            code: 'HRM_STALE',
+            message: 'Stale',
+            severity: 'warning',
+            timestamp: alertTimestamp,
+          },
+        ],
+        serverTimestamp: serverNow,
+      }
+
+      const state = reducer(INITIAL_STATE, action)
+      expect(state.activeAlerts[0].timestamp).toBe(1050000)
+
+      dateSpy.mockRestore()
+    })
   })
 
   describe('DEVICE_OFFLINE action', () => {
