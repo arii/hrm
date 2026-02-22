@@ -141,7 +141,7 @@ describe('ConnectPage', () => {
     expect(weightInput).toHaveValue(70)
 
     // Simulate user clicking the imperial button
-    const imperialButton = screen.getByRole('button', { name: 'imperial' })
+    const imperialButton = screen.getByLabelText('imperial units')
     fireEvent.click(imperialButton)
 
     // Check that setUserSettings was called to update the unit system

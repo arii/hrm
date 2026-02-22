@@ -4,14 +4,8 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import RadioGroup from '@mui/material/RadioGroup'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Radio from '@mui/material/Radio'
 import Typography from '@mui/material/Typography'
 import { UserProfileState } from './types'
-import { Gender } from '../../../types/core'
 
 interface UserSettingsProps {
   profile: UserProfileState
@@ -21,7 +15,29 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
   const { data, handlers, errors } = profile
 
   return (
-    <Stack spacing={2} sx={{ mb: 3 }}>
+    <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">
+      <ToggleButtonGroup
+        value={data.unitSystem}
+        exclusive
+        onChange={(_, newUnit) => {
+          if (newUnit) {
+            handlers.onUnitChange(newUnit)
+          }
+        }}
+        aria-label="Unit system"
+        aria-describedby="unit-system-description"
+        fullWidth
+      >
+        <p id="unit-system-description" style={{ display: 'none' }}>
+          Currently selected unit system is {data.unitSystem}.
+        </p>
+        <ToggleButton value="IMPERIAL" aria-label="imperial units">
+          Imperial (lbs, ft, in)
+        </ToggleButton>
+        <ToggleButton value="METRIC" aria-label="metric units">
+          Metric (kg, cm)
+        </ToggleButton>
+      </ToggleButtonGroup>
       <TextField
         fullWidth
         label="Your Name"
@@ -45,28 +61,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         helperText={errors.ageError}
         inputProps={{ min: 1, max: 120 }}
       />
-      <ToggleButtonGroup
-        value={data.unitSystem}
-        exclusive
-        onChange={(_, newUnit) => {
-          if (newUnit) {
-            handlers.onUnitChange(newUnit)
-          }
-        }}
-        aria-label="Unit system"
-        aria-describedby="unit-system-description"
-        fullWidth
-      >
-        <p id="unit-system-description" style={{ display: 'none' }}>
-          Currently selected unit system is {data.unitSystem}.
-        </p>
-        <ToggleButton value="IMPERIAL" aria-label="imperial units">
-          Imperial (lbs, ft, in)
-        </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
-          Metric (kg, cm)
-        </ToggleButton>
-      </ToggleButtonGroup>
       {data.unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
@@ -141,19 +135,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         error={!!errors.weightError}
         helperText={errors.weightError}
       />
-      <FormControl component="fieldset">
-        <FormLabel component="legend">Gender</FormLabel>
-        <RadioGroup
-          row
-          aria-label="gender"
-          name="gender"
-          value={data.gender}
-          onChange={(e) => handlers.setGender(e.target.value as Gender)}
-        >
-          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
-          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
-        </RadioGroup>
-      </FormControl>
     </Stack>
   )
 }

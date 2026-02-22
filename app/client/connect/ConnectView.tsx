@@ -19,8 +19,16 @@ import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
+import { Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from './types'
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
 
 interface ConnectViewProps {
   duration: string
@@ -131,7 +139,32 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings profile={userProfile} />
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <UserSettings profile={userProfile} />
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="gender"
+                value={data.gender}
+                onChange={(e) =>
+                  userProfile.handlers.setGender(e.target.value as Gender)
+                }
+              >
+                <FormControlLabel
+                  value="MALE"
+                  control={<Radio />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="FEMALE"
+                  control={<Radio />}
+                  label="Female"
+                />
+              </RadioGroup>
+            </FormControl>
+          </Stack>
         ) : (
           <Box
             sx={{
@@ -246,7 +279,7 @@ export default function ConnectView({
         )}
 
         {isConnected && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 2 }} data-testid="hr-tile">
             <HrTile
               name={data.userName}
               value={currentHR}
