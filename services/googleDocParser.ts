@@ -36,7 +36,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
 
     const text = cell.textContent
       .replace(/\u00A0/g, ' ')
-      .replace(/\r?\n|\r/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim()
     headers.push(text)
   })

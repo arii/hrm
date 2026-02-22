@@ -131,4 +131,54 @@ describe('parseGoogleDocTable', () => {
     const result = parseGoogleDocTable(html)
     expect(result.headers).toEqual(['Line 1 Line 2', 'Para 1 Para 2'])
   })
+
+  it('should only parse the first table in the document', () => {
+    const html = `
+      <table><tr><td>Table 1</td></tr></table>
+      <table><tr><td>Table 2</td></tr></table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual(['Table 1'])
+  })
+
+  it('should handle cells with multiple nested elements', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>
+            <div>First</div>
+            <span>Second</span>
+            <p>Third</p>
+            Last
+          </td>
+        </tr>
+      </table>
+    `
+    // div and span are not explicitly handled with extra spaces, but p is.
+    // node-html-parser textContent will concatenate them.
+    // p.insertAdjacentHTML('afterend', ' ') will add a space after the p.
+    // Whitespace between tags is collapsed to a single space.
+    const result = parseGoogleDocTable(html)
+    expect(result.headers[0]).toBe('First Second Third Last')
+  })
+
+  it('should handle non-breaking spaces and other whitespace characters', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>Item&nbsp;1</td>
+          <td>Item\u00A02</td>
+          <td>Item\t3</td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual(['Item 1', 'Item 2', 'Item 3'])
+  })
+
+  it('should return empty headers for a row with no cells', () => {
+    const html = '<table><tr></tr></table>'
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([])
+  })
 })
