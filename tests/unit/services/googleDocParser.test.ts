@@ -154,12 +154,16 @@ describe('parseGoogleDocTable', () => {
         </tr>
       </table>
     `
-    // div and span are not explicitly handled with extra spaces, but p is.
-    // node-html-parser textContent will concatenate them.
-    // p.insertAdjacentHTML('afterend', ' ') will add a space after the p.
     // Whitespace between tags is collapsed to a single space.
     const result = parseGoogleDocTable(html)
     expect(result.headers[0]).toBe('First Second Third Last')
+  })
+
+  it('should handle compact HTML with nested block elements', () => {
+    const html = '<table><tr><td><div>A</div><div>B</div><p>C</p>D</td></tr></table>'
+    const result = parseGoogleDocTable(html)
+    // Should be "A B C D"
+    expect(result.headers[0]).toBe('A B C D')
   })
 
   it('should handle non-breaking spaces and other whitespace characters', () => {
