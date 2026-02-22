@@ -10,7 +10,7 @@ jest.mock('@mui/material', () => ({
     children,
     title,
   }: {
-    children: React.ReactElement
+    children: React.ReactElement<{ title?: string }>
     title: string
   }) => React.cloneElement(children, { title }),
 }))
