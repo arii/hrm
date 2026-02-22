@@ -72,7 +72,7 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const { data, handlers } = userProfile
+  const { data } = userProfile
 
   useEffect(() => {
     if (isConnected) {
