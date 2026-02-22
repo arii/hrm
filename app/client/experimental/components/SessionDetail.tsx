@@ -1,8 +1,5 @@
 // app/client/experimental/components/SessionDetail.tsx
-<<<<<<< HEAD
-=======
 'use client'
->>>>>>> origin/leader
 import {
   Card,
   CardContent,
@@ -19,13 +16,8 @@ import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-<<<<<<< HEAD
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-  ssr: false,
-=======
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
->>>>>>> origin/leader
 })
 
 interface SessionDetailProps {

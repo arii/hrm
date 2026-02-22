@@ -12,8 +12,9 @@ import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 
 // Correctly mock the hooks
-jest.mock('@/hooks/useBluetoothHRM', () =>
-  jest.fn(() => ({
+jest.mock('@/hooks/useBluetoothHRM', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({
     connectAndStream: jest.fn(),
     autoConnect: jest.fn(),
     disconnect: jest.fn(),
@@ -24,37 +25,27 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
-  }))
-)
+  })),
+}))
 
 jest.mock('@/hooks/useWorkoutSessionManager', () => ({
-<<<<<<< HEAD
   useWorkoutSessionManager: jest.fn(() => ({
-    addHrData: jest.fn(),
-=======
-  __esModule: true,
-  useWorkoutSessionManager: jest.fn(() => ({
-    workoutDuration: 0,
-    resetWorkout: jest.fn(),
+    session: null,
+    workoutStatus: 'idle',
+    isInitialized: true,
     hasStarted: false,
->>>>>>> origin/leader
+    caloriesBurned: 0,
     startWorkout: jest.fn(),
     pauseWorkout: jest.fn(),
     resumeWorkout: jest.fn(),
     endWorkout: jest.fn(),
-<<<<<<< HEAD
     resetWorkout: jest.fn(),
-    duration: 0,
-    status: 'idle',
-    totalCaloriesBurned: 0,
-=======
-    workoutStatus: 'idle',
     addHrData: jest.fn(),
-    caloriesBurned: 0,
-    updateCalories: jest.fn(),
-    isInitialized: true,
->>>>>>> origin/leader
   })),
+}))
+
+jest.mock('@/hooks/useWorkoutTimer', () => ({
+  useWorkoutTimer: jest.fn(() => 0),
 }))
 
 jest.mock('@/context/WebSocketContext', () => ({

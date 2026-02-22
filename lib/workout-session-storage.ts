@@ -31,16 +31,12 @@ export interface WorkoutSessionData {
   pauseTime: number | null // Timestamp when paused
   calorieHistory: CalorieDataPoint[]
   totalCaloriesBurned: number
-<<<<<<< HEAD
-  userSettings: { age: number; weight: number; maxHr: number; gender: Gender }
-=======
   userSettings: {
     age: number
     weight: number
     maxHr: number
     gender?: Gender
   }
->>>>>>> origin/leader
   lastSyncTime: number
   syncStatus: 'pending' | 'synced' | 'failed'
 }
