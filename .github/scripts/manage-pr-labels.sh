@@ -21,7 +21,7 @@ fi
 group "Ensuring all managed labels exist"
 EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
 jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
-  if echo "$EXISTING_LABELS" | grep -Fxq "$name"; then
+  if echo "$EXISTING_LABELS" | grep -Fxq -- "$name"; then
     debug "Label '$name' already exists."
   else
     log "Creating label '$name'..."
@@ -76,7 +76,7 @@ if [ -n "$NEW_LABELS" ]; then
     # Trim leading/trailing whitespace
     clean_label=$(echo "$label" | xargs)
     if [ -n "$clean_label" ]; then
-      if echo "$EXISTING_LABELS" | grep -Fxq "$clean_label"; then
+      if echo "$EXISTING_LABELS" | grep -Fxq -- "$clean_label"; then
         debug "Label '$clean_label' already exists."
       else
         log "Creating label '$clean_label'..."
