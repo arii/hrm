@@ -1,0 +1,5 @@
+export const VRT_TIMEOUTS = {
+  STANDARD: 5000,
+  EXTENDED: 10000,
+  HYDRATION: 15000,
+} as const

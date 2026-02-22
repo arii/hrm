@@ -17,7 +17,12 @@ const envSchema = z
     SPOTIFY_DEBUG: z.string().optional(),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
+    NEXT_PUBLIC_USE_NATIVE_TABLE: z
+      .preprocess((val) => {
+        if (typeof val === 'string') return val.toLowerCase() === 'true'
+        return val === true
+      }, z.boolean())
+      .default(false),
     NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
     NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
@@ -31,7 +36,7 @@ const envSchema = z
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
     WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(5),
+    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
