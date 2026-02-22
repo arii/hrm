@@ -405,7 +405,7 @@ jobs:
             pnpm-lock.yaml \
             .env.local \
             server.ts \
-            proxy.ts \
+            middleware.ts \
             public \
             next.config.js
 
