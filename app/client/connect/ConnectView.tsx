@@ -210,7 +210,6 @@ export default function ConnectView({
               onWeightBlur={onWeightBlur}
               weightError={weightError}
               unit={unitSystem}
-              setUnit={onUnitChange}
             />
 
             <FormControl component="fieldset">
