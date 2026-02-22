@@ -275,11 +275,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.error({ error }, msg)
   }, [])
 
-  /**
-   * Reconnects using linear backoff (RECONNECT_BASE_DELAY_MS * attempt).
-   * Rationale: Centralized retry logic avoids cyclomatic complexity and
-   * provides a predictable ~72s window for device recovery.
-   */
+  /** Reconnects using linear backoff (see ADR-0007). */
   const reconnect = useCallback(
     (device: BluetoothDevice) => {
       if (isManualDisconnect.current) return
