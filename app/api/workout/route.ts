@@ -18,11 +18,7 @@ export async function GET(request: Request) {
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`
 
     const response = await fetch(exportUrl, {
-<<<<<<< HEAD
       next: { revalidate: 60 }, // Cache to avoid hitting Google limits
-=======
-      next: { revalidate: 60 },
->>>>>>> origin/leader
     })
 
     if (!response.ok) {

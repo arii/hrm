@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Alert,
   Box,
+  alpha,
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
@@ -34,11 +35,7 @@ export default function WorkoutTableHeader({
     const fetchData = async () => {
       try {
         setLoading(true)
-<<<<<<< HEAD
         setError(null) // Reset error on re-fetch
-=======
-        setError(null)
->>>>>>> origin/leader
         const res = await fetch(`/api/workout?docId=${docId}`)
         if (!res.ok) throw new Error('Failed to load workout data')
         const json = await res.json()
@@ -55,80 +52,36 @@ export default function WorkoutTableHeader({
     }
   }, [docId, refreshKey])
 
-<<<<<<< HEAD
-  return (
-    <Box sx={{ position: 'relative' }}>
-=======
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  if (error) {
-    return <Alert severity="error">{error}</Alert>
-  }
-
-  if (!data || data.headers.length === 0) {
-    return (
-      <Alert severity="info">No workout data found in this document.</Alert>
-    )
-  }
-
-  return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
->>>>>>> origin/leader
-      {onRefresh && (
-        <RefreshIconButton
-          onClick={onRefresh}
-          aria-label="refresh workout table"
-<<<<<<< HEAD
-        />
-      )}
-
-      {loading ? (
+  const renderContent = () => {
+    if (loading) {
+      return (
         <Box display="flex" justifyContent="center" p={4}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : !data || data.headers.length === 0 ? (
+      )
+    }
+
+    if (error) {
+      return <Alert severity="error">{error}</Alert>
+    }
+
+    if (!data || data.headers.length === 0) {
+      return (
         <Alert severity="info">No workout data found in this document.</Alert>
-      ) : (
-        <TableContainer
-          component={Paper}
-          elevation={2}
-          data-testid="workout-table-header"
-        >
-          <Table aria-label="workout table">
-            <TableHead>
-              <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                {data.headers.map((header, index) => (
-                  <TableCell key={index} sx={{ fontWeight: 'bold' }}>
-                    {header}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-          </Table>
-        </TableContainer>
-      )}
-=======
-          data-testid="refresh-icon-button"
-        />
-      )}
+      )
+    }
+
+    return (
       <TableContainer
         component={Paper}
         elevation={2}
         data-testid="workout-table-header"
       >
-        <Table sx={{ minWidth: 650 }} aria-label="workout table">
+        <Table aria-label="workout table">
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }} scope="col">
+                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
                   {header}
                 </TableCell>
               ))}
@@ -136,7 +89,31 @@ export default function WorkoutTableHeader({
           </TableHead>
         </Table>
       </TableContainer>
->>>>>>> origin/leader
+    )
+  }
+
+  return (
+    <Box sx={{ position: 'relative' }}>
+      {onRefresh && (
+        <RefreshIconButton
+          onClick={onRefresh}
+          aria-label="refresh workout table"
+          sx={(theme) => ({
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            width: 48,
+            height: 48,
+            backgroundColor: alpha(theme.palette.background.paper, 0.7),
+            backdropFilter: 'blur(4px)',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.background.paper, 0.9),
+            },
+          })}
+        />
+      )}
+      {renderContent()}
     </Box>
   )
 }
