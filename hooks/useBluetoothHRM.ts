@@ -504,7 +504,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // Explicit cleanup before each connection attempt
       await cleanupGattConnection(device)
 
-      isConnecting.current = true
       const abortController = new AbortController()
       abortControllerRef.current = abortController
 
@@ -649,10 +648,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Rethrow to be caught by reconnect logic if applicable
         throw error
-      } finally {
-        if (abortControllerRef.current === abortController) {
-          isConnecting.current = false
-        }
       }
     },
     [cleanupGattConnection, onDisconnected, updateSignalPeriod]

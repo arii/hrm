@@ -2,6 +2,8 @@
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
 interface UserSettingsProps {
   userName: string
@@ -21,6 +23,7 @@ interface UserSettingsProps {
   onWeightBlur: () => void
   weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
+  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -39,6 +42,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   onWeightBlur,
   weightError,
   unit,
+  setUnit,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -65,6 +69,27 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
+      <ToggleButtonGroup
+        value={unit}
+        exclusive
+        onChange={(_, newUnit) => {
+          if (newUnit) {
+            setUnit(newUnit)
+          }
+        }}
+        aria-label="Unit system"
+        aria-describedby="unit-system-description"
+      >
+        <p id="unit-system-description" style={{ display: 'none' }}>
+          Currently selected unit system is {unit}.
+        </p>
+        <ToggleButton value="IMPERIAL" aria-label="imperial units">
+          Imperial (lbs, ft, in)
+        </ToggleButton>
+        <ToggleButton value="METRIC" aria-label="metric units">
+          Metric (kg, cm)
+        </ToggleButton>
+      </ToggleButtonGroup>
       {unit === 'METRIC' ? (
         <TextField
           fullWidth
