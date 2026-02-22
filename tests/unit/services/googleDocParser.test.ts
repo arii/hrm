@@ -112,4 +112,23 @@ describe('parseGoogleDocTable', () => {
       'No table found in the Google Doc'
     )
   })
+
+  it('should return empty headers if no rows are found', () => {
+    const html = '<table></table>'
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([])
+  })
+
+  it('should handle <br> and <p> tags for spacing', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>Line 1<br>Line 2</td>
+          <td><p>Para 1</p><p>Para 2</p></td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual(['Line 1 Line 2', 'Para 1 Para 2'])
+  })
 })
