@@ -33,7 +33,6 @@ import {
 } from '@mui/material'
 
 interface ConnectViewProps {
-  isReady: boolean
   duration: string
   caloriesBurned: number
   userName: string
@@ -79,7 +78,6 @@ interface ConnectViewProps {
 }
 
 export default function ConnectView({
-  isReady,
   duration,
   caloriesBurned,
   userName,
@@ -174,11 +172,7 @@ export default function ConnectView({
 
   return (
     <>
-      <Container
-        data-ready={isReady ? 'true' : 'false'}
-        maxWidth="sm"
-        sx={{ py: 3, pb: 10 }}
-      >
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>
