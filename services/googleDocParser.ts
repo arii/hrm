@@ -31,8 +31,9 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     })
 
     cell
-      .querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li')
+      .querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote')
       .forEach((el) => {
+        el.insertAdjacentHTML('beforebegin', ' ')
         el.insertAdjacentHTML('afterend', ' ')
       })
 

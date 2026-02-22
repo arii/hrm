@@ -167,6 +167,12 @@ describe('parseGoogleDocTable', () => {
     expect(result.headers[0]).toBe('A B C D')
   })
 
+  it('should handle text directly before and after block elements', () => {
+    const html = '<table><tr><td>TextBefore<div>Block</div>TextAfter</td></tr></table>'
+    const result = parseGoogleDocTable(html)
+    expect(result.headers[0]).toBe('TextBefore Block TextAfter')
+  })
+
   it('should handle non-breaking spaces and other whitespace characters', () => {
     const html = `
       <table>
