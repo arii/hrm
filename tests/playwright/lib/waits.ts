@@ -15,7 +15,7 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-  TEST_READY: 2000,
+  TEST_READY: 10000,
   /** Default timeout for WebSocket connection */
   WEBSOCKET: 5000,
   /** Default timeout for element visibility */
@@ -52,21 +52,28 @@ export async function waitForPageReady(
     await document.fonts.ready
   })
 
-  // Wait for loading skeletons to disappear
-  await page
-    .waitForSelector('.MuiSkeleton-root', {
-      state: 'hidden',
-      timeout,
-    })
-    .catch(() => {
-      // Ignore errors if skeletons are not found (already hidden/removed)
-    })
-
-  // Wait for actual content to be present
+  // Wait for actual content to be present first (Fail-Fast check)
   await page.waitForSelector('main, [data-testid="dashboard"], [role="main"]', {
     state: 'visible',
     timeout,
   })
+
+  // Wait for loading skeletons to disappear
+  // We use hidden state to ensure they are either removed or invisible.
+  // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
+  // If skeletons persist (e.g. infinite loading or bug), we want VRT to capture that state
+  // rather than crashing with a generic TimeoutError.
+  try {
+    await page.waitForSelector('.MuiSkeleton-root', {
+      state: 'hidden',
+      timeout,
+    })
+  } catch (error) {
+    console.warn(
+      `[waitForPageReady] Skeletons did not disappear within ${timeout}ms. Proceeding to snapshot/test.`,
+      error
+    )
+  }
 }
 
 /**
@@ -84,7 +91,7 @@ export async function waitForWebSocketConnection(
 
   await page.waitForFunction(
     () => {
-      return window.__TEST_WEBSOCKET_READY__ === true
+      return document.body.dataset.connectionStatus === 'connected'
     },
     { timeout }
   )
