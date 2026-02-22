@@ -11,6 +11,7 @@ export const BLUETOOTH_MESSAGES = {
   connecting: 'Connecting...',
   connected: 'Connected',
   reconnecting: 'Reconnecting...',
+  disconnecting: 'Disconnecting...',
 
   // Custom Status Messages
   unstableConnection: 'Connection unstable. Reconnecting...',

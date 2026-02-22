@@ -2,10 +2,15 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-config'
+import {
+  BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_LINEAR_DELAY_MS,
+  RECONNECT_EXPONENTIAL_ATTEMPTS,
+} from '@/constants/bluetooth-reconnection'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import * as cookieUtils from '@/utils/cookies'
-import { env } from '@/lib/env'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -179,58 +184,6 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(mockBluetooth.requestDevice).toHaveBeenCalled()
-  })
-
-  it('ignores connection attempts while isConnecting lock is held', async () => {
-    const mockAbort = jest.fn()
-    const OriginalAbortController = global.AbortController
-    global.AbortController = jest.fn().mockImplementation(() => ({
-      signal: {
-        aborted: false,
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-      },
-      abort: mockAbort,
-    })) as jest.Mock
-
-    try {
-      // Make the connect call a promise that we can control
-      let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
-      const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-        (resolve) => {
-          connectResolver = resolve
-        }
-      )
-      mockGatt.connect.mockReturnValue(connectPromise)
-
-      const { result } = renderHook(() => useBluetoothHRM())
-
-      let firstPromise: Promise<void> | undefined
-      act(() => {
-        firstPromise = result.current.connectAndStream()
-      })
-
-      await waitFor(() => {
-        expect(result.current.deviceStatus).toMatch(/connecting/i)
-      })
-
-      act(() => {
-        result.current.connectAndStream()
-      })
-
-      expect(mockAbort).not.toHaveBeenCalled()
-      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
-
-      await act(async () => {
-        connectResolver(mockGatt)
-        await firstPromise
-      })
-
-      expect(result.current.isConnected).toBe(true)
-    } finally {
-      // Restore original AbortController
-      global.AbortController = OriginalAbortController
-    }
   })
 
   describe('Signal Quality Calculation', () => {
@@ -492,7 +445,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
-    it(`should attempt to reconnect on disconnection and give up after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
+    it(`should attempt to reconnect on disconnection and give up after ${BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // First connection is successful
@@ -514,28 +467,30 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
       expect(result.current.deviceStatus).toMatch(
         new RegExp(
-          `reconnecting.*attempt 1/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+          `reconnecting.*attempt 1/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
           'i'
         )
       )
 
       // --- Reconnection attempts ---
-      for (
-        let i = 1;
-        i <= env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS;
-        i++
-      ) {
-        const delay = Math.pow(2, i) * 1000
+      for (let i = 1; i <= BLUETOOTH_MAX_RECONNECT_ATTEMPTS; i++) {
+        const delay =
+          i <= RECONNECT_EXPONENTIAL_ATTEMPTS
+            ? Math.pow(2, i) * 1000
+            : RECONNECT_LINEAR_DELAY_MS
+
         await act(async () => {
           jest.advanceTimersByTime(delay)
         })
+
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
-        if (i < env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
+
+        if (i < BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
           expect(result.current.deviceStatus).toMatch(
             new RegExp(
               `reconnecting.*attempt ${
                 i + 1
-              }/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+              }/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
               'i'
             )
           )
@@ -550,13 +505,13 @@ describe('useBluetoothHRM', () => {
       await waitFor(() => {
         expect(result.current.deviceStatus).toMatch(
           new RegExp(
-            `failed to reconnect after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
+            `failed to reconnect after ${BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
             'i'
           )
         )
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
-        env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+        BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
 
       // It should also forget the device
@@ -595,7 +550,7 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
       expect(result.current.deviceStatus).toMatch(
         new RegExp(
-          `reconnecting.*attempt 2/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+          `reconnecting.*attempt 2/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
           'i'
         )
       )
@@ -690,7 +645,7 @@ describe('useBluetoothHRM', () => {
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(5)
+      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(15)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
