@@ -20,9 +20,11 @@ fi
 # Ensure all managed labels exist in the repository
 # =================================================================
 group "Ensuring all managed labels exist"
+# Get all existing labels once to avoid redundant API calls.
 EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
 jq -r '.[] | .name + "|" + .description + "|" + .color' .github/pr-labels.json | while IFS='|' read -r name description color; do
-  if echo "$EXISTING_LABELS" | grep -Fxq -- "$name"; then
+  # GitHub labels are case-insensitive, so we use grep -i for the check.
+  if echo "$EXISTING_LABELS" | grep -iFxq -- "$name"; then
     debug "Label '$name' already exists."
   else
     log "Creating label '$name'..."
@@ -71,13 +73,14 @@ if [ -n "$NEW_LABELS" ]; then
   # Before adding, ensure all new labels exist.
   group "Ensuring new labels exist before applying"
   IFS=',' read -ra LABELS <<< "$NEW_LABELS"
-  # Refresh existing labels to include any created in the first step
+  # Refresh existing labels to include any created in the first step.
   EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name')
   for label in "${LABELS[@]}"; do
     # Trim leading/trailing whitespace
     clean_label=$(echo "$label" | xargs)
     if [ -n "$clean_label" ]; then
-      if echo "$EXISTING_LABELS" | grep -Fxq -- "$clean_label"; then
+      # GitHub labels are case-insensitive, so we use grep -i for the check.
+      if echo "$EXISTING_LABELS" | grep -iFxq -- "$clean_label"; then
         debug "Label '$clean_label' already exists."
       else
         log "Creating label '$clean_label'..."
