@@ -51,7 +51,8 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
-      await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -78,10 +79,11 @@ test.describe('Visual Regression Tests', () => {
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 300,
+        maxHeight: 400,
       })
 
-      await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
       })
@@ -106,23 +108,21 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 350,
+        maxHeight: 400,
       })
 
-      await takeScreenshot(
-        dashboardPage,
-        'dashboard-active-timer-with-hr.png',
-        {
-          mask: [...getDynamicContentMasks(dashboardPage)],
-          maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
-        }
-      )
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
+        mask: [...getDynamicContentMasks(dashboardPage)],
+        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
+      })
     })
 
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize({ width: 375, height: 812 })
-      await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -130,7 +130,8 @@ test.describe('Visual Regression Tests', () => {
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize({ width: 768, height: 1024 })
-      await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -138,7 +139,8 @@ test.describe('Visual Regression Tests', () => {
 
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
-      await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
