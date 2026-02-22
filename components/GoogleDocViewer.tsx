@@ -11,7 +11,7 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useEffect, useState } from 'react'
-import RefreshIconButton from '@/components/RefreshIconButton'
+import RefreshIconButton from './RefreshIconButton'
 
 interface GoogleDocViewerProps {
   title: string
@@ -72,6 +72,7 @@ const GoogleDocViewer = ({
             <RefreshIconButton
               onClick={onRefresh}
               aria-label="refresh google doc"
+              data-testid="refresh-icon-button"
             />
           )}
           {iframeLoading && (

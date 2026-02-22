@@ -67,7 +67,9 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 
 const SuggestedIssueSchema = z.object({
   title: z.string(),
-  description: z.string().min(50, 'Description must be at least 50 characters long.'),
+  description: z
+    .string()
+    .min(50, 'Description must be at least 50 characters long.'),
   type: z.enum([
     'bug',
     'enhancement',

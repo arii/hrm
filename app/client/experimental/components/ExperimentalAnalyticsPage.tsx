@@ -1,6 +1,10 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
+<<<<<<< HEAD
 import { useState, useEffect, useMemo, useCallback } from 'react'
+=======
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+>>>>>>> origin/leader
 import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -24,6 +28,11 @@ import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 
+const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
+
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
   ZONE_1: 0,
@@ -34,6 +43,7 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_6: 0,
 }
 
+<<<<<<< HEAD
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ssr: false,
   loading: () => (
@@ -48,6 +58,8 @@ const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
   ),
 })
 
+=======
+>>>>>>> origin/leader
 type View = 'active' | 'list' | 'detail'
 
 const ExperimentalAnalyticsPage = () => {

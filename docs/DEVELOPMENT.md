@@ -45,7 +45,20 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - **Separate Refactoring**: Architectural changes and large-scale refactoring should be done in separate PRs from feature work or bug fixes.
 - **Focused Fixes**: Critical patches or hotfixes must be tightly focused on the issue at hand, without any unrelated changes.
 
-Refer to the PR template for a detailed scope validation checklist.
+#### PR Scope Guidelines
+
+- **Clear, single purpose:** The title and description of the PR should clearly state the purpose of the change.
+- **Relevant changes:** All code changes should be directly related to the stated objective.
+- **No unrelated cleanup:** Avoid including unrelated cleanup or refactoring in the same PR.
+- **Accurate description:** Ensure the title and description match the actual code changes.
+- **Focused testing:** Tests should cover the specific scope of the change.
+
+#### Impact Assessment Guidelines
+
+- Ensure changes are **backward compatible** or that any breaking changes are clearly documented.
+- Add or update **tests** to cover new or modified functionality.
+- Update **documentation** if the changes affect project usage or architecture.
+- Create or update an **ADR** for significant architectural decisions.
 
 ### Labeling Conventions
 
