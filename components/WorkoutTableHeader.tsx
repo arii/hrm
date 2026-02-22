@@ -81,7 +81,7 @@ export default function WorkoutTableHeader({
           <TableHead>
             <TableRow sx={{ backgroundColor: 'action.hover' }}>
               {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }}>
+                <TableCell key={index} sx={{ fontWeight: 'bold' }} scope="col">
                   {header}
                 </TableCell>
               ))}
