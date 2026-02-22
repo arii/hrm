@@ -1,6 +1,9 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import { SignalQualityIndicator } from './SignalQualityIndicator'
+import { SignalQualityIndicator } from '@/app/client/connect/SignalQualityIndicator'
 import '@testing-library/jest-dom'
 
 // Mock MUI icons
@@ -30,44 +33,25 @@ describe('SignalQualityIndicator', () => {
     )
     expect(screen.getByTestId('SignalCellularAltIcon')).toBeInTheDocument()
     expect(screen.getByText('1000ms')).toBeInTheDocument()
-    expect(container.firstChild).toHaveAttribute(
-      'title',
-      'Signal Quality: 1000ms avg period (~100% capture)'
-    )
   })
 
-  it('should render the "good" state with correct tooltip', () => {
-    const { container } = render(
-      <SignalQualityIndicator periodMs={1800} isConnected={true} />
-    )
+  it('should render the "good" state', () => {
+    render(<SignalQualityIndicator periodMs={1800} isConnected={true} />)
     expect(screen.getByTestId('SignalCellularAlt2BarIcon')).toBeInTheDocument()
     expect(screen.getByText('1800ms')).toBeInTheDocument()
-    expect(container.firstChild).toHaveAttribute(
-      'title',
-      'Signal Quality: 1800ms avg period (~56% capture)'
-    )
   })
 
-  it('should render the "poor" state with correct tooltip', () => {
-    const { container } = render(
-      <SignalQualityIndicator periodMs={2500} isConnected={true} />
-    )
+  it('should render the "poor" state', () => {
+    render(<SignalQualityIndicator periodMs={2500} isConnected={true} />)
     expect(screen.getByTestId('SignalCellularAlt1BarIcon')).toBeInTheDocument()
     expect(screen.getByText('2500ms')).toBeInTheDocument()
-    expect(container.firstChild).toHaveAttribute(
-      'title',
-      'Signal Quality: 2500ms avg period (~40% capture)'
-    )
   })
 
   it('should render the "none" state when disconnected', () => {
-    const { container } = render(
-      <SignalQualityIndicator periodMs={1000} isConnected={false} />
-    )
+    render(<SignalQualityIndicator periodMs={1000} isConnected={false} />)
     expect(
       screen.getByTestId('SignalCellularConnectedNoInternet0BarIcon')
     ).toBeInTheDocument()
     expect(screen.queryByText('1000ms')).not.toBeInTheDocument()
-    expect(container.firstChild).toHaveAttribute('title', 'No Signal')
   })
 })

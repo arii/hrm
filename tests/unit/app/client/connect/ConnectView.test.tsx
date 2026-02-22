@@ -86,4 +86,94 @@ describe('ConnectView', () => {
       expect(mockProps.onReset).toHaveBeenCalled()
     })
   })
+
+  it('displays an error message for invalid age only when ageError is set', () => {
+    const { rerender } = render(<ConnectView {...mockProps} />)
+    expect(screen.queryByText('Invalid age')).not.toBeInTheDocument()
+
+    const propsWithAgeError = {
+      ...mockProps,
+      userProfile: {
+        ...mockUserProfile,
+        errors: { ...mockUserProfile.errors, ageError: 'Invalid age' },
+      },
+    }
+    rerender(<ConnectView {...propsWithAgeError} />)
+    expect(screen.getByText('Invalid age')).toBeInTheDocument()
+  })
+
+  it('displays an error message for invalid height only when heightError is set', () => {
+    const { rerender } = render(<ConnectView {...mockProps} />)
+    expect(screen.queryByText('Invalid height')).not.toBeInTheDocument()
+
+    const propsWithHeightError = {
+      ...mockProps,
+      userProfile: {
+        ...mockUserProfile,
+        errors: { ...mockUserProfile.errors, heightError: 'Invalid height' },
+      },
+    }
+    rerender(<ConnectView {...propsWithHeightError} />)
+    expect(screen.getByText('Invalid height')).toBeInTheDocument()
+  })
+
+  it('displays an error message for invalid weight only when weightError is set', () => {
+    const { rerender } = render(<ConnectView {...mockProps} />)
+    expect(screen.queryByText('Invalid weight')).not.toBeInTheDocument()
+
+    const propsWithWeightError = {
+      ...mockProps,
+      userProfile: {
+        ...mockUserProfile,
+        errors: { ...mockUserProfile.errors, weightError: 'Invalid weight' },
+      },
+    }
+    rerender(<ConnectView {...propsWithWeightError} />)
+    expect(screen.getByText('Invalid weight')).toBeInTheDocument()
+  })
+
+  it('calls onUnitChange when the unit toggle is clicked', () => {
+    render(<ConnectView {...mockProps} />)
+    const imperialButton = screen.getByLabelText('imperial units')
+    fireEvent.click(imperialButton)
+    expect(mockUserProfile.handlers.onUnitChange).toHaveBeenCalledWith(
+      'IMPERIAL'
+    )
+  })
+
+  it('renders metric inputs when unit is metric', () => {
+    render(<ConnectView {...mockProps} />)
+    expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()
+  })
+
+  it('renders imperial inputs when unit is imperial', () => {
+    const imperialProps = {
+      ...mockProps,
+      userProfile: {
+        ...mockUserProfile,
+        data: {
+          ...mockUserProfile.data,
+          unitSystem: 'IMPERIAL' as const,
+        },
+      },
+    }
+    render(<ConnectView {...imperialProps} />)
+    expect(screen.getByLabelText('Feet')).toBeInTheDocument()
+    expect(screen.getByLabelText('Inches')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
+  })
+
+  it('renders gender selection', () => {
+    render(<ConnectView {...mockProps} />)
+    expect(screen.getByLabelText('Male')).toBeInTheDocument()
+    expect(screen.getByLabelText('Female')).toBeInTheDocument()
+  })
+
+  it('calls setGender when gender is changed', () => {
+    render(<ConnectView {...mockProps} />)
+    const femaleRadio = screen.getByLabelText('Female')
+    fireEvent.click(femaleRadio)
+    expect(mockUserProfile.handlers.setGender).toHaveBeenCalledWith('FEMALE')
+  })
 })
