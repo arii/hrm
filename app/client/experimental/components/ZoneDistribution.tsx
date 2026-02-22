@@ -2,8 +2,14 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { Card, CardContent, Typography, Box, useTheme } from '@mui/material'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  useTheme,
+  LinearProgress,
+} from '@mui/material'
 import {
   HeartRateZone,
   HR_ZONE_CONFIG,
@@ -44,9 +50,13 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
     })
   }, [timeInZones, totalDuration])
 
-  const chartData = useMemo(() => data.filter((d) => d.value > 0), [data])
+  // Filter out negligible data for visual clarity
+  const visibleData = useMemo(
+    () => data.filter((d) => d.percentage >= 1),
+    [data]
+  )
 
-  if (data.length === 0) {
+  if (totalDuration === 0) {
     return (
       <Card elevation={3}>
         <CardContent>
@@ -107,131 +117,47 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
           Heart Rate Zone Distribution
         </Typography>
 
-        <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          gap={2}
-          alignItems="center"
-        >
-          {/* Chart Section */}
-          <Box
-            width={{ xs: '100%', sm: '50%' }}
-            height={200}
-            position="relative"
-            role="img"
-            aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
-              totalDuration,
-              { unit: 'seconds', format: 'MM:SS', noPadMinutes: true }
-            )}.`}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {chartData.map((entry) => (
-                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number | undefined) =>
-                    [
-                      formatDuration(value || 0, {
-                        unit: 'seconds',
-                        format: 'MM:SS',
-                        noPadMinutes: true,
-                      }),
-                      'Duration',
-                    ] as [string, string]
-                  }
-                  contentStyle={{
-                    borderRadius: theme.shape.borderRadius,
-                    border: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: theme.palette.background.paper,
-                    boxShadow: theme.shadows[3],
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Center Label */}
-            <Box
-              position="absolute"
-              top={0}
-              left={0}
-              bottom={0}
-              right={0}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              flexDirection="column"
-              sx={{ pointerEvents: 'none' }}
-            >
-              <Typography variant="caption" color="textSecondary">
-                Total
-              </Typography>
-              <Typography variant="h6" fontWeight="bold">
-                {formatDuration(totalDuration, {
-                  unit: 'seconds',
-                  format: 'MM:SS',
-                  noPadMinutes: true,
-                })}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Legend / List Section */}
-          <Box
-            width={{ xs: '100%', sm: '50%' }}
-            display="flex"
-            flexDirection="column"
-            gap={1}
-          >
-            {data.map((item) => (
+        <Box display="flex" flexDirection="column" gap={2}>
+          {visibleData.map((item) => (
+            <Box key={item.name}>
               <Box
-                key={item.name}
                 display="flex"
-                alignItems="center"
                 justifyContent="space-between"
-                p={0.5}
+                alignItems="center"
+                mb={0.5}
               >
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box
-                    width={12}
-                    height={12}
-                    borderRadius="50%"
-                    bgcolor={item.color}
-                  />
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color="textPrimary"
-                  >
-                    {item.name}
-                  </Typography>
-                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {item.name}
+                </Typography>
                 <Box textAlign="right">
                   <Typography
                     variant="body2"
+                    component="span"
                     fontWeight="bold"
-                    fontFamily="monospace"
+                    mr={1}
                   >
                     {item.formattedTime}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
-                    {item.percentage}%
+                    ({item.percentage}%)
                   </Typography>
                 </Box>
               </Box>
-            ))}
-          </Box>
+              <LinearProgress
+                variant="determinate"
+                value={item.percentage}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: theme.palette.grey[200],
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: item.color,
+                    borderRadius: 5,
+                  },
+                }}
+              />
+            </Box>
+          ))}
         </Box>
       </CardContent>
     </Card>

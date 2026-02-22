@@ -110,7 +110,7 @@ export default function ConnectPage() {
     isInitialized,
     hasStarted,
     caloriesBurned,
-    startWorkout,
+    startPersistentWorkout,
     pauseWorkout,
     resumeWorkout,
     endWorkout,
@@ -128,11 +128,11 @@ export default function ConnectPage() {
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle') {
-      startWorkout(userAge || 30, userWeight || 70, { gender })
+      startPersistentWorkout(userAge || 30, userWeight || 70, { gender })
     } else if (workoutStatus === 'paused') {
       resumeWorkout()
     }
-  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
+  }, [startPersistentWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -180,7 +180,7 @@ export default function ConnectPage() {
   useEffect(() => {
     if (isInitialized && isConnected) {
       if (workoutStatus === 'idle') {
-        startWorkout(userAge || 30, userWeight || 70, { gender })
+        startPersistentWorkout(userAge || 30, userWeight || 70, { gender })
       } else if (workoutStatus === 'paused') {
         resumeWorkout()
       }
@@ -189,7 +189,7 @@ export default function ConnectPage() {
     isInitialized,
     isConnected,
     workoutStatus,
-    startWorkout,
+    startPersistentWorkout,
     resumeWorkout,
     userAge,
     userWeight,

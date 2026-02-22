@@ -31,9 +31,9 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
   }, [])
 
   return (
-    <Card>
+    <Card elevation={3}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h6" gutterBottom fontWeight="bold">
           Heart Rate Over Time
         </Typography>
         <Box
@@ -45,18 +45,47 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={theme.palette.divider}
+                vertical={false}
               />
-              <XAxis dataKey="time" tickFormatter={formatTime} />
-              <YAxis domain={['auto', 'auto']} />
-              <Tooltip />
-              <Legend />
+              <XAxis
+                dataKey="time"
+                tickFormatter={formatTime}
+                stroke={theme.palette.text.secondary}
+                tick={{ fontSize: 12 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                domain={['auto', 'auto']}
+                stroke={theme.palette.text.secondary}
+                tick={{ fontSize: 12 }}
+                tickLine={false}
+                axisLine={false}
+                width={40}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: theme.shape.borderRadius,
+                  border: `1px solid ${theme.palette.divider}`,
+                  backgroundColor: theme.palette.background.paper,
+                  boxShadow: theme.shadows[3],
+                }}
+                labelFormatter={(label) => formatTime(label)}
+                formatter={(value: number | undefined) => [
+                  value ? `${value} bpm` : 'N/A',
+                  'Heart Rate',
+                ]}
+              />
+              <Legend verticalAlign="top" height={36} />
               <Line
                 type="monotone"
                 dataKey="hr"
+                name="Heart Rate"
                 stroke={theme.palette.primary.main}
-                strokeWidth={2}
+                strokeWidth={3}
                 dot={false}
-                activeDot={{ r: 6 }}
+                activeDot={{ r: 6, fill: theme.palette.primary.main }}
+                animationDuration={500}
               />
             </LineChart>
           </ResponsiveContainer>

@@ -1,6 +1,6 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Container, Box, Button, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -47,11 +47,12 @@ const ExperimentalAnalyticsPage = () => {
     session: activeSession,
     status,
     isInitialized,
-    startWorkout,
+    startPersistentWorkout,
     pauseWorkout,
     resumeWorkout,
     endWorkout,
     addHrData,
+    exportWorkout,
     caloriesBurned,
   } = useWorkoutSessionManager()
 
@@ -109,28 +110,17 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  /**
-   * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
-   * This prevents the interval from being recreated on every hrmData change
-   */
-  const latestHrRef = useRef(0)
-
-  useEffect(() => {
-    latestHrRef.current = hrmData[0]?.value ?? 0
-  }, [hrmData])
-
-  // Recording interval - only depends on status, not hrmData
+  // Event-driven data ingestion (replacing interval polling)
   useEffect(() => {
     if (status !== 'running') return
 
-    const intervalId = setInterval(() => {
-      const currentHr = latestHrRef.current
-      // Add HR data point (handles calorie calc internally)
-      addHrData(currentHr)
-    }, 1000)
+    // We use the first client's data for this dashboard
+    const latestData = hrmData[0]
 
-    return () => clearInterval(intervalId)
-  }, [status, addHrData])
+    if (latestData?.value) {
+      addHrData(latestData.value)
+    }
+  }, [hrmData, status, addHrData])
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
@@ -138,9 +128,9 @@ const ExperimentalAnalyticsPage = () => {
     const weight = userSettings.userWeight || 70
     const maxHr = calculateMaxHr(age)
 
-    startWorkout(age, weight, { maxHr })
+    startPersistentWorkout(age, weight, { maxHr })
     setView('active')
-  }, [startWorkout, userSettings])
+  }, [startPersistentWorkout, userSettings])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
@@ -153,6 +143,10 @@ const ExperimentalAnalyticsPage = () => {
   const handleEndWorkout = useCallback(() => {
     endWorkout()
   }, [endWorkout])
+
+  const handleExportWorkout = useCallback(() => {
+    exportWorkout()
+  }, [exportWorkout])
 
   const handleViewSession = useCallback((session: WorkoutSessionData) => {
     setSelectedSession(session)
@@ -203,16 +197,21 @@ const ExperimentalAnalyticsPage = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
-          <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             {status === 'idle' && (
               <Button variant="contained" onClick={handleStartWorkout}>
                 Start Workout
               </Button>
             )}
             {status === 'running' && (
-              <Button variant="outlined" onClick={handlePauseWorkout}>
-                Pause
-              </Button>
+              <>
+                <Button variant="outlined" onClick={handlePauseWorkout}>
+                  Pause
+                </Button>
+                <Button variant="text" onClick={handleExportWorkout}>
+                  Export JSON
+                </Button>
+              </>
             )}
             {status === 'paused' && (
               <>
@@ -221,6 +220,9 @@ const ExperimentalAnalyticsPage = () => {
                 </Button>
                 <Button variant="outlined" onClick={handleEndWorkout}>
                   Finish Workout
+                </Button>
+                <Button variant="text" onClick={handleExportWorkout}>
+                  Export JSON
                 </Button>
               </>
             )}

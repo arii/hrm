@@ -1,3 +1,4 @@
+// app/client/experimental/components/WorkoutSummary.tsx
 'use client'
 
 import {
@@ -6,10 +7,9 @@ import {
   Typography,
   Box,
   Chip,
-  Divider,
   Stack,
   useTheme,
-  SvgIconProps,
+  Grid,
 } from '@mui/material'
 import {
   AccessTime as TimeIcon,
@@ -24,57 +24,6 @@ interface WorkoutSummaryProps {
   status: 'idle' | 'running' | 'paused' | 'finished'
   userName: string
   date: Date
-}
-
-interface MetricBlockProps {
-  label: string
-  value: string | number
-  icon: React.ElementType
-  iconColor?: SvgIconProps['color']
-  valueColor?: string
-}
-
-const MetricBlock = ({
-  label,
-  value,
-  icon: Icon,
-  iconColor = 'action',
-  valueColor = 'text.primary',
-}: MetricBlockProps) => (
-  <Box sx={{ textAlign: 'center', flex: 1 }}>
-    <Stack
-      direction="row"
-      justifyContent="center"
-      alignItems="center"
-      gap={1}
-      mb={0.5}
-    >
-      <Icon color={iconColor} fontSize="small" aria-hidden="true" />
-      <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
-        {label}
-      </Typography>
-    </Stack>
-    <Typography
-      variant="h4"
-      component="p"
-      sx={{
-        color: valueColor,
-        fontWeight: 700,
-      }}
-    >
-      {value}
-    </Typography>
-  </Box>
-)
-
-const STATUS_COLORS: Record<
-  string,
-  'success' | 'warning' | 'primary' | 'default'
-> = {
-  running: 'success',
-  paused: 'warning',
-  finished: 'primary',
-  idle: 'default',
 }
 
 const WorkoutSummary = ({
@@ -93,6 +42,9 @@ const WorkoutSummary = ({
     day: 'numeric',
   })
 
+  const statusColor =
+    theme.palette.custom?.[status] || theme.palette.text.secondary
+
   return (
     <Card
       data-testid="workout-summary"
@@ -104,7 +56,11 @@ const WorkoutSummary = ({
       }}
     >
       <Box
-        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}
+        sx={{
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          p: 2,
+        }}
       >
         <Stack
           direction="row"
@@ -128,13 +84,10 @@ const WorkoutSummary = ({
           </Box>
           <Chip
             label={status.toUpperCase()}
-            color={STATUS_COLORS[status] || 'default'}
-            variant={status === 'running' ? 'filled' : 'outlined'}
             sx={{
               fontWeight: 'bold',
-              bgcolor: status === 'running' ? 'white' : 'transparent',
-              color: status === 'running' ? 'primary.main' : 'inherit',
-              borderColor: 'white',
+              bgcolor: 'white',
+              color: statusColor,
             }}
           />
         </Stack>
@@ -147,28 +100,62 @@ const WorkoutSummary = ({
       </Box>
 
       <CardContent sx={{ pt: 3 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          divider={<Divider orientation="vertical" flexItem />}
-          spacing={2}
-          justifyContent="space-around"
-        >
-          <MetricBlock
-            label="DURATION"
-            value={formatDuration(duration, {
-              unit: 'seconds',
-              format: 'HH:MM:SS',
-            })}
-            icon={TimeIcon}
-          />
-          <MetricBlock
-            label="CALORIES"
-            value={calories.toFixed(1)}
-            icon={BurnIcon}
-            iconColor="error"
-            valueColor={calories > 0 ? 'error.main' : 'text.primary'}
-          />
-        </Stack>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6, sm: 6 }}>
+            <Box textAlign="center">
+              <Stack
+                direction="row"
+                justifyContent="center"
+                alignItems="center"
+                gap={1}
+                mb={0.5}
+              >
+                <TimeIcon color="action" fontSize="small" aria-hidden="true" />
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  fontWeight={600}
+                >
+                  DURATION
+                </Typography>
+              </Stack>
+              <Typography variant="h4" component="p" fontWeight={700}>
+                {formatDuration(duration, {
+                  unit: 'seconds',
+                  format: 'HH:MM:SS',
+                })}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 6, sm: 6 }}>
+            <Box textAlign="center">
+              <Stack
+                direction="row"
+                justifyContent="center"
+                alignItems="center"
+                gap={1}
+                mb={0.5}
+              >
+                <BurnIcon color="error" fontSize="small" aria-hidden="true" />
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  fontWeight={600}
+                >
+                  CALORIES
+                </Typography>
+              </Stack>
+              <Typography
+                variant="h4"
+                component="p"
+                fontWeight={700}
+                color={calories > 0 ? 'error.main' : 'text.primary'}
+              >
+                {calories.toFixed(1)}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </CardContent>
     </Card>
   )

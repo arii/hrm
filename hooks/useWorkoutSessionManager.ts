@@ -12,6 +12,7 @@ import {
   workoutSessionStorage,
   WorkoutSessionData,
   CalorieDataPoint,
+  HrDataPoint,
 } from '../lib/workout-session-storage'
 import { WorkoutStatus } from '@/types/workout'
 import {
@@ -58,8 +59,7 @@ type SessionManagerAction =
   | {
       type: 'ADD_HR_DATA'
       payload: {
-        hr: number
-        time: number
+        hrDataPoint: HrDataPoint
         caloriesDelta: number
         smoothedHr: number
         caloriesPerSecond: number
@@ -172,8 +172,9 @@ function sessionManagerReducer(
     case 'ADD_HR_DATA': {
       if (!state.session || state.status !== 'running') return state
 
-      const { hr, time, caloriesDelta, smoothedHr, caloriesPerSecond } =
+      const { hrDataPoint, caloriesDelta, smoothedHr, caloriesPerSecond } =
         action.payload
+      const { hr, time } = hrDataPoint
 
       const lastDataPoint =
         state.session.hrHistory[state.session.hrHistory.length - 1]
@@ -189,7 +190,7 @@ function sessionManagerReducer(
         [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
       }
 
-      const newHrHistory = [...state.session.hrHistory, { time, hr }]
+      const newHrHistory = [...state.session.hrHistory, hrDataPoint]
       const newMaxHr = Math.max(state.session.maxHr, hr)
       const oldAverage = state.session.averageHr
       const oldLength = state.session.hrHistory.length
@@ -338,7 +339,7 @@ export const useWorkoutSessionManager = () => {
     }
   }, [state.session, state.session?.status])
 
-  const startWorkout = useCallback(
+  const startPersistentWorkout = useCallback(
     (
       age: number,
       weight: number,
@@ -363,6 +364,9 @@ export const useWorkoutSessionManager = () => {
     },
     []
   )
+
+  // Alias for backward compatibility
+  const startWorkout = startPersistentWorkout
 
   const pauseWorkout = useCallback(() => {
     dispatch({ type: 'PAUSE' })
@@ -418,17 +422,36 @@ export const useWorkoutSessionManager = () => {
     }
     lastTimestampRef.current = now
 
+    const hrDataPoint: HrDataPoint = { time: now, hr }
+
     dispatch({
       type: 'ADD_HR_DATA',
       payload: {
-        hr,
-        time: now,
+        hrDataPoint,
         caloriesDelta,
         smoothedHr,
         caloriesPerSecond: isNaN(caloriesPerSecond) ? 0 : caloriesPerSecond,
       },
     })
   }, [])
+
+  const exportWorkout = useCallback(() => {
+    if (!state.session) return
+
+    const dataStr = JSON.stringify(state.session, null, 2)
+    const blob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `workout-session-${state.session.sessionId}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    // Revoke URL to free memory
+    URL.revokeObjectURL(url)
+  }, [state.session])
 
   // Map status for compatibility
   const hasStarted = state.status !== 'idle'
@@ -446,10 +469,12 @@ export const useWorkoutSessionManager = () => {
     hasStarted,
     caloriesBurned,
     startWorkout,
+    startPersistentWorkout,
     pauseWorkout,
     resumeWorkout,
     endWorkout,
     resetWorkout,
     addHrData,
+    exportWorkout,
   }
 }

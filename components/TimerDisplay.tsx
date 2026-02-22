@@ -1,4 +1,4 @@
-// File: components/TimerDisplay.tsx
+// components/TimerDisplay.tsx
 'use client'
 import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
@@ -193,7 +193,7 @@ const TimerDisplay = () => {
           aria-live="polite"
           aria-atomic="true"
           sx={{
-            fontFamily: 'var(--font-digital-7), monospace',
+            fontFamily: '"Roboto Mono", monospace',
             fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
             fontWeight: 900,
             lineHeight: 1,

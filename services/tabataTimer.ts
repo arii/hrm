@@ -3,7 +3,7 @@
  * Consolidated Dual-Mode Timer Service.
  * This class manages the state and logic for both TABATA and STOPWATCH modes,
  * handling transitions, sound cues, and broadcasting updates to clients.
- * It uses absolute timing (performance.now()) to maintain accuracy against drift.
+ * It uses absolute timing (Date.now()) to maintain accuracy against drift.
  */
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode, TimerPhase } from '../types/core'
@@ -66,7 +66,7 @@ class TabataTimer {
     if (this.isRunning) return
 
     this.isRunning = true
-    const now = performance.now()
+    const now = Date.now()
 
     if (this.currentPhase === 'IDLE') {
       this.currentPhase = 'PREPARE'
@@ -88,7 +88,7 @@ class TabataTimer {
   public pause(): void {
     if (!this.isRunning || !this.startTime) return
 
-    const now = performance.now()
+    const now = Date.now()
     const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
 
     if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
@@ -194,7 +194,7 @@ class TabataTimer {
   private updateTimer = (): void => {
     if (!this.isRunning || !this.startTime) return
 
-    const now = performance.now()
+    const now = Date.now()
     const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
 
     if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
