@@ -4,13 +4,13 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import Typography from '@mui/material/Typography'
 import {
   FormControl,
   FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
+  FormHelperText,
 } from '@mui/material'
 import { UserProfileState } from '@/types/connect'
 import { Gender } from '@/types/core'
@@ -86,7 +86,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
           helperText={errors.heightError}
         />
       ) : (
-        <Stack direction="column">
+        <FormControl error={!!errors.heightError} fullWidth variant="standard">
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
@@ -118,15 +118,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
             />
           </Stack>
           {errors.heightError && (
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{ mt: 0.5, ml: 1.5 }}
-            >
+            <FormHelperText sx={{ ml: 1.5 }}>
               {errors.heightError}
-            </Typography>
+            </FormHelperText>
           )}
-        </Stack>
+        </FormControl>
       )}
       <TextField
         fullWidth
