@@ -67,7 +67,7 @@ test.describe('Visual Regression Tests', () => {
       )
       await timerContainer.waitFor({
         state: 'visible',
-        timeout: VRT_TIMEOUTS.ELEMENT_VISIBLE,
+        timeout: VRT_TIMEOUTS.STANDARD,
       })
 
       await controlPage.getByTestId('start-timer-button').click()
@@ -76,7 +76,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: VRT_TIMEOUTS.STATE_TRANSITION,
+          timeout: VRT_TIMEOUTS.STANDARD,
         }
       )
 
@@ -103,7 +103,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: VRT_TIMEOUTS.STATE_TRANSITION,
+          timeout: VRT_TIMEOUTS.STANDARD,
         }
       )
 

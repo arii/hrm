@@ -110,7 +110,7 @@ test.describe('Component-Specific VRT', () => {
       'spotify-device-selector-button'
     )
     await expect(selectorButton).toBeVisible({
-      timeout: VRT_TIMEOUTS.COMPONENT_RENDER,
+      timeout: VRT_TIMEOUTS.STANDARD,
     })
     await selectorButton.click()
 
@@ -137,10 +137,10 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
-    // Explicit timeout for ErrorFallback as triggering a server-side error and
+    // Explicit extended timeout for ErrorFallback as triggering a server-side error and
     // rendering the fallback UI can be slower on CI environments.
     await expect(errorFallback).toBeVisible({
-      timeout: VRT_TIMEOUTS.COMPLEX_INTERACTION,
+      timeout: VRT_TIMEOUTS.EXTENDED,
     })
     await takeScreenshot(errorFallback, 'error-fallback.png')
   })
