@@ -16,11 +16,7 @@ const LoadingSkeleton = () => (
         width: { xs: '100%', sm: 'calc(50% - 8px)' },
       }}
     >
-      <Skeleton
-        variant="rectangular"
-        height={220}
-        sx={{ borderRadius: 3 }}
-      />
+      <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 3 }} />
     </Box>
     <Box
       data-testid="hr-tile-grid-item"
@@ -29,11 +25,7 @@ const LoadingSkeleton = () => (
         width: { sm: 'calc(50% - 8px)' },
       }}
     >
-      <Skeleton
-        variant="rectangular"
-        height={220}
-        sx={{ borderRadius: 3 }}
-      />
+      <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 3 }} />
     </Box>
   </>
 )
@@ -58,8 +50,8 @@ const EmptyDataMessage = () => (
       No Heart Rate Data
     </Typography>
     <Typography variant="body1" color="text.secondary" align="center">
-      Heart rate data will be displayed here once a monitor is connected
-      and streaming.
+      Heart rate data will be displayed here once a monitor is connected and
+      streaming.
     </Typography>
   </Box>
 )
