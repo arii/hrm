@@ -15,11 +15,7 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-<<<<<<< HEAD
   TEST_READY: 5000,
-=======
-  TEST_READY: 10000,
->>>>>>> origin/leader
   /** Default timeout for WebSocket connection */
   WEBSOCKET: 5000,
   /** Default timeout for element visibility */
