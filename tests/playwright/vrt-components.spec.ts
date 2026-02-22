@@ -132,11 +132,16 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('ErrorFallback UI', async ({ dashboardPage }) => {
-    // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component
+    // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component.
+    // NOTE: This intentionally triggers an "Uncaught error" in the server-side render, which is expected.
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
-    await expect(errorFallback).toBeVisible()
+    // Increased timeout for ErrorFallback as triggering a server-side error and
+    // rendering the fallback UI can be slower on CI environments.
+    await expect(errorFallback).toBeVisible({
+      timeout: VRT_TIMEOUTS.COMPLEX_INTERACTION,
+    })
     await takeScreenshot(errorFallback, 'error-fallback.png')
   })
 })
