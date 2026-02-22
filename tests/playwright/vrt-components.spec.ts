@@ -11,7 +11,6 @@ import { waitForPageReady } from './lib/waits'
 test.describe('Component-Specific VRT', () => {
   test.beforeEach(async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
-    await waitForPageReady(dashboardPage)
   })
 
   test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
@@ -49,6 +48,7 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
+<<<<<<< HEAD
   test('WorkoutTableViewer rendering', async ({ dashboardPage }) => {
     // Mock the workout API to return headers
     await dashboardPage.route('**/api/workout?docId=**', async (route) => {
@@ -69,6 +69,11 @@ test.describe('Component-Specific VRT', () => {
     const tableHeader = dashboardPage.getByTestId('workout-table-viewer')
     await expect(tableHeader).toBeVisible()
     await takeScreenshot(tableHeader, 'workout-table-viewer.png')
+=======
+  test.skip('WorkoutTableHeader rendering', async () => {
+    // Requires NEXT_PUBLIC_USE_NATIVE_TABLE=true which is a build-time/env-var.
+    // Skipping for now as it requires complex environment setup.
+>>>>>>> origin/leader
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {

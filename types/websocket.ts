@@ -78,7 +78,7 @@ export interface ActiveAlert {
   timestamp: number
 }
 
-export type ServerMessage =
+export type ServerMessage = (
   | {
       type: 'INITIAL_STATE'
       payload: InitialStateSnapshotPayload
@@ -90,6 +90,7 @@ export type ServerMessage =
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
+) & { serverTimestamp?: number }
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
