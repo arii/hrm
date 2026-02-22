@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectPage from '@/app/client/connect/page'
 import {
   UserSettingsContext,
@@ -15,7 +15,7 @@ import { toDisplay } from '@/utils/units'
 jest.mock('@/hooks/useBluetoothHRM', () =>
   jest.fn(() => ({
     connectAndStream: jest.fn(),
-    autoConnect: jest.fn(),
+    autoConnect: jest.fn().mockResolvedValue(undefined),
     disconnect: jest.fn(),
     forgetDevice: jest.fn(),
     deviceStatus: 'disconnected',
@@ -44,10 +44,11 @@ jest.mock('@/hooks/useWorkoutSessionManager', () => ({
   })),
 }))
 
+const mockSendData = jest.fn()
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: () => ({
     connectionStatus: 'Connected',
-    sendData: jest.fn(),
+    sendData: mockSendData,
   }),
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -169,5 +170,19 @@ describe('ConnectPage', () => {
     weightInput = screen.getByLabelText(/Your Weight/)
     const weightInLbs = toDisplay(mockUserSettings.userWeight!, 'IMPERIAL')
     expect(weightInput).toHaveValue(weightInLbs)
+  })
+
+  it('sends HRM_METADATA_UPDATE when user settings change', async () => {
+    renderWithProviders(<ConnectPage />, { providerProps })
+
+    await waitFor(() => {
+      expect(mockSendData).toHaveBeenCalledWith({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          name: 'Test User',
+          age: 30,
+        },
+      })
+    })
   })
 })

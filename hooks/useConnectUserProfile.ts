@@ -76,8 +76,11 @@ export const useConnectUserProfile = (): UserProfileState => {
     data: {
       userName,
       userAge: String(userAge || ''),
+      userAgeNum: userAge || 0,
       userHeight: displayHeight,
+      userHeightCm: Number(userSettings.userHeight) || 175,
       userWeight: displayWeight || '',
+      userWeightKg: userWeight || 0,
       gender,
       unitSystem,
     },

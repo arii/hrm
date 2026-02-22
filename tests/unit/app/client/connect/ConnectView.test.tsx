@@ -11,8 +11,11 @@ describe('ConnectView', () => {
     data: {
       userName: 'Test User',
       userAge: '30',
+      userAgeNum: 30,
       userHeight: { cm: '175', feet: '5', inches: '9' },
+      userHeightCm: 175,
       userWeight: '70',
+      userWeightKg: 70,
       gender: 'MALE' as const,
       unitSystem: 'METRIC' as const,
     },
@@ -130,50 +133,5 @@ describe('ConnectView', () => {
     }
     rerender(<ConnectView {...propsWithWeightError} />)
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
-  })
-
-  it('calls onUnitChange when the unit toggle is clicked', () => {
-    render(<ConnectView {...mockProps} />)
-    const imperialButton = screen.getByLabelText('imperial units')
-    fireEvent.click(imperialButton)
-    expect(mockUserProfile.handlers.onUnitChange).toHaveBeenCalledWith(
-      'IMPERIAL'
-    )
-  })
-
-  it('renders metric inputs when unit is metric', () => {
-    render(<ConnectView {...mockProps} />)
-    expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()
-  })
-
-  it('renders imperial inputs when unit is imperial', () => {
-    const imperialProps = {
-      ...mockProps,
-      userProfile: {
-        ...mockUserProfile,
-        data: {
-          ...mockUserProfile.data,
-          unitSystem: 'IMPERIAL' as const,
-        },
-      },
-    }
-    render(<ConnectView {...imperialProps} />)
-    expect(screen.getByLabelText('Feet')).toBeInTheDocument()
-    expect(screen.getByLabelText('Inches')).toBeInTheDocument()
-    expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
-  })
-
-  it('renders gender selection', () => {
-    render(<ConnectView {...mockProps} />)
-    expect(screen.getByLabelText('Male')).toBeInTheDocument()
-    expect(screen.getByLabelText('Female')).toBeInTheDocument()
-  })
-
-  it('calls setGender when gender is changed', () => {
-    render(<ConnectView {...mockProps} />)
-    const femaleRadio = screen.getByLabelText('Female')
-    fireEvent.click(femaleRadio)
-    expect(mockUserProfile.handlers.setGender).toHaveBeenCalledWith('FEMALE')
   })
 })

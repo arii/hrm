@@ -49,8 +49,11 @@ describe('useConnectUserProfile', () => {
 
     expect(result.current.data.userName).toBe('Test User')
     expect(result.current.data.userAge).toBe('30')
+    expect(result.current.data.userAgeNum).toBe(30)
     expect(result.current.data.userWeight).toBe('70')
+    expect(result.current.data.userWeightKg).toBe(70)
     expect(result.current.data.userHeight).toEqual(mockHeightState)
+    expect(result.current.data.userHeightCm).toBe(175)
     expect(result.current.data.gender).toBe('FEMALE')
     expect(result.current.data.unitSystem).toBe('METRIC')
   })

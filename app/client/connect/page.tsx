@@ -20,13 +20,10 @@ export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
   const {
     userName,
-    userAge: userAgeStr,
-    userWeight: userWeightStr,
+    userAgeNum: userAge,
+    userWeightKg: userWeight,
     gender,
   } = userProfile.data
-
-  const userAge = parseInt(userAgeStr) || 0
-  const userWeight = parseFloat(userWeightStr) || 0
 
   const [currentHR, setCurrentHR] = useState(0)
 

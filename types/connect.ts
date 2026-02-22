@@ -4,8 +4,11 @@ import { HeartRateZone } from '../lib/shared/hr-zones'
 export interface UserProfileData {
   userName: string
   userAge: string
+  userAgeNum: number
   userHeight: { cm: string; feet: string; inches: string }
+  userHeightCm: number
   userWeight: string
+  userWeightKg: number
   gender: Gender
   unitSystem: MeasurementSystem
 }
