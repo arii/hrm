@@ -249,7 +249,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             hrListenerRef.current
           )
         } catch (e) {
-          logger.warn({ e }, 'Error removing HR listener')
+          logger.debug({ e }, 'Error removing HR listener')
         }
         hrListenerRef.current = null
         hrCharacteristicRef.current = null
@@ -263,7 +263,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             batteryListenerRef.current
           )
         } catch (e) {
-          logger.warn({ e }, 'Error removing battery listener')
+          logger.debug({ e }, 'Error removing battery listener')
         }
         batteryListenerRef.current = null
         batteryCharacteristicRef.current = null
@@ -277,7 +277,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               activeDisconnectListenerRef.current
             )
           } catch (e) {
-            logger.warn({ e }, 'Error removing disconnect listener')
+            logger.debug({ e }, 'Error removing disconnect listener')
           }
           activeDisconnectListenerRef.current = null
         }
