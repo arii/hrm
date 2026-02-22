@@ -25,13 +25,13 @@ export const WAIT_TIMEOUTS = {
   /** Default timeout for navigation */
   NAVIGATION: 8000,
   /** Short timeout for quick checks */
-  SHORT: 1000,
+  SHORT: 500,
   /** Medium timeout for normal operations */
-  MEDIUM: 3000,
+  MEDIUM: 2000,
   /** Long timeout for complex operations */
-  LONG: 8000,
+  LONG: 5000,
   /** Infrastructure/server startup timeout */
-  INFRASTRUCTURE: 10000,
+  INFRASTRUCTURE: 8000,
 } as const
 
 /**
@@ -63,10 +63,11 @@ export async function waitForPageReady(
   // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
   // If skeletons persist (e.g. infinite loading or bug), we want VRT to capture that state
   // rather than crashing with a generic TimeoutError.
+  // We use a shorter but safe timeout for skeletons to avoid blocking tests unnecessarily.
   try {
     await page.waitForSelector('.MuiSkeleton-root', {
       state: 'hidden',
-      timeout,
+      timeout: Math.min(timeout, 2000),
     })
   } catch (error) {
     console.warn(

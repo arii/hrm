@@ -6,6 +6,7 @@ import {
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
 
 // Test suite configuration
@@ -64,7 +65,10 @@ test.describe('Visual Regression Tests', () => {
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
       )
-      await timerContainer.waitFor({ state: 'visible', timeout: 10000 })
+      await timerContainer.waitFor({
+        state: 'visible',
+        timeout: VRT_TIMEOUTS.STANDARD,
+      })
 
       await controlPage.getByTestId('start-timer-button').click()
 
@@ -72,7 +76,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: 10000,
+          timeout: VRT_TIMEOUTS.STANDARD,
         }
       )
 
@@ -99,7 +103,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: 10000,
+          timeout: VRT_TIMEOUTS.STANDARD,
         }
       )
 

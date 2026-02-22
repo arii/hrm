@@ -47,7 +47,7 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: false,
-  workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
+  workers: process.env.CI ? 2 : 1,
   timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
@@ -68,7 +68,7 @@ export default defineConfig({
   use: {
     // Base URL for all tests
     baseURL,
-    actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
+    actionTimeout: 5000, // Fails clicks/fills after 5s if element isn't found
     navigationTimeout: 15000, // Navigation timeout
     headless: true,
 

@@ -123,7 +123,7 @@ export async function navigateAndWait(
   // This is a minimal wait to ensure JS has executed
   await page
     .waitForFunction(() => !!window.__TEST_CONTROLS__, {
-      timeout: 5000,
+      timeout: 3000,
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
@@ -299,7 +299,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
   // Wait for WebSocket connection
   await page.waitForFunction(
     () => {
-      return window.__TEST_WEBSOCKET_READY__ === true
+      return document.body.dataset.connectionStatus === 'connected'
     },
     { timeout: 10000 }
   )
