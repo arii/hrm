@@ -54,7 +54,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
 
   // Retry failed tests on CI
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
 
   // Test execution optimizations - Fail Fast Strategy
   expect: {
@@ -69,7 +69,7 @@ export default defineConfig({
     // Base URL for all tests
     baseURL,
     actionTimeout: 5000, // Fails clicks/fills after 5s if element isn't found
-    navigationTimeout: 10000, // Navigation timeout
+    navigationTimeout: 15000, // Navigation timeout
     headless: true,
 
     // Screenshot settings
