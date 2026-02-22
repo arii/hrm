@@ -5,7 +5,15 @@ import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
-import { UserProfileState } from './types'
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
+import { UserProfileState } from '@/types/connect'
+import { Gender } from '@/types/core'
 
 interface UserSettingsProps {
   profile: UserProfileState
@@ -135,6 +143,19 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         error={!!errors.weightError}
         helperText={errors.weightError}
       />
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Gender</FormLabel>
+        <RadioGroup
+          row
+          aria-label="gender"
+          name="gender"
+          value={data.gender}
+          onChange={(e) => handlers.setGender(e.target.value as Gender)}
+        >
+          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
+          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
+        </RadioGroup>
+      </FormControl>
     </Stack>
   )
 }

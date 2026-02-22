@@ -4,7 +4,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
-import { UserProfileState } from '@/app/client/connect/types'
+import { UserProfileState } from '@/types/connect'
 
 describe('ConnectView', () => {
   const mockUserProfile: UserProfileState = {

@@ -5,7 +5,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from './ConnectView'
 import { WorkoutStatus } from '../../../types/workout'
 import { MeasurementSystem, Gender } from '../../../types/core'
-import { UserProfileState } from './types'
+import { UserProfileState } from '@/types/connect'
 
 describe('ConnectView', () => {
   const defaultUserProfile: UserProfileState = {
@@ -136,6 +136,19 @@ describe('ConnectView', () => {
     expect(screen.getByLabelText('Feet')).toBeInTheDocument()
     expect(screen.getByLabelText('Inches')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
+  })
+
+  it('renders gender selection', () => {
+    render(<ConnectView {...defaultProps} />)
+    expect(screen.getByLabelText('Male')).toBeInTheDocument()
+    expect(screen.getByLabelText('Female')).toBeInTheDocument()
+  })
+
+  it('calls setGender when gender is changed', () => {
+    render(<ConnectView {...defaultProps} />)
+    const femaleRadio = screen.getByLabelText('Female')
+    fireEvent.click(femaleRadio)
+    expect(defaultUserProfile.handlers.setGender).toHaveBeenCalledWith('FEMALE')
   })
 
   it('renders the reset section with correct text', () => {

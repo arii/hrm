@@ -70,8 +70,8 @@ export const useHeightInput = (
 
     if (!validationError && newCmValue > 0) {
       setCmValue(newCmValue.toFixed(2))
+      setTransientState(null)
     }
-    setTransientState(null)
   }
 
   return {

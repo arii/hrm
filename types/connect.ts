@@ -1,5 +1,5 @@
-import { MeasurementSystem, Gender } from '../../../types/core'
-import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import { MeasurementSystem, Gender } from './core'
+import { HeartRateZone } from '../lib/shared/hr-zones'
 
 export interface UserProfileData {
   userName: string

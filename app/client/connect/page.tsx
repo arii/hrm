@@ -1,82 +1,34 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
-import { MeasurementSystem } from '../../../types/core'
-import { toKg, toDisplay } from '../../../utils/units'
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
   toHeartRateZone,
 } from '@/lib/shared/hr-zones'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
-import { useHeightInput } from '@/hooks/useHeightInput'
-import {
-  validateAgeValue,
-  validateWeightValue,
-} from '@/lib/validation/userMetrics'
+import { useConnectUserProfile } from '@/hooks/useConnectUserProfile'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 
 export default function ConnectPage() {
-  const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+  const userProfile = useConnectUserProfile()
+  const {
+    userName,
+    userAge: userAgeStr,
+    userWeight: userWeightStr,
+    gender,
+  } = userProfile.data
+
+  const userAge = parseInt(userAgeStr) || 0
+  const userWeight = parseFloat(userWeightStr) || 0
 
   const [currentHR, setCurrentHR] = useState(0)
-
-  const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
-    null
-  )
-
-  const displayWeight = useMemo(() => {
-    if (localDisplayWeight !== null) {
-      return localDisplayWeight
-    }
-    if (userWeight) {
-      return toDisplay(userWeight, unitSystem).toString()
-    }
-    return ''
-  }, [localDisplayWeight, userWeight, unitSystem])
-
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
-
-  const {
-    displayHeight,
-    updateHeight: handleHeightChange,
-    commitHeight: handleHeightBlur,
-    error: heightError,
-  } = useHeightInput('175', unitSystem)
-
-  const handleAgeBlur = () => {
-    const error = validateAgeValue(String(userAge || ''))
-    setAgeError(error)
-  }
-
-  const handleWeightChange = (newDisplayValue: string) => {
-    setLocalDisplayWeight(newDisplayValue)
-  }
-
-  const handleWeightBlur = () => {
-    const valueToValidate = localDisplayWeight ?? displayWeight
-    const error = validateWeightValue(valueToValidate, unitSystem)
-    setWeightError(error)
-
-    if (!error) {
-      const numericValue = parseFloat(valueToValidate)
-      if (!isNaN(numericValue) && numericValue > 0) {
-        const newKgValue = toKg(numericValue, unitSystem)
-        setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
-      }
-    }
-    // Reset local state to show the canonical value from context
-    setLocalDisplayWeight(null)
-  }
 
   const { connectionStatus, sendData } = useWebSocket()
 
@@ -238,13 +190,6 @@ export default function ConnectPage() {
     })
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
-  const handleUnitChange = (newUnit: MeasurementSystem) => {
-    if (newUnit && newUnit !== unitSystem) {
-      setUserSettings((prev) => ({ ...prev, unitSystem: newUnit }))
-      setLocalDisplayWeight(null)
-    }
-  }
-
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
@@ -256,34 +201,7 @@ export default function ConnectPage() {
         format: 'HH:MM:SS',
       })}
       caloriesBurned={caloriesBurned}
-      userProfile={{
-        data: {
-          userName,
-          userAge: String(userAge || ''),
-          userHeight: displayHeight,
-          userWeight: displayWeight || '',
-          gender,
-          unitSystem,
-        },
-        errors: {
-          ageError,
-          heightError,
-          weightError,
-        },
-        handlers: {
-          setUserName: (name) =>
-            setUserSettings((prev) => ({ ...prev, userName: name })),
-          setUserAge: (age) =>
-            setUserSettings((prev) => ({ ...prev, userAge: Number(age) })),
-          onAgeBlur: handleAgeBlur,
-          setUserHeight: handleHeightChange,
-          onHeightBlur: handleHeightBlur,
-          setUserWeight: handleWeightChange,
-          onWeightBlur: handleWeightBlur,
-          setGender: (g) => setUserSettings((prev) => ({ ...prev, gender: g })),
-          onUnitChange: handleUnitChange,
-        },
-      }}
+      userProfile={userProfile}
       isConnected={isConnected}
       isDataStale={isDataStale}
       deviceStatus={deviceStatus}
