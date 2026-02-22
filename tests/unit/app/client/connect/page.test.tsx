@@ -10,6 +10,7 @@ import {
 } from '@/context/UserSettingsContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
 // Correctly mock the hooks
 const mockConnectAndStream = jest.fn()
@@ -208,8 +209,7 @@ describe('ConnectPage', () => {
   })
 
   it('displays heart rate tile when connected', () => {
-    const useBluetoothHRM = require('@/hooks/useBluetoothHRM')
-    useBluetoothHRM.mockReturnValue({
+    jest.mocked(useBluetoothHRM).mockReturnValue({
       connectAndStream: mockConnectAndStream,
       autoConnect: mockAutoConnect,
       disconnect: mockDisconnect,
