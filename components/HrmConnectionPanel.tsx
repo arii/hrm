@@ -7,6 +7,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
 import HrTile from '@/components/HrTile'
 import { getActiveHrmData } from '@/utils/hrm'
+import { HR_TILE_MAX_HEIGHT } from '@/constants/layout'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -58,7 +59,6 @@ const HrmConnectionPanel = () => {
             </Typography>
           </Box>
           <Box
-            data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
               width: { sm: 'calc(50% - 12px)' },
@@ -66,7 +66,7 @@ const HrmConnectionPanel = () => {
           >
             <Skeleton
               variant="rectangular"
-              height={220}
+              height={HR_TILE_MAX_HEIGHT}
               sx={{ borderRadius: 3 }}
             />
           </Box>
@@ -82,7 +82,6 @@ const HrmConnectionPanel = () => {
           return (
             <Box
               key={user.clientId}
-              data-testid="hr-tile-grid-item"
               sx={{
                 width: {
                   xs: '100%',
