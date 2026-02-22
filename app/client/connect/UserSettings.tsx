@@ -4,6 +4,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Box from '@mui/material/Box'
 import {
   FormControl,
   FormLabel,
@@ -14,6 +15,18 @@ import {
 } from '@mui/material'
 import { UserProfileState } from '@/types/connect'
 import { Gender } from '@/types/core'
+
+const visuallyHidden = {
+  border: 0,
+  clip: 'rect(0 0 0 0)',
+  height: '1px',
+  margin: -1,
+  overflow: 'hidden',
+  padding: 0,
+  position: 'absolute',
+  whiteSpace: 'nowrap',
+  width: '1px',
+} as const
 
 interface UserSettingsProps {
   profile: UserProfileState
@@ -36,9 +49,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         aria-describedby="unit-system-description"
         fullWidth
       >
-        <p id="unit-system-description" style={{ display: 'none' }}>
+        <Box id="unit-system-description" sx={visuallyHidden}>
           Currently selected unit system is {data.unitSystem}.
-        </p>
+        </Box>
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
