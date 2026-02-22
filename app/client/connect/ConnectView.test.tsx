@@ -77,17 +77,15 @@ describe('ConnectView', () => {
   it('renders metric inputs when unit is metric', () => {
     const props = { ...defaultProps, unitSystem: 'METRIC' as MeasurementSystem }
     render(<ConnectView {...props} />)
-    // Note: UserSettings implementation details might vary, checking for label presence
-    // Assuming UserSettings renders labels based on unit
-    // If UserSettings is a pure component relying on props, this should work if UserSettings handles it.
-    // Based on previous test reading:
-    // expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
-    // However, I should verify what UserSettings renders. For now, let's assume the previous test intent was correct but props were wrong.
+    expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()
   })
 
   it('renders imperial inputs when unit is imperial', () => {
     render(<ConnectView {...defaultProps} />)
-    // Similarly, assuming UserSettings renders these fields
+    expect(screen.getByLabelText('Feet')).toBeInTheDocument()
+    expect(screen.getByLabelText('Inches')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
   })
 
   it('renders the reset section with correct text', () => {
@@ -100,9 +98,7 @@ describe('ConnectView', () => {
     ).toBeInTheDocument()
   })
 
-  it('calls onReset when reset button is clicked and confirmed', async () => {
-    // Note: The current implementation of handleFullReset calls onForgetDevice then onReset.
-    // There is no confirmation dialog in the code I read, just a direct call.
+  it('calls onReset when reset button is clicked', async () => {
     render(<ConnectView {...defaultProps} />)
     const resetButton = screen.getByText('Reset Permissions & Settings')
     fireEvent.click(resetButton)
