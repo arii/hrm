@@ -31,7 +31,7 @@ const envSchema = z
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
     WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(5),
+    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(15),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
