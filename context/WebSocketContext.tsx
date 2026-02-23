@@ -192,8 +192,11 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
+      if (
+        typeof window !== 'undefined' &&
+        (process.env.NODE_ENV !== 'production' ||
+          process.env.NEXT_PUBLIC_TESTING === 'true')
+      ) {
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -229,8 +232,11 @@ export const WebSocketProvider = ({
       )
       setConnectionStatus('Disconnected')
 
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
+      if (
+        typeof window !== 'undefined' &&
+        (process.env.NODE_ENV !== 'production' ||
+          process.env.NEXT_PUBLIC_TESTING === 'true')
+      ) {
         document.body.dataset.connectionStatus = 'disconnected'
       }
 
