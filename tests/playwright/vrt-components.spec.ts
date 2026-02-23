@@ -137,7 +137,7 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
-    // Explicit extended timeout for ErrorFallback as triggering a server-side error and
+    // Explicit extended timeout for ErrorFallback as triggering the error boundary and
     // rendering the fallback UI can be slower on CI environments.
     await expect(errorFallback).toBeVisible({
       timeout: VRT_TIMEOUTS.EXTENDED,

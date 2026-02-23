@@ -13,6 +13,10 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
+    // Suppress logging for intentional VRT errors to keep test logs clean.
+    if (error.message === 'VRT Test Error') {
+      return
+    }
     // Log the error to an error reporting service
     console.error(error)
   }, [error])
