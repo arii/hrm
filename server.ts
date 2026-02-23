@@ -137,13 +137,13 @@ app.prepare().then(async () => {
   // Gated to prevent accidental use in production
   expressApp.post('/api/debug/reset', (_req, res) => {
     if (env.NODE_ENV === 'production' && !env.ALLOW_DEBUG_RESET) {
-      res.status(403).json({ error: 'Debug reset not allowed in production' })
-      return
+      return res
+        .status(403)
+        .json({ error: 'Debug reset not allowed in production' })
     }
     resetSocketManager()
     logger.info('Server-side HRM state has been reset via /api/debug/reset')
-    res.status(200).json({ status: 'reset' })
-    return
+    return res.status(200).json({ status: 'reset' })
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {
