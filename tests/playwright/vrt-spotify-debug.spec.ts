@@ -1,8 +1,5 @@
 import { test } from './fixtures'
-import {
-  setupMinimalVisualRegressionTest,
-  mockLoggedInSession,
-} from './lib'
+import { setupMinimalVisualRegressionTest, mockLoggedInSession } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
