@@ -40,14 +40,14 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
-  workoutDocUrl?: string
-  workoutDocIframeUrl?: string
+  docId?: string
+  iframeUrl?: string
 }
 
 const DashboardClient = ({
   useNativeTable,
-  workoutDocUrl,
-  workoutDocIframeUrl,
+  docId,
+  iframeUrl,
 }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
@@ -64,10 +64,6 @@ const DashboardClient = ({
       setAudioInitialized(true)
     }
   }
-
-  const docId = workoutDocUrl
-    ? workoutDocUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1]
-    : undefined
 
   return (
     <Container
@@ -96,7 +92,7 @@ const DashboardClient = ({
         ) : (
           <GoogleDocViewer
             title="Today's Training Regimen"
-            embedUrl={workoutDocIframeUrl || ''}
+            embedUrl={iframeUrl || ''}
             height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}

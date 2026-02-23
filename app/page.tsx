@@ -1,5 +1,6 @@
 import DashboardClient from '@/components/DashboardClient'
 import { env } from '@/lib/env'
+import { extractGoogleDocId } from '@/utils/urls'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -24,11 +25,13 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     throw new Error('VRT Test Error')
   }
 
+  const docId = extractGoogleDocId(env.GOOGLE_DOC_WORKOUT_URL)
+
   return (
     <DashboardClient
       useNativeTable={useNativeTable}
-      workoutDocUrl={env.GOOGLE_DOC_WORKOUT_URL}
-      workoutDocIframeUrl={env.GOOGLE_DOC_IFRAME_URL}
+      docId={docId}
+      iframeUrl={env.GOOGLE_DOC_IFRAME_URL}
     />
   )
 }

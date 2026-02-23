@@ -66,3 +66,13 @@ export const getSpotifyCallbackURL = (): string => {
     `${getBaseURL()}/api/auth/callback/spotify`
   )
 }
+
+/**
+ * Extracts a Google Document ID from a standard sharing/view/edit URL.
+ * @param url The Google Doc URL.
+ * @returns The extracted document ID or undefined if not found.
+ */
+export const extractGoogleDocId = (url?: string): string | undefined => {
+  if (!url) return undefined
+  return url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1]
+}

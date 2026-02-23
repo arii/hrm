@@ -56,8 +56,8 @@ jest.mock('@/hooks/useAudio', () => ({
 
 describe('DashboardClient', () => {
   const mockProps = {
-    workoutDocUrl: 'https://docs.google.com/document/d/mock-doc-id/edit',
-    workoutDocIframeUrl:
+    docId: 'mock-doc-id',
+    iframeUrl:
       'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
   }
 
