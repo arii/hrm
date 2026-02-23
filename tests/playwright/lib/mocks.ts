@@ -38,20 +38,44 @@ const STABLE_WORKOUT_HTML = `
  * or flaky iframe content.
  *
  * @param pageOrContext - The Playwright Page or BrowserContext object.
+ * @param html - Optional custom HTML body for the mock.
  */
 export async function mockGoogleDocIframe(
-  pageOrContext: Page | BrowserContext
+  pageOrContext: Page | BrowserContext,
+  html: string = STABLE_WORKOUT_HTML
 ): Promise<void> {
+  // Pattern to match any Google Doc publication URL with embedded=true
   await pageOrContext.route(
-    '**/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
+    /.*docs\.google\.com\/document\/d\/e\/.*\/pub\?embedded=true.*/,
     (route) => {
       route.fulfill({
         status: 200,
         contentType: 'text/html; charset=utf-8',
-        body: STABLE_WORKOUT_HTML,
+        body: html,
       })
     }
   )
+}
+
+/**
+ * Mocks the workout API response for stable VRT.
+ *
+ * @param pageOrContext - The Playwright Page or BrowserContext object.
+ * @param data - Optional custom workout data.
+ */
+export async function mockWorkoutApi(
+  pageOrContext: Page | BrowserContext,
+  data: { headers: string[] } = {
+    headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
+  }
+): Promise<void> {
+  await pageOrContext.route('**/api/workout*', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(data),
+    })
+  })
 }
 
 /**

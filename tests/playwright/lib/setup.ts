@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
+import { mockGoogleDocIframe, mockWorkoutApi } from './mocks'
 import {
   waitForFontsLoaded,
   waitForPageReady,
@@ -150,14 +150,18 @@ export async function navigateAndWait(
  */
 export async function setupVisualRegressionTest(
   browser: Browser,
-  options: { useNativeTable?: boolean } = {}
+  options: {
+    useNativeTable?: boolean
+    workoutData?: { headers: string[] }
+    workoutHtml?: string
+  } = {}
 ): Promise<{
   context: BrowserContext
   dashboardPage: Page
   controlPage: Page
   mockPage: Page
 }> {
-  const { useNativeTable } = options
+  const { useNativeTable, workoutData, workoutHtml } = options
 
   // Create a new isolated browser context for the test suite
   const context = await browser.newContext({
@@ -165,18 +169,10 @@ export async function setupVisualRegressionTest(
   })
 
   // Mock the dynamic Google Doc iframe with static, stable content
-  await mockGoogleDocIframe(context)
+  await mockGoogleDocIframe(context, workoutHtml)
 
   // Mock the workout API response for stable VRT
-  await context.route('**/api/workout*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-      }),
-    })
-  })
+  await mockWorkoutApi(context, workoutData)
 
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
@@ -233,20 +229,16 @@ export async function setupVisualRegressionTest(
 export async function setupMinimalVisualRegressionTest(
   page: Page,
   path: string = '',
-  options: { useNativeTable?: boolean } = {}
+  options: {
+    useNativeTable?: boolean
+    workoutData?: { headers: string[] }
+    workoutHtml?: string
+  } = {}
 ): Promise<void> {
-  const { useNativeTable } = options
+  const { useNativeTable, workoutData, workoutHtml } = options
 
   // Mock the workout API response for stable VRT
-  await page.route('**/api/workout*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-      }),
-    })
-  })
+  await mockWorkoutApi(page, workoutData)
 
   // Append native flag if needed
   let finalPath = path
@@ -259,7 +251,7 @@ export async function setupMinimalVisualRegressionTest(
   if (path === '' || path === '/' || path.includes('?')) {
     // Only mock if it's the dashboard page
     if (path.startsWith('/') || path === '') {
-      await mockGoogleDocIframe(page)
+      await mockGoogleDocIframe(page, workoutHtml)
     }
   }
   await navigateAndWait(page, finalPath)
