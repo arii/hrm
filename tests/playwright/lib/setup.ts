@@ -323,17 +323,17 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
 }
 
 /**
- * Stop any running timer on the control page.
+ * Stop any running timer on the provided page.
  * Useful for ensuring tests start from a clean state.
  *
- * @param controlPage - The control panel Page object
- * @param dashboardPage - The dashboard Page object (optional)
+ * @param page - The Page object to check for a running timer
+ * @param dashboardPage - Optional dashboard Page object to verify timer reset
  */
 export async function stopTimer(
-  controlPage: Page,
+  page: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = controlPage.getByRole('button', {
+  const stopButton = page.getByRole('button', {
     name: 'STOP',
     exact: true,
   })
@@ -345,7 +345,7 @@ export async function stopTimer(
 
       // Wait for START button to confirm timer stopped
       await expect(
-        controlPage.getByRole('button', { name: 'START', exact: true })
+        page.getByRole('button', { name: 'START', exact: true })
       ).toBeVisible({ timeout: 5000 })
 
       // Wait for dashboard to clear timer display if provided
@@ -359,7 +359,8 @@ export async function stopTimer(
       }
     }
   } catch (error) {
-    console.warn('Timer check/stop encountered an issue (ignoring):', error)
+    // In many cleanup scenarios, the page might already be closed or the button missing
+    // We log a debug message but don't fail the teardown
   }
 }
 
@@ -459,22 +460,17 @@ export async function prepareForVisualRegression(
 }
 
 /**
- * Standard cleanup for visual regression tests.
- * Ensures timers are stopped and mock HR devices are cleared to prevent state pollution.
+ * Generic cleanup for VRT tests to ensure state isolation.
+ * Resets timers and clears mock HR devices on the provided pages.
  *
- * @param dashboardPage - The dashboard Page object
- * @param controlPage - The control panel Page object (optional)
+ * @param pages - One or more Page objects to clean up
  */
-export async function cleanupVisualRegressionTest(
-  dashboardPage: Page,
-  controlPage?: Page
-): Promise<void> {
-  // 1. Stop any running timers
-  if (controlPage) {
-    await stopTimer(controlPage, dashboardPage)
-  }
+export async function cleanupVisualRegressionTest(...pages: Page[]) {
+  for (const page of pages) {
+    // 1. Reset all timers to prevent them from running into the next test
+    await stopTimer(page)
 
-  // 2. Clear mock HR devices
-  // This ensures that any client-side injected HR data is cleared between tests
-  await mockMultipleHrDevices(dashboardPage, [])
+    // 2. Clear all mock HR devices to prevent heart rate tile pollution
+    await mockMultipleHrDevices(page, [])
+  }
 }

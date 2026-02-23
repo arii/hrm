@@ -1,6 +1,9 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest, mockMultipleHrDevices } from './lib'
+import {
+  setupVisualRegressionTest,
+  cleanupVisualRegressionTest,
+} from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -25,9 +28,9 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
+  // Explicit cleanup for pages not managed by fixtures
   test.afterEach(async () => {
-    // Clear any client-side state on the mock page
-    await mockMultipleHrDevices(mockPage, [])
+    await cleanupVisualRegressionTest(mockPage)
   })
 
   test.beforeEach(async () => {

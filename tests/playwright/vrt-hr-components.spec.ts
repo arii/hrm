@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -56,6 +56,7 @@ test.describe('Visual Regression Tests', () => {
     )
   })
 
+  // Explicit cleanup for pages not managed by fixtures
   test.afterEach(async () => {
     await cleanupVisualRegressionTest(dashboardPage)
   })
@@ -87,6 +88,14 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Multiple connected devices
     test('dashboard with 2 HR devices', async () => {
+      const expectedCount = 2
+
+      // Disconnect from server to prevent background updates (like "Mock User") from interfering
+      await dashboardPage.evaluate(() => {
+        // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+        window.__TEST_CONTROLS__?.disconnect()
+      })
+
       await mockMultipleHrDevices(dashboardPage, [
         {
           clientId: 'user-1',
@@ -106,10 +115,12 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
-      // Assert all HR tiles maintain dimensions
+      // Explicitly wait for the correct number of tiles to prevent race conditions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
-      const count = await hrTiles.count()
-      for (let i = 0; i < count; i++) {
+      await expect(hrTiles).toHaveCount(expectedCount, { timeout: 5000 })
+
+      // Assert all HR tiles maintain dimensions
+      for (let i = 0; i < expectedCount; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
           minHeight: 180,
         })
@@ -132,6 +143,10 @@ test.describe('Visual Regression Tests', () => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
+        // Wait for HR tile to reflect the update and be stable
+        const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+        await hrTile.waitFor({ state: 'visible', timeout: 5000 })
+
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,
@@ -146,6 +161,11 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Disconnected state
     test('dashboard with disconnected HR device', async () => {
       await mockMultipleHrDevices(dashboardPage, [])
+      // Ensure no tiles are present
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
+        timeout: 5000,
+      })
+
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
         maxDiffPixelRatio: 0.1,

@@ -34,6 +34,7 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
+  // Explicit cleanup for pages not managed by fixtures
   test.afterEach(async () => {
     await cleanupVisualRegressionTest(dashboardPage, controlPage)
   })
