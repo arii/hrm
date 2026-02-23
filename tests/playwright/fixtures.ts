@@ -4,7 +4,7 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
-import { mockMultipleHrDevices } from './lib/mocks'
+import { cleanupVisualRegressionTest } from './lib'
 
 type PageFixtures = {
   dashboardPage: Page
@@ -13,66 +13,51 @@ type PageFixtures = {
   connectPage: Page
 }
 
+/**
+ * Safely cleans up a page after a test, clearing HR devices and stopping timers.
+ * Swallows errors to prevent teardown failures from masking test results.
+ */
+async function safePageTeardown(page: Page) {
+  try {
+    if (!page.isClosed()) {
+      await cleanupVisualRegressionTest(page)
+    }
+  } catch (error) {
+    // Teardown errors are logged but shouldn't fail the test
+    console.debug('Optional page teardown skipped:', error)
+  }
+}
+
 export const test = base.extend<PageFixtures>({
   dashboardPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
       const text = msg.text()
-      // Filter out expected noise
       if (text.includes('DOCS_timing')) return
-
-      // Filter out expected server-side render error during the ErrorFallback UI test
-      if (text.includes('An error occurred in the Server Components render')) {
+      if (text.includes('An error occurred in the Server Components render'))
         return
-      }
-
       console.log(`Console ${msg.type()}: ${text}`)
     })
     await applyFixture(page)
-
-    // Teardown: Clear mock HR devices to prevent state pollution between tests
-    try {
-      await mockMultipleHrDevices(page, [])
-    } catch (error) {
-      // Ignore errors if the page is already closed or navigated away
-      console.warn('Failed to clear mock HR devices during teardown:', error)
-    }
+    await safePageTeardown(page)
   },
 
   controlPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
-
-    // Teardown
-    try {
-      await mockMultipleHrDevices(page, [])
-    } catch (error) {
-      console.warn('Failed to clear mock HR devices during teardown:', error)
-    }
+    await safePageTeardown(page)
   },
 
   mockPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
-
-    // Teardown
-    try {
-      await mockMultipleHrDevices(page, [])
-    } catch (error) {
-      console.warn('Failed to clear mock HR devices during teardown:', error)
-    }
+    await safePageTeardown(page)
   },
 
   connectPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
-
-    // Teardown
-    try {
-      await mockMultipleHrDevices(page, [])
-    } catch (error) {
-      console.warn('Failed to clear mock HR devices during teardown:', error)
-    }
+    await safePageTeardown(page)
   },
 })
 
