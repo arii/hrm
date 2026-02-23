@@ -17,7 +17,7 @@ const checkLocalStorage = () => {
     window.localStorage.setItem(testKey, 'test')
     window.localStorage.removeItem(testKey)
     isLocalStorageAvailable = true
-  } catch {
+  } catch (e) {
     isLocalStorageAvailable = false
   }
   return isLocalStorageAvailable
@@ -111,14 +111,30 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
           const valueToStore =
             value instanceof Function ? value(currentStoredValue) : value
 
-          if (checkLocalStorage()) {
-            window.localStorage.setItem(key, JSON.stringify(valueToStore))
-          } else {
-            Cookies.set(key, JSON.stringify(valueToStore), {
-              expires: 365,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'strict',
-            })
+          try {
+            if (checkLocalStorage()) {
+              window.localStorage.setItem(key, JSON.stringify(valueToStore))
+            } else {
+              Cookies.set(key, JSON.stringify(valueToStore), {
+                expires: 365,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+              })
+            }
+          } catch (storageError) {
+            console.error('Storage write failed:', storageError)
+            // Final fallback to cookies if localStorage write failed despite check
+            if (checkLocalStorage()) {
+              try {
+                Cookies.set(key, JSON.stringify(valueToStore), {
+                  expires: 365,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: 'strict',
+                })
+              } catch (cookieError) {
+                console.error('Cookie fallback failed:', cookieError)
+              }
+            }
           }
           return valueToStore
         })

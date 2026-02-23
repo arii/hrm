@@ -3,7 +3,6 @@ import { test } from './fixtures'
 import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
-  mockMultipleHrDevices,
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -36,9 +35,8 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.afterEach(async () => {
-    // Ensure timer and HR data are stopped/cleared after each test to maintain a clean state
+    // Ensure timer is stopped after each test to maintain a clean state
     await stopTimer(controlPage, dashboardPage)
-    await mockMultipleHrDevices(dashboardPage, [])
   })
 
   test.beforeEach(async () => {
@@ -97,7 +95,6 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Active timer WITH HR data (the regression scenario)
     test('active timer with HR data', async () => {
-      await mockPage.getByLabel('User Name').fill('Mock User')
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()

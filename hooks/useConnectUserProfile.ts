@@ -93,16 +93,18 @@ export const useConnectUserProfile = (): UserProfileState => {
       blurHandlersRef.current.handleHeightBlur()
     }
 
-    window.addEventListener('beforeunload', persist)
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         persist()
       }
-    })
+    }
+
+    window.addEventListener('beforeunload', persist)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('beforeunload', persist)
-      document.removeEventListener('visibilitychange', persist)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       persist()
     }
   }, [])
