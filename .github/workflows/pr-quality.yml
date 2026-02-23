@@ -191,12 +191,8 @@ jobs:
       - name: Report Lint Failure
         if: steps.lint.outcome == 'failure'
         run: |
-          echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          # Capture the first 50 lines of lint output
-          head -n 50 logs/lint-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "Full details are available in the **Files Changed** tab as inline annotations or in the job logs." >> $GITHUB_STEP_SUMMARY
+          echo "### ❌ Lint Check Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed annotations are available in the **Files Changed** tab. See the summary above for key issues." >> $GITHUB_STEP_SUMMARY
           exit 1
 
       - name: Upload Lint Report
