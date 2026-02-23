@@ -1,6 +1,10 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest, mockLoggedInSession } from './lib'
+import {
+  setupVisualRegressionTest,
+  mockLoggedInSession,
+  cleanupVisualRegressionTest,
+} from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -28,6 +32,10 @@ test.describe('Visual Regression Tests', () => {
   // Centralized cleanup hook
   test.afterAll(async () => {
     await context?.close()
+  })
+
+  test.afterEach(async () => {
+    await cleanupVisualRegressionTest(dashboardPage, controlPage)
   })
 
   // Add a beforeEach hook to wait for the page to be ready before each test

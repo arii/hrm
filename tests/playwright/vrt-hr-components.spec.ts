@@ -4,6 +4,7 @@ import {
   getDynamicContentMasks,
   getHrMasks,
   setupVisualRegressionTest,
+  cleanupVisualRegressionTest,
   mockMultipleHrDevices,
   resetServerState,
 } from './lib'
@@ -56,8 +57,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.afterEach(async () => {
-    // Clear mock HR devices to prevent state pollution between tests
-    await mockMultipleHrDevices(dashboardPage, [])
+    await cleanupVisualRegressionTest(dashboardPage)
   })
 
   test.describe('HR-Related Components', () => {

@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
+import { mockGoogleDocIframe, mockMultipleHrDevices } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
@@ -456,4 +456,25 @@ export async function prepareForVisualRegression(
   ...pages: Page[]
 ): Promise<void> {
   await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
+}
+
+/**
+ * Standard cleanup for visual regression tests.
+ * Ensures timers are stopped and mock HR devices are cleared to prevent state pollution.
+ *
+ * @param dashboardPage - The dashboard Page object
+ * @param controlPage - The control panel Page object (optional)
+ */
+export async function cleanupVisualRegressionTest(
+  dashboardPage: Page,
+  controlPage?: Page
+): Promise<void> {
+  // 1. Stop any running timers
+  if (controlPage) {
+    await stopTimer(controlPage, dashboardPage)
+  }
+
+  // 2. Clear mock HR devices
+  // This ensures that any client-side injected HR data is cleared between tests
+  await mockMultipleHrDevices(dashboardPage, [])
 }

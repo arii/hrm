@@ -4,11 +4,11 @@ import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
   resetServerState,
+  cleanupVisualRegressionTest,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
-import { stopTimer } from './lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -36,8 +36,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.afterEach(async () => {
-    // Ensure timer is stopped after each test to maintain a clean state
-    await stopTimer(controlPage, dashboardPage)
+    await cleanupVisualRegressionTest(dashboardPage, controlPage)
   })
 
   test.beforeEach(async ({ request }) => {
