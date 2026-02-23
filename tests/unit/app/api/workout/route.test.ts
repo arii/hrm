@@ -89,7 +89,7 @@ describe('API Route: /api/workout', () => {
 
     it('should return parsed data on successful fetch', async () => {
       const mockHtml = '<table><tr><td>Mock Data</td></tr></table>'
-      const mockParsedData = [{ col1: 'Mock Data' }]
+      const mockParsedData = { headers: ['Mock Data'] }
 
       mockedFetch.mockResolvedValue({
         ok: true,
