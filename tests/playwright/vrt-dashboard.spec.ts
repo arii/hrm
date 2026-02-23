@@ -72,7 +72,6 @@ test.describe('Visual Regression Tests', () => {
         { timeout: 5000 }
       ),
     ])
-
   })
 
   test.describe('Dashboard Component', () => {
