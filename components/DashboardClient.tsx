@@ -30,6 +30,10 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ),
 })
 
+const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
+  ssr: false,
+})
+
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
@@ -60,9 +64,13 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
+  triggerError?: boolean
 }
 
-const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
+const DashboardClient = ({
+  useNativeTable,
+  triggerError,
+}: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -80,44 +88,46 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
   }
 
   return (
-    <Container
-      data-testid="dashboard"
-      maxWidth="xl"
-      onClick={handleInteraction}
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
-      <Box sx={mainGridStyles}>
-        <Box sx={{ height: '100%' }}>
-          <TimerDisplay />
+    <>
+      {triggerError && <TestErrorTrigger />}
+      <Container
+        data-testid="dashboard"
+        maxWidth="xl"
+        onClick={handleInteraction}
+        sx={{
+          py: { xs: 2, sm: 3 },
+          minHeight: '100vh',
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={mainGridStyles}>
+          <Box sx={{ height: '100%' }}>
+            <TimerDisplay />
+          </Box>
+          <HrmConnectionPanel />
         </Box>
-        <HrmConnectionPanel />
-      </Box>
-      <Box sx={{ width: '100%', mt: 2 }}>
-        {useNativeTable ? (
-          <WorkoutTableHeader
-            docId={DOC_ID}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        )}
-      </Box>
-
+        <Box sx={{ width: '100%', mt: 2 }}>
+          {useNativeTable ? (
+            <WorkoutTableHeader
+              docId={DOC_ID}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={DOC_URL}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          )}
+        </Box>
+      </Container>
       <SpotifyDisplay />
-    </Container>
+    </>
   )
 }
 
