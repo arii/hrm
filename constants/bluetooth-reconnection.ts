@@ -2,7 +2,9 @@
  * @file bluetooth-reconnection.ts
  * @description Centralized constants for Bluetooth reconnection logic.
  */
-const envValue = Number(process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
+const envValue = Number(
+  process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+)
 export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS = !isNaN(envValue) ? envValue : 2
 
 // Reconnection Delay Parameters
