@@ -8,6 +8,7 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import {
   createMockSpotifyData,
@@ -44,6 +45,13 @@ jest.mock('@/hooks/useVolumePreference', () => {
     default: jest.fn(),
   }
 })
+
+// Mock the snackbar hook
+jest.mock('@/hooks/useAppSnackbar', () => ({
+  useAppSnackbar: jest.fn(() => ({
+    showWarning: jest.fn(),
+  })),
+}))
 
 // Mock the spotify constants
 jest.mock('@/constants/spotify', () => ({
@@ -206,5 +214,66 @@ describe('components/SpotifyControls', () => {
     expect(
       screen.getByText('Registering HRM Web Player...')
     ).toBeInTheDocument()
+  })
+
+  it('shows warning snackbar when changing volume while disconnected', () => {
+    const showWarningMock = jest.fn()
+    ;(useAppSnackbar as jest.Mock).mockReturnValue({
+      showWarning: showWarningMock,
+    })
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Disconnected',
+      spotifyData: createMockSpotifyData(),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    const volumeSlider = screen.getByRole('slider')
+    fireEvent.change(volumeSlider, { target: { value: 80 } })
+
+    expect(showWarningMock).toHaveBeenCalledWith('Changes not saved: Offline')
+  })
+
+  it('uses HRM Web Player as fallback if no device is active or selected', () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            id: 'track1',
+            name: 'Test Track',
+            artist: 'Test Artist',
+            albumName: 'Album',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: 'hrm-player',
+            name: HRM_WEB_PLAYER_NAME,
+            is_active: false,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    const playButton = screen.getByLabelText('Play')
+    fireEvent.click(playButton)
+
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        deviceId: 'hrm-player',
+      })
+    )
   })
 })

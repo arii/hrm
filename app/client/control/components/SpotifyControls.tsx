@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
@@ -33,6 +34,7 @@ const SpotifyControls = () => {
   const { player, isReady } = useSpotifyWebPlayback()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSyncingVolume, setIsSyncingVolume] = useState(false)
@@ -131,7 +133,12 @@ const SpotifyControls = () => {
       return selectedDeviceId
     }
     const activeDevice = devices.find((device) => device.is_active)
-    return activeDevice?.id
+    if (activeDevice) return activeDevice.id
+
+    const hrmPlayer = devices.find(
+      (d) => d.name.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+    )
+    return hrmPlayer?.id
   }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
@@ -179,6 +186,16 @@ const SpotifyControls = () => {
       }
     },
     [sendSpotifyCommand]
+  )
+
+  const handleVolumeChange = useCallback(
+    (val: number) => {
+      setVolume(val)
+      if (connectionStatus !== 'Connected') {
+        showWarning('Changes not saved: Offline')
+      }
+    },
+    [connectionStatus, showWarning, setVolume]
   )
 
   const sendVolumeCommand = useCallback(
@@ -315,7 +332,7 @@ const SpotifyControls = () => {
             <VolumeSlider
               volume={volume}
               muted={muted}
-              onVolumeChange={setVolume}
+              onVolumeChange={handleVolumeChange}
               onToggleMute={toggleMute}
               showValue={true}
             />
