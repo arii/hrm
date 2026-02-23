@@ -412,7 +412,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         document.visibilityState !== 'visible' &&
         !isWorkoutActive
       ) {
-        logger.info('Tab is backgrounded and no workout active. Skipping auto-reconnect.')
+        logger.info(
+          'Tab is backgrounded and no workout active. Skipping auto-reconnect.'
+        )
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
         setCustomStatusMessage(BLUETOOTH_MESSAGES.backgroundReconnectDisabled)
         return
@@ -441,7 +443,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       reconnectAttempts.current = 0
       reconnect(device, 'Connection lost')
     },
-    [reconnect]
+    [reconnect, isWorkoutActive]
   )
 
   // Cleanup
