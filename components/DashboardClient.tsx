@@ -103,8 +103,8 @@ const DashboardClient = ({
           <Box sx={{ height: '100%' }}>
             <TimerDisplay />
           </Box>
+          <HrmConnectionPanel />
         </Box>
-        <HrmConnectionPanel />
         <Box sx={{ width: '100%', mt: 2 }}>
           {(!docId && useNativeTable) || (!iframeUrl && !useNativeTable) ? (
             <Alert severity="warning" sx={{ width: '100%' }}>
