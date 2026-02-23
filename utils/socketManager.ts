@@ -28,7 +28,7 @@ import { HrmSessionManager } from '../lib/hrm/HrmSessionManager.js'
 import { AppServices } from '../lib/services.js'
 import { env } from '../lib/env.js'
 import { roundTo, objectFromEntries } from '../lib/utils.js'
-import { isGenericName } from './hrm.js'
+import { isGenericName, filterHrmData } from './hrm.js'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
@@ -228,11 +228,16 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
+  const allData = hrmSessionManager.findAll()
+  const filteredData = filterHrmData(allData, Date.now(), {
+    includeZeroValues: true,
+  })
+
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmSessionManager.findAll(),
+      payload: filteredData,
     },
     'socketManager.broadcastState'
   )
@@ -273,9 +278,14 @@ const handleIncomingMessage = (
       }
       case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
+        const allData = hrmSessionManager.findAll()
+        const filteredData = filterHrmData(allData, Date.now(), {
+          includeZeroValues: true,
+        })
+
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmSessionManager.findAll(),
+          hrmData: filteredData,
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
