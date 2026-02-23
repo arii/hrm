@@ -8,10 +8,6 @@ import { getBaseURL } from '../../utils/urls'
 const BASE_URL = getBaseURL()
 
 test.describe('HRM Workflow Assessment', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 })
-  })
-
   test('Complete Workout Session - Tabata with HR Monitoring', async ({
     page,
   }) => {
