@@ -5,7 +5,8 @@ import { WorkoutTableDto } from '@/types/workout'
 /**
  * Combined selector for block-level elements that should have spaces inserted
  * around them to prevent text merging during parsing.
- * Containers like ul/ol are omitted as their children (li) provide the spacing.
+ * Elements like `ul`/`ol` are omitted as their children (`li`) are included in this selector
+ * and provide the necessary spacing.
  */
 const BLOCK_SELECTOR = 'div,p,h1,h2,h3,h4,h5,h6,li,blockquote'
 
