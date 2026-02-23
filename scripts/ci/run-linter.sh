@@ -1,8 +1,15 @@
 #!/bin/bash
-set -eo pipefail
+set -o pipefail
 
 echo "🔍 Running linter..."
 mkdir -p logs
 
-# Run with JSON output for GitHub Actions annotations
-pnpm run lint --format json -o logs/eslint-report.json
+# First pass: Run ESLint with stylish output for human-readable logs and summary
+pnpm run lint --format stylish 2>&1 | tee logs/lint-output.log
+LINT_EXIT_CODE=${PIPESTATUS[0]}
+
+# Second pass: Generate JSON report for GitHub annotations
+# We use --cache to make this run very fast
+pnpm run lint --format json -o logs/eslint-report.json || true
+
+exit $LINT_EXIT_CODE

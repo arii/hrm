@@ -188,17 +188,15 @@ jobs:
           ./scripts/ci/run-linter.sh
         continue-on-error: true
 
-      - name: Annotate Lint Results
-        uses: ataylorme/eslint-annotate-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          report-json: logs/eslint-report.json
-
       - name: Report Lint Failure
         if: steps.lint.outcome == 'failure'
         run: |
           echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo "Linting failed. Please see the **Files Changed** tab for inline annotations or check the job logs for details." >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          # Capture the first 50 lines of lint output
+          head -n 50 logs/lint-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "Full details are available in the **Files Changed** tab as inline annotations or in the job logs." >> $GITHUB_STEP_SUMMARY
           exit 1
 
       - name: Upload Lint Report
@@ -281,6 +279,15 @@ jobs:
           set -o pipefail
           mkdir -p logs
           pnpm run type-check 2>&1 | tee logs/type-check-output.log
+
+      - name: Report Type Check Failure
+        if: failure() && steps.type-check.outcome == 'failure'
+        run: |
+          echo "### ❌ Type Check Failure Report" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          # Show the first 20 lines of errors
+          head -n 20 logs/type-check-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Type Check Report
         if: always()
