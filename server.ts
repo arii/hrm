@@ -136,8 +136,12 @@ app.prepare().then(async () => {
   // POST /api/debug/reset - Reset the server-side HRM session state (for testing)
   // Gated to prevent accidental use in production
   expressApp.post('/api/debug/reset', (_req, res) => {
-    if (env.NODE_ENV === 'production' && process.env.ALLOW_DEBUG_RESET !== 'true') {
-      return res.status(403).json({ error: 'Debug reset not allowed in production' })
+    if (
+      env.NODE_ENV === 'production' &&
+      process.env.ALLOW_DEBUG_RESET !== 'true'
+    ) {
+      res.status(403).json({ error: 'Debug reset not allowed in production' })
+      return
     }
     resetSocketManager()
     logger.info('Server-side HRM state has been reset via /api/debug/reset')
