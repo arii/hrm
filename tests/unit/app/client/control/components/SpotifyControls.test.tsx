@@ -236,6 +236,42 @@ describe('components/SpotifyControls', () => {
     expect(showWarningMock).toHaveBeenCalledWith('Changes not saved: Offline')
   })
 
+  it('throttles warning snackbar when changing volume while disconnected', () => {
+    jest.useFakeTimers()
+    const showWarningMock = jest.fn()
+    ;(useAppSnackbar as jest.Mock).mockReturnValue({
+      showWarning: showWarningMock,
+    })
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Disconnected',
+      spotifyData: createMockSpotifyData(),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    const volumeSlider = screen.getByRole('slider')
+
+    // First change: warning shown
+    fireEvent.change(volumeSlider, { target: { value: 60 } })
+    expect(showWarningMock).toHaveBeenCalledTimes(1)
+
+    // Rapid change within throttle window: warning not shown again
+    fireEvent.change(volumeSlider, { target: { value: 70 } })
+    fireEvent.change(volumeSlider, { target: { value: 80 } })
+    expect(showWarningMock).toHaveBeenCalledTimes(1)
+
+    // Advance time past throttle (3000ms)
+    jest.advanceTimersByTime(3100)
+
+    // Change after throttle: warning shown again
+    fireEvent.change(volumeSlider, { target: { value: 90 } })
+    expect(showWarningMock).toHaveBeenCalledTimes(2)
+
+    jest.useRealTimers()
+  })
+
   it('uses HRM Web Player as fallback if no device is active or selected', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',

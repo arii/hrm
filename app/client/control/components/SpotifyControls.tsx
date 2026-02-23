@@ -36,6 +36,7 @@ const SpotifyControls = () => {
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
+  const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSyncingVolume, setIsSyncingVolume] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
@@ -192,7 +193,12 @@ const SpotifyControls = () => {
     (val: number) => {
       setVolume(val)
       if (connectionStatus !== 'Connected') {
-        showWarning('Changes not saved: Offline')
+        const now = Date.now()
+        // Throttle warning to once every 3 seconds to avoid spam during sliding
+        if (now - lastWarningTimeRef.current > 3000) {
+          showWarning('Changes not saved: Offline')
+          lastWarningTimeRef.current = now
+        }
       }
     },
     [connectionStatus, showWarning, setVolume]
