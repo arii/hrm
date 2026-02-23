@@ -84,6 +84,8 @@ const HrmConnectionPanel = () => {
                   xs: '100%',
                   sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
                 },
+                height: 220,
+                overflow: 'hidden',
               }}
             >
               <HrTile {...tileProps} />

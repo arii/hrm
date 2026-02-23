@@ -17,6 +17,7 @@ const HR_TILE_MIN_HEIGHT = 180
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
+      data-testid="hr-tile-name"
       variant="h4"
       sx={{
         fontWeight: 900,

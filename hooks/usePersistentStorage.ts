@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
+import isEqual from 'lodash.isequal'
 
 const checkLocalStorage = () => {
   if (typeof window === 'undefined') {
@@ -29,9 +30,11 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function usePersistentStorage<T>(key: string, initialValue: T) {
   // 1. Initialize state with initialValue to match Server Side rendering.
   const [storedValue, setStoredValue] = useState<T>(initialValue)
+  const isInitialized = useRef(false)
 
   // 2. Sync with storage inside useEffect (Client-side only).
   useEffect(() => {
+    if (isInitialized.current) return
     if (typeof window === 'undefined') {
       return
     }
@@ -72,18 +75,25 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
 
           // Merge: Defaults -> Filtered Storage
           const merged = { ...initialValue, ...filteredParsed } as T
-          // This is the core of the SSR-safe logic. We initialize state to `initialValue`
-          // and then update it with the value from storage on the client.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setStoredValue(merged)
+
+          // Only update state if it actually changed to avoid hydration flicker
+          if (!isEqual(merged, storedValue)) {
+            // This is the core of the SSR-safe logic. We initialize state to `initialValue`
+            // and then update it with the value from storage on the client.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setStoredValue(merged)
+          }
 
           // Sync back to storage if using local storage to remove zombie keys
           if (useLocal) {
             window.localStorage.setItem(key, JSON.stringify(merged))
           }
         } else {
-          setStoredValue(parsed)
+          if (!isEqual(parsed, storedValue)) {
+            setStoredValue(parsed)
+          }
         }
+        isInitialized.current = true
       }
     } catch (error) {
       console.error(
