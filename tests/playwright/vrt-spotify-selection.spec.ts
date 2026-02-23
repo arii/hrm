@@ -8,7 +8,7 @@ import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 test.describe('Spotify Selection Page VRT', () => {
-  test('initial list state', async ({ dashboardPage, useNativeTable }) => {
+  test('initial list state', async ({ dashboardPage, context, useNativeTable }) => {
     // Mock authentication and Spotify data to avoid 401 errors
     await mockLoggedInSession(context)
     await mockSpotifyPlaylists(context)

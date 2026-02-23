@@ -155,7 +155,8 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
-      await dashboardPage.setViewportSize({ width: 375, height: 1000 })
+      // Use standard mobile viewport height
+      await dashboardPage.setViewportSize({ width: 375, height: 812 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
@@ -164,7 +165,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('tablet viewport', async () => {
-      await dashboardPage.setViewportSize({ width: 768, height: 1000 })
+      await dashboardPage.setViewportSize({ width: 768, height: 1024 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
