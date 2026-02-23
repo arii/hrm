@@ -7,6 +7,12 @@ const booleanSchema = z.preprocess((val) => {
   return val === true
 }, z.boolean())
 
+/**
+ * Schema for all environment variables.
+ *
+ * IMPORTANT: If you add a new `NEXT_PUBLIC_` variable here, you MUST also add it to
+ * the `getEnvSource` function below. Otherwise, it will not be available in the client.
+ */
 export const envObjectSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -60,6 +66,7 @@ export const envObjectSchema = z.object({
   INCLUDE_MOBILE: booleanSchema.default(false),
   SKIP_WEBSERVER: booleanSchema.default(false),
   SKIP_BUILD: booleanSchema.default(false),
+  ALLOW_DEBUG_RESET: booleanSchema.default(false),
 })
 
 const envSchema = envObjectSchema
@@ -158,8 +165,8 @@ if (!parsedEnv.success) {
     throw parsedEnv.error
   } else {
     // On the client, we log a warning but don't throw to avoid crashing the app.
-    // However, we must be aware that some variables might be missing or invalid.
-    console.warn(
+    // However, we return the raw source values (as best effort) rather than a hardcoded fallback.
+    console.error(
       '⚠️ Invalid client-side environment variables:',
       JSON.stringify(parsedEnv.error.format(), null, 2)
     )
@@ -168,15 +175,6 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : ({
-      NODE_ENV: 'production',
-      NEXT_PUBLIC_USE_NATIVE_TABLE: false,
-      NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: 8,
-      WEBSOCKET_WATCHDOG_INTERVAL: 30000,
-      NEXT_PUBLIC_API_URL: '',
-      NEXT_PUBLIC_WS_URL: '',
-      NEXT_PUBLIC_TESTING: false,
-      // Add other essential defaults for the client if needed
-    } as z.infer<typeof envSchema>)
+  : (getEnvSource() as unknown as z.infer<typeof envSchema>)
 
 export { envSchema }

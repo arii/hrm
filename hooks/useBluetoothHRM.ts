@@ -31,9 +31,7 @@ const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
 export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_test
-    : HEARTBEAT_INTERVAL_MS_prod
+  env.NODE_ENV === 'test' ? HEARTBEAT_INTERVAL_MS_test : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -382,10 +380,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     isManualDisconnect.current = false
 
-    if (
-      typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
+    if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
@@ -406,10 +401,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (
-        typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
+      if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING) {
         if (window.TEST_CONTROLS) {
           delete window.TEST_CONTROLS.setHrmStatus
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage
