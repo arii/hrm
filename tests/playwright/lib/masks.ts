@@ -15,7 +15,7 @@ import type { Locator, Page } from '@playwright/test'
  * from CSS classes or DOM structure, making tests less brittle.
  */
 export const VRT_MASK_SELECTORS = {
-  liveHrPercent: '[data-testid="live-hr-percent"]',
+  bpmPercent: '[data-testid="bpm-percent"]',
   bpmValue: '[data-testid="bpm-value"]',
   caloriesValue: '[data-testid="calories-value"]',
   timerCountdown: '[data-testid="timer-countdown"]',
@@ -32,7 +32,7 @@ export const VRT_MASK_SELECTORS = {
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
   return [
-    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmPercent),
     page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.caloriesValue),
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
@@ -49,7 +49,7 @@ export function getDynamicContentMasks(page: Page): Locator[] {
  */
 export function getHrMasks(page: Page): Locator[] {
   return [
-    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmPercent),
     page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.caloriesValue),
   ]
