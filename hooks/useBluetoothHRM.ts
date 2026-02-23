@@ -8,6 +8,7 @@ import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { requestWakeLock } from '@/utils/wakeLock'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
@@ -100,6 +101,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -229,6 +232,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
+
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().catch(() => {})
+      wakeLockRef.current = null
+    }
+
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause()
+      } catch (err) {
+        logger.debug({ err }, 'Failed to pause silent audio')
+      }
+      audioRef.current = null
+    }
 
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
@@ -405,6 +422,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {})
+        wakeLockRef.current = null
+      }
+
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause()
+        } catch (err) {
+          logger.debug({ err }, 'Failed to pause silent audio')
+        }
+        audioRef.current = null
+      }
+
       if (
         typeof window !== 'undefined' &&
         process.env.NEXT_PUBLIC_TESTING === 'true'
@@ -414,6 +445,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage
         }
       }
+    }
+  }, [])
+
+  const acquireWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) return
+    try {
+      const wakeLock = await requestWakeLock()
+      if (wakeLock) {
+        wakeLock.addEventListener('release', () => {
+          logger.info('Wake Lock was released')
+          wakeLockRef.current = null
+        })
+        wakeLockRef.current = wakeLock
+      }
+    } catch (err) {
+      logger.error({ err }, 'Failed to acquire wake lock')
     }
   }, [])
 
@@ -571,6 +618,28 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
         )
+
+        // Request Screen Wake Lock and start silent audio to maintain connection in background
+        await acquireWakeLock()
+
+        // Start silent audio keep-alive to maintain background execution priority
+        if (typeof window !== 'undefined') {
+          if (!audioRef.current) {
+            audioRef.current = new Audio('/assets/silence.mp3')
+            audioRef.current.loop = true
+          }
+          try {
+            const playPromise = audioRef.current.play()
+            if (playPromise && typeof playPromise.catch === 'function') {
+              playPromise.catch((err) =>
+                logger.error({ err }, 'Failed to play silent audio')
+              )
+            }
+          } catch (err) {
+            logger.error({ err }, 'Failed to play silent audio')
+          }
+        }
+
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
@@ -640,7 +709,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [onDisconnected, updateSignalPeriod, acquireWakeLock]
   )
 
   useEffect(() => {
@@ -807,6 +876,52 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
     }
   }, [connectAndStream])
+
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        logger.info('Tab returned to foreground. Verifying HRM connectivity...')
+
+        if (statusRef.current === BluetoothConnectionStatus.CONNECTED) {
+          if (!deviceRef.current?.gatt?.connected) {
+            logger.warn(
+              'GATT disconnected while backgrounded. Attempting reconnect...'
+            )
+            if (deviceRef.current) {
+              reconnect(deviceRef.current, 'Background GATT disconnection')
+            } else {
+              autoConnect()
+            }
+          } else {
+            logger.info('HRM connectivity verified.')
+            // Re-request wake lock and audio if needed
+            await acquireWakeLock()
+            if (audioRef.current && audioRef.current.paused) {
+              try {
+                const playPromise = audioRef.current.play()
+                if (playPromise && typeof playPromise.catch === 'function') {
+                  playPromise.catch((err) =>
+                    logger.error({ err }, 'Failed to resume silent audio')
+                  )
+                }
+              } catch (err) {
+                logger.error({ err }, 'Failed to play silent audio')
+              }
+            }
+          }
+        } else if (!isManualDisconnect.current) {
+          logger.info(
+            { status: statusRef.current },
+            'Tab returned to foreground and HRM not connected. Ensuring autoConnect...'
+          )
+          autoConnect()
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [reconnect, autoConnect, acquireWakeLock])
 
   return {
     connectAndStream,
