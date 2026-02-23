@@ -358,7 +358,7 @@ export async function stopTimer(
         )
       }
     }
-  } catch (error) {
+  } catch {
     // In many cleanup scenarios, the page might already be closed or the button missing
     // We log a debug message but don't fail the teardown
   }
