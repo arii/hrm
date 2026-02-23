@@ -13,7 +13,21 @@ import { useAudio } from '@/hooks/useAudio'
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
+  loading: () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 56,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        width: '100%',
+        minHeight: '64px',
+      }}
+    >
+      <DashboardSectionLoadingSkeleton height="64px" />
+    </Box>
+  ),
 })
 
 const DOC_URL =
