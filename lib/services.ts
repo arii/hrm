@@ -29,7 +29,7 @@ export async function createServices(
   // Cleanup existing services if we're re-initializing partially (edge case)
   if (process.env.NODE_ENV !== 'production') {
     global.spotifyService?.cleanup()
-    global.tabataService?.dispose()
+    global.tabataService?.cleanup()
   }
 
   const tabataService = new TabataTimer(broadcast)
