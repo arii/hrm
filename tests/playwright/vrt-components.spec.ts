@@ -46,13 +46,10 @@ test.describe('Component-Specific VRT', () => {
     dashboardPage,
     useNativeTable,
   }) => {
-    // If we are in native mode, this component isn't even rendered by default on the dashboard
-    // but setupMinimalVisualRegressionTest might have handled it.
-    // We force native=false if it's not already set to ensure the component is there.
-    if (useNativeTable !== false) {
-      await dashboardPage.goto('/?native=false')
-      await waitForPageReady(dashboardPage)
-    }
+    test.skip(
+      useNativeTable === true,
+      'GoogleDocViewer is only available in Legacy mode'
+    )
 
     const toggleButton = dashboardPage.getByLabel('Collapse document')
     await toggleButton.click()
@@ -66,11 +63,10 @@ test.describe('Component-Specific VRT', () => {
     dashboardPage,
     useNativeTable,
   }) => {
-    // Ensure we are in native mode for this test
-    if (useNativeTable !== true) {
-      await dashboardPage.goto('/?native=true')
-      await waitForPageReady(dashboardPage)
-    }
+    test.skip(
+      useNativeTable === false,
+      'WorkoutTableHeader is only available in Native mode'
+    )
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
