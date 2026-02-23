@@ -25,13 +25,14 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     ? testingParam[0]
     : testingParam
 
-  // Only allow intentional errors in development or test environments
+  // Only allow intentional errors in development or test environments.
+  // Note: testingValue is from query params and is not used as a primary guard
+  // to prevent intentional crashes in production via URL manipulation.
   const isTestableEnv =
     process.env.NODE_ENV !== 'production' ||
     env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
     env.CI === 'true' ||
     env.TESTING === 'true' ||
-    testingValue === 'true' ||
     false
 
   return (
