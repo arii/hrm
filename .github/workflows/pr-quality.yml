@@ -148,22 +148,14 @@ jobs:
         run: |
           set -o pipefail
           pnpm run knip 2>&1 | tee knip-output.txt
-        continue-on-error: true
 
       - name: Upload Knip Report
-        if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
+        if: failure() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
           path: knip-output.txt
           retention-days: 2
-
-      - name: Fail on Knip Errors
-        if: steps.knip.outcome == 'failure'
-        continue-on-error: true
-        run: |
-          echo "::warning::Knip check failed but continuing workflow for now. Knip validation is under review."
-          exit 0
 
   lint-check:
     name: 🔍 Lint Check
