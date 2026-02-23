@@ -150,6 +150,7 @@ export default defineConfig({
           SPOTIFY_CLIENT_ID: 'test_client_id',
           SPOTIFY_CLIENT_SECRET: 'test_client_secret',
           ALLOW_DEBUG_RESET: 'true',
+          WEBSOCKET_WATCHDOG_INTERVAL: '5000',
         },
       },
 
@@ -157,7 +158,7 @@ export default defineConfig({
   outputDir: 'test-results/',
   reporter: [
     ['list'],
-    process.env.CI ? ['github'] : [],
+    ...(process.env.CI ? [['github']] : []),
     ['blob'],
     [
       'junit',
@@ -168,5 +169,5 @@ export default defineConfig({
     ],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
-  ],
+  ] as any,
 })
