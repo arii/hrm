@@ -82,8 +82,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Disconnect from server to prevent background updates (like "Mock User") from interfering
       await dashboardPage.evaluate(() => {
-        // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-        window.__TEST_CONTROLS__?.disconnect()
+        window.__TEST_CONTROLS__?.disconnect?.()
       })
 
       await mockMultipleHrDevices(dashboardPage, [

@@ -15,12 +15,6 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
@@ -120,10 +114,20 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
+<<<<<<< HEAD
       if (isTestEnvironment()) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
         ).__TEST_CONTROLS__ = {
+=======
+      if (
+        process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
+        (typeof window !== 'undefined' &&
+          window.location.search.includes('testing=true'))
+      ) {
+        window.__TEST_CONTROLS__ = {
+>>>>>>> c705c04a (chore: optimize VRT cleanup and standardize on fixtures)
           dispatch,
           disconnect: () => {},
           connect: () => {},
@@ -321,6 +325,7 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
+<<<<<<< HEAD
     if (isTestEnvironment()) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }
@@ -328,6 +333,17 @@ export const WebSocketProvider = ({
       if (testControls) {
         testControls.disconnect = disconnect
         testControls.connect = connect
+=======
+    if (
+      typeof window !== 'undefined' &&
+      (process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
+        window.location.search.includes('testing=true'))
+    ) {
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.disconnect = disconnect
+        window.__TEST_CONTROLS__.connect = connect
+>>>>>>> c705c04a (chore: optimize VRT cleanup and standardize on fixtures)
       }
     }
 
