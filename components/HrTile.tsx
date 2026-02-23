@@ -17,7 +17,14 @@ const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
+<<<<<<< HEAD
+<<<<<<< HEAD
       data-testid="hr-tile-name"
+=======
+      data-testid="athlete-name"
+>>>>>>> 0dc4e7b1 (feat: implement Spotify API mocking and improve VRT suite stability)
+=======
+>>>>>>> 8586293e (feat(vrt): implement spotify api mocking and stabilize visual regression tests)
       variant="h4"
       sx={{
         fontWeight: 900,
@@ -102,11 +109,19 @@ const DataTier = ({
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
+<<<<<<< HEAD
     <MetricItem
       value={Math.floor(calories)}
       label="KCAL"
+<<<<<<< HEAD
       testId="calories-value"
+=======
+      testId="calorie-count"
+>>>>>>> 0dc4e7b1 (feat: implement Spotify API mocking and improve VRT suite stability)
     />
+=======
+    <MetricItem value={Math.floor(calories)} label="KCAL" />
+>>>>>>> 8586293e (feat(vrt): implement spotify api mocking and stabilize visual regression tests)
   </Box>
 )
 

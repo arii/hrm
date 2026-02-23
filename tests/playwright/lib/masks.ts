@@ -15,9 +15,19 @@ import type { Locator, Page } from '@playwright/test'
  * from CSS classes or DOM structure, making tests less brittle.
  */
 export const VRT_MASK_SELECTORS = {
+<<<<<<< HEAD
+<<<<<<< HEAD
   bpmPercent: '[data-testid="bpm-percent"]',
   bpmValue: '[data-testid="bpm-value"]',
   caloriesValue: '[data-testid="calories-value"]',
+=======
+  liveHrValue: '[data-testid="bpm-value"]',
+=======
+  liveHrValue: '[data-testid="live-hr-value"]',
+>>>>>>> 8586293e (feat(vrt): implement spotify api mocking and stabilize visual regression tests)
+  liveHrPercent: '[data-testid="live-hr-percent"]',
+  hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
+>>>>>>> 0dc4e7b1 (feat: implement Spotify API mocking and improve VRT suite stability)
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
@@ -32,9 +42,19 @@ export const VRT_MASK_SELECTORS = {
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
   return [
+<<<<<<< HEAD
     page.locator(VRT_MASK_SELECTORS.bpmPercent),
     page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.caloriesValue),
+=======
+    page.locator(VRT_MASK_SELECTORS.liveHrValue),
+    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+<<<<<<< HEAD
+    page.locator(VRT_MASK_SELECTORS.liveHrCalories),
+    page.locator(VRT_MASK_SELECTORS.liveHrName),
+>>>>>>> 0dc4e7b1 (feat: implement Spotify API mocking and improve VRT suite stability)
+=======
+>>>>>>> 8586293e (feat(vrt): implement spotify api mocking and stabilize visual regression tests)
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
@@ -49,9 +69,15 @@ export function getDynamicContentMasks(page: Page): Locator[] {
  */
 export function getHrMasks(page: Page): Locator[] {
   return [
+<<<<<<< HEAD
     page.locator(VRT_MASK_SELECTORS.bpmPercent),
     page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.caloriesValue),
+=======
+    page.locator(VRT_MASK_SELECTORS.liveHrValue),
+    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.hrTileGridItem),
+>>>>>>> 0dc4e7b1 (feat: implement Spotify API mocking and improve VRT suite stability)
   ]
 }
 

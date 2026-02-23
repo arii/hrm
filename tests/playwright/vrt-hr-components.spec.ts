@@ -54,6 +54,14 @@ test.describe('Visual Regression Tests', () => {
       () => document.body.dataset.connectionStatus === 'connected',
       { timeout: 5000 }
     )
+
+    // Ensure the mock athlete is registered and visible on the dashboard
+    // This prevents race conditions where the dashboard is connected but hasn't received the first athlete data yet.
+    await expect(dashboardPage.getByTestId('hr-tile-card').first()).toBeVisible(
+      {
+        timeout: 10000,
+      }
+    )
   })
 
   test.afterEach(async () => {
