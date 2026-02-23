@@ -3,20 +3,16 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs'
 import path from 'path'
 import os from 'os'
 import crypto from 'crypto'
-import { fileURLToPath } from 'url'
 import { z } from 'zod'
 
 // --- Constants ---
 const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
 // Load config once at module level for efficiency
 const config = (() => {
   try {
-    const CONFIG_PATH = path.join(__dirname, 'issue-config.json')
+    const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
     const content = readFileSync(CONFIG_PATH, 'utf-8')
     return JSON.parse(content)
   } catch (e) {
@@ -599,7 +595,7 @@ export async function run(
   let slopPattern: RegExp | null = null
   try {
     const slopWords = readFileSync(
-      path.join(__dirname, '../ai_slop_words.txt'),
+      path.resolve(process.cwd(), 'ai_slop_words.txt'),
       'utf-8'
     )
       .split('\n')
