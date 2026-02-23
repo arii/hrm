@@ -8,7 +8,6 @@ import { getBaseURL } from '../../utils/urls'
 const BASE_URL = getBaseURL()
 
 test.describe('HRM Workflow Assessment', () => {
-
   test('Complete Workout Session - Tabata with HR Monitoring', async ({
     page,
   }) => {
