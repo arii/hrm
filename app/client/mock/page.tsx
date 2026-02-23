@@ -86,7 +86,16 @@ export default function MockPage() {
     latestProfile.current = { age, weightKg, heightCm, gender, name, maxHr }
     sendHrPacketRef.current = sendHrPacket
     sendMetadataPacket()
-  }, [age, weightKg, heightCm, gender, name, maxHr, sendHrPacket, sendMetadataPacket])
+  }, [
+    age,
+    weightKg,
+    heightCm,
+    gender,
+    name,
+    maxHr,
+    sendHrPacket,
+    sendMetadataPacket,
+  ])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return

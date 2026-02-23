@@ -154,8 +154,8 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       // Force height to match baseline precisely to avoid dimension mismatch in CI
       await dashboard.evaluate((el) => {
-        (el as HTMLElement).style.height = '1038px';
-      });
+        ;(el as HTMLElement).style.height = '1038px'
+      })
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
@@ -166,8 +166,8 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 768, height: 1134 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await dashboard.evaluate((el) => {
-        (el as HTMLElement).style.height = '1134px';
-      });
+        ;(el as HTMLElement).style.height = '1134px'
+      })
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3,
@@ -178,8 +178,8 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 1920, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await dashboard.evaluate((el) => {
-        (el as HTMLElement).style.height = '1440px';
-      });
+        ;(el as HTMLElement).style.height = '1440px'
+      })
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3,
