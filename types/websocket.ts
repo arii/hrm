@@ -4,7 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 import { WebSocket } from 'ws'
-import { HeartRateZone } from '@/lib/shared/hr-zones'
+import { z } from 'zod'
 import type {
   HrmStreamData as HrmData,
   TimerData,
@@ -102,6 +102,17 @@ export type ServerMessage = (
  * inside the compiled `server.js` and centralizes it here for reuse.
  */
 
+// --- Shared Zod Schemas ---
+
+/**
+ * Common HRM data fields shared between HRM_INPUT and HRM_METADATA_UPDATE.
+ */
+const HrmCommonDataSchema = z.object({
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+})
+
 // --- Client Input Command Interfaces ---
 
 /**
@@ -109,27 +120,36 @@ export type ServerMessage = (
  * The `calories` field is optional to support older clients and handle
  * cases where the client has not yet calculated a value.
  */
-export interface IncomingHrmData {
-  value: number | null
-  maxHr?: number
-  name?: string
-  age?: number
-  calories?: number
-  percentage?: number
-  zone?: HeartRateZone
-}
+export const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
+  value: z.number().nullable(),
+  calories: z.number().optional(),
+  percentage: z.number().optional(),
+  zone: z
+    .enum([
+      'ZONE_0',
+      'ZONE_1',
+      'ZONE_2',
+      'ZONE_3',
+      'ZONE_4',
+      'ZONE_5',
+      'ZONE_6',
+    ])
+    .optional(),
+})
 
-export interface HrmInputMessage {
-  type: 'HRM_INPUT'
-  data: IncomingHrmData
-}
+export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
 
-import { z } from 'zod'
+export const HrmInputMessageSchema = z.object({
+  type: z.literal('HRM_INPUT'),
+  data: IncomingHrmDataSchema,
+})
 
-const HrmMetadataUpdateDataSchema = z.object({
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
+export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>
+
+/**
+ * Represents the data payload for an HRM_METADATA_UPDATE message.
+ */
+export const HrmMetadataUpdateDataSchema = HrmCommonDataSchema.extend({
   weightKg: z.number().optional(),
   heightCm: z.number().optional(),
   weight: z.number().optional(),
@@ -139,10 +159,14 @@ const HrmMetadataUpdateDataSchema = z.object({
 
 export type HrmMetadataUpdateData = z.infer<typeof HrmMetadataUpdateDataSchema>
 
-export interface HrmMetadataUpdateMessage {
-  type: 'HRM_METADATA_UPDATE'
-  data: HrmMetadataUpdateData
-}
+export const HrmMetadataUpdateMessageSchema = z.object({
+  type: z.literal('HRM_METADATA_UPDATE'),
+  data: HrmMetadataUpdateDataSchema,
+})
+
+export type HrmMetadataUpdateMessage = z.infer<
+  typeof HrmMetadataUpdateMessageSchema
+>
 
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
@@ -200,22 +224,7 @@ export type ClientCommandMessage =
   | ClientRegistrationMessage
   | PingMessage
 
-// --- Zod Schemas for Client Input Command Interfaces ---
-
-const IncomingHrmDataSchema = z.object({
-  value: z.number().nullable(),
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
-  calories: z.number().optional(),
-  percentage: z.number().optional(),
-  zone: z.string().optional(),
-})
-
-const HrmMetadataUpdateMessageSchema = z.object({
-  type: z.literal('HRM_METADATA_UPDATE'),
-  data: HrmMetadataUpdateDataSchema,
-})
+// --- Zod Schemas for Other Client Input Commands ---
 
 const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
@@ -242,7 +251,7 @@ const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('GET_DEVICES'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
@@ -269,11 +278,6 @@ const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
-const HrmInputMessageSchema = z.object({
-  type: z.literal('HRM_INPUT'),
-  data: IncomingHrmDataSchema,
-})
-
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -283,5 +287,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
 ])
