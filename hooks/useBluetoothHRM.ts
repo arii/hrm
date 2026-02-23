@@ -104,6 +104,39 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  const stopKeepAlive = useCallback(async () => {
+    if (wakeLockRef.current) {
+      await wakeLockRef.current.release().catch(() => {})
+      wakeLockRef.current = null
+    }
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause()
+      } catch (err) {
+        logger.debug({ err }, 'Failed to pause silent audio')
+      }
+      audioRef.current = null
+    }
+  }, [])
+
+  const startSilentAudio = useCallback(() => {
+    if (typeof window === 'undefined') return
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/assets/silence.mp3')
+      audioRef.current.loop = true
+    }
+    try {
+      const playPromise = audioRef.current.play()
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((err) =>
+          logger.error({ err }, 'Failed to play silent audio')
+        )
+      }
+    } catch (err) {
+      logger.error({ err }, 'Failed to play silent audio')
+    }
+  }, [])
+
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
     if (periodHistory.current.length > ROLLING_AVG_HISTORY_LENGTH) {
@@ -233,19 +266,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
-    if (wakeLockRef.current) {
-      wakeLockRef.current.release().catch(() => {})
-      wakeLockRef.current = null
-    }
-
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause()
-      } catch (err) {
-        logger.debug({ err }, 'Failed to pause silent audio')
-      }
-      audioRef.current = null
-    }
+    stopKeepAlive()
 
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
@@ -258,7 +279,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
-  }, [])
+  }, [stopKeepAlive])
 
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
@@ -422,19 +443,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {})
-        wakeLockRef.current = null
-      }
-
-      if (audioRef.current) {
-        try {
-          audioRef.current.pause()
-        } catch (err) {
-          logger.debug({ err }, 'Failed to pause silent audio')
-        }
-        audioRef.current = null
-      }
+      stopKeepAlive()
 
       if (
         typeof window !== 'undefined' &&
@@ -446,7 +455,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     }
-  }, [])
+  }, [stopKeepAlive])
 
   const acquireWakeLock = useCallback(async () => {
     if (wakeLockRef.current) return
@@ -619,26 +628,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
         )
 
-        // Request Screen Wake Lock and start silent audio to maintain connection in background
+        // Maintain connection in background
         await acquireWakeLock()
-
-        // Start silent audio keep-alive to maintain background execution priority
-        if (typeof window !== 'undefined') {
-          if (!audioRef.current) {
-            audioRef.current = new Audio('/assets/silence.mp3')
-            audioRef.current.loop = true
-          }
-          try {
-            const playPromise = audioRef.current.play()
-            if (playPromise && typeof playPromise.catch === 'function') {
-              playPromise.catch((err) =>
-                logger.error({ err }, 'Failed to play silent audio')
-              )
-            }
-          } catch (err) {
-            logger.error({ err }, 'Failed to play silent audio')
-          }
-        }
+        startSilentAudio()
 
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
@@ -709,7 +701,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod, acquireWakeLock]
+    [onDisconnected, updateSignalPeriod, acquireWakeLock, startSilentAudio]
   )
 
   useEffect(() => {
@@ -896,17 +888,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             logger.info('HRM connectivity verified.')
             // Re-request wake lock and audio if needed
             await acquireWakeLock()
-            if (audioRef.current && audioRef.current.paused) {
-              try {
-                const playPromise = audioRef.current.play()
-                if (playPromise && typeof playPromise.catch === 'function') {
-                  playPromise.catch((err) =>
-                    logger.error({ err }, 'Failed to resume silent audio')
-                  )
-                }
-              } catch (err) {
-                logger.error({ err }, 'Failed to play silent audio')
-              }
+            if (audioRef.current?.paused) {
+              startSilentAudio()
             }
           }
         } else if (!isManualDisconnect.current) {
@@ -921,7 +904,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [reconnect, autoConnect, acquireWakeLock])
+  }, [reconnect, autoConnect, acquireWakeLock, startSilentAudio])
 
   return {
     connectAndStream,
