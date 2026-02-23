@@ -851,8 +851,9 @@ jobs:
       - name: Generate Summary Report
         shell: bash
         run: |
-          chmod +x ./scripts/ci/generate-test-summary.sh
-          ./scripts/ci/generate-test-summary.sh \
+          # Debug: list files to ensure script existence
+          ls -R scripts/ci/
+          bash ./scripts/ci/generate-test-summary.sh \
             "${{ needs.script-tests.result }}" \
             "${{ needs.infra-tests.result }}" \
             "${{ needs.unit-tests.result }}" \
