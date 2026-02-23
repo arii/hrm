@@ -57,7 +57,8 @@ jest.mock('@/hooks/useAudio', () => ({
 describe('DashboardClient', () => {
   const mockProps = {
     workoutDocUrl: 'https://docs.google.com/document/d/mock-doc-id/edit',
-    workoutDocIframeUrl: 'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
+    workoutDocIframeUrl:
+      'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
   }
 
   it('renders GoogleDocViewer when useNativeTable is false', async () => {
