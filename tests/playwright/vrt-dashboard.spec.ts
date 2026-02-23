@@ -9,6 +9,7 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
+import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -150,7 +151,7 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
-      await dashboardPage.setViewportSize({ width: 375, height: 1038 })
+      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
@@ -159,7 +160,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('tablet viewport', async () => {
-      await dashboardPage.setViewportSize({ width: 768, height: 1134 })
+      await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),

@@ -5,6 +5,7 @@
  */
 import { defineConfig, devices } from '@playwright/test'
 import { getBaseURL } from './utils/urls'
+import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
 
 export default defineConfig({
   testDir: './tests/playwright/oauth',
@@ -37,7 +38,7 @@ export default defineConfig({
     trace: 'on',
 
     // Browser context options
-    viewport: { width: 1920, height: 1080 },
+    viewport: DESKTOP_VIEWPORT,
 
     // Increase timeouts for OAuth flows
     actionTimeout: 30_000,
@@ -53,7 +54,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
+        viewport: DESKTOP_VIEWPORT,
         launchOptions: {
           // OAuth tests run headed for debugging and session management
           headless: false,
