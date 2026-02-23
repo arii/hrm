@@ -39,6 +39,7 @@ export {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   mockSpotifyAccessToken,
+  mockSpotifyPlaylists,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest } from './test-helpers'
+import { setupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 

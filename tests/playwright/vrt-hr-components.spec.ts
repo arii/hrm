@@ -5,7 +5,7 @@ import {
   getHrMasks,
   setupVisualRegressionTest,
   mockMultipleHrDevices,
-} from './test-helpers'
+} from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 

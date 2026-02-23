@@ -127,6 +127,7 @@ export {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   mockSpotifyAccessToken,
+  mockSpotifyPlaylists,
 } from './mocks'
 
 // ============================================================================

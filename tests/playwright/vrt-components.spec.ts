@@ -4,7 +4,7 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
-} from './test-helpers'
+} from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'

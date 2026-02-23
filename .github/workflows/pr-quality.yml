@@ -646,6 +646,7 @@ jobs:
       NEXTAUTH_URL: http://localhost:3007
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       PORT: 3007
+      SKIP_BUILD: 'true'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -729,6 +730,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
+      SKIP_BUILD: 'true'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

@@ -154,6 +154,62 @@ export async function mockLoggedInSession(
 }
 
 /**
+ * Mocks the Spotify playlists endpoint.
+ *
+ * @param context - The Playwright BrowserContext or Page object.
+ */
+export async function mockSpotifyPlaylists(
+  context: BrowserContext | Page
+): Promise<void> {
+  await context.route('**/api/spotify/playlists', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        presetPlaylists: [
+          {
+            name: 'HIIT',
+            uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5',
+            id: 'preset-hiit',
+            imageUrl: 'https://via.placeholder.com/150',
+          },
+        ],
+        userPlaylists: [
+          {
+            id: 'user-playlist-1',
+            name: 'My Training Mix',
+            uri: 'spotify:playlist:user1',
+            description: 'Workout tunes',
+            imageUrl: 'https://via.placeholder.com/150',
+            trackCount: 25,
+            owner: 'Test User',
+            public: true,
+          },
+        ],
+      }),
+    })
+  })
+
+  // Also mock individual playlist tracks if needed
+  await context.route('**/api/spotify/playlists/*', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        items: [
+          {
+            id: 'track-1',
+            name: 'Mock Track 1',
+            uri: 'spotify:track:1',
+            artists: [{ name: 'Artist 1' }],
+          },
+        ],
+      }),
+    })
+  })
+}
+
+/**
  * Mocks the Spotify access token endpoint.
  *
  * @param context - The Playwright BrowserContext object.

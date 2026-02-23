@@ -1,6 +1,6 @@
 // File: tests/playwright/simple-smoke.spec.ts
 import { test, expect } from '@playwright/test'
-import { BASE_URL } from './test-helpers'
+import { BASE_URL } from './lib'
 
 test.describe('Simple Smoke Test', () => {
   test('should load the homepage and have the correct title', async ({
