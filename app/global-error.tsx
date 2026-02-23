@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { VRT_TEST_ERROR_MESSAGE } from '@/constants/vrt'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -14,10 +13,6 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Suppress logging for intentional VRT errors to keep test logs clean.
-    if (error.message === VRT_TEST_ERROR_MESSAGE) {
-      return
-    }
     // Log the error to an error reporting service
     console.error(error)
   }, [error])
