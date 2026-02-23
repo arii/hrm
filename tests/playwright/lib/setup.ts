@@ -328,23 +328,23 @@ export async function stopTimer(
   controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = controlPage.getByRole('button', {
-    name: 'STOP',
-    exact: true,
-  })
+  // Use data-testid for faster lookup and stability
+  const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
-    // Performance: Fast-fail check for button existence before checking visibility
+    // Performance: Fast-fail check for button existence before checking visibility.
+    // count() is an immediate check that doesn't wait for the element to appear.
     if ((await stopButton.count()) === 0) return
 
-    // If timer is running, stop it. Use a short timeout for cleanup checks.
-    if (await stopButton.isVisible({ timeout: 500 })) {
+    // If timer is running, stop it.
+    if (await stopButton.isVisible()) {
       await stopButton.click()
 
-      // Wait for START button to confirm timer stopped
+      // Wait for START button to confirm timer stopped. Use a reduced timeout
+      // for teardown to keep tests fast.
       await expect(
-        controlPage.getByRole('button', { name: 'START', exact: true })
-      ).toBeVisible({ timeout: 2000 })
+        controlPage.getByTestId('start-timer-button')
+      ).toBeVisible({ timeout: 1000 })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
