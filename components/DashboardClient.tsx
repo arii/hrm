@@ -5,7 +5,7 @@ import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
@@ -14,6 +14,10 @@ import { useAudio } from '@/hooks/useAudio'
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
+})
+
+const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
+  ssr: false,
 })
 
 const DOC_URL =
@@ -44,8 +48,6 @@ const mainGridStyles: SxProps = {
   gap: 2,
 }
 
-import { VRT_TEST_ERROR_MESSAGE } from '@/constants/vrt'
-
 interface DashboardClientProps {
   useNativeTable: boolean
   triggerError?: boolean
@@ -59,12 +61,6 @@ const DashboardClient = ({
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
-
-  useEffect(() => {
-    if (triggerError) {
-      throw new Error(VRT_TEST_ERROR_MESSAGE)
-    }
-  }, [triggerError])
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
@@ -88,6 +84,7 @@ const DashboardClient = ({
         backgroundColor: 'background.default',
       }}
     >
+      {triggerError && <TestErrorTrigger />}
       <Box sx={mainGridStyles}>
         <Box sx={{ height: '100%' }}>
           <TimerDisplay />
