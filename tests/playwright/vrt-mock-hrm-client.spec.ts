@@ -33,7 +33,11 @@ test.describe('Visual Regression Tests', () => {
     test('form inputs', async () => {
       await mockPage.getByLabel('Weight (kg)').fill('75')
       await mockPage.getByLabel('Height (cm)').fill('180')
-      await mockPage.getByLabel('Gender').fill('female')
+
+      // Select Gender using the dropdown
+      await mockPage.getByLabel('Gender').click()
+      await mockPage.getByRole('option', { name: 'Female' }).click()
+
       const mockClientForm = mockPage.getByTestId('mock-client-form')
       await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png')
     })
