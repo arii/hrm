@@ -17,7 +17,10 @@ const extractCellText = (cell: HTMLElement): string => {
     block.insertAdjacentHTML('afterend', ' ')
   })
 
-  const rawText = cell.text.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim()
+  const rawText = cell.text
+    .replace(/\u00A0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 
   return decode(rawText)
 }
