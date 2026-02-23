@@ -120,7 +120,7 @@ const SpotifyControls = () => {
       !devices.some((d) => d.is_active)
     ) {
       const hrmPlayer = devices.find(
-        (d) => d.name.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
       )
       if (hrmPlayer) {
         setSelectedDeviceId(hrmPlayer.id)
@@ -136,7 +136,7 @@ const SpotifyControls = () => {
     if (activeDevice) return activeDevice.id
 
     const hrmPlayer = devices.find(
-      (d) => d.name.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+      (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
     )
     return hrmPlayer?.id
   }, [devices, selectedDeviceId])
