@@ -3,16 +3,13 @@ import {
   ClientHrmData,
   ActiveAlert,
   HrmData,
-} from '../types/websocket.js'
+} from '@/types/websocket'
 import {
   HRM_STALE_THRESHOLD_MS,
   HRM_WARNING_THRESHOLD_MS,
-} from './constants.js'
-import {
-  calculateZoneFromMaxHr,
-  toHeartRateZone,
-} from '../lib/shared/hr-zones.js'
-import { calculateMaxHr } from './hrCalculations.js'
+} from '@/utils/constants'
+import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
 interface FilterHrmDataOptions {
   includeZeroValues?: boolean
