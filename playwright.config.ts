@@ -94,9 +94,11 @@ export default defineConfig({
   // Browser configurations
   projects: [
     {
-      name: 'chromium',
+      name: 'Chromium Legacy',
       use: {
         ...devices['Desktop Chrome'],
+        // Custom flag to be handled in fixtures.ts
+        useNativeTable: false,
         launchOptions: {
           args: [
             '--disable-web-security',
@@ -109,10 +111,26 @@ export default defineConfig({
           ],
         },
         viewport: { width: 1920, height: 1080 },
-        video: {
-          mode: 'retain-on-failure',
-          size: { width: 1920, height: 1080 },
+      },
+    },
+    {
+      name: 'Chromium Native',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Custom flag to be handled in fixtures.ts
+        useNativeTable: true,
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=TranslateUI',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            // Hide scrollbars for consistent VRT snapshots
+            '--hide-scrollbars',
+          ],
         },
+        viewport: { width: 1920, height: 1080 },
       },
     },
     // Mobile testing (optional, can be enabled via environment variable)
@@ -145,6 +163,7 @@ export default defineConfig({
           PORT: port.toString(),
           TESTING: 'true',
           NEXT_PUBLIC_TESTING: 'true',
+          NEXT_PUBLIC_USE_NATIVE_TABLE: 'true',
           NEXTAUTH_SECRET: 'a-super-long-and-secure-secret-for-ci-tests',
           NEXTAUTH_URL: baseURL,
           SPOTIFY_CLIENT_ID: 'test_client_id',

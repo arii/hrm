@@ -21,8 +21,13 @@ let context: BrowserContext
 // Test suite for VRT
 test.describe('Visual Regression Tests', () => {
   // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
+  test.beforeAll(async ({ browser }, testInfo) => {
+    // Extract custom option from project configuration
+    const useNativeTable = testInfo.project.use.useNativeTable as
+      | boolean
+      | undefined
+
+    const setup = await setupVisualRegressionTest(browser, { useNativeTable })
     context = setup.context
     dashboardPage = setup.dashboardPage
     controlPage = setup.controlPage

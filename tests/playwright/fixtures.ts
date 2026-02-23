@@ -10,16 +10,26 @@ type PageFixtures = {
   controlPage: Page
   mockPage: Page
   connectPage: Page
+  /** Whether to use the native table view */
+  useNativeTable?: boolean
 }
 
 export const test = base.extend<PageFixtures>({
-  dashboardPage: async ({ context }, applyFixture) => {
+  // Define the custom option with a default value
+  useNativeTable: [undefined, { option: true }],
+
+  dashboardPage: async ({ context, useNativeTable }, applyFixture) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
       if (!msg.text().includes('DOCS_timing')) {
         console.log(`Console ${msg.type()}: ${msg.text()}`)
       }
     })
+
+    // If useNativeTable is explicitly set, we could potentially inject it here
+    // but navigations happen in the tests.
+    // Instead, we can provide a decorated goto or just let tests handle it.
+
     await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },

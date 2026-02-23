@@ -10,8 +10,10 @@ import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage }) => {
-    await setupMinimalVisualRegressionTest(dashboardPage, '/')
+  test.beforeEach(async ({ dashboardPage, useNativeTable }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/', {
+      useNativeTable,
+    })
   })
 
   test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
@@ -40,10 +42,17 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(loadingIndicator, 'loading-indicator.png')
   })
 
-  test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
-    // Ensure we are in non-native mode for this test
-    await dashboardPage.goto('/?native=false')
-    await waitForPageReady(dashboardPage)
+  test('GoogleDocViewer shrunk state', async ({
+    dashboardPage,
+    useNativeTable,
+  }) => {
+    // If we are in native mode, this component isn't even rendered by default on the dashboard
+    // but setupMinimalVisualRegressionTest might have handled it.
+    // We force native=false if it's not already set to ensure the component is there.
+    if (useNativeTable !== false) {
+      await dashboardPage.goto('/?native=false')
+      await waitForPageReady(dashboardPage)
+    }
 
     const toggleButton = dashboardPage.getByLabel('Collapse document')
     await toggleButton.click()
@@ -53,10 +62,15 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+  test('WorkoutTableHeader rendering', async ({
+    dashboardPage,
+    useNativeTable,
+  }) => {
     // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
-    await waitForPageReady(dashboardPage)
+    if (useNativeTable !== true) {
+      await dashboardPage.goto('/?native=true')
+      await waitForPageReady(dashboardPage)
+    }
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()

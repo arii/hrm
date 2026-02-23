@@ -145,14 +145,20 @@ export async function navigateAndWait(
  * and prepares them for snapshot testing.
  *
  * @param browser - The Playwright Browser fixture
+ * @param options - Optional configuration for the setup
  * @returns An object containing the context and all created pages.
  */
-export async function setupVisualRegressionTest(browser: Browser): Promise<{
+export async function setupVisualRegressionTest(
+  browser: Browser,
+  options: { useNativeTable?: boolean } = {}
+): Promise<{
   context: BrowserContext
   dashboardPage: Page
   controlPage: Page
   mockPage: Page
 }> {
+  const { useNativeTable } = options
+
   // Create a new isolated browser context for the test suite
   const context = await browser.newContext({
     storageState: undefined, // Ensure no cookies or storage state from previous tests
@@ -181,8 +187,11 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Navigate all pages to their respective routes in parallel
   const baseUrl = getBaseURL()
+  const nativeParam =
+    useNativeTable !== undefined ? `?native=${useNativeTable}` : ''
+
   await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}${nativeParam}`),
     controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
     mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
   ])
@@ -219,11 +228,15 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
  *
  * @param page - The Playwright Page object
  * @param path - Optional path to navigate to
+ * @param options - Optional configuration
  */
 export async function setupMinimalVisualRegressionTest(
   page: Page,
-  path: string = ''
+  path: string = '',
+  options: { useNativeTable?: boolean } = {}
 ): Promise<void> {
+  const { useNativeTable } = options
+
   // Mock the workout API response for stable VRT
   await page.route('**/api/workout*', async (route) => {
     await route.fulfill({
@@ -235,11 +248,21 @@ export async function setupMinimalVisualRegressionTest(
     })
   })
 
-  // Mock the iframe for the root path before navigation
-  if (path === '' || path === '/') {
-    await mockGoogleDocIframe(page)
+  // Append native flag if needed
+  let finalPath = path
+  if (useNativeTable !== undefined) {
+    const separator = finalPath.includes('?') ? '&' : '?'
+    finalPath = `${finalPath}${separator}native=${useNativeTable}`
   }
-  await navigateAndWait(page, path)
+
+  // Mock the iframe for the root path before navigation
+  if (path === '' || path === '/' || path.includes('?')) {
+    // Only mock if it's the dashboard page
+    if (path.startsWith('/') || path === '') {
+      await mockGoogleDocIframe(page)
+    }
+  }
+  await navigateAndWait(page, finalPath)
 }
 
 /**
