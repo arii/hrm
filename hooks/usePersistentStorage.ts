@@ -2,18 +2,25 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
 import isEqual from 'lodash.isequal'
 
+// Cache the result of localStorage check to avoid redundant operations
+let isLocalStorageAvailable: boolean | null = null
+
 const checkLocalStorage = () => {
   if (typeof window === 'undefined') {
     return false
+  }
+  if (isLocalStorageAvailable !== null && process.env.NODE_ENV !== 'test') {
+    return isLocalStorageAvailable
   }
   try {
     const testKey = 'hrm-local-storage-test'
     window.localStorage.setItem(testKey, 'test')
     window.localStorage.removeItem(testKey)
-    return true
+    isLocalStorageAvailable = true
   } catch {
-    return false
+    isLocalStorageAvailable = false
   }
+  return isLocalStorageAvailable
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -30,11 +37,13 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function usePersistentStorage<T>(key: string, initialValue: T) {
   // 1. Initialize state with initialValue to match Server Side rendering.
   const [storedValue, setStoredValue] = useState<T>(initialValue)
-  const isInitialized = useRef(false)
+  const lastKeyRef = useRef<string | null>(null)
 
   // 2. Sync with storage inside useEffect (Client-side only).
   useEffect(() => {
-    if (isInitialized.current) return
+    // If the key hasn't changed and we've already initialized, skip.
+    if (lastKeyRef.current === key) return
+
     if (typeof window === 'undefined') {
       return
     }
@@ -50,18 +59,6 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
 
         // Handle object migration by merging stored data with initial defaults.
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
-          // Specific sanitization for user-prefs (legacy support)
-          if (
-            'userAge' in parsed &&
-            typeof parsed.userAge !== 'number' &&
-            parsed.userAge !== null
-          ) {
-            parsed.userAge = null
-          }
-          if ('userName' in parsed && typeof parsed.userName !== 'string') {
-            parsed.userName = ''
-          }
-
           const schemaKeys = Object.keys(initialValue)
           const filteredParsed = Object.keys(parsed).reduce(
             (acc, k) => {
@@ -78,8 +75,6 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
 
           // Only update state if it actually changed to avoid hydration flicker
           if (!isEqual(merged, storedValue)) {
-            // This is the core of the SSR-safe logic. We initialize state to `initialValue`
-            // and then update it with the value from storage on the client.
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setStoredValue(merged)
           }
@@ -93,15 +88,20 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
             setStoredValue(parsed)
           }
         }
-        isInitialized.current = true
+      } else {
+        // If no item in storage, ensure we are using initialValue
+        if (!isEqual(initialValue, storedValue)) {
+          setStoredValue(initialValue)
+        }
       }
+      lastKeyRef.current = key
     } catch (error) {
       console.error(
         `Error reading or parsing persistent storage key “${key}”`,
         error
       )
     }
-  }, [key, initialValue])
+  }, [key, initialValue, storedValue])
 
   // Return a wrapped version of useState's setter function that persists the new value.
   const setValue = useCallback(
@@ -136,7 +136,10 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue) {
         try {
-          setStoredValue(JSON.parse(e.newValue))
+          const parsed = JSON.parse(e.newValue)
+          if (!isEqual(parsed, storedValue)) {
+            setStoredValue(parsed)
+          }
         } catch (error) {
           console.error(`Error parsing storage change for key “${key}”:`, error)
         }
@@ -146,7 +149,7 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [key])
+  }, [key, storedValue])
 
   return [storedValue, setValue] as const
 }

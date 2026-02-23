@@ -41,6 +41,7 @@ const HrmConnectionPanel = () => {
               alignItems: 'center',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
               height: '100%', // Ensure the container fills the grid cell
+              minHeight: 220,
               gap: 2,
               p: 2,
               border: 1,
@@ -60,7 +61,7 @@ const HrmConnectionPanel = () => {
             data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
+              width: { sm: 'calc(50% - 8px)' },
               height: 220,
               backgroundColor: 'action.hover',
               borderRadius: 3,
@@ -85,7 +86,6 @@ const HrmConnectionPanel = () => {
                   sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
                 },
                 height: 220,
-                overflow: 'hidden',
               }}
             >
               <HrTile {...tileProps} />

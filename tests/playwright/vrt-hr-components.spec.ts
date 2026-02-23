@@ -38,6 +38,7 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('HR-Related Components', () => {
     test('dashboard with HR data', async () => {
+      await mockPage.getByLabel('User Name').fill('Mock User')
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
@@ -63,7 +64,7 @@ test.describe('Visual Regression Tests', () => {
       await mockMultipleHrDevices(dashboardPage, [
         {
           clientId: 'user-1',
-          name: 'User One',
+          name: 'Athlete 1',
           value: 145,
           maxHr: 185,
           calories: 300,
@@ -71,7 +72,7 @@ test.describe('Visual Regression Tests', () => {
         },
         {
           clientId: 'user-2',
-          name: 'User Two',
+          name: 'Athlete 2',
           value: 165,
           maxHr: 190,
           calories: 450,
@@ -102,6 +103,7 @@ test.describe('Visual Regression Tests', () => {
     const zones = [0, 1, 2, 3, 4, 5, 6]
     for (const zone of zones) {
       test(`dashboard with HR in Zone ${zone}`, async () => {
+        await mockPage.getByLabel('User Name').fill('Mock User')
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 

@@ -94,8 +94,15 @@ export const useConnectUserProfile = (): UserProfileState => {
     }
 
     window.addEventListener('beforeunload', persist)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        persist()
+      }
+    })
+
     return () => {
       window.removeEventListener('beforeunload', persist)
+      document.removeEventListener('visibilitychange', persist)
       persist()
     }
   }, [])
