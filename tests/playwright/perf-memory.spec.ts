@@ -10,7 +10,7 @@ interface PerformanceMetrics {
 }
 
 // --- Test Configuration ---
-const TEST_DURATION_MS = 10 * 1000 // 10 seconds
+const TEST_DURATION_MS = 20 * 1000 // 20 seconds
 const SAMPLING_INTERVAL_MS = 1000 // 1 second
 const HEAP_GROWTH_THRESHOLD = 0.35 // 35% (relaxed further to account for sandbox/CI variance)
 
