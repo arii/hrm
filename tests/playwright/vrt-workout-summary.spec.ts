@@ -1,8 +1,9 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest } from './lib'
+import { setupVisualRegressionTest, resetServerState } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { HRM_ROUTES } from './lib/setup'
+import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -23,6 +24,17 @@ test.describe('WorkoutSummary Component VRT', () => {
   // Centralized cleanup hook
   test.afterAll(async () => {
     await context?.close()
+  })
+
+  test.beforeEach(async ({ request }) => {
+    await resetServerState(request)
+    await dashboardPage.reload()
+    await waitForPageReady(dashboardPage)
+    // Ensure WebSocket is re-established after server reset
+    await dashboardPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 5000 }
+    )
   })
 
   test('active state', async () => {
