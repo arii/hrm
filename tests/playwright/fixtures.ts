@@ -18,7 +18,10 @@ export const test = base.extend<PageFixtures>({
   // Define the custom option with a default value
   useNativeTable: [undefined, { option: true }],
 
-  dashboardPage: async ({ context, useNativeTable }, applyFixture) => {
+  dashboardPage: async (
+    { context, useNativeTable: _useNativeTable },
+    applyFixture
+  ) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
       const text = msg.text()
