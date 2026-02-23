@@ -124,10 +124,20 @@ export interface HrmInputMessage {
   data: IncomingHrmData
 }
 
-export type HrmMetadataUpdateData = Omit<
-  Partial<HrmData>,
-  'clientId' | 'value' | 'calories'
->
+import { z } from 'zod'
+
+const HrmMetadataUpdateDataSchema = z.object({
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+  weightKg: z.number().optional(),
+  heightCm: z.number().optional(),
+  weight: z.number().optional(),
+  height: z.number().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'NEUTRAL']).optional(),
+})
+
+export type HrmMetadataUpdateData = z.infer<typeof HrmMetadataUpdateDataSchema>
 
 export interface HrmMetadataUpdateMessage {
   type: 'HRM_METADATA_UPDATE'
@@ -190,8 +200,6 @@ export type ClientCommandMessage =
   | ClientRegistrationMessage
   | PingMessage
 
-import { z } from 'zod'
-
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 const IncomingHrmDataSchema = z.object({
@@ -202,17 +210,6 @@ const IncomingHrmDataSchema = z.object({
   calories: z.number().optional(),
   percentage: z.number().optional(),
   zone: z.string().optional(),
-})
-
-const HrmMetadataUpdateDataSchema = z.object({
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
-  weightKg: z.number().optional(),
-  heightCm: z.number().optional(),
-  weight: z.number().optional(),
-  height: z.number().optional(),
-  gender: z.enum(['MALE', 'FEMALE', 'NEUTRAL']).optional(),
 })
 
 const HrmMetadataUpdateMessageSchema = z.object({

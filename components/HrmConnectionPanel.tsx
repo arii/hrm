@@ -60,7 +60,7 @@ const HrmConnectionPanel = () => {
             sx={{
               display: { xs: 'none', md: 'block' },
               width: { sm: 'calc(50% - 12px)' },
-              height: 220,
+              minHeight: 220,
               backgroundColor: 'action.hover',
               borderRadius: 3,
             }}
@@ -83,8 +83,7 @@ const HrmConnectionPanel = () => {
                   xs: '100%',
                   sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
                 },
-                height: 220,
-                overflow: 'hidden',
+                minHeight: 220,
               }}
             >
               <HrTile {...tileProps} />

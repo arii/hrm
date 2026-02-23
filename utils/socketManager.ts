@@ -357,6 +357,13 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
+        /**
+         * CALORIE OWNERSHIP & SINGLE SOURCE OF TRUTH:
+         * While the mock client simulates calories for real-time responsiveness, the server remains
+         * the authoritative source for the shared application state. The server validates incoming
+         * calorie values to prevent anomalies and persists them in the session manager.
+         * The values broadcasted by the server (via broadcastState) are what all dashboard clients display.
+         */
         const hrmMessage = message as HrmInputMessage
         const existingData = hrmSessionManager.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
@@ -365,7 +372,7 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
           let finalCalories = sessionState.accumulatedCalories
 
-          // Use the client-provided calories directly
+          // Use the client-provided calories directly (if valid)
           if (typeof hrmMessage.data.calories === 'number') {
             const clientCalories = hrmMessage.data.calories
             const serverCalories = sessionState.accumulatedCalories
