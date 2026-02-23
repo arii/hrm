@@ -70,6 +70,9 @@ export async function assertFixedDimensions(
     maxWidth?: number
   }
 ) {
+  // Ensure the element is visible before calculating bounding box
+  await locator.waitFor({ state: 'visible' })
+
   const bbox = await locator.boundingBox()
 
   if (!bbox) {

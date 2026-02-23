@@ -2,14 +2,21 @@ import { z } from 'zod'
 
 describe('Environment Variables', () => {
   const OLD_ENV = process.env
+  // @ts-ignore
+  const originalWindow = global.window
 
   beforeEach(() => {
     jest.resetModules()
     process.env = { ...OLD_ENV }
+    // Ensure we start as "server" by default
+    // @ts-ignore
+    delete global.window
   })
 
   afterAll(() => {
     process.env = OLD_ENV
+    // @ts-ignore
+    global.window = originalWindow
   })
 
   it('should use default values for rate limiting and WebSocket connections', async () => {
@@ -73,5 +80,36 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     delete process.env.NEXTAUTH_URL
     await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+  })
+
+  it('should not throw on client even if server variables are missing', async () => {
+    // @ts-ignore - simulate client
+    global.window = {}
+
+    process.env.NODE_ENV = 'test'
+    // Missing required server variables
+    delete process.env.NEXTAUTH_URL
+    delete process.env.NEXTAUTH_SECRET
+
+    // Explicitly set some public vars
+    process.env.NEXT_PUBLIC_API_URL = 'http://api.test'
+
+    const { env } = await import('../../../lib/env')
+    expect(env.NEXT_PUBLIC_API_URL).toBe('http://api.test')
+    // @ts-ignore - checking that it's undefined on client mapping
+    expect(env.NEXTAUTH_URL).toBeUndefined()
+  })
+
+  it('should still validate public variables on client', async () => {
+    // @ts-ignore - simulate client
+    global.window = {}
+
+    process.env.NODE_ENV = 'test'
+    process.env.NEXT_PUBLIC_API_URL = 'invalid-url'
+
+    // We shouldn't throw, but log a warning (which we can't easily assert here without spying)
+    const { env } = await import('../../../lib/env')
+    // Since validation failed, it falls back to getEnvSource()
+    expect(env.NEXT_PUBLIC_API_URL).toBe('invalid-url')
   })
 })

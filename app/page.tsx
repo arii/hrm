@@ -14,13 +14,19 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     nativeValue === 'true' ||
     (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
 
-  // Check for test-error
+  // Check for test-error - only allowed in non-production or test environments
   const testErrorParam = params['test-error']
   const testErrorValue = Array.isArray(testErrorParam)
     ? testErrorParam[0]
     : testErrorParam
 
-  if (testErrorValue === 'true') {
+  const isTestableEnv =
+    env.NODE_ENV !== 'production' ||
+    env.TESTING === 'true' ||
+    env.CI === 'true' ||
+    params.testing === 'true'
+
+  if (testErrorValue === 'true' && isTestableEnv) {
     throw new Error('VRT Test Error')
   }
 

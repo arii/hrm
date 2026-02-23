@@ -2,13 +2,11 @@
  * @file bluetooth-reconnection.ts
  * @description Centralized constants for Bluetooth reconnection logic.
  */
+import { env } from '@/lib/env'
 
 // Maximum number of times to attempt reconnection before giving up.
 export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
-  typeof process !== 'undefined' &&
-  process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-    ? parseInt(process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS, 10)
-    : 2
+  env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
 
 // Reconnection Delay Parameters
 export const RECONNECT_BASE_DELAY_MS = 5000

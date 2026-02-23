@@ -43,6 +43,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+      await hrTile.waitFor({ state: 'visible' }) // Explicit wait
       await assertFixedDimensions(hrTile, {
         minHeight: 180,
       })
@@ -81,6 +82,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert all HR tiles maintain dimensions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
+      await hrTiles.first().waitFor({ state: 'visible' }) // wait for at least one
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
@@ -106,6 +108,12 @@ test.describe('Visual Regression Tests', () => {
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
         const dashboard = dashboardPage.getByTestId('dashboard')
+        // Wait for the tile to be updated
+        await dashboardPage
+          .getByTestId('hr-tile-card')
+          .first()
+          .waitFor({ state: 'visible' })
+
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,
           mask: [
