@@ -467,6 +467,16 @@ export async function prepareForVisualRegression(
  */
 export async function cleanupVisualRegressionTest(...pages: Page[]) {
   for (const page of pages) {
+    // Optimization: Skip cleanup if the page is already closed or if test controls are not attached.
+    // This reduces overhead for non-VRT tests when using global fixtures.
+    if (page.isClosed()) continue
+
+    const hasControls = await page
+      .evaluate(() => !!window.__TEST_CONTROLS__)
+      .catch(() => false)
+
+    if (!hasControls) continue
+
     // 1. Reset all timers to prevent them from running into the next test
     await stopTimer(page)
 
