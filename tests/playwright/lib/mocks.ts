@@ -168,7 +168,7 @@ export async function mockLoggedInSession(
 export async function mockSpotifyPlaylists(
   context: BrowserContext | Page
 ): Promise<void> {
-  await context.route('**/api/spotify/playlists', (route) => {
+  await context.route('**/api/spotify/playlists*', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',

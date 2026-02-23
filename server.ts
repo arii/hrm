@@ -146,6 +146,7 @@ app.prepare().then(async () => {
     resetSocketManager()
     logger.info('Server-side HRM state has been reset via /api/debug/reset')
     res.status(200).json({ status: 'reset' })
+    return
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {

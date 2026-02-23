@@ -21,11 +21,7 @@ export const test = base.extend<PageFixtures>({
       if (text.includes('DOCS_timing')) return
 
       // Filter out expected server-side render error during the ErrorFallback UI test
-      if (
-        text.includes(
-          'An error occurred in the Server Components render. The specific message is omitted in production builds'
-        )
-      ) {
+      if (text.includes('An error occurred in the Server Components render')) {
         return
       }
 
