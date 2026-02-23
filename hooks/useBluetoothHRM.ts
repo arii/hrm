@@ -51,7 +51,6 @@ const parseHeartRate = (value: DataView): number => {
 
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
-  throttleMs?: number
   userName?: string | null
   userAge?: number | null
   onHeartRateUpdate?: (heartRate: number) => void
@@ -155,19 +154,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   >(null)
   const onHeartRateUpdateRef = useRef(onHeartRateUpdate)
   const onConnectRef = useRef(onConnect)
+  const sendDataRef = useRef(sendData)
 
   useEffect(() => {
     onHeartRateUpdateRef.current = onHeartRateUpdate
-  }, [onHeartRateUpdate])
-
-  useEffect(() => {
     onConnectRef.current = onConnect
-  }, [onConnect])
-
-  const sendDataRef = useRef(sendData)
-  useEffect(() => {
     sendDataRef.current = sendData
-  }, [sendData])
+  }, [onHeartRateUpdate, onConnect, sendData])
 
   useEffect(() => {
     userDetailsRef.current = {
