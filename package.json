@@ -23,7 +23,7 @@
     "pm2:delete": "pm2 stop hrm-server && pm2 delete hrm-server",
     "lint": "eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts middleware.ts --cache",
     "lint:fix": "eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts middleware.ts --fix --cache",
-    "type-check": "tsc -p tsconfig.type-check.json --noEmit --pretty false",
+    "type-check": "tsc -p tsconfig.type-check.json --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",

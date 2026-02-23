@@ -265,7 +265,7 @@ jobs:
           use-build-cache: true
           cache-type: type-check
 
-      - name: Register Problem Matcher
+      - name: Register TypeScript Matcher
         run: echo "::add-matcher::.github/tsc-error-matcher.json"
 
       - name: Run Type Check
@@ -274,7 +274,8 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p logs
-          pnpm run type-check 2>&1 | tee logs/type-check-output.log
+          # In CI, we use --pretty false to ensure the problem matcher can parse the output reliably
+          pnpm run type-check -- --pretty false 2>&1 | tee logs/type-check-output.log
 
       - name: Report Type Check Failure
         if: failure() && steps.type-check.outcome == 'failure'
@@ -315,7 +316,7 @@ jobs:
           use-build-cache: true
           cache-type: next-build
 
-      - name: Register Problem Matcher
+      - name: Register TypeScript Matcher
         run: echo "::add-matcher::.github/tsc-error-matcher.json"
 
       - name: Verify Build
@@ -329,6 +330,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          # Ensure build script doesn't use --pretty for tsc
           ./scripts/ci/run-build.sh
 
       - name: Verify Artifacts
@@ -843,38 +845,21 @@ jobs:
       perf-tests-outcome: ${{ needs.perf-tests.result }}
       visual-tests-outcome: ${{ needs.visual-tests.result }}
     steps:
-      - name: Determine Tests Status
+      - name: Generate Summary Report
         shell: bash
         run: |
-          echo "📊 All Integration Tests Summary:"
-          echo "  Script Tests: ${{ needs.script-tests.result }}"
-          echo "  Infra Tests: ${{ needs.infra-tests.result }}"
-          echo "  Unit Tests: ${{ needs.unit-tests.result }}"
-          echo "  Component Tests: ${{ needs.component-tests.result }}"
-          echo "  Perf Tests: ${{ needs.perf-tests.result }}"
-          echo "  Visual Tests: ${{ needs.visual-tests.result }}"
+          chmod +x ./scripts/ci/generate-test-summary.sh
+          ./scripts/ci/generate-test-summary.sh \
+            "${{ needs.script-tests.result }}" \
+            "${{ needs.infra-tests.result }}" \
+            "${{ needs.unit-tests.result }}" \
+            "${{ needs.component-tests.result }}" \
+            "${{ needs.perf-tests.result }}" \
+            "${{ needs.visual-tests.result }}"
 
-          # Generate Markdown Summary Table
-          get_status_icon() {
-            case "$1" in
-              "success") echo "✅ Pass" ;;
-              "failure") echo "❌ Fail" ;;
-              "cancelled") echo "🛑 Cancelled" ;;
-              "skipped") echo "⏭️ Skipped" ;;
-              *) echo "❓ Unknown ($1)" ;;
-            esac
-          }
-
-          echo "### 📊 HRM Integration Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Script Tests** | $(get_status_icon "${{ needs.script-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Infrastructure Tests** | $(get_status_icon "${{ needs.infra-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Unit Tests** | $(get_status_icon "${{ needs.unit-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Component Tests** | $(get_status_icon "${{ needs.component-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Performance Tests** | $(get_status_icon "${{ needs.perf-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Visual Tests** | $(get_status_icon "${{ needs.visual-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
-
+      - name: Determine Overall Status
+        shell: bash
+        run: |
           # Fail if any test failed
           if [ "${{ needs.script-tests.result }}" = "failure" ] || \
              [ "${{ needs.infra-tests.result }}" = "failure" ] || \

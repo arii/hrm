@@ -155,7 +155,8 @@ export default defineConfig({
   // Output configuration
   outputDir: 'test-results/',
   reporter: [
-    process.env.CI ? ['github'] : ['list'],
+    ['list'],
+    process.env.CI ? ['github'] : [],
     ['blob'],
     [
       'junit',
