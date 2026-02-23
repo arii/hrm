@@ -6,7 +6,7 @@ To maintain consistency and use the centralized barrel exports, please follow th
 
 ```typescript
 import { HrTile, BottomNavBar } from '@/components'
-import { useAudio, useLocalStorage } from '@/hooks'
+import { useAudio, usePersistentStorage } from '@/hooks'
 import { logger } from '@/utils'
 ```
 
