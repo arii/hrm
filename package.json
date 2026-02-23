@@ -32,7 +32,7 @@
     "test:components": "cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
-    "test:visual": "playwright test --project=chromium tests/playwright/vrt-*.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts",
+    "test:visual": "playwright test tests/playwright/vrt-*.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
     "test:slop": "./scripts/run_slop_tests.sh",
     "lint:slop": "./scripts/find_slop.sh -w ai_slop_words.txt",
