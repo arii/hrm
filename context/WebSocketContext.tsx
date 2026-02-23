@@ -104,20 +104,8 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (
-        process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        (typeof window !== 'undefined' &&
-          window.location.search.includes('testing=true'))
-      ) {
-        window.__TEST_CONTROLS__ = {
-          dispatch,
-          disconnect: () => {},
-          connect: () => {},
-        }
-      }
     }
-  }, [dispatch])
+  }, [])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -310,22 +298,29 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
+    return () => {
+      disconnect()
+    }
+  }, [connect, disconnect])
+
+  // Centralized effect for exposing test controls to the window object.
+  // This ensures that all required controls (dispatch, connect, disconnect)
+  // are attached consistently and updated whenever their implementations change.
+  useEffect(() => {
     if (
       typeof window !== 'undefined' &&
       (process.env.NODE_ENV !== 'production' ||
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
-      if (window.__TEST_CONTROLS__) {
-        window.__TEST_CONTROLS__.disconnect = disconnect
-        window.__TEST_CONTROLS__.connect = connect
+      window.__TEST_CONTROLS__ = {
+        ...window.__TEST_CONTROLS__,
+        dispatch,
+        connect,
+        disconnect,
       }
     }
-
-    return () => {
-      disconnect()
-    }
-  }, [connect, disconnect])
+  }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {
