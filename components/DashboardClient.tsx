@@ -13,7 +13,25 @@ import { useAudio } from '@/hooks/useAudio'
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
+  loading: () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 56,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        width: '100%',
+        minHeight: '64px',
+      }}
+    >
+      <DashboardSectionLoadingSkeleton height="64px" />
+    </Box>
+  ),
+})
+
+const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
+  ssr: false,
 })
 
 const DOC_URL =
@@ -46,9 +64,13 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
+  triggerError?: boolean
 }
 
-const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
+const DashboardClient = ({
+  useNativeTable,
+  triggerError,
+}: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -67,6 +89,8 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
 
   return (
     <Box sx={{ backgroundColor: 'background.default' }}>
+    <>
+      {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"
         maxWidth="xl"
