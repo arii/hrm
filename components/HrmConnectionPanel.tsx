@@ -5,16 +5,15 @@ import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
 import HrTile from '@/components/HrTile'
-import { getActiveHrmData } from '@/utils/hrm'
+import { augmentHrmData } from '@/utils/hrm'
+import { ClientHrmData } from '@/types/websocket'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const now = useNow()
 
   const tileData = useMemo(() => {
-    return getActiveHrmData(hrmData, activeAlerts, now, {
-      includeZeroValues: true,
-    })
+    return augmentHrmData(hrmData, activeAlerts, now)
   }, [hrmData, activeAlerts, now])
 
   const isLoading =
@@ -68,7 +67,7 @@ const HrmConnectionPanel = () => {
           />
         </>
       ) : (
-        tileData.map((user) => {
+        tileData.map((user: ClientHrmData) => {
           // Destructure to remove volatile timestamps causing re-renders
           const {
             updatedAt: _updatedAt,
