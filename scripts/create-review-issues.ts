@@ -7,22 +7,21 @@ import { z } from 'zod'
 
 // --- Constants ---
 const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
-let MIN_DESCRIPTION_LENGTH = DEFAULT_MIN_DESCRIPTION_LENGTH
-
-try {
-  const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
-  const configContent = readFileSync(CONFIG_PATH, 'utf-8')
-  if (configContent) {
-    const config = JSON.parse(configContent)
-    MIN_DESCRIPTION_LENGTH =
-      config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
-  }
-} catch (e) {
-  // During tests, readFileSync might be mocked and return undefined or throw
-  // Fallback to default
-}
-
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
+
+function getMinDescriptionLength(): number {
+  try {
+    const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
+    const configContent = readFileSync(CONFIG_PATH, 'utf-8')
+    if (configContent) {
+      const config = JSON.parse(configContent)
+      return config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
+    }
+  } catch (e) {
+    // Fallback to default if config is missing or invalid
+  }
+  return DEFAULT_MIN_DESCRIPTION_LENGTH
+}
 
 // --- Label Configuration ---
 
@@ -82,12 +81,7 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 
 const SuggestedIssueSchema = z.object({
   title: z.string(),
-  description: z
-    .string()
-    .min(
-      MIN_DESCRIPTION_LENGTH,
-      `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters long.`
-    ),
+  description: z.string().min(1, 'Description is required.'),
   type: z.enum([
     'bug',
     'enhancement',
@@ -387,11 +381,12 @@ export function checkIssueQuality(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
 ): QualityResult {
+  const minLength = getMinDescriptionLength()
   // 1. Check description length
-  if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
+  if (issue.description.trim().length < minLength) {
     return {
       isLowQuality: true,
-      reason: `Description too short (${issue.description.trim().length} chars)`,
+      reason: `Description too short (${issue.description.trim().length} chars, required ${minLength})`,
     }
   }
 
