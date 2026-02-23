@@ -20,15 +20,18 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     ? testErrorParam[0]
     : testErrorParam
 
+  // Only allow intentional errors in development or test environments.
   const isTestableEnv =
-    env.NODE_ENV !== 'production' ||
-    env.TESTING === 'true' ||
+    process.env.NODE_ENV !== 'production' ||
+    env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
     env.CI === 'true' ||
-    params.testing === 'true'
+    env.TESTING === 'true' ||
+    false
 
-  if (testErrorValue === 'true' && isTestableEnv) {
-    throw new Error('VRT Test Error')
-  }
-
-  return <DashboardClient useNativeTable={useNativeTable} />
+  return (
+    <DashboardClient
+      useNativeTable={useNativeTable}
+      triggerError={isTestableEnv && testErrorValue === 'true'}
+    />
+  )
 }

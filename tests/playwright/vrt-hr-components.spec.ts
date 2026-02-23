@@ -32,6 +32,11 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
+  test.afterEach(async () => {
+    // Clear mock HR devices to prevent state pollution between tests
+    await mockMultipleHrDevices(dashboardPage, [])
+  })
+
   test.beforeEach(async () => {
     await waitForPageReady(dashboardPage)
   })

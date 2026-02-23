@@ -148,22 +148,14 @@ jobs:
         run: |
           set -o pipefail
           pnpm run knip 2>&1 | tee knip-output.txt
-        continue-on-error: true
 
       - name: Upload Knip Report
-        if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
+        if: failure() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
           path: knip-output.txt
           retention-days: 2
-
-      - name: Fail on Knip Errors
-        if: steps.knip.outcome == 'failure'
-        continue-on-error: true
-        run: |
-          echo "::warning::Knip check failed but continuing workflow for now. Knip validation is under review."
-          exit 0
 
   lint-check:
     name: 🔍 Lint Check
@@ -185,16 +177,15 @@ jobs:
         id: lint
         shell: bash
         run: |
-          set -o pipefail
           ./scripts/ci/run-linter.sh
+        continue-on-error: true
 
       - name: Report Lint Failure
-        if: failure() && steps.lint.outcome == 'failure'
+        if: steps.lint.outcome == 'failure'
         run: |
-          echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          cat logs/lint-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "### ❌ Lint Check Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed annotations are available in the **Files Changed** tab. See the summary above for key issues." >> $GITHUB_STEP_SUMMARY
+          exit 1
 
       - name: Upload Lint Report
         if: always()
@@ -266,13 +257,26 @@ jobs:
           use-build-cache: true
           cache-type: type-check
 
+      - name: Register TypeScript Matcher
+        run: echo "::add-matcher::.github/tsc-error-matcher.json"
+
       - name: Run Type Check
         id: type-check
         shell: bash
         run: |
           set -o pipefail
           mkdir -p logs
-          pnpm run type-check 2>&1 | tee logs/type-check-output.log
+          # In CI, we use --pretty false to ensure the problem matcher can parse the output reliably
+          pnpm run type-check --pretty false 2>&1 | tee logs/type-check-output.log
+
+      - name: Report Type Check Failure
+        if: failure() && steps.type-check.outcome == 'failure'
+        run: |
+          echo "### ❌ Type Check Failure Report" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          # Show the first 20 lines of errors
+          head -n 20 logs/type-check-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Type Check Report
         if: always()
@@ -304,6 +308,9 @@ jobs:
           use-build-cache: true
           cache-type: next-build
 
+      - name: Register TypeScript Matcher
+        run: echo "::add-matcher::.github/tsc-error-matcher.json"
+
       - name: Verify Build
         id: build
         env:
@@ -315,6 +322,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          # Ensure build script doesn't use --pretty for tsc
           ./scripts/ci/run-build.sh
 
       - name: Verify Artifacts
@@ -829,17 +837,25 @@ jobs:
       perf-tests-outcome: ${{ needs.perf-tests.result }}
       visual-tests-outcome: ${{ needs.visual-tests.result }}
     steps:
-      - name: Determine Tests Status
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate Summary Report
         shell: bash
         run: |
-          echo "📊 All Integration Tests Summary:"
-          echo "  Script Tests: ${{ needs.script-tests.result }}"
-          echo "  Infra Tests: ${{ needs.infra-tests.result }}"
-          echo "  Unit Tests: ${{ needs.unit-tests.result }}"
-          echo "  Component Tests: ${{ needs.component-tests.result }}"
-          echo "  Perf Tests: ${{ needs.perf-tests.result }}"
-          echo "  Visual Tests: ${{ needs.visual-tests.result }}"
+          # Debug: list files to ensure script existence
+          ls -R scripts/ci/
+          bash ./scripts/ci/generate-test-summary.sh \
+            "${{ needs.script-tests.result }}" \
+            "${{ needs.infra-tests.result }}" \
+            "${{ needs.unit-tests.result }}" \
+            "${{ needs.component-tests.result }}" \
+            "${{ needs.perf-tests.result }}" \
+            "${{ needs.visual-tests.result }}"
 
+      - name: Determine Overall Status
+        shell: bash
+        run: |
           # Fail if any test failed
           if [ "${{ needs.script-tests.result }}" = "failure" ] || \
              [ "${{ needs.infra-tests.result }}" = "failure" ] || \
