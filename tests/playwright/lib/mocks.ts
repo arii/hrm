@@ -227,11 +227,13 @@ export async function mockSpotifySDK(
   pageOrContext: Page | BrowserContext
 ): Promise<void> {
   // 1. Mock the SDK script loading
-  await pageOrContext.route('https://sdk.scdn.co/spotify-player.js', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/javascript',
-      body: `
+  await pageOrContext.route(
+    'https://sdk.scdn.co/spotify-player.js',
+    (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/javascript',
+        body: `
         window.Spotify = {
           Player: class {
             constructor(options) {
@@ -265,8 +267,9 @@ export async function mockSpotifySDK(
           window.onSpotifyWebPlaybackSDKReady();
         }
       `,
-    })
-  })
+      })
+    }
+  )
 
   // 2. Intercept any other Spotify-related network requests to prevent 401s and external calls
   // This covers api.spotify.com, gue1-dealer.g2.spotify.com, and other scdn.co assets
