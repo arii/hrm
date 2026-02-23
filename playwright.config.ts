@@ -155,7 +155,7 @@ export default defineConfig({
   // Output configuration
   outputDir: 'test-results/',
   reporter: [
-    ['list'],
+    process.env.CI ? ['github'] : ['list'],
     ['blob'],
     ['junit', { outputFile: 'test-results/results.xml' }],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],

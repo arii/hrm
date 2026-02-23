@@ -185,16 +185,23 @@ jobs:
         id: lint
         shell: bash
         run: |
-          set -o pipefail
           ./scripts/ci/run-linter.sh
+        continue-on-error: true
+
+      - name: Annotate Lint Results
+        uses: ataylorme/eslint-annotate-action@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          report-json: logs/eslint-report.json
 
       - name: Report Lint Failure
-        if: failure() && steps.lint.outcome == 'failure'
+        if: steps.lint.outcome == 'failure'
         run: |
           echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
           cat logs/lint-output.log >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          exit 1
 
       - name: Upload Lint Report
         if: always()
@@ -266,6 +273,9 @@ jobs:
           use-build-cache: true
           cache-type: type-check
 
+      - name: Register Problem Matcher
+        run: echo "::add-matcher::.github/tsc-error-matcher.json"
+
       - name: Run Type Check
         id: type-check
         shell: bash
@@ -303,6 +313,9 @@ jobs:
         with:
           use-build-cache: true
           cache-type: next-build
+
+      - name: Register Problem Matcher
+        run: echo "::add-matcher::.github/tsc-error-matcher.json"
 
       - name: Verify Build
         id: build
@@ -839,6 +852,17 @@ jobs:
           echo "  Component Tests: ${{ needs.component-tests.result }}"
           echo "  Perf Tests: ${{ needs.perf-tests.result }}"
           echo "  Visual Tests: ${{ needs.visual-tests.result }}"
+
+          # Generate Markdown Summary Table
+          echo "### 📊 HRM Integration Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Script Tests** | $([ "${{ needs.script-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Infrastructure Tests** | $([ "${{ needs.infra-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Unit Tests** | $([ "${{ needs.unit-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Component Tests** | $([ "${{ needs.component-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Performance Tests** | $([ "${{ needs.perf-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Visual Tests** | $([ "${{ needs.visual-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
 
           # Fail if any test failed
           if [ "${{ needs.script-tests.result }}" = "failure" ] || \
