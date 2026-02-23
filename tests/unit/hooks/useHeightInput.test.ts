@@ -12,12 +12,16 @@ describe('useHeightInput', () => {
   })
 
   it('should initialize with derived state from initialCm', () => {
-    const { result } = renderHook(() => useHeightInput('180', 'METRIC', onCommit))
+    const { result } = renderHook(() =>
+      useHeightInput('180', 'METRIC', onCommit)
+    )
     expect(result.current.displayHeight.cm).toBe('180')
   })
 
   it('should update transient state when updateHeight is called', () => {
-    const { result } = renderHook(() => useHeightInput('180', 'METRIC', onCommit))
+    const { result } = renderHook(() =>
+      useHeightInput('180', 'METRIC', onCommit)
+    )
 
     act(() => {
       result.current.updateHeight({ cm: '185' })
@@ -28,7 +32,9 @@ describe('useHeightInput', () => {
   })
 
   it('should call onCommit and clear transient state on commitHeight if valid', () => {
-    const { result } = renderHook(() => useHeightInput('180', 'METRIC', onCommit))
+    const { result } = renderHook(() =>
+      useHeightInput('180', 'METRIC', onCommit)
+    )
 
     act(() => {
       result.current.updateHeight({ cm: '185' })
@@ -44,14 +50,18 @@ describe('useHeightInput', () => {
   })
 
   it('should handle imperial units correctly', () => {
-    const { result } = renderHook(() => useHeightInput('175.26', 'IMPERIAL', onCommit)) // 175.26 cm is 5ft 9in
+    const { result } = renderHook(() =>
+      useHeightInput('175.26', 'IMPERIAL', onCommit)
+    ) // 175.26 cm is 5ft 9in
 
     expect(result.current.displayHeight.feet).toBe('5')
     expect(result.current.displayHeight.inches).toBe('9')
   })
 
   it('should set error and NOT call onCommit if invalid', () => {
-    const { result } = renderHook(() => useHeightInput('180', 'METRIC', onCommit))
+    const { result } = renderHook(() =>
+      useHeightInput('180', 'METRIC', onCommit)
+    )
 
     act(() => {
       result.current.updateHeight({ cm: '50' }) // Too short

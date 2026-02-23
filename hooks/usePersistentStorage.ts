@@ -72,6 +72,9 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
 
           // Merge: Defaults -> Filtered Storage
           const merged = { ...initialValue, ...filteredParsed } as T
+          // This is the core of the SSR-safe logic. We initialize state to `initialValue`
+          // and then update it with the value from storage on the client.
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setStoredValue(merged)
 
           // Sync back to storage if using local storage to remove zombie keys

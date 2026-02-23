@@ -37,14 +37,18 @@ describe('usePersistentStorage', () => {
   })
 
   it('should use localStorage when available', () => {
-    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+    )
 
     act(() => {
       const [, setValue] = result.current
       setValue(UPDATED_VALUE)
     })
 
-    expect(JSON.parse(window.localStorage.getItem(TEST_KEY)!)).toEqual(UPDATED_VALUE)
+    expect(JSON.parse(window.localStorage.getItem(TEST_KEY)!)).toEqual(
+      UPDATED_VALUE
+    )
     expect(Cookies.set).not.toHaveBeenCalled()
   })
 
@@ -52,7 +56,9 @@ describe('usePersistentStorage', () => {
     // Mock localStorage to be unavailable
     Object.defineProperty(window, 'localStorage', {
       value: {
-        setItem: () => { throw new Error('Storage full') },
+        setItem: () => {
+          throw new Error('Storage full')
+        },
         getItem: jest.fn(),
         removeItem: jest.fn(),
         clear: jest.fn(),
@@ -61,20 +67,28 @@ describe('usePersistentStorage', () => {
       configurable: true,
     })
 
-    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+    )
 
     act(() => {
       const [, setValue] = result.current
       setValue(UPDATED_VALUE)
     })
 
-    expect(Cookies.set).toHaveBeenCalledWith(TEST_KEY, JSON.stringify(UPDATED_VALUE), expect.any(Object))
+    expect(Cookies.set).toHaveBeenCalledWith(
+      TEST_KEY,
+      JSON.stringify(UPDATED_VALUE),
+      expect.any(Object)
+    )
   })
 
   it('should load initial value from localStorage if present', () => {
     window.localStorage.setItem(TEST_KEY, JSON.stringify(UPDATED_VALUE))
 
-    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+    )
 
     expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
@@ -83,7 +97,9 @@ describe('usePersistentStorage', () => {
     // Mock localStorage to be unavailable
     Object.defineProperty(window, 'localStorage', {
       value: {
-        setItem: () => { throw new Error('Storage full') },
+        setItem: () => {
+          throw new Error('Storage full')
+        },
         getItem: jest.fn(),
         removeItem: jest.fn(),
         clear: jest.fn(),
@@ -91,10 +107,11 @@ describe('usePersistentStorage', () => {
       writable: true,
       configurable: true,
     })
-
     ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(UPDATED_VALUE))
 
-    const { result } = renderHook(() => usePersistentStorage(TEST_KEY, INITIAL_VALUE))
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+    )
 
     expect(result.current[0]).toEqual(UPDATED_VALUE)
   })

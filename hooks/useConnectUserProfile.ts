@@ -62,7 +62,13 @@ export const useConnectUserProfile = (): UserProfileState => {
       }
       setLocalDisplayWeight(null)
     }
-  }, [localDisplayWeight, displayWeight, unitSystem, setUserSettings, userWeight])
+  }, [
+    localDisplayWeight,
+    displayWeight,
+    unitSystem,
+    setUserSettings,
+    userWeight,
+  ])
 
   const handleUnitChange = useCallback(
     (newUnit: MeasurementSystem) => {
@@ -76,7 +82,10 @@ export const useConnectUserProfile = (): UserProfileState => {
 
   // Persistent commit on unmount/unload to handle cases where blur hasn't fired
   const blurHandlersRef = useRef({ handleWeightBlur, handleHeightBlur })
-  blurHandlersRef.current = { handleWeightBlur, handleHeightBlur }
+
+  useEffect(() => {
+    blurHandlersRef.current = { handleWeightBlur, handleHeightBlur }
+  }, [handleWeightBlur, handleHeightBlur])
 
   useEffect(() => {
     const persist = () => {
