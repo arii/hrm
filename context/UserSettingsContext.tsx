@@ -50,11 +50,16 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const migrate = useCallback((stored: unknown) => {
-    if (typeof stored !== 'object' || stored === null) return DEFAULT_PREFERENCES
+    if (typeof stored !== 'object' || stored === null) {
+      return DEFAULT_PREFERENCES
+    }
     const schemaKeys = Object.keys(DEFAULT_PREFERENCES)
-    const filtered = Object.keys(stored).reduce((acc, k) => {
+    const storedObj = stored as Record<string, unknown>
+    const filtered = Object.keys(storedObj).reduce((acc, k) => {
       if (schemaKeys.includes(k)) {
-        ;(acc as any)[k] = (stored as any)[k]
+        const key = k as keyof UserPreferences
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        acc[key] = storedObj[k] as any
       }
       return acc
     }, {} as Partial<UserPreferences>)
