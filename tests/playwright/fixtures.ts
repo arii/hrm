@@ -21,9 +21,16 @@ export const test = base.extend<PageFixtures>({
   dashboardPage: async ({ context, useNativeTable }, applyFixture) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
-      if (!msg.text().includes('DOCS_timing')) {
-        console.log(`Console ${msg.type()}: ${msg.text()}`)
+      const text = msg.text()
+      // Filter out expected noise
+      if (text.includes('DOCS_timing')) return
+
+      // Filter out expected server-side render error during the ErrorFallback UI test
+      if (text.includes('An error occurred in the Server Components render')) {
+        return
       }
+
+      console.log(`Console ${msg.type()}: ${text}`)
     })
 
     // If useNativeTable is explicitly set, we could potentially inject it here

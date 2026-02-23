@@ -168,6 +168,7 @@ export default defineConfig({
           NEXTAUTH_URL: baseURL,
           SPOTIFY_CLIENT_ID: 'test_client_id',
           SPOTIFY_CLIENT_SECRET: 'test_client_secret',
+          ALLOW_DEBUG_RESET: 'true',
         },
       },
 
@@ -175,8 +176,15 @@ export default defineConfig({
   outputDir: 'test-results/',
   reporter: [
     ['list'],
+    process.env.CI ? ['github'] : [],
     ['blob'],
-    ['junit', { outputFile: 'test-results/results.xml' }],
+    [
+      'junit',
+      {
+        outputFile:
+          process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME || 'test-results/results.xml',
+      },
+    ],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
   ],

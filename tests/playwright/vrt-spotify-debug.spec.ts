@@ -1,10 +1,11 @@
 import { test } from './fixtures'
-import { setupMinimalVisualRegressionTest } from './test-helpers'
+import { setupMinimalVisualRegressionTest, mockLoggedInSession } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 test.describe('Spotify Debug Page VRT', () => {
   test('initial state', async ({ dashboardPage, useNativeTable }) => {
+    await mockLoggedInSession(context)
     await setupMinimalVisualRegressionTest(dashboardPage, '/debug/spotify', {
       useNativeTable,
     })

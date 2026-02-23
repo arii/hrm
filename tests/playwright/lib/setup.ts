@@ -11,6 +11,7 @@ import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { mockGoogleDocIframe, mockWorkoutApi } from './mocks'
+import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
   waitForPageReady,
@@ -137,6 +138,22 @@ export async function navigateAndWait(
   })
 
   await waitForPageReady(page)
+}
+
+/**
+ * Resets the server-side HRM state using the debug endpoint.
+ *
+ * @param request - The Playwright APIRequestContext object.
+ */
+export async function resetServerState(
+  request: APIRequestContext
+): Promise<void> {
+  const response = await request.post(`${getBaseURL()}/api/debug/reset`)
+  if (!response.ok()) {
+    console.warn(
+      `Warning: Failed to reset server state. Status: ${response.status()}`
+    )
+  }
 }
 
 /**

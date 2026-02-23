@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest } from './test-helpers'
+import { setupVisualRegressionTest, mockLoggedInSession } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -23,6 +23,9 @@ test.describe('Visual Regression Tests', () => {
     context = setup.context
     controlPage = setup.controlPage
     dashboardPage = setup.dashboardPage
+
+    // Mock session to ensure consistent authenticated state for components
+    await mockLoggedInSession(context)
   })
 
   // Centralized cleanup hook
