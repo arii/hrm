@@ -191,20 +191,20 @@ export async function setupVisualRegressionTest(
   // Mock the workout API response for stable VRT
   await mockWorkoutApi(context, workoutData)
 
-  // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
     context.newPage(),
     context.newPage(),
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel
   const baseUrl = getBaseURL()
-  const nativeParam =
-    useNativeTable !== undefined ? `?native=${useNativeTable}` : ''
+  const dashboardUrl = new URL(HRM_ROUTES.DASHBOARD, baseUrl)
+  if (useNativeTable !== undefined) {
+    dashboardUrl.searchParams.set('native', useNativeTable.toString())
+  }
 
   await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}${nativeParam}`),
+    dashboardPage.goto(dashboardUrl.toString()),
     controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
     mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
   ])
@@ -257,21 +257,14 @@ export async function setupMinimalVisualRegressionTest(
   // Mock the workout API response for stable VRT
   await mockWorkoutApi(page, workoutData)
 
-  // Append native flag if needed
-  let finalPath = path
+  const url = new URL(path, getBaseURL())
   if (useNativeTable !== undefined) {
-    const separator = finalPath.includes('?') ? '&' : '?'
-    finalPath = `${finalPath}${separator}native=${useNativeTable}`
+    url.searchParams.set('native', useNativeTable.toString())
   }
 
-  // Mock the iframe for the root path before navigation
-  if (path === '' || path === '/' || path.includes('?')) {
-    // Only mock if it's the dashboard page
-    if (path.startsWith('/') || path === '') {
-      await mockGoogleDocIframe(page, workoutHtml)
-    }
-  }
-  await navigateAndWait(page, finalPath)
+  await mockGoogleDocIframe(page, workoutHtml)
+
+  await navigateAndWait(page, url.pathname + url.search)
 }
 
 /**

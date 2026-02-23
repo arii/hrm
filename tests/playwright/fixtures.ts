@@ -33,10 +33,6 @@ export const test = base.extend<PageFixtures>({
       console.log(`Console ${msg.type()}: ${text}`)
     })
 
-    // If useNativeTable is explicitly set, we could potentially inject it here
-    // but navigations happen in the tests.
-    // Instead, we can provide a decorated goto or just let tests handle it.
-
     await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },
