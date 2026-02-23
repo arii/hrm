@@ -1,4 +1,4 @@
-import DashboardClient from '@/components/DashboardClient'
+  import DashboardClient from '@/components/DashboardClient'
 import { env } from '@/lib/env'
 
 interface DashboardProps {
