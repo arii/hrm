@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ErrorInfo, ReactNode } from 'react'
+import { VRT_TEST_ERROR_MESSAGE } from '@/constants/vrt'
 
 interface Props {
   children: ReactNode
@@ -21,6 +22,10 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Suppress logging for intentional VRT errors to keep test logs clean.
+    if (error.message === VRT_TEST_ERROR_MESSAGE) {
+      return
+    }
     console.error('Uncaught error:', error, errorInfo)
   }
 

@@ -55,6 +55,11 @@ test.describe('Visual Regression Tests', () => {
     )
   })
 
+  test.afterEach(async () => {
+    // Clear mock HR devices to prevent state pollution between tests
+    await mockMultipleHrDevices(dashboardPage, [])
+  })
+
   test.describe('HR-Related Components', () => {
     test('dashboard with HR data', async () => {
       await mockPage.getByLabel('Current BPM').fill('155')
