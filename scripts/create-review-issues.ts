@@ -3,16 +3,20 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs'
 import path from 'path'
 import os from 'os'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 import { z } from 'zod'
 
 // --- Constants ---
 const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 // Load config once at module level for efficiency
 const config = (() => {
   try {
-    const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
+    const CONFIG_PATH = path.join(__dirname, 'issue-config.json')
     const content = readFileSync(CONFIG_PATH, 'utf-8')
     return JSON.parse(content)
   } catch (e) {
@@ -82,7 +86,12 @@ const LABEL_CONFIG: { [key: string]: { color: string; description: string } } =
 
 const SuggestedIssueSchema = z.object({
   title: z.string(),
-  description: z.string().min(1, 'Description is required.'),
+  description: z
+    .string()
+    .min(
+      MIN_DESCRIPTION_LENGTH,
+      `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters.`
+    ),
   type: z.enum([
     'bug',
     'enhancement',
@@ -546,10 +555,7 @@ export async function run(
 
   let result: ReviewResult
   try {
-    const content = readFileSync(
-      path.resolve(process.cwd(), reviewFilePath),
-      'utf-8'
-    )
+    const content = readFileSync(path.resolve(reviewFilePath), 'utf-8')
     const parsedJson = JSON.parse(content)
     const validationResult = ReviewResultSchema.safeParse(parsedJson)
     if (!validationResult.success) {
@@ -593,7 +599,7 @@ export async function run(
   let slopPattern: RegExp | null = null
   try {
     const slopWords = readFileSync(
-      path.resolve(process.cwd(), 'ai_slop_words.txt'),
+      path.join(__dirname, '../ai_slop_words.txt'),
       'utf-8'
     )
       .split('\n')
