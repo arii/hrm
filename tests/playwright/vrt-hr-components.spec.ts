@@ -1,10 +1,8 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
   getHrMasks,
-  setupVisualRegressionTest,
-  cleanupVisualRegressionTest,
   mockMultipleHrDevices,
   resetServerState,
 } from './lib'
@@ -15,33 +13,15 @@ import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
 
-// Reusable page objects
-let dashboardPage: Page
-let mockPage: Page
-let context: BrowserContext
-
 // Test suite for VRT
 test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    dashboardPage = setup.dashboardPage
-    mockPage = setup.mockPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ dashboardPage, mockPage, request }) => {
     // 1. Reset server-side state
     await resetServerState(request)
 
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await dashboardPage.reload()
-    await mockPage.reload()
+    // 2. Navigate to required routes
+    await dashboardPage.goto('/')
+    await mockPage.goto('/client/mock')
 
     // 3. Wait for pages to be ready and connected
     await waitForPageReady(dashboardPage)
@@ -57,12 +37,8 @@ test.describe('Visual Regression Tests', () => {
     )
   })
 
-  // Explicit cleanup for pages not managed by fixtures
-  test.afterEach(async () => {
-    await cleanupVisualRegressionTest(dashboardPage)
-  })
-
   test.describe('HR-Related Components', () => {
+<<<<<<< HEAD
     // Reset devices after each test to prevent state pollution
     test.afterEach(async () => {
       await mockMultipleHrDevices(dashboardPage, [])
@@ -70,6 +46,9 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('dashboard with HR data', async () => {
+=======
+    test('dashboard with HR data', async ({ dashboardPage, mockPage }) => {
+>>>>>>> c8cb2a02 (chore: optimize VRT cleanup and standardize on fixtures)
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
@@ -98,7 +77,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Multiple connected devices
-    test('dashboard with 2 HR devices', async () => {
+    test('dashboard with 2 HR devices', async ({ dashboardPage }) => {
       const expectedCount = 2
 
       // Disconnect from server to prevent background updates (like "Mock User") from interfering
@@ -162,7 +141,10 @@ test.describe('Visual Regression Tests', () => {
     // NEW: HR device in representative zones (Idle, Middle, Max)
     const zones = [0, 3, 6]
     for (const zone of zones) {
-      test(`dashboard with HR in Zone ${zone}`, async () => {
+      test(`dashboard with HR in Zone ${zone}`, async ({
+        dashboardPage,
+        mockPage,
+      }) => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
@@ -189,7 +171,7 @@ test.describe('Visual Regression Tests', () => {
     }
 
     // NEW: Disconnected state
-    test('dashboard with disconnected HR device', async () => {
+    test('dashboard with disconnected HR device', async ({ dashboardPage }) => {
       await mockMultipleHrDevices(dashboardPage, [])
       // Ensure no tiles are present
       await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
