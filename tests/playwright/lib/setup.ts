@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe, mockMultipleHrDevices } from './mocks'
+import { mockGoogleDocIframe } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
@@ -323,17 +323,17 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
 }
 
 /**
- * Stop any running timer on the provided page.
+ * Stop any running timer on the control page.
  * Useful for ensuring tests start from a clean state.
  *
- * @param page - The Page object to check for a running timer
- * @param dashboardPage - Optional dashboard Page object to verify timer reset
+ * @param controlPage - The control panel Page object
+ * @param dashboardPage - The dashboard Page object (optional)
  */
 export async function stopTimer(
-  page: Page,
+  controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = page.getByRole('button', {
+  const stopButton = controlPage.getByRole('button', {
     name: 'STOP',
     exact: true,
   })
@@ -348,7 +348,7 @@ export async function stopTimer(
 
       // Wait for START button to confirm timer stopped
       await expect(
-        page.getByRole('button', { name: 'START', exact: true })
+        controlPage.getByRole('button', { name: 'START', exact: true })
       ).toBeVisible({ timeout: 2000 })
 
       // Wait for dashboard to clear timer display if provided
@@ -362,8 +362,7 @@ export async function stopTimer(
       }
     }
   } catch {
-    // In many cleanup scenarios, the page might already be closed or the button missing
-    // We log a debug message but don't fail the teardown
+    // Teardown errors are ignored to prevent masking test failures
   }
 }
 

@@ -15,12 +15,6 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
@@ -116,9 +110,7 @@ export const WebSocketProvider = ({
         (typeof window !== 'undefined' &&
           window.location.search.includes('testing=true'))
       ) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
+        window.__TEST_CONTROLS__ = {
           dispatch,
           disconnect: () => {},
           connect: () => {},
@@ -324,12 +316,9 @@ export const WebSocketProvider = ({
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
-      const testControls = (
-        window as Window & { __TEST_CONTROLS__?: TestControls }
-      ).__TEST_CONTROLS__
-      if (testControls) {
-        testControls.disconnect = disconnect
-        testControls.connect = connect
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.disconnect = disconnect
+        window.__TEST_CONTROLS__.connect = connect
       }
     }
 

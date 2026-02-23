@@ -14,15 +14,25 @@ export interface TestControls {
   // From WebSocketProvider context
   dispatch?: (message: ServerMessage) => void
   disconnect?: () => void
+  connect?: () => void
 }
 
 declare global {
   var spotifyService: SpotifyService | undefined
 
   interface Window {
+    /** Flag used by Playwright to ensure the application is fully hydrated and ready for interaction. */
     __TEST_READY__?: boolean
+    /** Flag used by Playwright to verify that the WebSocket connection is active. */
     __TEST_WEBSOCKET_READY__?: boolean
+    /** Centralized object for manual state manipulation during E2E/Visual tests. */
     TEST_CONTROLS?: TestControls
+    /** WebSocket-specific test controls used by Playwright. @deprecated Use TEST_CONTROLS instead. */
+    __TEST_CONTROLS__?: {
+      dispatch: (message: ServerMessage) => void
+      disconnect: () => void
+      connect: () => void
+    }
   }
 }
 
