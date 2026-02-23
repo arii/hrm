@@ -270,6 +270,7 @@ export async function createServices(broadcast) {
   // 3. Persist to globalThis for future reloads and global access
   globalWithServices.spotifyService = services.spotifyService
   globalWithServices.tabataService = services.tabataService
+  globalWithServices.isSpotifyInitialized = services.isSpotifyInitialized
 
   return services
 }
