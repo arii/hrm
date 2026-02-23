@@ -127,11 +127,7 @@ export interface HrmInputMessage {
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
   'clientId' | 'value' | 'calories'
-> & {
-  weight?: number
-  height?: number
-  gender?: string
-}
+>
 
 export interface HrmMetadataUpdateMessage {
   type: 'HRM_METADATA_UPDATE'
@@ -212,9 +208,9 @@ const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
-  weight: z.number().optional(),
-  height: z.number().optional(),
-  gender: z.string().optional(),
+  weightKg: z.number().optional(),
+  heightCm: z.number().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'NEUTRAL']).optional(),
 })
 
 const HrmMetadataUpdateMessageSchema = z.object({

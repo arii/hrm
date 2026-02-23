@@ -174,6 +174,8 @@ const initSocketManager = (
         value: 0,
         maxHr: 185,
         age: 30,
+        weightKg: 70,
+        gender: 'NEUTRAL',
         calories: 0,
         updatedAt: Date.now(),
         // Add default name in test env to satisfy server-side filter in existing tests

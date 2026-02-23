@@ -130,6 +130,8 @@ export interface RawHrmStreamData {
   percentage?: number
   zone?: HeartRateZone
   weightKg?: number
+  heightCm?: number
+  gender?: Gender
   updatedAt?: number
 }
 

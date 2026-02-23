@@ -18,22 +18,26 @@ import {
 } from '../../../types/websocket'
 import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { Gender } from '@/types/core'
+import MenuItem from '@mui/material/MenuItem'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
-  const [weight, setWeight] = useState(70) // Add weight state
-  const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('female') // Add gender state
+  const [weightKg, setWeightKg] = useState(70)
+  const [heightCm, setHeightCm] = useState(175)
+  const [gender, setGender] = useState<Gender>('FEMALE')
+  const [calories, setCalories] = useState(0)
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
 
   const sendHrPacket = useCallback(
-    (hr: number) => {
+    (hr: number, currentCalories: number) => {
       const { zone, percentage } = calculateZoneFromMaxHr(
         hr,
         calculateMaxHr(age)
@@ -46,6 +50,7 @@ export default function MockPage() {
           value: hr,
           percentage,
           zone: heartRateZone,
+          calories: currentCalories,
         },
       }
       sendData(message)
@@ -60,13 +65,13 @@ export default function MockPage() {
         maxHr: maxHr,
         name: name,
         age: age,
-        weight: weight,
-        height: height,
+        weightKg: weightKg,
+        heightCm: heightCm,
         gender: gender,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr, weight, height, gender])
+  }, [sendData, name, age, maxHr, weightKg, heightCm, gender])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -77,14 +82,29 @@ export default function MockPage() {
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
-    sendHrPacket(hrValue)
+    sendHrPacket(hrValue, calories)
     const id = window.setInterval(() => {
-      const fluctuatedHr = Math.max(
-        70,
-        hrValue + Math.floor(Math.random() * 5) - 2
-      )
-      setHrValue(fluctuatedHr)
-      sendHrPacket(fluctuatedHr)
+      setHrValue((prevHr) => {
+        const fluctuatedHr = Math.max(
+          70,
+          prevHr + Math.floor(Math.random() * 5) - 2
+        )
+
+        setCalories((prevCalories) => {
+          const caloriesDelta = estimateCaloriesBurned({
+            heartRate: fluctuatedHr,
+            age,
+            weightKg,
+            gender,
+            durationMinutes: 2 / 60, // 2 seconds interval
+          })
+          const newCalories = prevCalories + caloriesDelta
+          sendHrPacket(fluctuatedHr, newCalories)
+          return newCalories
+        })
+
+        return fluctuatedHr
+      })
     }, 2000)
     setIntervalId(id)
   }
@@ -98,9 +118,10 @@ export default function MockPage() {
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
-    setHrValue(isNaN(value) ? 0 : value)
+    const finalValue = isNaN(value) ? 0 : value
+    setHrValue(finalValue)
     if (!isStreaming) {
-      sendHrPacket(value)
+      sendHrPacket(finalValue, calories)
     }
   }
 
@@ -119,7 +140,7 @@ export default function MockPage() {
     const newHr = zones[zone]
     setHrValue(newHr)
     if (!isStreaming) {
-      sendHrPacket(newHr)
+      sendHrPacket(newHr, calories)
     }
   }
 
@@ -169,8 +190,8 @@ export default function MockPage() {
                 label="Weight (kg)"
                 placeholder="e.g., 70"
                 type="number"
-                value={weight}
-                onChange={(e) => setWeight(parseInt(e.target.value, 10))}
+                value={weightKg}
+                onChange={(e) => setWeightKg(parseInt(e.target.value, 10))}
                 fullWidth
               />
             </Grid>
@@ -179,19 +200,23 @@ export default function MockPage() {
                 label="Height (cm)"
                 placeholder="e.g., 175"
                 type="number"
-                value={height}
-                onChange={(e) => setHeight(parseInt(e.target.value, 10))}
+                value={heightCm}
+                onChange={(e) => setHeightCm(parseInt(e.target.value, 10))}
                 fullWidth
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
               <TextField
+                select
                 label="Gender"
-                placeholder="e.g., male"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                onChange={(e) => setGender(e.target.value as Gender)}
                 fullWidth
-              />
+              >
+                <MenuItem value="MALE">Male</MenuItem>
+                <MenuItem value="FEMALE">Female</MenuItem>
+                <MenuItem value="NEUTRAL">Neutral</MenuItem>
+              </TextField>
             </Grid>
           </Grid>
 
@@ -305,7 +330,7 @@ export default function MockPage() {
             disabled={connectionStatus !== 'Connected'}
             startIcon={<HeartBroken />}
             fullWidth
-            sx={{ mb: 3 }}
+            sx={{ mb: 1 }}
             data-testid={
               isStreaming ? 'streaming-stop-button' : 'streaming-start-button'
             }
@@ -313,6 +338,18 @@ export default function MockPage() {
             {isStreaming
               ? `STOP Streaming HR: ${hrValue} BPM`
               : 'START Continuous Stream'}
+          </Button>
+
+          <Button
+            variant="outlined"
+            size="small"
+            color="secondary"
+            onClick={() => setCalories(0)}
+            disabled={isStreaming}
+            sx={{ mb: 3 }}
+            fullWidth
+          >
+            Reset Calories ({Math.floor(calories)} kcal)
           </Button>
 
           <Box
