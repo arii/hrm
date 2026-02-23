@@ -74,45 +74,46 @@ const DashboardClient = ({
   }
 
   return (
-    <Container
-      data-testid="dashboard"
-      maxWidth="xl"
-      onClick={handleInteraction}
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
+    <>
       {triggerError && <TestErrorTrigger />}
-      <Box sx={mainGridStyles}>
-        <Box sx={{ height: '100%' }}>
-          <TimerDisplay />
+      <Container
+        data-testid="dashboard"
+        maxWidth="xl"
+        onClick={handleInteraction}
+        sx={{
+          py: { xs: 2, sm: 3 },
+          minHeight: '100vh',
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={mainGridStyles}>
+          <Box sx={{ height: '100%' }}>
+            <TimerDisplay />
+          </Box>
+          <HrmConnectionPanel />
         </Box>
-        <HrmConnectionPanel />
-      </Box>
-      <Box sx={{ width: '100%', mt: 2 }}>
-        {useNativeTable ? (
-          <WorkoutTableHeader
-            docId={DOC_ID}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        )}
-      </Box>
-
+        <Box sx={{ width: '100%', mt: 2 }}>
+          {useNativeTable ? (
+            <WorkoutTableHeader
+              docId={DOC_ID}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={DOC_URL}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          )}
+        </Box>
+      </Container>
       <SpotifyDisplay />
-    </Container>
+    </>
   )
 }
 
