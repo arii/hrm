@@ -108,9 +108,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     | null
   >(null)
 
-  const stopKeepAlive = useCallback(async () => {
+  const stopKeepAlive = useCallback(() => {
     if (wakeLockRef.current) {
-      await wakeLockRef.current.release().catch(() => {})
+      wakeLockRef.current.release().catch(() => {})
       wakeLockRef.current = null
     }
     if (audioRef.current) {
@@ -126,16 +126,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const startKeepAlive = useCallback(async () => {
     if (typeof window === 'undefined') return
     if (!wakeLockRef.current) {
-      try {
-        const wl = await requestWakeLock()
-        if (wl) {
-          wl.addEventListener('release', () => {
-            wakeLockRef.current = null
-          })
-          wakeLockRef.current = wl
-        }
-      } catch (err) {
-        logger.error({ err }, 'Wake lock failed')
+      const wl = await requestWakeLock()
+      if (wl) {
+        wl.addEventListener('release', () => {
+          wakeLockRef.current = null
+        })
+        wakeLockRef.current = wl
       }
     }
     if (!audioRef.current) {
@@ -151,10 +147,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  const cleanupGattConnection = useCallback(async () => {
+  const cleanupGattConnection = useCallback(() => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (abortControllerRef.current) abortControllerRef.current.abort()
-    await stopKeepAlive()
+    stopKeepAlive()
     const device = deviceRef.current
     if (device) {
       if (activeDisconnectListenerRef.current) {
@@ -302,7 +298,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const forgetDevice = useCallback(async () => {
     logger.info('Forgetting device...')
-    await disconnect()
+    disconnect()
     try {
       setCookie('hrm_device_id', '', -1)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
@@ -411,7 +407,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnecting.current) return false
+      if (isConnecting.current) return true
       if (abortControllerRef.current) abortControllerRef.current.abort()
       isConnecting.current = true
       abortControllerRef.current = new AbortController()
