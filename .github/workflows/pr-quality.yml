@@ -198,9 +198,7 @@ jobs:
         if: steps.lint.outcome == 'failure'
         run: |
           echo "### ❌ Lint Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          cat logs/lint-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "Linting failed. Please see the **Files Changed** tab for inline annotations or check the job logs for details." >> $GITHUB_STEP_SUMMARY
           exit 1
 
       - name: Upload Lint Report
@@ -854,15 +852,25 @@ jobs:
           echo "  Visual Tests: ${{ needs.visual-tests.result }}"
 
           # Generate Markdown Summary Table
+          get_status_icon() {
+            case "$1" in
+              "success") echo "✅ Pass" ;;
+              "failure") echo "❌ Fail" ;;
+              "cancelled") echo "🛑 Cancelled" ;;
+              "skipped") echo "⏭️ Skipped" ;;
+              *) echo "❓ Unknown ($1)" ;;
+            esac
+          }
+
           echo "### 📊 HRM Integration Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Script Tests** | $([ "${{ needs.script-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Infrastructure Tests** | $([ "${{ needs.infra-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Unit Tests** | $([ "${{ needs.unit-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Component Tests** | $([ "${{ needs.component-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Performance Tests** | $([ "${{ needs.perf-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Visual Tests** | $([ "${{ needs.visual-tests.result }}" = "success" ] && echo '✅ Pass' || echo '❌ Fail') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Script Tests** | $(get_status_icon "${{ needs.script-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Infrastructure Tests** | $(get_status_icon "${{ needs.infra-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Unit Tests** | $(get_status_icon "${{ needs.unit-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Component Tests** | $(get_status_icon "${{ needs.component-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Performance Tests** | $(get_status_icon "${{ needs.perf-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Visual Tests** | $(get_status_icon "${{ needs.visual-tests.result }}") |" >> $GITHUB_STEP_SUMMARY
 
           # Fail if any test failed
           if [ "${{ needs.script-tests.result }}" = "failure" ] || \
