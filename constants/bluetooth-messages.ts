@@ -32,7 +32,8 @@ export const BLUETOOTH_MESSAGES = {
     `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
   connectionStormDetected:
     'Connection unstable. Please re-sync your sensor manually.',
-  backgroundReconnectDisabled: 'Reconnection paused while tab is in background.',
+  backgroundReconnectDisabled:
+    'Reconnection paused while tab is in background.',
 
   // Error Messages
   error: 'Error',

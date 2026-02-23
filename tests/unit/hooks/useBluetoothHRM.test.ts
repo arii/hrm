@@ -566,6 +566,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
+<<<<<<< HEAD
 
 <<<<<<< HEAD
       // It should also forget the device
@@ -575,6 +576,8 @@ describe('useBluetoothHRM', () => {
       expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
 =======
 >>>>>>> 802319d5 (Refine Bluetooth HRM auto-reconnection strategy for stability)
+=======
+>>>>>>> b575afc8 (Refine Bluetooth HRM Auto-Reconnection Strategy to Mitigate GATT Errors and Improve Stability)
     })
 
     it('should successfully reconnect after a disconnection', async () => {
