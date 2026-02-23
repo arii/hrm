@@ -19,6 +19,7 @@ import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
@@ -83,8 +84,8 @@ export default function ConnectView({
   const isDisconnecting =
     bluetoothStatus === BluetoothConnectionStatus.DISCONNECTING
   const isReSyncNeeded =
-    deviceStatus.includes('re-sync') ||
-    deviceStatus.includes('Failed to reconnect')
+    (deviceStatus || '').includes('re-sync') ||
+    (deviceStatus || '').includes('Failed to reconnect')
 
   useEffect(() => {
     if (isConnected) {
@@ -169,12 +170,13 @@ export default function ConnectView({
 
         {deviceStatus &&
           !isConnected &&
-          bluetoothStatus !== BluetoothConnectionStatus.DISCONNECTED && (
+          (bluetoothStatus !== BluetoothConnectionStatus.DISCONNECTED ||
+            deviceStatus !== BLUETOOTH_MESSAGES.disconnected) && (
             <Alert
               data-testid="connection-status-alert"
               severity={
                 bluetoothStatus === BluetoothConnectionStatus.ERROR ||
-                deviceStatus.includes('Failed')
+                deviceStatus.toLowerCase().includes('failed')
                   ? 'error'
                   : 'info'
               }

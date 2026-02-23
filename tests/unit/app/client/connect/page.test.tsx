@@ -11,6 +11,7 @@ import {
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 // Correctly mock the hooks
 const mockConnectAndStream = jest.fn()
@@ -27,6 +28,7 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     deviceStatus: 'disconnected',
     batteryLevel: null,
     isConnected: false,
+    bluetoothStatus: BluetoothConnectionStatus.DISCONNECTED,
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
@@ -217,6 +219,7 @@ describe('ConnectPage', () => {
       deviceStatus: 'connected',
       batteryLevel: 90,
       isConnected: true,
+      bluetoothStatus: BluetoothConnectionStatus.CONNECTED,
       isDataStale: false,
       isSupported: true,
       disconnectionReason: null,

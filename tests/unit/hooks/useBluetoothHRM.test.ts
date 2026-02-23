@@ -3,6 +3,7 @@
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import Cookies from 'js-cookie'
 import { env } from '@/lib/env'
@@ -561,6 +562,9 @@ describe('useBluetoothHRM', () => {
             `failed to reconnect after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
             'i'
           )
+        )
+        expect(result.current.bluetoothStatus).toBe(
+          BluetoothConnectionStatus.ERROR
         )
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
