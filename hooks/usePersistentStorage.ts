@@ -26,9 +26,18 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
-function usePersistentStorage<T>(key: string, initialValue: T) {
+export interface UsePersistentStorageOptions<T> {
+  migrate?: (data: unknown) => T
+}
+
+function usePersistentStorage<T>(
+  key: string,
+  initialValue: T,
+  options: UsePersistentStorageOptions<T> = {}
+) {
   const [storedValue, setStoredValue] = useState<T>(initialValue)
   const lastKeyRef = useRef<string | null>(null)
+  const { migrate } = options
 
   useEffect(() => {
     if (lastKeyRef.current === key) return
@@ -41,7 +50,11 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
         : Cookies.get(key)
 
       if (item) {
-        const parsed = JSON.parse(item)
+        let parsed = JSON.parse(item)
+
+        if (migrate) {
+          parsed = migrate(parsed)
+        }
 
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
           const merged = { ...initialValue, ...parsed } as T
@@ -71,7 +84,7 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
         error
       )
     }
-  }, [key, initialValue, storedValue])
+  }, [key, initialValue, storedValue, migrate])
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {

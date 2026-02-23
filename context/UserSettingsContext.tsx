@@ -1,6 +1,6 @@
 // context/UserSettingsContext.tsx
 'use client'
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useCallback } from 'react'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
 
@@ -49,10 +49,23 @@ export const UserSettingsContext = createContext<
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const migrate = useCallback((stored: unknown) => {
+    if (typeof stored !== 'object' || stored === null) return DEFAULT_PREFERENCES
+    const schemaKeys = Object.keys(DEFAULT_PREFERENCES)
+    const filtered = Object.keys(stored).reduce((acc, k) => {
+      if (schemaKeys.includes(k)) {
+        ;(acc as any)[k] = (stored as any)[k]
+      }
+      return acc
+    }, {} as Partial<UserPreferences>)
+    return { ...DEFAULT_PREFERENCES, ...filtered }
+  }, [])
+
   // Use the usePersistentStorage hook directly within the provider
   const userPreferences = usePersistentStorage<UserPreferences>(
     'user-prefs',
-    DEFAULT_PREFERENCES
+    DEFAULT_PREFERENCES,
+    { migrate }
   )
 
   return (
