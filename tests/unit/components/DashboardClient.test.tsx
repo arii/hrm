@@ -55,14 +55,19 @@ jest.mock('@/hooks/useAudio', () => ({
 }))
 
 describe('DashboardClient', () => {
+  const mockProps = {
+    workoutDocUrl: 'https://docs.google.com/document/d/mock-doc-id/edit',
+    workoutDocIframeUrl: 'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
+  }
+
   it('renders GoogleDocViewer when useNativeTable is false', async () => {
-    render(<DashboardClient useNativeTable={false} />)
+    render(<DashboardClient useNativeTable={false} {...mockProps} />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
   })
 
   it('renders WorkoutTableHeader when useNativeTable is true', async () => {
-    render(<DashboardClient useNativeTable={true} />)
+    render(<DashboardClient useNativeTable={true} {...mockProps} />)
     expect(
       await screen.findByTestId('workout-table-header')
     ).toBeInTheDocument()
@@ -70,7 +75,7 @@ describe('DashboardClient', () => {
   })
 
   it('passes a new refreshKey to child components when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={true} />)
+    render(<DashboardClient useNativeTable={true} {...mockProps} />)
 
     const workoutTableHeader = await screen.findByTestId('workout-table-header')
     const initialRefreshKey =
@@ -94,7 +99,7 @@ describe('DashboardClient', () => {
   })
 
   it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={false} />)
+    render(<DashboardClient useNativeTable={false} {...mockProps} />)
 
     const googleDocViewer = await screen.findByTestId('google-doc-viewer')
     const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')

@@ -24,5 +24,11 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     throw new Error('VRT Test Error')
   }
 
-  return <DashboardClient useNativeTable={useNativeTable} />
+  return (
+    <DashboardClient
+      useNativeTable={useNativeTable}
+      workoutDocUrl={env.GOOGLE_DOC_WORKOUT_URL}
+      workoutDocIframeUrl={env.GOOGLE_DOC_IFRAME_URL}
+    />
+  )
 }

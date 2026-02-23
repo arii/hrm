@@ -16,9 +16,6 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
 })
 
-const DOC_URL =
-  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
-
 const WorkoutTableHeader = dynamic(
   () => import('@/components/WorkoutTableHeader'),
   {
@@ -32,9 +29,6 @@ const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
   loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
 
-const DOC_ID =
-  '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
-
 const mainGridStyles: SxProps = {
   display: 'grid',
   gridTemplateColumns: {
@@ -46,9 +40,15 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
+  workoutDocUrl?: string
+  workoutDocIframeUrl?: string
 }
 
-const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
+const DashboardClient = ({
+  useNativeTable,
+  workoutDocUrl,
+  workoutDocIframeUrl,
+}: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -64,6 +64,10 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
       setAudioInitialized(true)
     }
   }
+
+  const docId = workoutDocUrl
+    ? workoutDocUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1]
+    : undefined
 
   return (
     <Container
@@ -85,14 +89,14 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
       <Box sx={{ width: '100%', mt: 2 }}>
         {useNativeTable ? (
           <WorkoutTableHeader
-            docId={DOC_ID}
+            docId={docId || ''}
             refreshKey={refreshKey}
             onRefresh={handleRefresh}
           />
         ) : (
           <GoogleDocViewer
             title="Today's Training Regimen"
-            embedUrl={DOC_URL}
+            embedUrl={workoutDocIframeUrl || ''}
             height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}

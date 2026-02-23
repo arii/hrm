@@ -17,6 +17,7 @@ const envSchema = z
     SPOTIFY_DEBUG: z.string().optional(),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
+    GOOGLE_DOC_IFRAME_URL: z.string().url().optional(),
     NEXT_PUBLIC_USE_NATIVE_TABLE: z
       .preprocess((val) => {
         if (typeof val === 'string') return val.toLowerCase() === 'true'
