@@ -39,7 +39,7 @@ jobs:
           IS_DEPLOYMENT: 'true'
         run: |
           # 1. Use production config with standalone output
-          cp deploy/next.config.js next.config.js
+          cp deploy/next.config.ts next.config.ts
           # 2. Build Next.js
           pnpm run build
           # 3. Package Artifact (Hybrid Strategy)

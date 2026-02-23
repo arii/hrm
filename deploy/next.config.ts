@@ -1,18 +1,20 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next'
+import { env } from '../lib/env'
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'i.scdn.co',
         port: '',
         pathname: '/image/**',
       },
     ],
   },
-  output: 'standalone',
+  output: 'standalone' as const,
   env: {
-    TESTING: process.env.TESTING,
+    TESTING: String(env.TESTING),
   },
   async redirects() {
     return [

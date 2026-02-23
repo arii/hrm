@@ -108,7 +108,7 @@ export class ConnectionMonitor {
     this.wss = wss
 
     // If no interval is provided via argument, get it from the environment.
-    let interval: number = watchdogInterval ?? env.WEBSOCKET_WATCHDOG_INTERVAL
+    const interval: number = watchdogInterval ?? env.WEBSOCKET_WATCHDOG_INTERVAL
 
     // Final validation for any source.
     if (interval <= 0) {
