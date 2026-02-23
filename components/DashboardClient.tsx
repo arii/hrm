@@ -4,6 +4,7 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
+import Alert from '@mui/material/Alert'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
@@ -102,29 +103,34 @@ const DashboardClient = ({
           <Box sx={{ height: '100%' }}>
             <TimerDisplay />
           </Box>
-          <HrmConnectionPanel />
         </Box>
         <HrmConnectionPanel />
-      </Box>
-      <Box sx={{ width: '100%', mt: 2 }}>
-        {useNativeTable ? (
-          <WorkoutTableHeader
-            docId={docId || ''}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={iframeUrl || ''}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-          />
-        )}
-      </Box>
+        <Box sx={{ width: '100%', mt: 2 }}>
+          {(!docId && useNativeTable) || (!iframeUrl && !useNativeTable) ? (
+            <Alert severity="warning" sx={{ width: '100%' }}>
+              {useNativeTable
+                ? 'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
+                : 'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'}
+            </Alert>
+          ) : useNativeTable ? (
+            <WorkoutTableHeader
+              docId={docId || ''}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={iframeUrl || ''}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+              refreshKey={refreshKey}
+              onRefresh={handleRefresh}
+            />
+          )}
+        </Box>
+      </Container>
 
       <SpotifyDisplay />
     </>

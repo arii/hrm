@@ -163,7 +163,8 @@ export default defineConfig({
       'junit',
       {
         outputFile:
-          process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME || 'test-results/results.xml',
+          process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ||
+          'test-results/results.xml',
       },
     ],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
