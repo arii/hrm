@@ -339,21 +339,24 @@ export async function stopTimer(
   })
 
   try {
-    // If timer is running, stop it
-    if (await stopButton.isVisible({ timeout: 2000 })) {
+    // Performance: Fast-fail check for button existence before checking visibility
+    if ((await stopButton.count()) === 0) return
+
+    // If timer is running, stop it. Use a short timeout for cleanup checks.
+    if (await stopButton.isVisible({ timeout: 500 })) {
       await stopButton.click()
 
       // Wait for START button to confirm timer stopped
       await expect(
         page.getByRole('button', { name: 'START', exact: true })
-      ).toBeVisible({ timeout: 5000 })
+      ).toBeVisible({ timeout: 2000 })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
         await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
           /00:00/,
           {
-            timeout: 5000,
+            timeout: 2000,
           }
         )
       }

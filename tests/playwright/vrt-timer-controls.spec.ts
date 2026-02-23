@@ -1,50 +1,27 @@
-import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest, cleanupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
 
-// Reusable page objects
-let controlPage: Page
-let dashboardPage: Page
-let context: BrowserContext
-
 // Test suite for VRT
 test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    controlPage = setup.controlPage
-    dashboardPage = setup.dashboardPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  // Explicit cleanup for pages not managed by fixtures
-  test.afterEach(async () => {
-    await cleanupVisualRegressionTest(dashboardPage, controlPage)
-  })
-
   // Add a beforeEach hook to wait for the page to be ready before each test
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ controlPage, dashboardPage }) => {
+    await controlPage.goto('/client/control')
+    await dashboardPage.goto('/')
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
   })
 
   test.describe('TimerControls Component', () => {
-    test('initial state', async () => {
+    test('initial state', async ({ controlPage }) => {
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-idle.png')
     })
 
-    test('with configured inputs', async () => {
+    test('with configured inputs', async ({ controlPage }) => {
       // Ensure Tabata mode is active to see inputs
       await controlPage.getByTestId('tabata-mode-button').click()
 
@@ -70,7 +47,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('in active state', async () => {
+    test('in active state', async ({ controlPage }) => {
       await controlPage.getByTestId('start-timer-button').click()
       await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible()
 
@@ -83,7 +60,7 @@ test.describe('Visual Regression Tests', () => {
       await controlPage.getByTestId('stop-timer-button').click()
     })
 
-    test('start button hover state', async () => {
+    test('start button hover state', async ({ controlPage }) => {
       const startButton = controlPage.getByTestId('start-timer-button')
       await startButton.hover()
       await takeScreenshot(startButton, 'start-button-hover.png', {
@@ -92,7 +69,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('in stopwatch mode', async () => {
+    test('in stopwatch mode', async ({ controlPage }) => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {

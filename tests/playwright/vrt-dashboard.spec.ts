@@ -1,11 +1,6 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { test } from './fixtures'
-import {
-  getDynamicContentMasks,
-  setupVisualRegressionTest,
-  resetServerState,
-  cleanupVisualRegressionTest,
-} from './lib'
+import { getDynamicContentMasks, resetServerState } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -13,41 +8,16 @@ import { VRT_TIMEOUTS } from './lib/timeouts'
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
 
-// Reusable page objects
-let dashboardPage: Page
-let controlPage: Page
-let mockPage: Page
-let context: BrowserContext
-
 // Test suite for VRT
 test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    dashboardPage = setup.dashboardPage
-    controlPage = setup.controlPage
-    mockPage = setup.mockPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  // Explicit cleanup for pages not managed by the dashboardPage/controlPage fixtures
-  test.afterEach(async () => {
-    await cleanupVisualRegressionTest(dashboardPage, controlPage)
-  })
-
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ dashboardPage, controlPage, mockPage, request }) => {
     // 1. Reset server-side state
     await resetServerState(request)
 
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await dashboardPage.reload()
-    await controlPage.reload()
-    await mockPage.reload()
+    // 2. Navigate to required routes
+    await dashboardPage.goto('/')
+    await controlPage.goto('/client/control')
+    await mockPage.goto('/client/mock')
 
     // 3. Wait for pages to be ready and connected
     await waitForPageReady(dashboardPage)
@@ -77,7 +47,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Dashboard Component', () => {
-    test('initial, empty state', async () => {
+    test('initial, empty state', async ({ dashboardPage }) => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
@@ -86,7 +56,10 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer with no HR data
-    test('active timer without HR data', async () => {
+    test('active timer without HR data', async ({
+      dashboardPage,
+      controlPage,
+    }) => {
       // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
@@ -120,7 +93,11 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer WITH HR data (the regression scenario)
-    test('active timer with HR data', async () => {
+    test('active timer with HR data', async ({
+      dashboardPage,
+      controlPage,
+      mockPage,
+    }) => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
@@ -149,7 +126,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Responsive breakpoint tests
-    test('mobile viewport', async () => {
+    test('mobile viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 375, height: 1000 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
@@ -158,7 +135,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('tablet viewport', async () => {
+    test('tablet viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 768, height: 1000 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
@@ -167,7 +144,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('large desktop viewport', async () => {
+    test('large desktop viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
