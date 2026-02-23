@@ -305,8 +305,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         msg = `Error: ${error.message}`
       }
     }
-    setStatus(BluetoothConnectionStatus.ERROR)
-    setCustomStatusMessage(BLUETOOTH_MESSAGES.errorWithDetails(msg))
+    if (isMounted.current) {
+      setStatus(BluetoothConnectionStatus.ERROR)
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.errorWithDetails(msg))
+    }
     logger.error({ error }, msg)
   }, [])
 
@@ -330,11 +332,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       const delay = getBackoffDelay(reconnectAttempts.current, isZombieError)
 
-      setStatus(
-        isZombieError
-          ? BluetoothConnectionStatus.CONNECTING
-          : BluetoothConnectionStatus.RECONNECTING
-      )
+      if (isMounted.current) {
+        setStatus(
+          isZombieError
+            ? BluetoothConnectionStatus.CONNECTING
+            : BluetoothConnectionStatus.RECONNECTING
+        )
+      }
 
       const statusMessage = isZombieError
         ? BLUETOOTH_MESSAGES.deviceBusy(
@@ -359,7 +363,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ) {
           if (device.gatt?.connected) {
             logger.info('Device already connected, skipping reconnect attempt.')
-            setStatus(BluetoothConnectionStatus.CONNECTED)
+            if (isMounted.current) {
+              setStatus(BluetoothConnectionStatus.CONNECTED)
+            }
             return
           }
 
@@ -513,10 +519,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current = device
 
         if (!isReconnect) {
-          setStatus(BluetoothConnectionStatus.CONNECTING)
-          setCustomStatusMessage(
-            BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
-          )
+          if (isMounted.current) {
+            setStatus(BluetoothConnectionStatus.CONNECTING)
+            setCustomStatusMessage(
+              BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
+            )
+          }
         }
 
         let server: BluetoothRemoteGATTServer | undefined
@@ -637,10 +645,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         )
 
-        setStatus(BluetoothConnectionStatus.CONNECTED)
-        setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
-        )
+        if (isMounted.current) {
+          setStatus(BluetoothConnectionStatus.CONNECTED)
+          setCustomStatusMessage(
+            BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
+          )
+        }
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
@@ -671,6 +681,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (device.gatt?.connected) {
           logger.info('Ensuring GATT disconnection after failure...')
           device.gatt.disconnect()
+          return false // Let onDisconnected handle the retry/cleanup
         }
 
         if (errorMsg.includes('timeout')) {
@@ -678,8 +689,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             { device: device.name },
             'Connection timeout detected. Resetting device and permissions.'
           )
-          setStatus(BluetoothConnectionStatus.ERROR)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
+          if (isMounted.current) {
+            setStatus(BluetoothConnectionStatus.ERROR)
+            setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
+          }
           reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
           deviceRef.current = null
 
@@ -892,6 +905,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     deviceStatus,
     batteryLevel,
     isConnected: status === BluetoothConnectionStatus.CONNECTED,
+    bluetoothStatus: status,
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,

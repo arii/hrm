@@ -114,6 +114,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    bluetoothStatus,
     isDataStale,
     isSupported,
     signalPeriodMs,
@@ -201,6 +202,7 @@ export default function ConnectPage() {
       caloriesBurned={caloriesBurned}
       userProfile={userProfile}
       isConnected={isConnected}
+      bluetoothStatus={bluetoothStatus}
       isDataStale={isDataStale}
       deviceStatus={deviceStatus}
       batteryLevel={batteryLevel}

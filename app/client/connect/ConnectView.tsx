@@ -21,12 +21,14 @@ import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
   userProfile: UserProfileState
   isConnected: boolean
+  bluetoothStatus: BluetoothConnectionStatus
   isDataStale?: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -52,6 +54,7 @@ export default function ConnectView({
   caloriesBurned,
   userProfile,
   isConnected,
+  bluetoothStatus,
   isDataStale = false,
   deviceStatus,
   batteryLevel,
@@ -73,6 +76,15 @@ export default function ConnectView({
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
   const { data } = userProfile
+
+  const isConnecting =
+    bluetoothStatus === BluetoothConnectionStatus.CONNECTING ||
+    bluetoothStatus === BluetoothConnectionStatus.RECONNECTING
+  const isDisconnecting =
+    bluetoothStatus === BluetoothConnectionStatus.DISCONNECTING
+  const isReSyncNeeded =
+    deviceStatus.includes('re-sync') ||
+    deviceStatus.includes('Failed to reconnect')
 
   useEffect(() => {
     if (isConnected) {
@@ -157,10 +169,15 @@ export default function ConnectView({
 
         {deviceStatus &&
           !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
+          bluetoothStatus !== BluetoothConnectionStatus.DISCONNECTED && (
             <Alert
               data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+              severity={
+                bluetoothStatus === BluetoothConnectionStatus.ERROR ||
+                deviceStatus.includes('Failed')
+                  ? 'error'
+                  : 'info'
+              }
               sx={{ mb: 2 }}
             >
               {deviceStatus}
@@ -176,22 +193,21 @@ export default function ConnectView({
               disabled={
                 !data.userName.trim() ||
                 !data.userAge.trim() ||
-                deviceStatus.includes('Connecting') ||
-                deviceStatus.includes('Disconnecting')
+                isConnecting ||
+                isDisconnecting
               }
             >
-              {deviceStatus.includes('Connecting') ? (
+              {isConnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
                 </Stack>
-              ) : deviceStatus.includes('Disconnecting') ? (
+              ) : isDisconnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Disconnecting...</span>
                 </Stack>
-              ) : deviceStatus.includes('re-sync') ||
-                deviceStatus.includes('Failed to reconnect') ? (
+              ) : isReSyncNeeded ? (
                 'Re-sync Sensor'
               ) : (
                 'Connect Bluetooth HRM'
@@ -230,9 +246,9 @@ export default function ConnectView({
                 size="large"
                 onClick={onDisconnect}
                 color="error"
-                disabled={deviceStatus.includes('Disconnecting')}
+                disabled={isDisconnecting}
               >
-                {deviceStatus.includes('Disconnecting') ? (
+                {isDisconnecting ? (
                   <Stack direction="row" spacing={1} alignItems="center">
                     <CircularProgress size={20} color="inherit" />
                     <span>Disconnecting...</span>
