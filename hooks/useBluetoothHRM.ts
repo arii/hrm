@@ -382,10 +382,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     isManualDisconnect.current = false
 
-    if (
-      typeof window !== 'undefined' &&
-      String(env.NEXT_PUBLIC_TESTING) === 'true'
-    ) {
+    if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
@@ -406,10 +403,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (
-        typeof window !== 'undefined' &&
-        String(env.NEXT_PUBLIC_TESTING) === 'true'
-      ) {
+      if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING) {
         if (window.TEST_CONTROLS) {
           delete window.TEST_CONTROLS.setHrmStatus
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage

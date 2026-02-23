@@ -12,8 +12,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
   const useNativeTable =
     nativeValue === 'true' ||
-    (String(env.NEXT_PUBLIC_USE_NATIVE_TABLE) === 'true' &&
-      nativeValue !== 'false')
+    (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
 
   // Check for test-error
   const testErrorParam = params['test-error']
