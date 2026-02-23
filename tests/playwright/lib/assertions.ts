@@ -101,21 +101,10 @@ export async function assertWebSocketConnected(
 ): Promise<void> {
   const { timeout = 10000 } = options
 
-  const isConnected = await page.evaluate((t) => {
-    return new Promise<boolean>((resolve) => {
-      const checkConnection = () => {
-        if (window.__TEST_WEBSOCKET_READY__ === true) {
-          resolve(true)
-          return
-        }
-        setTimeout(checkConnection, 100)
-      }
-      checkConnection()
-      setTimeout(() => resolve(false), t)
-    })
-  }, timeout)
-
-  expect(isConnected).toBe(true)
+  await page.waitForFunction(
+    () => document.body.dataset.connectionStatus === 'connected',
+    { timeout }
+  )
 }
 
 /**
