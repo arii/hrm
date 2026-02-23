@@ -1,9 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import {
-  setupVisualRegressionTest,
-  cleanupVisualRegressionTest,
-} from './lib'
+import { setupVisualRegressionTest, cleanupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
