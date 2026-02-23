@@ -15,6 +15,14 @@ import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '@/utils/websocketUtils'
 import logger from '@/utils/logger.server'
 import { ExtWebSocket } from '@/types/websocket'
+import { env } from '@/lib/env'
+
+// Mock env
+jest.mock('@/lib/env', () => ({
+  env: {
+    WEBSOCKET_WATCHDOG_INTERVAL: 30000,
+  },
+}))
 
 // Mock the logger to prevent console output during tests
 jest.mock('@/utils/logger.server', () => ({
@@ -181,7 +189,8 @@ describe('ConnectionMonitor', () => {
 
   describe('Constructor Interval Validation', () => {
     afterEach(() => {
-      delete process.env.WEBSOCKET_WATCHDOG_INTERVAL
+      // @ts-expect-error - reset mock
+      env.WEBSOCKET_WATCHDOG_INTERVAL = 30000
     })
 
     it('should use the provided watchdogInterval if valid', () => {
@@ -201,19 +210,25 @@ describe('ConnectionMonitor', () => {
     })
 
     it('should use the environment variable if no argument is provided', () => {
-      process.env.WEBSOCKET_WATCHDOG_INTERVAL = '15000'
+      // @ts-expect-error - set mock
+      env.WEBSOCKET_WATCHDOG_INTERVAL = 15000
       const monitor = new ConnectionMonitor(mockWss)
       monitor.start()
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 15000)
     })
 
     it('should fall back to default if environment variable is invalid', () => {
-      process.env.WEBSOCKET_WATCHDOG_INTERVAL = 'invalid'
+      // Note: With Zod validation, invalid env vars throw at startup or are coerced.
+      // ConnectionMonitor no longer handles 'invalid' strings as the env object
+      // will already have the coerced/default value.
+      // This test is kept for logic coverage of fallback when interval <= 0.
+      // @ts-expect-error - set mock
+      env.WEBSOCKET_WATCHDOG_INTERVAL = -1
       const monitor = new ConnectionMonitor(mockWss)
       monitor.start()
       expect(logger.warn).toHaveBeenCalledWith(
         expect.any(Object),
-        'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
+        'Watchdog interval must be a positive integer. Using fallback.'
       )
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
     })

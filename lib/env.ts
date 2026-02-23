@@ -134,8 +134,8 @@ if (!parsedEnv.success && isServer) {
   throw parsedEnv.error
 }
 
-export const env = parsedEnv.success
+export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : (parsedEnv as any).data || ({} as z.infer<typeof envSchema>)
+  : ({} as z.infer<typeof envSchema>)
 
 export { envSchema }
