@@ -109,6 +109,7 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  resetServerState,
   // Timer utilities
   stopTimer,
   configureTimer,
@@ -127,6 +128,7 @@ export {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   mockSpotifyAccessToken,
+  mockSpotifyPlaylists,
 } from './mocks'
 
 // ============================================================================

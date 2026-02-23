@@ -21,9 +21,13 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     ? testErrorParam[0]
     : testErrorParam
 
-  if (testErrorValue === 'true') {
-    throw new Error('VRT Test Error')
-  }
+  // Only allow intentional errors in development or test environments.
+  const isTestableEnv =
+    process.env.NODE_ENV !== 'production' ||
+    env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
+    env.CI === 'true' ||
+    env.TESTING === 'true' ||
+    false
 
   const docId = extractGoogleDocId(env.GOOGLE_DOC_WORKOUT_URL)
 
@@ -32,6 +36,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
       useNativeTable={useNativeTable}
       docId={docId}
       iframeUrl={env.GOOGLE_DOC_IFRAME_URL}
+      triggerError={isTestableEnv && testErrorValue === 'true'}
     />
   )
 }

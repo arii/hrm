@@ -13,7 +13,25 @@ import { useAudio } from '@/hooks/useAudio'
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height="80px" />,
+  loading: () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 56,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        width: '100%',
+        minHeight: '64px',
+      }}
+    >
+      <DashboardSectionLoadingSkeleton height="64px" />
+    </Box>
+  ),
+})
+
+const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
+  ssr: false,
 })
 
 const WorkoutTableHeader = dynamic(
@@ -42,12 +60,14 @@ interface DashboardClientProps {
   useNativeTable: boolean
   docId?: string
   iframeUrl?: string
+  triggerError?: boolean
 }
 
 const DashboardClient = ({
   useNativeTable,
   docId,
   iframeUrl,
+  triggerError,
 }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
@@ -66,19 +86,23 @@ const DashboardClient = ({
   }
 
   return (
-    <Container
-      data-testid="dashboard"
-      maxWidth="xl"
-      onClick={handleInteraction}
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
-      <Box sx={mainGridStyles}>
-        <Box sx={{ height: '100%' }}>
-          <TimerDisplay />
+    <>
+      {triggerError && <TestErrorTrigger />}
+      <Container
+        data-testid="dashboard"
+        maxWidth="xl"
+        onClick={handleInteraction}
+        sx={{
+          py: { xs: 2, sm: 3 },
+          minHeight: '100vh',
+          backgroundColor: 'background.default',
+        }}
+      >
+        <Box sx={mainGridStyles}>
+          <Box sx={{ height: '100%' }}>
+            <TimerDisplay />
+          </Box>
+          <HrmConnectionPanel />
         </Box>
         <HrmConnectionPanel />
       </Box>
@@ -103,7 +127,7 @@ const DashboardClient = ({
       </Box>
 
       <SpotifyDisplay />
-    </Container>
+    </>
   )
 }
 

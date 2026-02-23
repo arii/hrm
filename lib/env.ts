@@ -15,6 +15,12 @@ const envSchema = z
     SPOTIFY_CALLBACK_URL: z.string().url().optional(),
     INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
     SPOTIFY_DEBUG: z.string().optional(),
+    ALLOW_DEBUG_RESET: z
+      .preprocess((val) => {
+        if (typeof val === 'string') return val.toLowerCase() === 'true'
+        return val === true
+      }, z.boolean())
+      .default(false),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional().or(z.literal('')),
     GOOGLE_DOC_IFRAME_URL: z.string().url().optional().or(z.literal('')),
