@@ -47,10 +47,10 @@ interface MockBluetoothDevice {
 declare global {
   interface Window {
     __TEST_CONTROLS__?: {
-      dispatch?: (message: any) => void
+      dispatch?: (message: unknown) => void
       disconnect?: () => void
       connect?: () => void
-      setHrmStatus?: (status: any) => void
+      setHrmStatus?: (status: unknown) => void
       setCustomHrmStatusMessage?: (message: string | null) => void
     }
     bluetoothTestHelpers?: {
