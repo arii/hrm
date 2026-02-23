@@ -4,12 +4,16 @@ import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
   resetServerState,
+  cleanupVisualRegressionTest,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
+<<<<<<< HEAD
 import { stopTimer } from './lib/setup'
 import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
+=======
+>>>>>>> 869dda23 (chore: centralize and automate VRT mock HR device cleanup)
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -37,8 +41,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.afterEach(async () => {
-    // Ensure timer is stopped after each test to maintain a clean state
-    await stopTimer(controlPage, dashboardPage)
+    await cleanupVisualRegressionTest(dashboardPage, controlPage)
   })
 
   test.beforeEach(async ({ request }) => {

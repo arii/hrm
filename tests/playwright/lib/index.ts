@@ -110,6 +110,7 @@ export {
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,
+  cleanupVisualRegressionTest,
   // Timer utilities
   stopTimer,
   configureTimer,

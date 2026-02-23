@@ -4,6 +4,7 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
+import { mockMultipleHrDevices } from './lib/mocks'
 
 type PageFixtures = {
   dashboardPage: Page
@@ -28,21 +29,50 @@ export const test = base.extend<PageFixtures>({
       console.log(`Console ${msg.type()}: ${text}`)
     })
     await applyFixture(page)
+
+    // Teardown: Clear mock HR devices to prevent state pollution between tests
+    try {
+      await mockMultipleHrDevices(page, [])
+    } catch (error) {
+      // Ignore errors if the page is already closed or navigated away
+      console.warn('Failed to clear mock HR devices during teardown:', error)
+    }
   },
 
   controlPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
+
+    // Teardown
+    try {
+      await mockMultipleHrDevices(page, [])
+    } catch (error) {
+      console.warn('Failed to clear mock HR devices during teardown:', error)
+    }
   },
 
   mockPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
+
+    // Teardown
+    try {
+      await mockMultipleHrDevices(page, [])
+    } catch (error) {
+      console.warn('Failed to clear mock HR devices during teardown:', error)
+    }
   },
 
   connectPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
     await applyFixture(page)
+
+    // Teardown
+    try {
+      await mockMultipleHrDevices(page, [])
+    } catch (error) {
+      console.warn('Failed to clear mock HR devices during teardown:', error)
+    }
   },
 })
 
