@@ -293,6 +293,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const reconnect = useCallback(
     (device: BluetoothDevice, reason = 'Connection lost') => {
+      if (reconnectTimeoutRef.current || isConnecting.current) {
+        logger.debug(
+          {
+            hasTimeout: !!reconnectTimeoutRef.current,
+            isConnecting: isConnecting.current,
+          },
+          'Reconnection already in progress. Skipping.'
+        )
+        return
+      }
+
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
@@ -325,6 +336,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             )
       )
       reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isConnecting.current &&
@@ -436,10 +448,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
           setBatteryLevel((await bChar.readValue()).getUint8(0))
           await bChar.startNotifications()
-          const bListener = (e: Event) =>
-            setBatteryLevel(
-              (e.target as BluetoothRemoteGATTCharacteristic).value!.getUint8(0)
-            )
+          const bListener = (e: Event) => {
+            const target = e.target as BluetoothRemoteGATTCharacteristic
+            if (target?.value) {
+              setBatteryLevel(target.value.getUint8(0))
+            }
+          }
           bChar.addEventListener('characteristicvaluechanged', bListener)
           batteryCharacteristicRef.current = bChar
           batteryListenerRef.current = bListener
@@ -449,12 +463,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         await characteristic.startNotifications()
         setIsDataStale(false)
         const hrListener = (e: Event) => {
+          const target = e.target as BluetoothRemoteGATTCharacteristic
+          if (!target?.value) return
+
           const now = Date.now()
           if (lastDataTime.current > 0)
             updateSignalPeriod(now - lastDataTime.current)
-          const val = (e.target as BluetoothRemoteGATTCharacteristic).value
-          if (!val) return
-          const hr = parseHeartRate(val)
+
+          const hr = parseHeartRate(target.value)
           lastDataTime.current = now
           onHeartRateUpdateRef.current?.(hr)
         }
