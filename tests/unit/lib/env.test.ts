@@ -37,18 +37,27 @@ describe('Environment Variables', () => {
     process.env.INTERNAL_API_MAX_REQUESTS = '200'
     process.env.GENERAL_API_MAX_REQUESTS = '400'
     process.env.WS_MAX_CONNECTIONS = '10'
+    process.env.ANALYZE = 'true'
+    process.env.TESTING = 'true'
+    process.env.IGNORE_BUILD_ERRORS = 'true'
+    process.env.npm_package_version = '1.0.0'
+
     const { env } = await import('../../../lib/env')
     expect(env.RATE_LIMIT_WINDOW_MS).toBe(120000)
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(60)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(200)
     expect(env.GENERAL_API_MAX_REQUESTS).toBe(400)
     expect(env.WS_MAX_CONNECTIONS).toBe(10)
+    expect(env.ANALYZE).toBe(true)
+    expect(env.TESTING).toBe(true)
+    expect(env.IGNORE_BUILD_ERRORS).toBe(true)
+    expect(env.npm_package_version).toBe('1.0.0')
   })
 
   it('should throw an error for invalid environment variables', async () => {
-    process.env.NODE_ENV = 'test'
+    process.env.NODE_ENV = 'production'
     process.env.NEXTAUTH_URL = 'invalid-url'
-    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.NEXTAUTH_SECRET = 'short'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)

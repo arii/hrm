@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import logger from '@/utils/logger'
+import { env } from '@/lib/env'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
@@ -28,8 +29,8 @@ export async function GET(_req: Request) {
         'No valid user session found, attempting system token fallback.'
       )
       const tokenManager = new SpotifyTokenManager(
-        process.env.SPOTIFY_CLIENT_ID || '',
-        process.env.SPOTIFY_CLIENT_SECRET || ''
+        env.SPOTIFY_CLIENT_ID || '',
+        env.SPOTIFY_CLIENT_SECRET || ''
       )
       accessToken = await tokenManager.getValidAccessToken()
     }

@@ -9,6 +9,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.server.js'
+import { env } from '@/lib/env'
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
@@ -110,21 +111,8 @@ export class ConnectionMonitor {
 
     // If no interval is provided via argument, get it from the environment.
     if (interval === undefined) {
-      const envValue = process.env.WEBSOCKET_WATCHDOG_INTERVAL
-      const parsedValue = parseInt(envValue || '30000', 10)
-
-      if (envValue && (isNaN(parsedValue) || parsedValue <= 0)) {
-        logger.warn(
-          {
-            provided: envValue,
-            fallback: 30000,
-          },
-          'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
-        )
-        interval = 30000
-      } else {
-        interval = parsedValue
-      }
+      const envValue = env.WEBSOCKET_WATCHDOG_INTERVAL
+      interval = envValue
     }
 
     // Final validation for any source.

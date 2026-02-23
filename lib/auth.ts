@@ -50,7 +50,7 @@ async function syncTokenWithBackend(token: JWT) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-token-secret': env.NEXTAUTH_SECRET,
+        'x-internal-token-secret': env.NEXTAUTH_SECRET || '',
       },
       body: JSON.stringify(tokenPayload),
     })
@@ -142,9 +142,9 @@ const SPOTIFY_SCOPES = [
 
 // --- CRITICAL SECURITY CHECK ---
 // Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
-const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET
+const NEXTAUTH_SECRET_VAL = env.NEXTAUTH_SECRET
 
-if (!NEXTAUTH_SECRET) {
+if (!NEXTAUTH_SECRET_VAL) {
   throw new Error(
     'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
   )
@@ -287,5 +287,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret: NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET_VAL,
 }

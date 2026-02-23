@@ -94,7 +94,7 @@ const getLogMeta = (
   // DEV-NOTE: Be mindful of logging sensitive data. In a real-world scenario,
   // IP addresses and user-agents might be considered PII and should be
   // handled according to privacy policies. Redacting in production is a safeguard.
-  const isProduction = process.env.NODE_ENV === 'production'
+  const isProduction = env.NODE_ENV === 'production'
 
   const ip = req.socket.remoteAddress
   const userAgent = req.headers['user-agent']

@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+const booleanSchema = z.preprocess((val) => {
+  if (typeof val === 'string') return val.toLowerCase() === 'true'
+  return val === true
+}, z.boolean())
+
 const envSchema = z
   .object({
     NODE_ENV: z
@@ -7,8 +12,8 @@ const envSchema = z
       .default('development'),
     PORT: z.coerce.number().default(3000),
     HOST: z.string().default('0.0.0.0'),
-    NEXTAUTH_SECRET: z.string(),
-    NEXTAUTH_URL: z.string().url(),
+    NEXTAUTH_SECRET: z.string().optional(),
+    NEXTAUTH_URL: z.string().url().optional(),
     BASE_URL: z.string().url().optional(),
     SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
     SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
@@ -17,12 +22,7 @@ const envSchema = z
     SPOTIFY_DEBUG: z.string().optional(),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    NEXT_PUBLIC_USE_NATIVE_TABLE: z
-      .preprocess((val) => {
-        if (typeof val === 'string') return val.toLowerCase() === 'true'
-        return val === true
-      }, z.boolean())
-      .default(false),
+    NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema.default(false),
     NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
     NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
@@ -38,11 +38,18 @@ const envSchema = z
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
     NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
-    ANALYZE: z.string().optional(),
-    TESTING: z.string().optional(),
-    IS_DEPLOYMENT: z.string().optional(),
+    ANALYZE: booleanSchema.default(false),
+    TESTING: booleanSchema.default(false),
+    NEXT_PUBLIC_TESTING: booleanSchema.optional(),
+    IS_DEPLOYMENT: booleanSchema.default(false),
+    LOG_LEVEL: z.string().optional(),
     WS_URL: z.string().url().optional(),
     HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),
+    npm_package_version: z.string().optional(),
+    IGNORE_BUILD_ERRORS: booleanSchema.default(false),
+    INCLUDE_MOBILE: booleanSchema.default(false),
+    SKIP_WEBSERVER: booleanSchema.default(false),
+    SKIP_BUILD: booleanSchema.default(false),
   })
   .superRefine((data, ctx) => {
     // Paired validation for Spotify credentials
@@ -76,37 +83,53 @@ const envSchema = z
     }
 
     // Production-ready NEXTAUTH_SECRET validation
-    if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET.length < 32) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['NEXTAUTH_SECRET'],
-        message:
-          'NEXTAUTH_SECRET must be at least 32 characters long in production.',
-      })
-    }
-
-    if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET.length < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['NEXTAUTH_SECRET'],
-        message: 'NEXTAUTH_SECRET is required.',
-      })
+    if (data.NODE_ENV === 'production') {
+      if (!data.NEXTAUTH_SECRET || data.NEXTAUTH_SECRET.length < 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['NEXTAUTH_SECRET'],
+          message:
+            'NEXTAUTH_SECRET must be at least 32 characters long in production.',
+        })
+      }
+      if (!data.NEXTAUTH_URL) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['NEXTAUTH_URL'],
+          message: 'NEXTAUTH_URL is required in production.',
+        })
+      }
     }
   })
   .transform((data) => {
+    // Provide a default NEXTAUTH_URL for non-production environments if not set
+    if (!data.NEXTAUTH_URL && data.NODE_ENV !== 'production') {
+      data.NEXTAUTH_URL = 'http://localhost:3000'
+    }
+
     if (!data.SPOTIFY_CALLBACK_URL && data.NEXTAUTH_URL) {
       data.SPOTIFY_CALLBACK_URL = `${data.NEXTAUTH_URL}/api/auth/callback/spotify`
     }
+
+    // Alias NEXT_PUBLIC_TESTING to TESTING if not explicitly set
+    if (data.NEXT_PUBLIC_TESTING === undefined) {
+      data.NEXT_PUBLIC_TESTING = data.TESTING
+    }
+
     return data
   })
 
 const parsedEnv = envSchema.safeParse(process.env)
 
-if (!parsedEnv.success) {
+const isServer = typeof window === 'undefined'
+
+if (!parsedEnv.success && isServer) {
   console.error('❌ Invalid environment variables:', parsedEnv.error.format())
   throw parsedEnv.error
 }
 
-export const env = parsedEnv.data
+export const env = parsedEnv.success
+  ? parsedEnv.data
+  : (parsedEnv as any).data || ({} as z.infer<typeof envSchema>)
 
 export { envSchema }
