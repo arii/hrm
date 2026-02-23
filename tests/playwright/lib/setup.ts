@@ -345,9 +345,9 @@ export async function stopTimer(
 
       // Wait for START button to confirm timer stopped. Use a reduced timeout
       // for teardown to keep tests fast.
-      await expect(
-        controlPage.getByTestId('start-timer-button')
-      ).toBeVisible({ timeout: 1000 })
+      await expect(controlPage.getByTestId('start-timer-button')).toBeVisible({
+        timeout: 1000,
+      })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
