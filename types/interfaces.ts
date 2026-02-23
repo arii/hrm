@@ -39,7 +39,7 @@ export interface SpotifyService {
   /**
    * Cleans up resources used by the service, like intervals or timeouts.
    */
-  cleanup?(): void
+  cleanup(): void
 
   /**
    * Handles the reception of new Spotify authentication tokens.
