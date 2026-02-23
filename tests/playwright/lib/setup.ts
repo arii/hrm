@@ -89,10 +89,7 @@ export async function createTestPage(
     enableConsoleLogging?: boolean
   } = {}
 ): Promise<Page> {
-  const {
-    viewport = DESKTOP_VIEWPORT,
-    enableConsoleLogging = false,
-  } = options
+  const { viewport = DESKTOP_VIEWPORT, enableConsoleLogging = false } = options
 
   const page = await context.newPage()
   await page.setViewportSize(viewport)
