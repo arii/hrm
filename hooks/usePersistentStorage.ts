@@ -26,7 +26,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
-interface UsePersistentStorageOptions<T> {
+/** @public */
+export interface UsePersistentStorageOptions<T> {
   /**
    * Optional migration function to handle schema evolution or data sanitization.
    * Receives the raw data from storage (as unknown) and must return the validated type T.

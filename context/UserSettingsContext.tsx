@@ -56,10 +56,15 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     const storedRecord = stored as Record<string, unknown>
     const cleanStored = Object.keys(DEFAULT_PREFERENCES).reduce((acc, key) => {
       const k = key as keyof UserPreferences
-      if (storedRecord[k] !== undefined && storedRecord[k] !== null) {
-        acc[k] = storedRecord[
-          k
-        ] as unknown as UserPreferences[keyof UserPreferences]
+      const storedVal = storedRecord[k]
+      const defaultVal = DEFAULT_PREFERENCES[k]
+
+      if (
+        storedVal !== undefined &&
+        storedVal !== null &&
+        typeof storedVal === typeof defaultVal
+      ) {
+        ;(acc as Record<string, unknown>)[k] = storedVal
       }
       return acc
     }, {} as Partial<UserPreferences>)
