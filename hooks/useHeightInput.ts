@@ -12,8 +12,7 @@ interface HeightState {
 
 export const useHeightInput = (
   initialCm: string,
-  unitSystem: MeasurementSystem,
-  onCommit?: (cm: number) => void
+  unitSystem: MeasurementSystem
 ) => {
   const [cmValue, setCmValue] = useLocalStorage('hrm-user-height', initialCm)
   const [transientState, setTransientState] = useState<HeightState | null>(null)
@@ -71,9 +70,8 @@ export const useHeightInput = (
 
     if (!validationError && newCmValue > 0) {
       setCmValue(newCmValue.toFixed(2))
-      setTransientState(null)
-      onCommit?.(newCmValue)
     }
+    setTransientState(null)
   }
 
   return {

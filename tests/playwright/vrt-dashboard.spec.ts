@@ -6,7 +6,6 @@ import {
 } from './test-helpers'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
-import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
 
 // Test suite configuration
@@ -52,8 +51,7 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async () => {
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-empty.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -65,10 +63,7 @@ test.describe('Visual Regression Tests', () => {
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
       )
-      await timerContainer.waitFor({
-        state: 'visible',
-        timeout: VRT_TIMEOUTS.STANDARD,
-      })
+      await timerContainer.waitFor({ state: 'visible', timeout: 10000 })
 
       await controlPage.getByTestId('start-timer-button').click()
 
@@ -76,18 +71,17 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: VRT_TIMEOUTS.STANDARD,
+          timeout: 10000,
         }
       )
 
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 400,
+        maxHeight: 300,
       })
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
       })
@@ -103,7 +97,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
-          timeout: VRT_TIMEOUTS.STANDARD,
+          timeout: 10000,
         }
       )
 
@@ -112,21 +106,23 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 400,
+        maxHeight: 350,
       })
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
-        mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
-      })
+      await takeScreenshot(
+        dashboardPage,
+        'dashboard-active-timer-with-hr.png',
+        {
+          mask: [...getDynamicContentMasks(dashboardPage)],
+          maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
+        }
+      )
     })
 
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize({ width: 375, height: 812 })
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -134,8 +130,7 @@ test.describe('Visual Regression Tests', () => {
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize({ width: 768, height: 1024 })
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -143,8 +138,7 @@ test.describe('Visual Regression Tests', () => {
 
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })

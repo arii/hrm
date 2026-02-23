@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { render, screen, fireEvent } from '@testing-library/react'
-import WorkoutControls from '@/app/client/connect/WorkoutControls'
-import { WorkoutStatus } from '@/types/workout'
+import WorkoutControls from './WorkoutControls'
+import { WorkoutStatus } from '../../../types/workout'
 
 describe('WorkoutControls', () => {
   const mockOnStart = jest.fn()

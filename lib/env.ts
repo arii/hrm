@@ -17,12 +17,7 @@ const envSchema = z
     SPOTIFY_DEBUG: z.string().optional(),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    NEXT_PUBLIC_USE_NATIVE_TABLE: z
-      .preprocess((val) => {
-        if (typeof val === 'string') return val.toLowerCase() === 'true'
-        return val === true
-      }, z.boolean())
-      .default(false),
+    NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
     NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
     NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),

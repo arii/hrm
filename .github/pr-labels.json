@@ -30,11 +30,6 @@
     "color": "a2eeef"
   },
   {
-    "name": "frontend-improvement",
-    "description": "Visual or interactive improvement to the user interface.",
-    "color": "a2eeef"
-  },
-  {
     "name": "refactor",
     "description": "Restructuring code without changing behavior.",
     "color": "bfdadc"

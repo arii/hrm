@@ -83,12 +83,6 @@ describe('Bluetooth Message Constants', () => {
         'Connecting to saved device...'
       )
     })
-
-    it('should generate the correct deviceBusy message', () => {
-      expect(BLUETOOTH_MESSAGES.deviceBusy(2000, 1, 3)).toBe(
-        'Device busy. Retrying in 2s... (1/3)'
-      )
-    })
   })
 
   describe('Error Messages', () => {

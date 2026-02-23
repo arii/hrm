@@ -123,7 +123,7 @@ export async function navigateAndWait(
   // This is a minimal wait to ensure JS has executed
   await page
     .waitForFunction(() => !!window.__TEST_CONTROLS__, {
-      timeout: 3000,
+      timeout: 5000,
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
@@ -160,17 +160,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Mock the dynamic Google Doc iframe with static, stable content
   await mockGoogleDocIframe(context)
-
-  // Mock the workout API response for stable VRT
-  await context.route('**/api/workout*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-      }),
-    })
-  })
 
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
@@ -224,17 +213,6 @@ export async function setupMinimalVisualRegressionTest(
   page: Page,
   path: string = ''
 ): Promise<void> {
-  // Mock the workout API response for stable VRT
-  await page.route('**/api/workout*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-      }),
-    })
-  })
-
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {
     await mockGoogleDocIframe(page)
@@ -299,7 +277,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
   // Wait for WebSocket connection
   await page.waitForFunction(
     () => {
-      return document.body.dataset.connectionStatus === 'connected'
+      return window.__TEST_WEBSOCKET_READY__ === true
     },
     { timeout: 10000 }
   )

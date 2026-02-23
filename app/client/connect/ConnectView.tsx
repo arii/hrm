@@ -19,28 +19,57 @@ import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
 import logger from '@/utils/logger'
+import { MeasurementSystem, Gender } from '../../../types/core'
 import { WorkoutStatus } from '../../../types/workout'
-import { UserProfileState, HrZoneData } from '@/types/connect'
+import { HeartRateZone } from '../../../lib/shared/hr-zones'
+import {
+  ToggleButtonGroup,
+  ToggleButton,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
 
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userProfile: UserProfileState
+  userName: string
+  setUserName: (name: string) => void
+  userAge: string
+  setUserAge: (age: string) => void
+  onAgeBlur: () => void
+  ageError: string | null
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
+  onHeightBlur: () => void
+  heightError: string | null
+  userWeight: string
+  setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  weightError: string | null
+  gender: Gender
+  setGender: (gender: Gender) => void
+  unitSystem: MeasurementSystem
+  onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   isDataStale?: boolean
   deviceStatus: string
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
+  onForgetDevice: () => void | Promise<void>
   isSupported: boolean
   signalPeriodMs: number
   currentHR: number
-  hrZoneData: HrZoneData
+  hrZoneProps: { percentage: number }
+  zone: HeartRateZone
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
-  onReset: () => void
   workoutStatus: WorkoutStatus
   onStartWorkout: () => void
   onPauseWorkout: () => void
@@ -50,7 +79,24 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
-  userProfile,
+  userName,
+  setUserName,
+  userAge,
+  setUserAge,
+  onAgeBlur,
+  ageError,
+  userHeight,
+  setUserHeight,
+  onHeightBlur,
+  heightError,
+  userWeight,
+  setUserWeight,
+  onWeightBlur,
+  weightError,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
   isConnected,
   isDataStale = false,
   deviceStatus,
@@ -61,45 +107,38 @@ export default function ConnectView({
   isSupported,
   signalPeriodMs,
   currentHR,
-  hrZoneData,
+  hrZoneProps,
+  zone,
   connectionStatus,
   bluetoothConnected,
   hasStarted,
-  onReset,
   workoutStatus,
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const { data } = userProfile
+
+  const handleReset = async () => {
+    setIsResetting(true)
+    await onForgetDevice()
+    setIsResetting(false)
+  }
 
   useEffect(() => {
     if (isConnected) {
       logger.debug(
-        { currentHR, isDataStale, userName: data.userName },
+        { currentHR, isDataStale, userName },
         'HrTile rendering with currentHR'
       )
     }
-  }, [currentHR, isConnected, isDataStale, data.userName])
+  }, [currentHR, isConnected, isDataStale, userName])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
     if (level > 50) return <BatteryChargingFullIcon color="action" />
     if (level > 20) return <BatteryStdIcon color="warning" />
     return <BatteryAlertIcon color="error" />
-  }
-
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
   }
 
   if (!isSupported) {
@@ -115,7 +154,6 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
         <BottomNavBar />
       </Container>
     )
@@ -131,7 +169,63 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings profile={userProfile} />
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            <UserSettings
+              userName={userName}
+              setUserName={setUserName}
+              userAge={userAge}
+              setUserAge={setUserAge}
+              onAgeBlur={onAgeBlur}
+              ageError={ageError}
+              userHeight={userHeight}
+              setUserHeight={setUserHeight}
+              onHeightBlur={onHeightBlur}
+              heightError={heightError}
+              userWeight={userWeight}
+              setUserWeight={setUserWeight}
+              onWeightBlur={onWeightBlur}
+              weightError={weightError}
+              unit={unitSystem}
+              setUnit={onUnitChange}
+            />
+
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <FormControlLabel
+                  value="MALE"
+                  control={<Radio />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="FEMALE"
+                  control={<Radio />}
+                  label="Female"
+                />
+              </RadioGroup>
+            </FormControl>
+          </Stack>
         ) : (
           <Box
             sx={{
@@ -147,10 +241,10 @@ export default function ConnectView({
               Connected as
             </Typography>
             <Typography variant="h5" fontWeight="bold">
-              {data.userName}
+              {userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {data.userAge}
+              Age: {userAge}
             </Typography>
           </Box>
         )}
@@ -174,8 +268,8 @@ export default function ConnectView({
               size="large"
               onClick={onConnect}
               disabled={
-                !data.userName.trim() ||
-                !data.userAge.trim() ||
+                !userName.trim() ||
+                !userAge.trim() ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -246,12 +340,12 @@ export default function ConnectView({
         )}
 
         {isConnected && (
-          <Box sx={{ mt: 2 }} data-testid="hr-tile">
+          <Box sx={{ mt: 2 }}>
             <HrTile
-              name={data.userName}
+              name={userName}
               value={currentHR}
-              percentage={hrZoneData.percentage}
-              zone={hrZoneData.zone}
+              percentage={hrZoneProps.percentage}
+              zone={zone}
               calories={caloriesBurned}
               isDataStale={isDataStale}
             />
@@ -271,6 +365,8 @@ export default function ConnectView({
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
 
+        <ResetSection onReset={handleReset} isResetting={isResetting} />
+
         <Typography
           variant="body2"
           color="text.secondary"
@@ -279,8 +375,6 @@ export default function ConnectView({
         >
           WebSocket: {connectionStatus}
         </Typography>
-
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
       </Container>
       <BottomNavBar />
     </>

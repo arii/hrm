@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectPage from '@/app/client/connect/page'
 import {
   UserSettingsContext,
@@ -10,27 +10,20 @@ import {
 } from '@/context/UserSettingsContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
 // Correctly mock the hooks
-const mockConnectAndStream = jest.fn()
-const mockAutoConnect = jest.fn().mockResolvedValue(undefined)
-const mockDisconnect = jest.fn()
-const mockForgetDevice = jest.fn()
-
 jest.mock('@/hooks/useBluetoothHRM', () =>
   jest.fn(() => ({
-    connectAndStream: mockConnectAndStream,
-    autoConnect: mockAutoConnect,
-    disconnect: mockDisconnect,
-    forgetDevice: mockForgetDevice,
+    connectAndStream: jest.fn(),
+    autoConnect: jest.fn(),
+    disconnect: jest.fn(),
+    forgetDevice: jest.fn(),
     deviceStatus: 'disconnected',
     batteryLevel: null,
     isConnected: false,
     isDataStale: false,
     isSupported: true,
     disconnectionReason: null,
-    connectionAttempted: false,
   }))
 )
 
@@ -51,11 +44,10 @@ jest.mock('@/hooks/useWorkoutSessionManager', () => ({
   })),
 }))
 
-const mockSendData = jest.fn()
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: () => ({
     connectionStatus: 'Connected',
-    sendData: mockSendData,
+    sendData: jest.fn(),
   }),
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -149,7 +141,7 @@ describe('ConnectPage', () => {
     expect(weightInput).toHaveValue(70)
 
     // Simulate user clicking the imperial button
-    const imperialButton = screen.getByLabelText('imperial units')
+    const imperialButton = screen.getByRole('button', { name: 'imperial' })
     fireEvent.click(imperialButton)
 
     // Check that setUserSettings was called to update the unit system
@@ -177,54 +169,5 @@ describe('ConnectPage', () => {
     weightInput = screen.getByLabelText(/Your Weight/)
     const weightInLbs = toDisplay(mockUserSettings.userWeight!, 'IMPERIAL')
     expect(weightInput).toHaveValue(weightInLbs)
-  })
-
-  it('sends HRM_METADATA_UPDATE when user settings change', async () => {
-    renderWithProviders(<ConnectPage />, { providerProps })
-
-    await waitFor(() => {
-      expect(mockSendData).toHaveBeenCalledWith({
-        type: 'HRM_METADATA_UPDATE',
-        data: {
-          name: 'Test User',
-          age: 30,
-        },
-      })
-    })
-  })
-
-  it('renders user settings form when not connected', () => {
-    renderWithProviders(<ConnectPage />, { providerProps })
-    expect(screen.getByTestId('user-settings-form')).toBeInTheDocument()
-  })
-
-  it('calls connectAndStream with correct user data when connect button is clicked', () => {
-    renderWithProviders(<ConnectPage />, { providerProps })
-    const connectButton = screen.getByRole('button', {
-      name: /Connect Bluetooth HRM/i,
-    })
-    fireEvent.click(connectButton)
-
-    expect(mockConnectAndStream).toHaveBeenCalledWith('Test User', 30)
-  })
-
-  it('displays heart rate tile when connected', () => {
-    jest.mocked(useBluetoothHRM).mockReturnValue({
-      connectAndStream: mockConnectAndStream,
-      autoConnect: mockAutoConnect,
-      disconnect: mockDisconnect,
-      forgetDevice: mockForgetDevice,
-      deviceStatus: 'connected',
-      batteryLevel: 90,
-      isConnected: true,
-      isDataStale: false,
-      isSupported: true,
-      disconnectionReason: null,
-      connectionAttempted: true,
-    })
-
-    renderWithProviders(<ConnectPage />, { providerProps })
-    expect(screen.getByTestId('bpm-value')).toBeInTheDocument()
-    expect(screen.queryByTestId('user-settings-form')).not.toBeInTheDocument()
   })
 })

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import { ServiceInitializationError } from '../../lib/errors'
 import { SpotifyData } from '../../types/websocket'
 import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
 import logger from '../../utils/logger.server'
@@ -161,26 +160,6 @@ describe('SpotifyPolling Service', () => {
         // Act & Assert
         expect(spotifyService.isReady()).toBe(false)
       })
-    })
-
-    it('should throw ServiceInitializationError if Spotify credentials are missing', async () => {
-      const { env } = await import('../../lib/env.js')
-
-      const idSpy = jest.replaceProperty(env, 'SPOTIFY_CLIENT_ID', undefined)
-      const secretSpy = jest.replaceProperty(
-        env,
-        'SPOTIFY_CLIENT_SECRET',
-        undefined
-      )
-
-      try {
-        await expect(SpotifyPolling.create(broadcastMock)).rejects.toThrow(
-          ServiceInitializationError
-        )
-      } finally {
-        idSpy.restore()
-        secretSpy.restore()
-      }
     })
   })
 

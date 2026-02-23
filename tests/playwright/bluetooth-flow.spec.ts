@@ -36,7 +36,7 @@ test.describe('Bluetooth HRM Connection', () => {
     await expect(resetButton).toBeVisible()
   })
 
-  test('robustness: handles stale connection by forgetting and prompting', async ({
+  test('reliability: handles connection loss by forgetting and prompting for reconnection', async ({
     connectPage,
   }) => {
     // 1. Setup a "saved" device that will fail to connect

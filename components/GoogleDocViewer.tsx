@@ -10,7 +10,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
-import { alpha } from '@mui/material/styles'
 import { memo, useEffect, useState } from 'react'
 import RefreshIconButton from './RefreshIconButton'
 
@@ -65,7 +64,7 @@ const GoogleDocViewer = ({
             overflow: 'hidden',
             borderRadius: 1,
             border: '1px solid',
-            borderColor: 'divider',
+            borderColor: 'grey.300',
             position: 'relative',
           }}
         >
@@ -74,19 +73,6 @@ const GoogleDocViewer = ({
               onClick={onRefresh}
               aria-label="refresh google doc"
               data-testid="refresh-icon-button"
-              sx={(theme) => ({
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                zIndex: 10,
-                width: 48,
-                height: 48,
-                backgroundColor: alpha(theme.palette.background.paper, 0.7),
-                backdropFilter: 'blur(4px)',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
-                },
-              })}
             />
           )}
           {iframeLoading && (

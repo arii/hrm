@@ -1,6 +1,7 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
+import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
@@ -61,11 +62,14 @@ const HrmConnectionPanel = () => {
             sx={{
               display: { xs: 'none', md: 'block' },
               width: { sm: 'calc(50% - 12px)' },
-              height: 220,
-              backgroundColor: 'action.hover',
-              borderRadius: 3,
             }}
-          />
+          >
+            <Skeleton
+              variant="rectangular"
+              height={220}
+              sx={{ borderRadius: 3 }}
+            />
+          </Box>
         </>
       ) : (
         tileData.map((user) => {
