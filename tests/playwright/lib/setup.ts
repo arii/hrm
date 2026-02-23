@@ -153,7 +153,7 @@ export async function resetServerState(
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await request.post(`${getBaseURL()}/api/debug/reset`, {
-        timeout: 10000,
+        timeout: 30000,
       })
       if (response.ok()) {
         return

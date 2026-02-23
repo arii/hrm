@@ -73,16 +73,6 @@ test.describe('Visual Regression Tests', () => {
       ),
     ])
 
-    // Force visibility and stability to avoid flaky screenshots
-    await dashboardPage.addStyleTag({
-      content: `
-        [data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }
-        /* Stabilize height by ensuring minimum content area */
-        [data-testid="dashboard"] { min-height: 1000px !important; }
-        /* Ensure doc viewer has fixed height during tests */
-        [data-testid="google-doc-viewer-iframe"] { height: 500px !important; }
-      `,
-    })
   })
 
   test.describe('Dashboard Component', () => {

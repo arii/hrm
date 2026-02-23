@@ -71,9 +71,12 @@ export default function MockPage() {
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
   // on every change to the local state for simplicity and immediate feedback.
+  // We also ensure it's sent whenever the connection is established.
   useEffect(() => {
-    sendMetadataPacket()
-  }, [sendMetadataPacket])
+    if (connectionStatus === 'Connected') {
+      sendMetadataPacket()
+    }
+  }, [connectionStatus, sendMetadataPacket])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
