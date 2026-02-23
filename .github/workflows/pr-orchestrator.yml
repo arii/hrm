@@ -222,7 +222,9 @@ jobs:
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       base_sha: ${{ github.event.pull_request.base.sha || inputs.base_ref }}
       head_sha: ${{ github.event.pull_request.head.sha || inputs.head_ref }}
-    secrets: inherit
+    secrets:
+      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   create-review-issues:
     name: 🚀 Create Review Issues

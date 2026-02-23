@@ -44,7 +44,9 @@ jobs:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
-    secrets: inherit
+    secrets:
+      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   prepare-review-issues:
     name: 📝 Prepare Issue Context

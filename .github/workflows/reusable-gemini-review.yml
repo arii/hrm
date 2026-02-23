@@ -89,7 +89,7 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
           BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
-          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
@@ -117,7 +117,7 @@ jobs:
       - name: Get PR Diff
         id: diff
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           # The PR's base commit SHA, for an accurate diff at the time of branching.
           BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
@@ -136,7 +136,7 @@ jobs:
       - name: Gather PR Context
         id: context
         env:
-          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         run: |
           # Fetch the LIVE body to ensure we see the results of pr-enrichment
@@ -227,7 +227,7 @@ jobs:
       - name: Get PR Checks & Logs
         id: checks
         env:
-          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
@@ -354,7 +354,7 @@ jobs:
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_DIFF_FILE: pr.diff
           FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
           # Pass other context vars
@@ -374,7 +374,7 @@ jobs:
 
       - name: Post Review Comment
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
@@ -427,7 +427,7 @@ jobs:
 
       - name: Manage Labels
         env:
-          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         run: ./.github/scripts/manage-pr-labels.sh
 
@@ -440,7 +440,7 @@ jobs:
       - name: Create skip check
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
           script: |
             const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
             await github.rest.checks.create({
