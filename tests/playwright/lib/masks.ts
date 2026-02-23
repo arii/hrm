@@ -15,8 +15,10 @@ import type { Locator, Page } from '@playwright/test'
  * from CSS classes or DOM structure, making tests less brittle.
  */
 export const VRT_MASK_SELECTORS = {
-  liveHrValue: '[data-testid="live-hr-value"]',
+  liveHrValue: '[data-testid="bpm-value"]',
   liveHrPercent: '[data-testid="live-hr-percent"]',
+  liveHrCalories: '[data-testid="calorie-count"]',
+  liveHrName: '[data-testid="athlete-name"]',
   hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
@@ -34,9 +36,13 @@ export function getDynamicContentMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.liveHrValue),
     page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.liveHrCalories),
+    page.locator(VRT_MASK_SELECTORS.liveHrName),
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
+    page.getByTestId('google-doc-viewer-iframe'),
+    page.getByTestId('workout-table-viewer'),
   ]
 }
 
@@ -50,6 +56,8 @@ export function getHrMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.liveHrValue),
     page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.liveHrCalories),
+    page.locator(VRT_MASK_SELECTORS.liveHrName),
     page.locator(VRT_MASK_SELECTORS.hrTileGridItem),
   ]
 }

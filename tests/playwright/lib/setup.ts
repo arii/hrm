@@ -148,12 +148,31 @@ export async function navigateAndWait(
 export async function resetServerState(
   request: APIRequestContext
 ): Promise<void> {
-  const response = await request.post(`${getBaseURL()}/api/debug/reset`)
-  if (!response.ok()) {
-    console.warn(
-      `Warning: Failed to reset server state. Status: ${response.status()}`
-    )
+  // Use a retry mechanism to handle occasional socket hangups or server busy states
+  let lastError: Error | undefined
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await request.post(`${getBaseURL()}/api/debug/reset`, {
+        timeout: 10000,
+      })
+      if (response.ok()) {
+        return
+      }
+      console.warn(
+        `Attempt ${attempt}: Failed to reset server state. Status: ${response.status()}`
+      )
+    } catch (error) {
+      lastError = error as Error
+      console.warn(`Attempt ${attempt}: Error resetting server state:`, error)
+      // Short delay before retry
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
   }
+
+  console.error(
+    'Critical: All attempts to reset server state failed.',
+    lastError
+  )
 }
 
 /**

@@ -17,6 +17,7 @@ const HR_TILE_MIN_HEIGHT = 180
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
+      data-testid="athlete-name"
       variant="h4"
       sx={{
         fontWeight: 900,
@@ -101,7 +102,11 @@ const DataTier = ({
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
+    <MetricItem
+      value={Math.floor(calories)}
+      label="KCAL"
+      testId="calorie-count"
+    />
   </Box>
 )
 
