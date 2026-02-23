@@ -74,5 +74,7 @@ export const getSpotifyCallbackURL = (): string => {
  */
 export const extractGoogleDocId = (url?: string): string | undefined => {
   if (!url) return undefined
-  return url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1]
+  // Ensure it looks like a Google Doc ID (usually 25+ chars) and anchors the segment
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})/)
+  return match ? match[1] : undefined
 }
