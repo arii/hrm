@@ -407,7 +407,7 @@ jobs:
             server.ts \
             middleware.ts \
             public \
-            next.config.js
+            next.config.ts
 
           echo "✅ Release archive created:"
           ls -lh release.tar.gz
