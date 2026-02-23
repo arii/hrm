@@ -9,9 +9,37 @@ export interface AppServices {
   isSpotifyInitialized: boolean
 }
 
+/**
+ * Ensures that service instances are persisted across hot-reloads in development.
+ * This prevents the "Double-Singleton" problem where multiple instances of stateful
+ * services (like Spotify polling) are created during Next.js recompilation.
+ *
+ * In Next.js, standard singleton patterns (const service = new Service()) fail
+ * because the module is re-executed on hot-reload, creating a new instance.
+ * Patching globalThis is the standard Next.js way to persist instances.
+ */
+const globalWithServices = globalThis as unknown as {
+  spotifyService: SpotifyService | undefined
+  tabataService: TabataTimer | undefined
+  isSpotifyInitialized: boolean | undefined
+}
+
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
+  // Reuse existing instances in development to avoid duplicate connections
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    globalWithServices.spotifyService &&
+    globalWithServices.tabataService
+  ) {
+    return {
+      spotifyService: globalWithServices.spotifyService,
+      tabataService: globalWithServices.tabataService,
+      isSpotifyInitialized: !!globalWithServices.isSpotifyInitialized,
+    }
+  }
+
   const tabataService = new TabataTimer(broadcast)
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
@@ -49,5 +77,12 @@ export async function createServices(
     }
   }
 
-  return { tabataService, spotifyService, isSpotifyInitialized }
+  const services = { tabataService, spotifyService, isSpotifyInitialized }
+
+  // Expose instances globally (required for API routes and persistence)
+  globalWithServices.spotifyService = services.spotifyService
+  globalWithServices.tabataService = services.tabataService
+  globalWithServices.isSpotifyInitialized = services.isSpotifyInitialized
+
+  return services
 }

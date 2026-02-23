@@ -219,3 +219,64 @@ This pattern offers several benefits:
 - **Stability:** It can lead to more stable tests, as you are not relying on selectors that might change.
 - **Safety:** By guarding the assignment to `window.TEST_CONTROLS` with an environment variable (`NEXT_PUBLIC_TESTING`), you ensure that these test-only controls are not exposed in your production build.
 - **Type Safety:** The `window.TEST_CONTROLS` object should be typed in a global declaration file (e.g., `types/global.d.ts`) to ensure type safety in your tests.
+
+## Server-Side Service Singletons (Next.js)
+
+In Next.js development mode, modules are frequently re-executed due to hot-reloading. This breaks standard singleton patterns because a new instance is created every time the module is re-loaded.
+
+### The "Double-Singleton" Problem
+
+If you have a service that starts a polling loop or maintains a persistent connection, hot-reloading will create a new instance of that service *without* stopping the old one. Over time, this leads to resource leaks and "ghost" processes.
+
+### Implementation Pattern
+
+We use the `globalThis` object to persist service instances across reloads. This is the standard pattern in the Next.js ecosystem (similar to how Prisma handles database connections).
+
+```typescript
+import { SpotifyService } from '../types/interfaces.js'
+import TabataTimer from '../services/tabataTimer.js'
+
+/**
+ * Define a type-safe interface for globalThis.
+ */
+const globalWithServices = globalThis as unknown as {
+  spotifyService: SpotifyService | undefined
+  tabataService: TabataTimer | undefined
+  isSpotifyInitialized: boolean | undefined
+}
+
+export async function createServices(broadcast) {
+  // 1. Check for existing instances in development
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    globalWithServices.spotifyService &&
+    globalWithServices.tabataService
+  ) {
+    return {
+      spotifyService: globalWithServices.spotifyService,
+      tabataService: globalWithServices.tabataService,
+      isSpotifyInitialized: !!globalWithServices.isSpotifyInitialized,
+    }
+  }
+
+  // 2. Create new instances if none exist
+  // ... initialization logic ...
+  const services = {
+     spotifyService: await SpotifyPolling.create(broadcast),
+     tabataService: new TabataTimer(broadcast),
+     isSpotifyInitialized: true,
+  }
+
+  // 3. Persist to globalThis for future reloads and global access
+  globalWithServices.spotifyService = services.spotifyService
+  globalWithServices.tabataService = services.tabataService
+
+  return services
+}
+```
+
+### Why use `globalThis`?
+
+1.  **Persistence**: Survives module re-execution during development.
+2.  **Universal Access**: Allows Next.js API routes and Server Components to access the same stateful service instances initialized by the custom server.
+3.  **Consistency**: Prevents duplicate connections to third-party APIs (like Spotify).
