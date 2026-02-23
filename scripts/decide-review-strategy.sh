@@ -24,6 +24,8 @@ set -e
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
 
+# Files to ignore when checking for significant code changes
+IGNORE_PATTERN='\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$'
 
 # --- Initial State ---
 NEEDS_REVIEW="false"
@@ -141,7 +143,7 @@ else
             # Check for substantial code changes since the last review.
             if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
                 CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE "$IGNORE_PATTERN" 2>/dev/null || echo 0) | head -n 1)
 
                 if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
                     SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
@@ -153,7 +155,7 @@ else
             else
                 # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
                 CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE "$IGNORE_PATTERN" 2>/dev/null || echo 0) | head -n 1)
                 if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
                     SKIP_REASON="no significant code changes from base"
                     NEEDS_REVIEW="false"

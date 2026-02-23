@@ -19,7 +19,7 @@ jobs:
   test_pr_squash:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Install jq
         run: |
@@ -97,7 +97,7 @@ jobs:
   test_conflict_resolver:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Install jq
         run: |
@@ -203,7 +203,7 @@ jobs:
   test_pr_squash_rebase:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
     steps:
       - name: Install jq
         run: |

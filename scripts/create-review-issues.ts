@@ -6,7 +6,22 @@ import crypto from 'crypto'
 import { z } from 'zod'
 
 // --- Constants ---
-const MIN_DESCRIPTION_LENGTH = 50
+const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
+let MIN_DESCRIPTION_LENGTH = DEFAULT_MIN_DESCRIPTION_LENGTH
+
+try {
+  const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
+  const configContent = readFileSync(CONFIG_PATH, 'utf-8')
+  if (configContent) {
+    const config = JSON.parse(configContent)
+    MIN_DESCRIPTION_LENGTH =
+      config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
+  }
+} catch (e) {
+  // During tests, readFileSync might be mocked and return undefined or throw
+  // Fallback to default
+}
+
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
 // --- Label Configuration ---
@@ -69,7 +84,10 @@ const SuggestedIssueSchema = z.object({
   title: z.string(),
   description: z
     .string()
-    .min(50, 'Description must be at least 50 characters long.'),
+    .min(
+      MIN_DESCRIPTION_LENGTH,
+      `Description must be at least ${MIN_DESCRIPTION_LENGTH} characters long.`
+    ),
   type: z.enum([
     'bug',
     'enhancement',

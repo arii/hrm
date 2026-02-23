@@ -887,7 +887,7 @@ jobs:
       ]
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:

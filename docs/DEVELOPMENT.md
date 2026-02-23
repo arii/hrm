@@ -53,6 +53,18 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - **Accurate description:** Ensure the title and description match the actual code changes.
 - **Focused testing:** Tests should cover the specific scope of the change.
 
+#### Review Strategy & Ignored Files
+
+To optimize the review process and avoid unnecessary AI analysis, the `scripts/decide-review-strategy.sh` script uses an `IGNORE_PATTERN` to identify non-significant changes. PRs containing only changes to these files may skip automatic re-review.
+
+The `IGNORE_PATTERN` regex is: `\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$`
+
+This pattern includes:
+- Documentation (`.md`)
+- Static assets (`.png`, `.svg`)
+- Lock files (`pnpm-lock.yaml`)
+- Git configuration (`.gitignore`)
+
 #### Impact Assessment Guidelines
 
 - Ensure changes are **backward compatible** or that any breaking changes are clearly documented.
