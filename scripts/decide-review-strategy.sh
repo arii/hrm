@@ -25,7 +25,7 @@ set -e
 : "${COMMENT_BODY:=}"
 
 # Files to ignore when checking for significant code changes
-IGNORE_PATTERN='\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$'
+IGNORE_PATTERN='(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)'
 
 # --- Initial State ---
 NEEDS_REVIEW="false"

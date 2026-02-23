@@ -33,7 +33,7 @@
 #
 # Configuration:
 #   GEMINI_API_KEY - Required: Set in repository secrets
-#   ARI_PAT - Required: Personal access token for PR creation
+#   CI_BOT_PAT - Required: Personal access token for PR creation
 #   NEXTAUTH_URL, NEXTAUTH_SECRET - For build verification
 #
 # Error Handling:
@@ -631,7 +631,7 @@ jobs:
         if: env.AGENT_PROVIDER == 'gemini'
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.ARI_PAT }}
+          token: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           commit-message: ${{ env.COMMIT_MESSAGE }}
           title: ${{ env.TITLE }}
           body: |

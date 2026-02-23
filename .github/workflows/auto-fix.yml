@@ -23,7 +23,7 @@ jobs:
       - name: Comment on Install Failure
         if: steps.setup.outcome == 'failure'
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 Auto-Fix Failed
           The \`pnpm install --frozen-lockfile\` command failed. This likely means your \`pnpm-lock.yaml\` file is out of sync with your \`package.json\`.

@@ -57,7 +57,7 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 
 To optimize the review process and avoid unnecessary AI analysis, the `scripts/decide-review-strategy.sh` script uses an `IGNORE_PATTERN` to identify non-significant changes. PRs containing only changes to these files may skip automatic re-review.
 
-The `IGNORE_PATTERN` regex is: `\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$`
+The `IGNORE_PATTERN` regex is: `(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)`
 
 This pattern includes:
 - Documentation (`.md`)

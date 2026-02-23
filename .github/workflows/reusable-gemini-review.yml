@@ -42,7 +42,7 @@ on:
     secrets:
       GEMINI_API_KEY:
         required: true
-      ARI_PAT:
+      GH_TOKEN:
         required: true
     outputs:
       needs-review:
@@ -89,7 +89,7 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
           BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
@@ -136,7 +136,7 @@ jobs:
       - name: Gather PR Context
         id: context
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         run: |
           # Fetch the LIVE body to ensure we see the results of pr-enrichment
@@ -227,8 +227,7 @@ jobs:
       - name: Get PR Checks & Logs
         id: checks
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
-          ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
@@ -355,7 +354,7 @@ jobs:
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           PR_DIFF_FILE: pr.diff
           FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
           # Pass other context vars
@@ -375,7 +374,7 @@ jobs:
 
       - name: Post Review Comment
         env:
-          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
@@ -428,7 +427,7 @@ jobs:
 
       - name: Manage Labels
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         run: ./.github/scripts/manage-pr-labels.sh
 
