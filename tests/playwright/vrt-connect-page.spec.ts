@@ -13,17 +13,17 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
+    // Wait for the button to be enabled as a proxy for hydration and form completion
+    await expect(
+      connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
+    ).toBeEnabled({ timeout: VRT_TIMEOUTS.STANDARD })
+
     await connectPage.waitForFunction(
       () => window.TEST_CONTROLS?.setHrmStatus,
       {
-        timeout: VRT_TIMEOUTS.HYDRATION,
+        timeout: VRT_TIMEOUTS.STANDARD,
       }
     )
-
-    await connectPage.waitForTimeout(100)
-    await expect(
-      connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
-    ).toBeVisible()
   })
 
   test('scanning state', async ({ connectPage }) => {

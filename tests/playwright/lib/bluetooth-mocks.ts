@@ -146,6 +146,7 @@ export const injectBluetoothMocks = async (page: Page) => {
 
     // Inject
     navigator.bluetooth = mockBluetooth
+    window.__TEST_MODE__ = true
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {

@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useRef, useEffect, useLayoutEffect } from 'react'
 import {
   HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
@@ -378,12 +378,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   // Cleanup
-  useEffect(() => {
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
+
+  useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
 
     if (
       typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TESTING === 'true'
+      (process.env.NEXT_PUBLIC_TESTING === 'true' || (window as any).__TEST_MODE__)
     ) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
@@ -407,10 +409,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       if (
         typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
+        (process.env.NEXT_PUBLIC_TESTING === 'true' || (window as any).__TEST_MODE__)
       ) {
-        if (window.TEST_CONTROLS) {
+        // Only delete if they are still the same functions we set
+        if (window.TEST_CONTROLS?.setHrmStatus === setStatus) {
           delete window.TEST_CONTROLS.setHrmStatus
+        }
+        if (window.TEST_CONTROLS?.setCustomHrmStatusMessage === setCustomStatusMessage) {
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage
         }
       }

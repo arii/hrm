@@ -115,7 +115,9 @@ test.describe('Component-Specific VRT', () => {
     await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
-    await expect(menu).toBeVisible()
+    await expect(menu).toBeVisible({ timeout: VRT_TIMEOUTS.STANDARD })
+    // Ensure the menu is fully rendered before accessibility check/screenshot
+    await dashboardPage.waitForTimeout(500)
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       maxDiffPixelRatio: 0.15,
       threshold: 0.3,

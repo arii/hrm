@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
@@ -36,11 +36,17 @@ export default function MockPage() {
   const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
 
+  // Maintain refs for values accessed inside the interval to avoid stale closures
+  const latestProfile = useRef({ age, weightKg, heightCm, gender, name, maxHr })
+  const sendHrPacketRef = useRef<(hr: number, currentCalories: number) => void>(
+    () => {}
+  )
+
   const sendHrPacket = useCallback(
     (hr: number, currentCalories: number) => {
       const { zone, percentage } = calculateZoneFromMaxHr(
         hr,
-        calculateMaxHr(age)
+        calculateMaxHr(latestProfile.current.age)
       )
       const heartRateZone = toHeartRateZone(zone)
 
@@ -55,34 +61,39 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData, age]
+    [sendData]
   )
 
   const sendMetadataPacket = useCallback(() => {
+    const { maxHr, name, age, weightKg, heightCm, gender } =
+      latestProfile.current
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
-        maxHr: maxHr,
-        name: name,
-        age: age,
-        weightKg: weightKg,
-        heightCm: heightCm,
-        gender: gender,
+        maxHr,
+        name,
+        age,
+        weightKg,
+        heightCm,
+        gender,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr, weightKg, heightCm, gender])
+  }, [sendData])
 
-  // NOTE: In a real client, metadata would likely be sent once upon connection
-  // or when the user explicitly saves settings. For this mock, we send it
-  // on every change to the local state for simplicity and immediate feedback.
+  // Sync refs and send metadata on every change
   useEffect(() => {
+    latestProfile.current = { age, weightKg, heightCm, gender, name, maxHr }
+    sendHrPacketRef.current = sendHrPacket
     sendMetadataPacket()
-  }, [sendMetadataPacket])
+  }, [age, weightKg, heightCm, gender, name, maxHr, sendHrPacket, sendMetadataPacket])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
+
+    // Initial send
     sendHrPacket(hrValue, calories)
+
     const id = window.setInterval(() => {
       setHrValue((prevHr) => {
         const fluctuatedHr = Math.max(
@@ -91,6 +102,8 @@ export default function MockPage() {
         )
 
         setCalories((prevCalories) => {
+          const { age, weightKg, gender } = latestProfile.current
+
           const caloriesDelta = estimateCaloriesBurned({
             heartRate: fluctuatedHr,
             age,
@@ -99,7 +112,10 @@ export default function MockPage() {
             durationMinutes: 2 / 60, // 2 seconds interval
           })
           const newCalories = prevCalories + caloriesDelta
-          sendHrPacket(fluctuatedHr, newCalories)
+
+          // Use the ref to ensure we call the latest version of the function
+          sendHrPacketRef.current(fluctuatedHr, newCalories)
+
           return newCalories
         })
 
