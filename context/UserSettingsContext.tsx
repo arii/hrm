@@ -49,27 +49,35 @@ export const UserSettingsContext = createContext<
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const migrate = useCallback((stored: unknown) => {
+  const migrate = useCallback((stored: unknown): UserPreferences => {
     if (typeof stored !== 'object' || stored === null) {
       return DEFAULT_PREFERENCES
     }
-    const schemaKeys = Object.keys(DEFAULT_PREFERENCES)
+
     const storedObj = stored as Record<string, unknown>
-    const filtered = Object.keys(storedObj).reduce((acc, k) => {
-      if (schemaKeys.includes(k)) {
-        const key = k as keyof UserPreferences
-        /**
-         * NOTE: We use 'any' cast here because we've already validated that the key 'k'
-         * exists in UserPreferences (via schemaKeys.includes). This ensures we only
-         * restore known keys from storage while maintaining full type safety for the
-         * rest of the application.
-         */
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        acc[key] = storedObj[k] as any
+    const result = { ...DEFAULT_PREFERENCES }
+
+    // Use a type-safe approach to map stored values to the result object
+    // only if they exist in the default schema.
+    const schemaKeys = Object.keys(DEFAULT_PREFERENCES) as Array<
+      keyof UserPreferences
+    >
+    schemaKeys.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(storedObj, key)) {
+        const val = storedObj[key]
+        if (val !== undefined && val !== null) {
+          /**
+           * NOTE: The cast to 'never' on the left side or a generic type assertion
+           * is required when dynamically assigning to a narrowed object key in TS.
+           * This is safer than 'any' because it maintains context within the known
+           * schema keys of UserPreferences.
+           */
+          ;(result as Record<keyof UserPreferences, unknown>)[key] = val
+        }
       }
-      return acc
-    }, {} as Partial<UserPreferences>)
-    return { ...DEFAULT_PREFERENCES, ...filtered }
+    })
+
+    return result
   }, [])
 
   // Use the usePersistentStorage hook directly within the provider

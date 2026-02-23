@@ -74,7 +74,6 @@ const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
         sx={{
           py: { xs: 2, sm: 3 },
           minHeight: '100vh',
-          backgroundColor: 'background.default',
         }}
       >
         <Box sx={mainGridStyles}>
