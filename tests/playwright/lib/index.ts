@@ -109,6 +109,7 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  resetServerState,
   // Timer utilities
   stopTimer,
   configureTimer,

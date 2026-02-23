@@ -8,7 +8,7 @@ import { httpLogger } from './utils/logger.server.js'
 import logger from './utils/logger.server.js'
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
-import { initSocketManager } from './utils/socketManager.js'
+import { initSocketManager, resetSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
@@ -131,6 +131,17 @@ app.prepare().then(async () => {
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
+  })
+
+  // POST /api/debug/reset - Reset the server-side HRM session state (for testing)
+  // Gated to prevent accidental use in production
+  expressApp.post('/api/debug/reset', (_req, res) => {
+    if (env.NODE_ENV === 'production' && process.env.ALLOW_DEBUG_RESET !== 'true') {
+      return res.status(403).json({ error: 'Debug reset not allowed in production' })
+    }
+    resetSocketManager()
+    logger.info('Server-side HRM state has been reset via /api/debug/reset')
+    res.status(200).json({ status: 'reset' })
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {
