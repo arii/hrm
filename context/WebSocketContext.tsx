@@ -33,7 +33,6 @@ export interface WebSocketContextType extends WebSocketState {
   disconnect: () => void
 }
 
-// Helper function to check for test environment
 // This encapsulates the logic to avoid running it on every render inside the component
 const isTestEnvironment = () => {
   if (typeof window === 'undefined') return false
