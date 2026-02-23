@@ -2,6 +2,7 @@ import { test, expect, chromium, BrowserContext } from '@playwright/test'
 import path from 'path'
 import os from 'os'
 import fs from 'fs'
+import { SMALL_DESKTOP_VIEWPORT } from '../lib/viewports'
 
 /**
  * Local OAuth Verification Test
@@ -43,7 +44,7 @@ test.describe('Spotify OAuth Integration (Local)', () => {
 
     context = await chromium.launchPersistentContext(userDataDir, {
       headless: false, // Must be headed to see/interact with Spotify login if needed
-      viewport: { width: 1280, height: 720 },
+      viewport: SMALL_DESKTOP_VIEWPORT,
       args: [
         '--disable-blink-features=AutomationControlled', // Reduce detection
       ],

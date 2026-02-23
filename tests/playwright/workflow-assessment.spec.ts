@@ -4,12 +4,13 @@
  */
 import { test, expect } from '@playwright/test'
 import { getBaseURL } from '../../utils/urls'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 const BASE_URL = getBaseURL()
 
 test.describe('HRM Workflow Assessment', () => {
   test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.setViewportSize(DESKTOP_VIEWPORT)
   })
 
   test('Complete Workout Session - Tabata with HR Monitoring', async ({
