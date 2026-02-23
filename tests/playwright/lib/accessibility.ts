@@ -49,11 +49,16 @@ export async function checkAccessibility(target: Page | Locator) {
   if (selector) {
     try {
       await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+<<<<<<< HEAD
     } catch (error) {
       console.warn(
         'Failed to clean up accessibility uniqueId attribute:',
         error
       )
+=======
+    } catch {
+      // Ignore cleanup errors if element is already detached
+>>>>>>> 7ca07b4b (docs(small): fix: resolve merge conflicts and clean up artifacts (#9341))
     }
   }
 

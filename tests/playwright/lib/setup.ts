@@ -154,7 +154,6 @@ export async function navigateAndWait(
 export async function resetServerState(
   request: APIRequestContext
 ): Promise<void> {
-  // Use a retry mechanism to handle occasional socket hangups or server busy states
   let lastError: Error | undefined
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
@@ -475,4 +474,30 @@ export async function prepareForVisualRegression(
   ...pages: Page[]
 ): Promise<void> {
   await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
+}
+
+/**
+ * Prepares the VRT environment by resetting the server state,
+ * reloading pages, and waiting for WebSocket connections.
+ *
+ * @param request - The Playwright APIRequestContext object.
+ * @param pages - Array of Page objects to prepare.
+ */
+export async function prepareVrtEnvironment(
+  request: APIRequestContext,
+  pages: Page[]
+): Promise<void> {
+  await resetServerState(request)
+
+  await Promise.all(pages.map((page) => page.reload()))
+  await Promise.all(pages.map((page) => waitForPageReady(page)))
+
+  await Promise.all(
+    pages.map((page) =>
+      page.waitForFunction(
+        () => document.body.dataset.connectionStatus === 'connected',
+        { timeout: 5000 }
+      )
+    )
+  )
 }

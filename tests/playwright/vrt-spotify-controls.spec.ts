@@ -3,10 +3,9 @@ import { test } from './fixtures'
 import {
   setupVisualRegressionTest,
   mockLoggedInSession,
-  resetServerState,
+  prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -36,6 +35,7 @@ test.describe('Visual Regression Tests', () => {
 
   // Add a beforeEach hook to wait for the page to be ready before each test
   test.beforeEach(async ({ request }) => {
+<<<<<<< HEAD
     // 1. Reset server-side state
     await resetServerState(request)
 
@@ -60,6 +60,9 @@ test.describe('Visual Regression Tests', () => {
         { timeout: 5000 }
       ),
     ])
+=======
+    await prepareVrtEnvironment(request, [controlPage, dashboardPage])
+>>>>>>> 0bdaea8c (test(large): Refactor VRT setup and stabilize dashboard tests (#9248))
 
     // Force main content layout to be visible to avoid flaky blank screenshots due to Framer Motion
     await controlPage.addStyleTag({
