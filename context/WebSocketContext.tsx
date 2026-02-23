@@ -115,6 +115,7 @@ export const WebSocketProvider = ({
       }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       if (isTestEnvironment()) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
@@ -133,8 +134,10 @@ export const WebSocketProvider = ({
           connect: () => {},
         }
       }
+=======
+>>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
     }
-  }, [dispatch])
+  }, [])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -326,6 +329,7 @@ export const WebSocketProvider = ({
     connect()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (isTestEnvironment()) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }
@@ -334,23 +338,38 @@ export const WebSocketProvider = ({
         testControls.disconnect = disconnect
         testControls.connect = connect
 =======
+=======
+    return () => {
+      disconnect()
+    }
+  }, [connect, disconnect])
+
+  // Centralized effect for exposing test controls to the window object.
+  // This ensures that all required controls (dispatch, connect, disconnect)
+  // are attached consistently and updated whenever their implementations change.
+  useEffect(() => {
+>>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
     if (
       typeof window !== 'undefined' &&
       (process.env.NODE_ENV !== 'production' ||
         process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
+<<<<<<< HEAD
       if (window.__TEST_CONTROLS__) {
         window.__TEST_CONTROLS__.disconnect = disconnect
         window.__TEST_CONTROLS__.connect = connect
 >>>>>>> c705c04a (chore: optimize VRT cleanup and standardize on fixtures)
+=======
+      window.__TEST_CONTROLS__ = {
+        ...window.__TEST_CONTROLS__,
+        dispatch,
+        connect,
+        disconnect,
+>>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
       }
     }
-
-    return () => {
-      disconnect()
-    }
-  }, [connect, disconnect])
+  }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {

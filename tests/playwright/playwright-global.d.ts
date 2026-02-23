@@ -47,9 +47,11 @@ interface MockBluetoothDevice {
 declare global {
   interface Window {
     __TEST_CONTROLS__?: {
-      dispatch: (message: unknown) => void
-      disconnect: () => void
-      connect: () => void
+      dispatch?: (message: any) => void
+      disconnect?: () => void
+      connect?: () => void
+      setHrmStatus?: (status: any) => void
+      setCustomHrmStatusMessage?: (message: string | null) => void
     }
     bluetoothTestHelpers?: {
       simulateHeartRate: (bpm: number) => Promise<void>

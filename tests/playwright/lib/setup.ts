@@ -129,10 +129,8 @@ export async function navigateAndWait(
 
   // Force disconnect to remove HrmConnectionPanel skeleton
   await page.evaluate(() => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
     if (window.__TEST_CONTROLS__) {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__.disconnect()
+      window.__TEST_CONTROLS__.disconnect?.()
     }
   })
 
