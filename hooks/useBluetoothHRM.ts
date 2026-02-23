@@ -97,6 +97,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
+  const isDisconnecting = useRef(false)
+  const lastConnectTimeRef = useRef<number>(0)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
@@ -221,26 +223,39 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     heartbeatInterval,
   ])
 
-  const disconnect = useCallback(() => {
-    isManualDisconnect.current = true
-    isTimeoutDisconnect.current = false
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
+  const disconnect = useCallback(async () => {
+    if (isDisconnecting.current) return
+    isDisconnecting.current = true
+
+    try {
+      isManualDisconnect.current = true
+      isTimeoutDisconnect.current = false
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+
+      if (deviceRef.current?.gatt?.connected) {
+        logger.info('Disconnecting GATT server...')
+        deviceRef.current.gatt.disconnect()
+        // Cool-down period to allow OS to clean up the GATT stack
+        await new Promise((res) => setTimeout(res, 800))
+      }
+
+      sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
+
+      setStatus(BluetoothConnectionStatus.DISCONNECTED)
+      setCustomStatusMessage(null)
+      setSavedDevice(null)
+      setBatteryLevel(null)
+      setConnectionAttempted(false)
+      deviceRef.current = null
+      periodHistory.current = []
+      avgPeriodMs.current = 0
+      setSignalPeriodMs(0)
+    } finally {
+      isDisconnecting.current = false
     }
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-    if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
-
-    sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
-
-    setStatus(BluetoothConnectionStatus.DISCONNECTED)
-    setCustomStatusMessage(null)
-    setSavedDevice(null)
-    setBatteryLevel(null)
-    setConnectionAttempted(false)
-    deviceRef.current = null
-    periodHistory.current = []
-    avgPeriodMs.current = 0
-    setSignalPeriodMs(0)
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -290,27 +305,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
         )
         logger.error(
-          'Failed to reconnect after max attempts. Forgetting device.'
+          'Failed to reconnect after max attempts. Stopping auto-reconnect.'
         )
-        // Delay forgetDevice to allow the final status message to be displayed
-        setTimeout(forgetDevice, 1500)
         return
       }
 
       reconnectAttempts.current++
-      const delay = getBackoffDelay(reconnectAttempts.current)
 
-      const isBusy =
+      const isZombieError =
         reason.toLowerCase().includes('busy') ||
         reason.toLowerCase().includes('networkerror')
 
+      const delay = getBackoffDelay(reconnectAttempts.current, isZombieError)
+
       setStatus(
-        isBusy
+        isZombieError
           ? BluetoothConnectionStatus.CONNECTING
           : BluetoothConnectionStatus.RECONNECTING
       )
 
-      const statusMessage = isBusy
+      const statusMessage = isZombieError
         ? BLUETOOTH_MESSAGES.deviceBusy(
             delay,
             reconnectAttempts.current,
@@ -328,8 +342,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isConnecting.current &&
+          !isDisconnecting.current &&
           !isManualDisconnect.current
         ) {
+          if (device.gatt?.connected) {
+            logger.info('Device already connected, skipping reconnect attempt.')
+            setStatus(BluetoothConnectionStatus.CONNECTED)
+            return
+          }
+
           connectToGattRef.current?.(device, true).catch((error: unknown) => {
             logger.warn({ error }, 'Reconnect attempt failed')
             reconnect(
@@ -340,7 +361,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }, delay)
     },
-    [forgetDevice]
+    []
   )
 
   const onDisconnected = useCallback(
@@ -360,15 +381,42 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         'Device disconnected'
       )
       setBatteryLevel(null)
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
 
       if (isManualDisconnect.current) {
         logger.info('Not attempting to reconnect (manual disconnect).')
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
         reconnectAttempts.current = 0
         if (reconnectTimeoutRef.current)
           clearTimeout(reconnectTimeoutRef.current)
         return
       }
+
+      // Visibility check to avoid background reconnection thrashing
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState !== 'visible'
+      ) {
+        logger.info('Tab is backgrounded. Skipping auto-reconnect.')
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.backgroundReconnectDisabled)
+        return
+      }
+
+      // Connection Storm Prevention:
+      // If disconnect happens within 5s of a successful connect, abort and notify user.
+      const now = Date.now()
+      const timeSinceConnect = now - lastConnectTimeRef.current
+      if (lastConnectTimeRef.current > 0 && timeSinceConnect < 5000) {
+        logger.warn(
+          { timeSinceConnect },
+          'Connection storm detected. Aborting auto-reconnect.'
+        )
+        setStatus(BluetoothConnectionStatus.ERROR)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionStormDetected)
+        return
+      }
+
+      setStatus(BluetoothConnectionStatus.DISCONNECTED)
 
       // Start the reconnection process
       reconnectAttempts.current = 0
@@ -419,10 +467,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnecting.current) {
+      if (isConnecting.current || isDisconnecting.current) {
         logger.warn(
           { device: device.name },
-          'Connection already in progress. Skipping.'
+          'Connection or disconnection in progress. Skipping.'
         )
         return false
       }
@@ -576,6 +624,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
+        lastConnectTimeRef.current = Date.now()
         onConnectRef.current?.()
         return true
       } catch (error) {
@@ -597,6 +646,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
         }
 
+        if (device.gatt?.connected) {
+          logger.info('Ensuring GATT disconnection after failure...')
+          device.gatt.disconnect()
+        }
+
         if (errorMsg.includes('timeout')) {
           logger.error(
             { device: device.name },
@@ -609,18 +663,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           if (reconnectTimeoutRef.current)
             clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = setTimeout(() => {
-            isManualDisconnect.current = true
-            isTimeoutDisconnect.current = false
+          reconnectTimeoutRef.current = setTimeout(async () => {
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
+            await disconnect()
             setCookie('hrm_device_id', '', -1)
-            setStatus(BluetoothConnectionStatus.DISCONNECTED)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-            setSavedDevice(null)
-            setBatteryLevel(null)
-            deviceRef.current = null
             reconnectAttempts.current = 0
           }, 2000)
         } else if (isGattDisconnected) {
@@ -660,6 +709,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
+      if (isConnecting.current || isDisconnecting.current) {
+        logger.warn('Connection or disconnection in progress. Skipping.')
+        return false
+      }
+
       const { silent = false } = options
 
       userDetailsRef.current = {
@@ -779,7 +833,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) return
+    if (isConnecting.current || isDisconnecting.current) return
 
     try {
       setConnectionAttempted(true)

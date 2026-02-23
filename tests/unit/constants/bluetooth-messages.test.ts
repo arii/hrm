@@ -50,7 +50,7 @@ describe('Bluetooth Message Constants', () => {
 
     it('should generate the correct failedToReconnect message', () => {
       expect(BLUETOOTH_MESSAGES.failedToReconnect(5)).toBe(
-        'Failed to reconnect after 5 attempts. Resetting device...'
+        'Failed to reconnect after 5 attempts. Please re-sync your sensor.'
       )
     })
 
@@ -87,6 +87,18 @@ describe('Bluetooth Message Constants', () => {
     it('should generate the correct deviceBusy message', () => {
       expect(BLUETOOTH_MESSAGES.deviceBusy(2000, 1, 3)).toBe(
         'Device busy. Retrying in 2s... (1/3)'
+      )
+    })
+
+    it('should have the correct string for connectionStormDetected', () => {
+      expect(BLUETOOTH_MESSAGES.connectionStormDetected).toBe(
+        'Connection unstable. Please re-sync your sensor manually.'
+      )
+    })
+
+    it('should have the correct string for backgroundReconnectDisabled', () => {
+      expect(BLUETOOTH_MESSAGES.backgroundReconnectDisabled).toBe(
+        'Reconnection paused while tab is in background.'
       )
     })
   })

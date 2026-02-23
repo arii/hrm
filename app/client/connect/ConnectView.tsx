@@ -184,6 +184,9 @@ export default function ConnectView({
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
                 </Stack>
+              ) : deviceStatus.includes('re-sync') ||
+                deviceStatus.includes('Failed to reconnect') ? (
+                'Re-sync Sensor'
               ) : (
                 'Connect Bluetooth HRM'
               )}

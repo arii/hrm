@@ -503,6 +503,11 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(true)
       mockGatt.connect.mockClear() // Clear the initial connect call
 
+      // Advance time to avoid "Connection Storm" detection (needs > 5s)
+      await act(async () => {
+        jest.advanceTimersByTime(6000)
+      })
+
       // Subsequent connection attempts will fail
       mockGatt.connect.mockRejectedValue(new Error('Reconnect failed'))
 
@@ -558,15 +563,6 @@ describe('useBluetoothHRM', () => {
         env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
 
-      // It should also forget the device
-      await act(async () => {
-        jest.advanceTimersByTime(2000) // Run the final timer to forget the device
-      })
-      expect(cookieUtils.setCookie).toHaveBeenCalledWith(
-        'hrm_device_id',
-        '',
-        -1
-      )
     })
 
     it('should successfully reconnect after a disconnection', async () => {
@@ -576,6 +572,11 @@ describe('useBluetoothHRM', () => {
         await result.current.connectAndStream()
       })
       mockGatt.connect.mockClear()
+
+      // Advance time to avoid "Connection Storm" detection (needs > 5s)
+      await act(async () => {
+        jest.advanceTimersByTime(6000)
+      })
 
       // First reconnect attempt fails, second succeeds
       mockGatt.connect
@@ -649,6 +650,11 @@ describe('useBluetoothHRM', () => {
       })
       expect(result.current.isConnected).toBe(true)
 
+      // Advance time to avoid "Connection Storm" detection (needs > 5s)
+      await act(async () => {
+        jest.advanceTimersByTime(6000)
+      })
+
       // Mock the next connection attempt to be successful
       mockGatt.connect.mockResolvedValue(mockGatt)
 
@@ -689,7 +695,7 @@ describe('useBluetoothHRM', () => {
     it('should use the default max reconnection attempts when the environment variable is not set', async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(8)
+      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(2)
     })
 
     it('should use the custom max reconnection attempts from the environment variable', async () => {
