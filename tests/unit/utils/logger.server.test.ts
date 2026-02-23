@@ -62,6 +62,8 @@ describe('Server Logger (logger.server.ts)', () => {
 
   it('should create a standard logger in production', async () => {
     process.env.NODE_ENV = 'production'
+    process.env.NEXTAUTH_SECRET =
+      'a-super-long-and-secure-secret-for-production-tests'
     await import('@/utils/logger.server')
 
     const pinoOptions = pinoMock.mock.calls[0][0]
