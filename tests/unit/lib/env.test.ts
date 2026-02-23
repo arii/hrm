@@ -86,7 +86,7 @@ describe('Environment Variables', () => {
 
   it('should handle client-side environment correctly', async () => {
     // Simulate client-side environment
-    global.window = {} as any
+    global.window = {} as unknown as Window & typeof globalThis
     process.env.NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_TESTING = 'true'
     // Remove server-side secrets that would normally trigger validation errors in production
@@ -102,6 +102,46 @@ describe('Environment Variables', () => {
     expect(env.NEXTAUTH_SECRET).toBeUndefined()
 
     // Cleanup global window
-    delete (global as any).window
+    delete (global as unknown as { window?: unknown }).window
+  })
+
+  it('should ensure all NEXT_PUBLIC_ variables in schema are mapped in getEnvSource', async () => {
+    const { envObjectSchema } = await import('../../../lib/env')
+    // Simulate client side
+    global.window = {} as unknown as Window & typeof globalThis
+
+    // We can't directly call getEnvSource as it's not exported,
+    // but we can check if they are present in the resulting env object
+    // if we set them in process.env.
+    const publicKeys = Object.keys(envObjectSchema.shape).filter((key) =>
+      key.startsWith('NEXT_PUBLIC_')
+    )
+
+    publicKeys.forEach((key) => {
+      process.env[key] = 'test-value'
+    })
+
+    await import('../../../lib/env')
+
+    publicKeys.forEach((key) => {
+      if (key.endsWith('_URL')) {
+        process.env[key] = 'http://localhost'
+      } else {
+        process.env[key] = 'true'
+      }
+    })
+
+    // Re-import to get fresh env with 'true' values
+    jest.resetModules()
+    const { env: env2 } = (await import('../../../lib/env')) as {
+      env: Record<string, unknown>
+    }
+
+    publicKeys.forEach((key) => {
+      expect(env2).toHaveProperty(key)
+      expect(env2[key]).toBeDefined()
+    })
+
+    delete (global as unknown as { window?: unknown }).window
   })
 })

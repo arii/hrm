@@ -140,15 +140,9 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
-// --- CRITICAL SECURITY CHECK ---
-// Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
+// Note: NEXTAUTH_SECRET is validated in lib/env.ts, ensuring it is present
+// and meets length requirements in production.
 const NEXTAUTH_SECRET_VAL = env.NEXTAUTH_SECRET
-
-if (!NEXTAUTH_SECRET_VAL) {
-  throw new Error(
-    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
-  )
-}
 
 const providers = []
 

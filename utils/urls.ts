@@ -46,9 +46,8 @@ export const getAPIURL = (endpoint: string): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
   const envApiUrl = env.NEXT_PUBLIC_API_URL
   if (envApiUrl && envApiUrl.length > 0) {
-    const cleanedUrl = envApiUrl.replace(/\/$/, '') // Remove trailing slash
     // Strictly adhere to docs: assume no '/api' in the env var.
-    return `${cleanedUrl}/api/${endpoint.replace(/^\//, '')}`
+    return `${envApiUrl}/api/${endpoint.replace(/^\//, '')}`
   }
 
   // 2. Fallback for client-side execution, deriving from the browser's origin.

@@ -106,23 +106,7 @@ export class ConnectionMonitor {
    */
   constructor(wss: WebSocketServer, watchdogInterval?: number) {
     this.wss = wss
-
-    // If no interval is provided via argument, get it from the environment.
-    const interval: number = watchdogInterval ?? env.WEBSOCKET_WATCHDOG_INTERVAL
-
-    // Final validation for any source.
-    if (interval <= 0) {
-      logger.warn(
-        {
-          provided: interval,
-          fallback: 30000,
-        },
-        'Watchdog interval must be a positive integer. Using fallback.'
-      )
-      this.watchdogInterval = 30000
-    } else {
-      this.watchdogInterval = interval
-    }
+    this.watchdogInterval = watchdogInterval ?? env.WEBSOCKET_WATCHDOG_INTERVAL
   }
 
   /**
