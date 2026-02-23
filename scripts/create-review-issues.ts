@@ -9,19 +9,20 @@ import { z } from 'zod'
 const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
-function getMinDescriptionLength(): number {
+// Load config once at module level for efficiency
+const config = (() => {
   try {
     const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
-    const configContent = readFileSync(CONFIG_PATH, 'utf-8')
-    if (configContent) {
-      const config = JSON.parse(configContent)
-      return config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
-    }
+    const content = readFileSync(CONFIG_PATH, 'utf-8')
+    return JSON.parse(content)
   } catch (e) {
-    // Fallback to default if config is missing or invalid
+    // During tests or if file is missing, fallback to empty config
+    return {}
   }
-  return DEFAULT_MIN_DESCRIPTION_LENGTH
-}
+})()
+
+const MIN_DESCRIPTION_LENGTH =
+  config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
 
 // --- Label Configuration ---
 
@@ -381,12 +382,11 @@ export function checkIssueQuality(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
 ): QualityResult {
-  const minLength = getMinDescriptionLength()
   // 1. Check description length
-  if (issue.description.trim().length < minLength) {
+  if (issue.description.trim().length < MIN_DESCRIPTION_LENGTH) {
     return {
       isLowQuality: true,
-      reason: `Description too short (${issue.description.trim().length} chars, required ${minLength})`,
+      reason: `Description too short (${issue.description.trim().length} chars, required ${MIN_DESCRIPTION_LENGTH})`,
     }
   }
 
