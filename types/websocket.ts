@@ -120,7 +120,7 @@ const HrmCommonDataSchema = z.object({
  * The `calories` field is optional to support older clients and handle
  * cases where the client has not yet calculated a value.
  */
-export const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
+const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
   value: z.number().nullable(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
@@ -137,9 +137,7 @@ export const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
     .optional(),
 })
 
-export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
-
-export const HrmInputMessageSchema = z.object({
+const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: IncomingHrmDataSchema,
 })
@@ -149,7 +147,7 @@ export type HrmInputMessage = z.infer<typeof HrmInputMessageSchema>
 /**
  * Represents the data payload for an HRM_METADATA_UPDATE message.
  */
-export const HrmMetadataUpdateDataSchema = HrmCommonDataSchema.extend({
+const HrmMetadataUpdateDataSchema = HrmCommonDataSchema.extend({
   weightKg: z.number().optional(),
   heightCm: z.number().optional(),
   weight: z.number().optional(),
@@ -159,7 +157,7 @@ export const HrmMetadataUpdateDataSchema = HrmCommonDataSchema.extend({
 
 export type HrmMetadataUpdateData = z.infer<typeof HrmMetadataUpdateDataSchema>
 
-export const HrmMetadataUpdateMessageSchema = z.object({
+const HrmMetadataUpdateMessageSchema = z.object({
   type: z.literal('HRM_METADATA_UPDATE'),
   data: HrmMetadataUpdateDataSchema,
 })
