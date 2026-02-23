@@ -27,6 +27,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 export interface UsePersistentStorageOptions<T> {
+  /**
+   * Optional migration function to handle schema evolution or data sanitization.
+   * Receives the raw data from storage (as unknown) and must return the validated type T.
+   */
   migrate?: (data: unknown) => T
 }
 

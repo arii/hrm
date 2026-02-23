@@ -58,6 +58,12 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     const filtered = Object.keys(storedObj).reduce((acc, k) => {
       if (schemaKeys.includes(k)) {
         const key = k as keyof UserPreferences
+        /**
+         * NOTE: We use 'any' cast here because we've already validated that the key 'k'
+         * exists in UserPreferences (via schemaKeys.includes). This ensures we only
+         * restore known keys from storage while maintaining full type safety for the
+         * rest of the application.
+         */
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         acc[key] = storedObj[k] as any
       }
