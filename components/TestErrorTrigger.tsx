@@ -8,5 +8,4 @@ import { VRT_TEST_ERROR_MESSAGE } from '@/constants/vrt'
  */
 export default function TestErrorTrigger() {
   throw new Error(VRT_TEST_ERROR_MESSAGE)
-  return null
 }
