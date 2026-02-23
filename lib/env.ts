@@ -8,6 +8,7 @@ const booleanSchema = z.preprocess((val) => {
 }, z.boolean())
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const envSchema = z
   .object({
     NODE_ENV: z
@@ -61,6 +62,14 @@ const envSchema = z
     SKIP_BUILD: booleanSchema.default(false),
   })
 =======
+=======
+/**
+ * Schema for all environment variables.
+ *
+ * IMPORTANT: If you add a new `NEXT_PUBLIC_` variable here, you MUST also add it to
+ * the `getEnvSource` function below. Otherwise, it will not be available in the client.
+ */
+>>>>>>> 51341fbb (feat(medium): fix: robust client-side env validation and type safety improvements (#9193))
 export const envObjectSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -114,6 +123,7 @@ export const envObjectSchema = z.object({
   INCLUDE_MOBILE: booleanSchema.default(false),
   SKIP_WEBSERVER: booleanSchema.default(false),
   SKIP_BUILD: booleanSchema.default(false),
+  ALLOW_DEBUG_RESET: booleanSchema.default(false),
 })
 
 const envSchema = envObjectSchema
@@ -207,14 +217,45 @@ const getEnvSource = () => {
 
 const parsedEnv = envSchema.safeParse(getEnvSource())
 
+/**
+ * Sanitizes the raw environment source for client-side fallback.
+ * Attempts to coerce known boolean and number fields to their correct types
+ * to prevent logic errors (e.g., string "false" being truthy).
+ */
+const sanitizeClientEnv = (
+  raw: ReturnType<typeof getEnvSource>
+): z.infer<typeof envSchema> => {
+  const safe = { ...raw } as Record<string, unknown>
+
+  // List of boolean keys to coerce from "true"/"false" strings
+  const booleanKeys = [
+    'NEXT_PUBLIC_USE_NATIVE_TABLE',
+    'NEXT_PUBLIC_TESTING',
+  ] as const
+
+  // Coerce booleans
+  booleanKeys.forEach((key) => {
+    if (key in safe) {
+      safe[key] = String(safe[key]) === 'true'
+    } else {
+      safe[key] = false // Default to false if missing
+    }
+  })
+
+  // Numbers are handled by standard JS coercion in application logic usually,
+  // but we can add them if needed. For now, booleans are the critical safety regression.
+
+  return safe as z.infer<typeof envSchema>
+}
+
 if (!parsedEnv.success) {
   if (isServer) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
     throw parsedEnv.error
   } else {
     // On the client, we log a warning but don't throw to avoid crashing the app.
-    // However, we must be aware that some variables might be missing or invalid.
-    console.warn(
+    // We return a sanitized best-effort object to ensure boolean logic safety.
+    console.error(
       '⚠️ Invalid client-side environment variables:',
       JSON.stringify(parsedEnv.error.format(), null, 2)
     )
@@ -223,15 +264,6 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : ({
-      NODE_ENV: 'production',
-      NEXT_PUBLIC_USE_NATIVE_TABLE: false,
-      NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: 8,
-      WEBSOCKET_WATCHDOG_INTERVAL: 30000,
-      NEXT_PUBLIC_API_URL: '',
-      NEXT_PUBLIC_WS_URL: '',
-      NEXT_PUBLIC_TESTING: false,
-      // Add other essential defaults for the client if needed
-    } as z.infer<typeof envSchema>)
+  : sanitizeClientEnv(getEnvSource())
 
 export { envSchema }
