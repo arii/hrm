@@ -14,7 +14,6 @@ import {
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
-import { env } from '@/lib/env'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -112,8 +111,8 @@ export const WebSocketProvider = ({
       }
 
       if (
-        env.NODE_ENV !== 'production' ||
-        env.NEXT_PUBLIC_TESTING === 'true' ||
+        process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
         (typeof window !== 'undefined' &&
           window.location.search.includes('testing=true'))
       ) {
@@ -321,8 +320,8 @@ export const WebSocketProvider = ({
 
     if (
       typeof window !== 'undefined' &&
-      (env.NODE_ENV !== 'production' ||
-        env.NEXT_PUBLIC_TESTING === 'true' ||
+      (process.env.NODE_ENV !== 'production' ||
+        process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
     ) {
       const testControls = (

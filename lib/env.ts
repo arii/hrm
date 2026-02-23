@@ -82,7 +82,10 @@ const envSchema = z
     }
 
     // Production-ready NEXTAUTH_SECRET validation
-    if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET?.length! < 32) {
+    if (
+      data.NODE_ENV === 'production' &&
+      (data.NEXTAUTH_SECRET?.length ?? 0) < 32
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['NEXTAUTH_SECRET'],
@@ -91,7 +94,10 @@ const envSchema = z
       })
     }
 
-    if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET?.length! < 1) {
+    if (
+      data.NODE_ENV !== 'production' &&
+      (data.NEXTAUTH_SECRET?.length ?? 0) < 1
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['NEXTAUTH_SECRET'],
@@ -108,47 +114,27 @@ const envSchema = z
 
 const isServer = typeof window === 'undefined'
 
-/**
- * On the client, we must explicitly map the variables we want to expose
- * to ensure Next.js static replacement works correctly.
- */
 const getEnvSource = () => {
-  if (isServer) {
-    return process.env
-  }
-  return {
-    NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_USE_NATIVE_TABLE: process.env.NEXT_PUBLIC_USE_NATIVE_TABLE,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS:
-      process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
-    NEXT_PUBLIC_TESTING: process.env.NEXT_PUBLIC_TESTING,
-  }
+  return process.env
 }
 
 const parsedEnv = isServer
   ? envSchema.safeParse(getEnvSource())
-  : envObjectSchema.partial().safeParse(getEnvSource())
+  : ({
+      success: true,
+      data: process.env as unknown as z.infer<typeof envSchema>,
+    } as ReturnType<typeof envSchema.safeParse>)
 
 if (!parsedEnv.success) {
   if (isServer) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
     throw parsedEnv.error
-  } else {
-    // Log a warning if public variables are missing or invalid
-    const publicIssues = parsedEnv.error.issues.filter((issue) =>
-      issue.path[0].toString().startsWith('NEXT_PUBLIC_')
-    )
-    if (publicIssues.length > 0) {
-      console.warn('⚠️ Public environment validation issues:', publicIssues)
-    }
   }
 }
 
 // Ensure env is typed correctly. On the client, server-only fields will be undefined.
-export const env = (parsedEnv.success
-  ? parsedEnv.data
-  : getEnvSource()) as z.infer<typeof envSchema>
+export const env = (
+  parsedEnv.success ? parsedEnv.data : getEnvSource()
+) as z.infer<typeof envSchema>
 
 export { envSchema }

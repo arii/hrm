@@ -83,9 +83,7 @@ export default function ConnectView({
     bluetoothStatus === BluetoothConnectionStatus.RECONNECTING
   const isDisconnecting =
     bluetoothStatus === BluetoothConnectionStatus.DISCONNECTING
-  const isReSyncNeeded =
-    (deviceStatus || '').includes('re-sync') ||
-    (deviceStatus || '').includes('Failed to reconnect')
+  const isReSyncNeeded = bluetoothStatus === BluetoothConnectionStatus.ERROR
 
   useEffect(() => {
     if (isConnected) {
