@@ -1,0 +1,9 @@
+import json
+replies = [
+    {
+        "comment_id": "3942107976",
+        "reply": "Thank you for the detailed audit. I have addressed the feedback:\n\n1. **Race Condition Fixed**: Modified `connectToGatt` in `hooks/useBluetoothHRM.ts` to return `false` when a disconnect is forced on failure. This ensures that the `reconnect()` logic is only triggered once via the `onDisconnected` event listener, preventing the double-reconnect race condition.\n2. **UI Refactored**: `ConnectView.tsx` now uses the `BluetoothConnectionStatus` enum (exported from the hook) to control UI states (buttons, alerts, spinners). This replaces the fragile string parsing of `deviceStatus` for connecting and disconnecting states.\n3. **Improved Safety**: Added `isMounted` checks to all asynchronous state updates in `useBluetoothHRM.ts` to prevent memory leaks and React warnings.\n\nVerified with unit tests and visual inspection via Playwright."
+    }
+]
+with open('replies.json', 'w') as f:
+    json.dump(replies, f)
