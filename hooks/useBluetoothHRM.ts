@@ -315,6 +315,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const reconnect = useCallback(
     (device: BluetoothDevice, reason = 'Connection lost') => {
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
+        if (isMounted.current) {
+          setStatus(BluetoothConnectionStatus.ERROR)
+        }
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
         )

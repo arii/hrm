@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
 import { UserProfileState } from '@/types/connect'
+import { BluetoothConnectionStatus } from '@/types/bluetooth'
 
 describe('ConnectView', () => {
   const mockUserProfile: UserProfileState = {
@@ -42,6 +43,7 @@ describe('ConnectView', () => {
     caloriesBurned: 0,
     userProfile: mockUserProfile,
     isConnected: false,
+    bluetoothStatus: BluetoothConnectionStatus.DISCONNECTED,
     deviceStatus: 'Disconnected',
     batteryLevel: null,
     onConnect: jest.fn(),
