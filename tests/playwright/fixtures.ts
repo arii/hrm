@@ -27,25 +27,21 @@ export const test = base.extend<PageFixtures>({
 
       console.log(`Console ${msg.type()}: ${text}`)
     })
-    await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },
 
   controlPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },
 
   mockPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },
 
   connectPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize({ width: 1920, height: 1080 })
     await applyFixture(page)
   },
 })

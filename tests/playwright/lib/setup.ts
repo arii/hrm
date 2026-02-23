@@ -88,13 +88,12 @@ export async function createTestPage(
     enableConsoleLogging?: boolean
   } = {}
 ): Promise<Page> {
-  const {
-    viewport = { width: 1920, height: 1080 },
-    enableConsoleLogging = false,
-  } = options
+  const { viewport, enableConsoleLogging = false } = options
 
   const page = await context.newPage()
-  await page.setViewportSize(viewport)
+  if (viewport) {
+    await page.setViewportSize(viewport)
+  }
 
   if (enableConsoleLogging) {
     page.on('console', (msg) => {
@@ -292,10 +291,8 @@ export async function setupComprehensiveTest(options: {
   page: Page
   context: BrowserContext
 }): Promise<void> {
-  const { page, context } = options
+  const { context } = options
   const baseUrl = getBaseURL()
-
-  await page.setViewportSize({ width: 1920, height: 1080 })
 
   // Pre-warm all endpoints for comprehensive tests
   const dashboardTab = await context.newPage()
