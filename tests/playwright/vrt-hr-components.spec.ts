@@ -38,6 +38,11 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('HR-Related Components', () => {
+    // Reset devices after each test to prevent state pollution
+    test.afterEach(async () => {
+      await mockMultipleHrDevices(dashboardPage, [])
+    })
+
     test('dashboard with HR data', async () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
@@ -86,12 +91,12 @@ test.describe('Visual Regression Tests', () => {
       ])
 
       // Wait for HR tiles to appear
-      await expect(
-        dashboardPage.getByTestId('hr-tile-card').first()
-      ).toBeVisible()
+      const hrTiles = dashboardPage.getByTestId('hr-tile-card')
+      await expect(hrTiles).toHaveCount(2)
+      await expect(hrTiles.first()).toBeVisible()
+      await expect(hrTiles.nth(1)).toBeVisible()
 
       // Assert all HR tiles maintain dimensions
-      const hrTiles = dashboardPage.getByTestId('hr-tile-card')
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {

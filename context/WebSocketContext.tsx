@@ -103,13 +103,11 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
-  const shouldSetTestStatus = useCallback(() => {
-    return (
-      typeof window !== 'undefined' &&
-      (process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true')
-    )
-  }, [])
+  const shouldSetTestStatus =
+    typeof window !== 'undefined' &&
+    (process.env.NODE_ENV !== 'production' ||
+      process.env.NEXT_PUBLIC_TESTING === 'true' ||
+      window.location.search.includes('testing=true'))
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -118,7 +116,7 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (shouldSetTestStatus()) {
+      if (shouldSetTestStatus) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
         ).__TEST_CONTROLS__ = {
@@ -195,7 +193,7 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
-      if (shouldSetTestStatus()) {
+      if (shouldSetTestStatus) {
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -231,7 +229,7 @@ export const WebSocketProvider = ({
       )
       setConnectionStatus('Disconnected')
 
-      if (shouldSetTestStatus()) {
+      if (shouldSetTestStatus) {
         document.body.dataset.connectionStatus = 'disconnected'
       }
 
