@@ -236,26 +236,17 @@ We use the `globalThis` object to persist service instances across reloads. This
 import { SpotifyService } from '../types/interfaces.js'
 import TabataTimer from '../services/tabataTimer.js'
 
-/**
- * Define a type-safe interface for globalThis.
- */
-const globalWithServices = globalThis as unknown as {
-  spotifyService: SpotifyService | undefined
-  tabataService: TabataTimer | undefined
-  isSpotifyInitialized: boolean | undefined
-}
-
 export async function createServices(broadcast) {
   // 1. Check for existing instances in development
   if (
     process.env.NODE_ENV !== 'production' &&
-    globalWithServices.spotifyService &&
-    globalWithServices.tabataService
+    global.spotifyService &&
+    global.tabataService
   ) {
     return {
-      spotifyService: globalWithServices.spotifyService,
-      tabataService: globalWithServices.tabataService,
-      isSpotifyInitialized: !!globalWithServices.isSpotifyInitialized,
+      spotifyService: global.spotifyService,
+      tabataService: global.tabataService,
+      isSpotifyInitialized: !!global.isSpotifyInitialized,
     }
   }
 
@@ -267,14 +258,16 @@ export async function createServices(broadcast) {
      isSpotifyInitialized: true,
   }
 
-  // 3. Persist to globalThis for future reloads and global access
-  globalWithServices.spotifyService = services.spotifyService
-  globalWithServices.tabataService = services.tabataService
-  globalWithServices.isSpotifyInitialized = services.isSpotifyInitialized
+  // 3. Persist to global for future reloads and global access
+  global.spotifyService = services.spotifyService
+  global.tabataService = services.tabataService
+  global.isSpotifyInitialized = services.isSpotifyInitialized
 
   return services
 }
 ```
+
+> **Note**: To ensure type safety, the `global` object is augmented in a declaration file (e.g., `types/global.d.ts`).
 
 ### Why use `globalThis`?
 

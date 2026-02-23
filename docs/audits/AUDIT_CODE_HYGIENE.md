@@ -2,7 +2,7 @@
 
 ## Summary
 
-This audit identifies a mix of strong foundational practices and critical technical debt. While the project benefits from a very strict TypeScript configuration and good security measures like rate limiting, these are undermined by unstable dependencies, build process hacks, and legacy coding patterns in the core server logic. Addressing these issues is crucial for improving the long-term stability, security, and maintainability of the application.
+This audit identifies a mix of strong foundational practices and critical technical debt. While the project benefits from a very strict TypeScript configuration and good security measures like rate limiting, these are undermined by unstable dependencies and build process hacks. Recent efforts have successfully refactored legacy stateful patterns in the core server logic into a robust event-driven singleton architecture.
 
 ## Static Analysis Findings
 

@@ -9,35 +9,27 @@ export interface AppServices {
   isSpotifyInitialized: boolean
 }
 
-/**
- * Ensures that service instances are persisted across hot-reloads in development.
- * This prevents the "Double-Singleton" problem where multiple instances of stateful
- * services (like Spotify polling) are created during Next.js recompilation.
- *
- * In Next.js, standard singleton patterns (const service = new Service()) fail
- * because the module is re-executed on hot-reload, creating a new instance.
- * Patching globalThis is the standard Next.js way to persist instances.
- */
-const globalWithServices = globalThis as unknown as {
-  spotifyService: SpotifyService | undefined
-  tabataService: TabataTimer | undefined
-  isSpotifyInitialized: boolean | undefined
-}
-
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
-  // Reuse existing instances in development to avoid duplicate connections
+  // Reuse existing instances in development to avoid duplicate connections.
+  // Implementation of the Next.js Singleton pattern: docs/TYPESCRIPT_PATTERNS.md
   if (
     process.env.NODE_ENV !== 'production' &&
-    globalWithServices.spotifyService &&
-    globalWithServices.tabataService
+    global.spotifyService &&
+    global.tabataService
   ) {
     return {
-      spotifyService: globalWithServices.spotifyService,
-      tabataService: globalWithServices.tabataService,
-      isSpotifyInitialized: !!globalWithServices.isSpotifyInitialized,
+      spotifyService: global.spotifyService,
+      tabataService: global.tabataService,
+      isSpotifyInitialized: !!global.isSpotifyInitialized,
     }
+  }
+
+  // Cleanup existing services if we're re-initializing partially (edge case)
+  if (process.env.NODE_ENV !== 'production') {
+    global.spotifyService?.cleanup?.()
+    global.tabataService?.dispose()
   }
 
   const tabataService = new TabataTimer(broadcast)
@@ -80,9 +72,9 @@ export async function createServices(
   const services = { tabataService, spotifyService, isSpotifyInitialized }
 
   // Expose instances globally (required for API routes and persistence)
-  globalWithServices.spotifyService = services.spotifyService
-  globalWithServices.tabataService = services.tabataService
-  globalWithServices.isSpotifyInitialized = services.isSpotifyInitialized
+  global.spotifyService = services.spotifyService
+  global.tabataService = services.tabataService
+  global.isSpotifyInitialized = services.isSpotifyInitialized
 
   return services
 }
