@@ -3,9 +3,9 @@
  * across different modules (domain logic, UI, etc.).
  */
 import { HR_COLORS } from '@/lib/shared/colors'
-import { MAX_HR_DEFAULT, calculateMaxHr } from '@/utils/hrCalculations'
+import { calculateMaxHr } from '@/utils/hrCalculations'
 
-export { MAX_HR_DEFAULT, calculateMaxHr }
+export { calculateMaxHr }
 
 /**
  * Heart Rate Zone string literal type for consistency and full type safety.
