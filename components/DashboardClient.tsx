@@ -89,7 +89,6 @@ const DashboardClient = ({
 
   return (
     <Box sx={{ backgroundColor: 'background.default' }}>
-    <>
       {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"

@@ -50,34 +50,26 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const migrate = useCallback((stored: unknown): UserPreferences => {
-    if (typeof stored !== 'object' || stored === null) {
+    if (typeof stored !== 'object' || stored === null)
       return DEFAULT_PREFERENCES
-    }
 
-    const storedObj = stored as Record<string, unknown>
-    const result = { ...DEFAULT_PREFERENCES }
+    const storedRecord = stored as Record<string, unknown>
+    const cleanStored = Object.keys(DEFAULT_PREFERENCES).reduce((acc, key) => {
+      const k = key as keyof UserPreferences
+      const storedVal = storedRecord[k]
+      const defaultVal = DEFAULT_PREFERENCES[k]
 
-    // Use a type-safe approach to map stored values to the result object
-    // only if they exist in the default schema.
-    const schemaKeys = Object.keys(DEFAULT_PREFERENCES) as Array<
-      keyof UserPreferences
-    >
-    schemaKeys.forEach((key) => {
-      if (Object.prototype.hasOwnProperty.call(storedObj, key)) {
-        const val = storedObj[key]
-        if (val !== undefined && val !== null) {
-          /**
-           * NOTE: The cast to 'never' on the left side or a generic type assertion
-           * is required when dynamically assigning to a narrowed object key in TS.
-           * This is safer than 'any' because it maintains context within the known
-           * schema keys of UserPreferences.
-           */
-          ;(result as Record<keyof UserPreferences, unknown>)[key] = val
-        }
+      if (
+        storedVal !== undefined &&
+        storedVal !== null &&
+        typeof storedVal === typeof defaultVal
+      ) {
+        ;(acc as Record<string, unknown>)[k] = storedVal
       }
-    })
+      return acc
+    }, {} as Partial<UserPreferences>)
 
-    return result
+    return { ...DEFAULT_PREFERENCES, ...cleanStored }
   }, [])
 
   // Use the usePersistentStorage hook directly within the provider

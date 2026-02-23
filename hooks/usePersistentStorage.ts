@@ -97,28 +97,21 @@ function usePersistentStorage<T>(
           const valueToStore =
             value instanceof Function ? value(currentStoredValue) : value
 
-          try {
-            if (checkLocalStorage()) {
+          if (checkLocalStorage()) {
+            try {
               window.localStorage.setItem(key, JSON.stringify(valueToStore))
-            } else {
+            } catch (storageError) {
+              console.error('LocalStorage write failed:', storageError)
+            }
+          } else {
+            try {
               Cookies.set(key, JSON.stringify(valueToStore), {
                 expires: 365,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
               })
-            }
-          } catch (storageError) {
-            console.error('Storage write failed:', storageError)
-            if (checkLocalStorage()) {
-              try {
-                Cookies.set(key, JSON.stringify(valueToStore), {
-                  expires: 365,
-                  secure: process.env.NODE_ENV === 'production',
-                  sameSite: 'strict',
-                })
-              } catch (cookieError) {
-                console.error('Cookie fallback failed:', cookieError)
-              }
+            } catch (cookieError) {
+              console.error('Cookie write failed:', cookieError)
             }
           }
           return valueToStore
