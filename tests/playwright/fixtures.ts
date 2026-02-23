@@ -4,7 +4,6 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
-import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 type PageFixtures = {
   dashboardPage: Page
@@ -28,25 +27,21 @@ export const test = base.extend<PageFixtures>({
 
       console.log(`Console ${msg.type()}: ${text}`)
     })
-    await page.setViewportSize(DESKTOP_VIEWPORT)
     await applyFixture(page)
   },
 
   controlPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize(DESKTOP_VIEWPORT)
     await applyFixture(page)
   },
 
   mockPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize(DESKTOP_VIEWPORT)
     await applyFixture(page)
   },
 
   connectPage: async ({ context }, applyFixture) => {
     const page = await context.newPage()
-    await page.setViewportSize(DESKTOP_VIEWPORT)
     await applyFixture(page)
   },
 })

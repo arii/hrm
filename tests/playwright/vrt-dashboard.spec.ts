@@ -9,7 +9,7 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
-import { MOBILE_VIEWPORT } from './lib/viewports'
+import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -156,6 +156,15 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
+      })
+    })
+
+    test('tablet viewport', async () => {
+      await dashboardPage.setViewportSize(TABLET_VIEWPORT)
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
+        mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.3,
       })
     })
   })

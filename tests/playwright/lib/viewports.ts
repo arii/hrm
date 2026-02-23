@@ -1,14 +1,19 @@
 /**
- * Standard viewport dimensions for Visual Regression Testing.
- * Centralizing these ensures consistency across different tests and reduces redundancy.
+ * Viewport dimensions for Visual Regression Testing.
  */
+import type { ViewportSize } from '@playwright/test'
 
-export const DESKTOP_VIEWPORT = {
+export const DESKTOP_VIEWPORT: ViewportSize = {
   width: 1920,
   height: 1080,
 }
 
-export const MOBILE_VIEWPORT = {
+export const MOBILE_VIEWPORT: ViewportSize = {
   width: 375,
+  height: 1000,
+}
+
+export const TABLET_VIEWPORT: ViewportSize = {
+  width: 768,
   height: 1000,
 }
