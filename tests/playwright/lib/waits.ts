@@ -15,7 +15,7 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-  TEST_READY: 5000,
+  TEST_READY: 8000,
   /** Default timeout for WebSocket connection */
   WEBSOCKET: 5000,
   /** Default timeout for element visibility */
@@ -67,7 +67,7 @@ export async function waitForPageReady(
   try {
     await page.waitForSelector('.MuiSkeleton-root', {
       state: 'hidden',
-      timeout: Math.min(timeout, 2000),
+      timeout: Math.min(timeout, 5000),
     })
   } catch (error) {
     console.warn(

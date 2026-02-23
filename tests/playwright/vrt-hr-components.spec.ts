@@ -5,7 +5,8 @@ import {
   getHrMasks,
   setupVisualRegressionTest,
   mockMultipleHrDevices,
-} from './test-helpers'
+  resetServerState,
+} from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -32,13 +33,31 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
+  test.beforeEach(async ({ request }) => {
+    // 1. Reset server-side state
+    await resetServerState(request)
+
+    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
+    await dashboardPage.reload()
+    await mockPage.reload()
+
+    // 3. Wait for pages to be ready and connected
+    await waitForPageReady(dashboardPage)
+    await waitForPageReady(mockPage)
+
+    await dashboardPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 5000 }
+    )
+    await mockPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 5000 }
+    )
+  })
+
   test.afterEach(async () => {
     // Clear mock HR devices to prevent state pollution between tests
     await mockMultipleHrDevices(dashboardPage, [])
-  })
-
-  test.beforeEach(async () => {
-    await waitForPageReady(dashboardPage)
   })
 
   test.describe('HR-Related Components', () => {
@@ -46,8 +65,11 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
-      // Assert HR tile height is within limits
+      // Wait for HR tile to appear on dashboard
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
+
+      // Assert HR tile height is within limits
       await assertFixedDimensions(hrTile, {
         minHeight: 180,
       })

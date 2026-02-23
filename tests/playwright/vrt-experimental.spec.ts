@@ -1,5 +1,5 @@
 import { test } from './fixtures'
-import { setupMinimalVisualRegressionTest } from './test-helpers'
+import { setupMinimalVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
