@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -42,6 +42,11 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
+      // Wait for HR tile to appear
+      await expect(
+        dashboardPage.getByTestId('hr-tile-card').first()
+      ).toBeVisible()
+
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
       await assertFixedDimensions(hrTile, {
@@ -80,6 +85,11 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
+      // Wait for HR tiles to appear
+      await expect(
+        dashboardPage.getByTestId('hr-tile-card').first()
+      ).toBeVisible()
+
       // Assert all HR tiles maintain dimensions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
       const count = await hrTiles.count()
@@ -105,6 +115,11 @@ test.describe('Visual Regression Tests', () => {
       test(`dashboard with HR in Zone ${zone}`, async () => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
+
+        // Wait for HR tile to appear
+        await expect(
+          dashboardPage.getByTestId('hr-tile-card').first()
+        ).toBeVisible()
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
