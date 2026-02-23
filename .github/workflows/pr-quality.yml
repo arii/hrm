@@ -275,7 +275,7 @@ jobs:
           set -o pipefail
           mkdir -p logs
           # In CI, we use --pretty false to ensure the problem matcher can parse the output reliably
-          pnpm run type-check -- --pretty false 2>&1 | tee logs/type-check-output.log
+          pnpm run type-check --pretty false 2>&1 | tee logs/type-check-output.log
 
       - name: Report Type Check Failure
         if: failure() && steps.type-check.outcome == 'failure'
@@ -845,6 +845,9 @@ jobs:
       perf-tests-outcome: ${{ needs.perf-tests.result }}
       visual-tests-outcome: ${{ needs.visual-tests.result }}
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Generate Summary Report
         shell: bash
         run: |
