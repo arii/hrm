@@ -50,13 +50,16 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const migrate = useCallback((stored: unknown): UserPreferences => {
-    if (typeof stored !== 'object' || stored === null) return DEFAULT_PREFERENCES
+    if (typeof stored !== 'object' || stored === null)
+      return DEFAULT_PREFERENCES
 
     const storedRecord = stored as Record<string, unknown>
     const cleanStored = Object.keys(DEFAULT_PREFERENCES).reduce((acc, key) => {
       const k = key as keyof UserPreferences
       if (storedRecord[k] !== undefined && storedRecord[k] !== null) {
-        acc[k] = storedRecord[k] as any
+        acc[k] = storedRecord[
+          k
+        ] as unknown as UserPreferences[keyof UserPreferences]
       }
       return acc
     }, {} as Partial<UserPreferences>)

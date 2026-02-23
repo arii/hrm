@@ -88,7 +88,7 @@ describe('usePersistentStorage', () => {
     // but fails for the data key.
     Object.defineProperty(window, 'localStorage', {
       value: {
-        setItem: jest.fn((key, value) => {
+        setItem: jest.fn((key, _value) => {
           if (key === 'hrm-storage-test') {
             return // Success for check
           }
