@@ -165,6 +165,7 @@ import {
   setupMockHrStreaming,
   startMockHrStreaming,
   HRM_ROUTES,
+  DESKTOP_VIEWPORT,
 } from './lib'
 
 // Warmup endpoints for faster tests
@@ -172,7 +173,7 @@ await warmupEndpoints(context)
 
 // Create a test page with standard settings
 const page = await createTestPage(context, {
-  viewport: { width: 1920, height: 1080 },
+  viewport: DESKTOP_VIEWPORT,
   enableConsoleLogging: true,
 })
 

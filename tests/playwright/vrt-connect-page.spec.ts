@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
+import { MOBILE_VIEWPORT } from './lib/viewports'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -109,6 +110,13 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       maxDiffPixelRatio: 0.05,
       // Performance: Skip a11y check for this specific error variant; primary state is covered
       skipA11y: true,
+    })
+  })
+
+  test('mobile viewport', async ({ connectPage }) => {
+    await connectPage.setViewportSize(MOBILE_VIEWPORT)
+    await takeScreenshot(connectPage, 'connect-page-mobile.png', {
+      mask: [connectPage.getByTestId('hr-tile')],
     })
   })
 })
