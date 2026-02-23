@@ -100,10 +100,12 @@ export const useConnectUserProfile = (): UserProfileState => {
     }
 
     window.addEventListener('beforeunload', persist)
+    window.addEventListener('pagehide', persist)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('beforeunload', persist)
+      window.removeEventListener('pagehide', persist)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       persist()
     }
