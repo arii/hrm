@@ -88,8 +88,12 @@ const DashboardClient = ({
   }
 
   return (
+<<<<<<< HEAD
     <Box sx={{ backgroundColor: 'background.default' }}>
       {triggerError && <TestErrorTrigger />}
+=======
+    <>
+>>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
       <Container
         data-testid="dashboard"
         maxWidth="xl"
@@ -97,6 +101,10 @@ const DashboardClient = ({
         sx={{
           py: { xs: 2, sm: 3 },
           minHeight: '100vh',
+<<<<<<< HEAD
+=======
+          backgroundColor: 'background.default',
+>>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
         }}
       >
         <Box sx={mainGridStyles}>
@@ -126,7 +134,11 @@ const DashboardClient = ({
         </Box>
       </Container>
       <SpotifyDisplay />
+<<<<<<< HEAD
     </Box>
+=======
+    </>
+>>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
   )
 }
 
