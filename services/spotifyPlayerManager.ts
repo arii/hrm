@@ -1,7 +1,6 @@
 import { SpotifyCommandParameters } from '../types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
 import logger from '../utils/logger.server.js'
-import { logSpotifyCommandError } from './spotifyApiErrorHandling.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
@@ -269,7 +268,7 @@ export class SpotifyPlayerManager {
         )
         return
       }
-      await logSpotifyCommandError(commandName, error)
+      throw error
     }
   }
 }
