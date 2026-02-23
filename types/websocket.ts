@@ -210,6 +210,8 @@ const HrmMetadataUpdateDataSchema = z.object({
   age: z.number().optional(),
   weightKg: z.number().optional(),
   heightCm: z.number().optional(),
+  weight: z.number().optional(),
+  height: z.number().optional(),
   gender: z.enum(['MALE', 'FEMALE', 'NEUTRAL']).optional(),
 })
 

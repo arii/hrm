@@ -131,6 +131,10 @@ export interface RawHrmStreamData {
   zone?: HeartRateZone
   weightKg?: number
   heightCm?: number
+  /** @deprecated use weightKg */
+  weight?: number
+  /** @deprecated use heightCm */
+  height?: number
   gender?: Gender
   updatedAt?: number
 }

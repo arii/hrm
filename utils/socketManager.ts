@@ -246,7 +246,12 @@ const broadcastState = () => {
   const allData = hrmSessionManager.findAll()
   const filteredData = filterHrmData(allData, Date.now(), {
     includeZeroValues: true,
-  })
+  }).map((data) => ({
+    ...data,
+    // Backward compatibility: populate old fields
+    weight: data.weightKg,
+    height: data.heightCm,
+  }))
 
   broadcast(
     wsServerInstance,
@@ -296,7 +301,12 @@ const handleIncomingMessage = (
         const allData = hrmSessionManager.findAll()
         const filteredData = filterHrmData(allData, Date.now(), {
           includeZeroValues: true,
-        })
+        }).map((data) => ({
+          ...data,
+          // Backward compatibility: populate old fields
+          weight: data.weightKg,
+          height: data.heightCm,
+        }))
 
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
@@ -315,6 +325,20 @@ const handleIncomingMessage = (
           const updateData: Partial<HrmStreamData> = objectFromEntries(
             Object.entries(message.data)
           )
+
+          // Handle backward compatibility for weight and height
+          if (
+            updateData.weight !== undefined &&
+            updateData.weightKg === undefined
+          ) {
+            updateData.weightKg = updateData.weight
+          }
+          if (
+            updateData.height !== undefined &&
+            updateData.heightCm === undefined
+          ) {
+            updateData.heightCm = updateData.height
+          }
 
           if (
             !isGenericName(existingData.name) &&
