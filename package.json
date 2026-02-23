@@ -155,7 +155,7 @@
     "playwright": "^1.57.0",
     "pm2": "^6.0.14",
     "prettier": "^3.8.1",
-    "storybook": "^8.6.15",
+    "storybook": "^8.6.17",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
