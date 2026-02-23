@@ -8,26 +8,26 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 /**
  * Specific payload types for each Spotify command to ensure type safety.
  */
-export type SpotifyBasePayload = {
+type SpotifyBasePayload = {
   deviceId?: string
 }
 
-export type SpotifyPlayPayload = SpotifyBasePayload & {
+type SpotifyPlayPayload = SpotifyBasePayload & {
   playlistUri?: string
   contextUri?: string
   uri?: string
   offset?: { position: number }
 }
 
-export type SpotifyVolumePayload = SpotifyBasePayload & {
+type SpotifyVolumePayload = SpotifyBasePayload & {
   volume: number
 }
 
-export type SpotifyTransferPayload = {
+type SpotifyTransferPayload = {
   deviceId: string
 }
 
-export type CommandPayload =
+type CommandPayload =
   | SpotifyPlayPayload
   | SpotifyVolumePayload
   | SpotifyTransferPayload

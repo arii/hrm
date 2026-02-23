@@ -179,7 +179,7 @@ export interface ClientRegistrationMessage {
   role: 'dashboard' | 'controller'
 }
 
-export interface PingMessage {
+interface PingMessage {
   type: 'PING'
 }
 

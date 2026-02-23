@@ -230,6 +230,14 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmSessionManager.clear()
   clientSessionState.clear()
+  // Disconnect all clients to force them to re-register and re-initialize their sessions
+  if (wsServerInstance) {
+    wsServerInstance.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.close(1001, 'Server Reset')
+      }
+    })
+  }
 }
 
 const broadcastState = () => {
