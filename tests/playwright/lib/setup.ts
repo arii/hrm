@@ -17,6 +17,7 @@ import {
   waitForPageReady,
   waitForWebSocketConnection,
 } from './waits'
+import { DESKTOP_VIEWPORT } from './viewports'
 
 /**
  * Common routes used in HRM testing
@@ -89,7 +90,7 @@ export async function createTestPage(
   } = {}
 ): Promise<Page> {
   const {
-    viewport = { width: 1920, height: 1080 },
+    viewport = DESKTOP_VIEWPORT,
     enableConsoleLogging = false,
   } = options
 
@@ -272,7 +273,7 @@ export async function setupComprehensiveTest(options: {
   const { page, context } = options
   const baseUrl = getBaseURL()
 
-  await page.setViewportSize({ width: 1920, height: 1080 })
+  await page.setViewportSize(DESKTOP_VIEWPORT)
 
   // Pre-warm all endpoints for comprehensive tests
   const dashboardTab = await context.newPage()

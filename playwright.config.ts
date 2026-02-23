@@ -3,6 +3,7 @@
  * Optimized for performance and parallel execution
  */
 import { defineConfig, devices } from '@playwright/test'
+import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
 
 // Define the port for the test server
 const port = process.env.PORT || 3000
@@ -88,7 +89,7 @@ export default defineConfig({
     trace: 'on-first-retry',
 
     // Browser context options
-    viewport: { width: 1920, height: 1080 },
+    viewport: DESKTOP_VIEWPORT,
   },
 
   // Browser configurations
@@ -108,10 +109,10 @@ export default defineConfig({
             '--hide-scrollbars',
           ],
         },
-        viewport: { width: 1920, height: 1080 },
+        viewport: DESKTOP_VIEWPORT,
         video: {
           mode: 'retain-on-failure',
-          size: { width: 1920, height: 1080 },
+          size: DESKTOP_VIEWPORT,
         },
       },
     },
@@ -157,7 +158,7 @@ export default defineConfig({
   outputDir: 'test-results/',
   reporter: [
     ['list'],
-    process.env.CI ? ['github'] : [],
+    ...(process.env.CI ? [['github'] as any] : []),
     ['blob'],
     [
       'junit',
