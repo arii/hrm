@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest } from './lib'
+import { setupVisualRegressionTest, resetServerState } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -25,8 +25,21 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ request }) => {
+    // 1. Reset server-side state
+    await resetServerState(request)
+
+    // 2. Reload page to ensure clean state
+    await mockPage.reload()
+
+    // 3. Wait for page ready
     await waitForPageReady(mockPage)
+
+    // Ensure WebSocket is re-established after server reset
+    await mockPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 5000 }
+    )
   })
 
   test.describe('MockHRM Client', () => {

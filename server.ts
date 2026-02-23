@@ -141,7 +141,15 @@ app.prepare().then(async () => {
         .json({ error: 'Debug reset not allowed in production' })
     }
     resetSocketManager()
-    logger.info('Server-side HRM state has been reset via /api/debug/reset')
+
+    // Reset Timer Service to a clean state
+    services.tabataService.stop()
+    services.tabataService.setMode('TABATA')
+    services.tabataService.setConfig({ workDuration: 20, restDuration: 10 })
+
+    logger.info(
+      'Server-side state (HRM, Timer) has been reset via /api/debug/reset'
+    )
     return res.status(200).json({ status: 'reset' })
   })
 
