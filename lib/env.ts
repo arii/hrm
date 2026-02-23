@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+const isServer = typeof window === 'undefined'
+
 const booleanSchema = z.preprocess((val) => {
   if (typeof val === 'string') return val.toLowerCase() === 'true'
   return val === true
@@ -58,6 +60,10 @@ const envSchema = z
     SKIP_BUILD: booleanSchema.default(false),
   })
   .superRefine((data, ctx) => {
+    // Only perform strict validation on the server.
+    // On the client, many of these variables will be missing.
+    if (!isServer) return
+
     // Paired validation for Spotify credentials
     if (data.SPOTIFY_CLIENT_ID && !data.SPOTIFY_CLIENT_SECRET) {
       ctx.addIssue({
@@ -125,9 +131,22 @@ const envSchema = z
     return data
   })
 
-const parsedEnv = envSchema.safeParse(process.env)
+const getEnvSource = () => {
+  if (isServer) return process.env
 
-const isServer = typeof window === 'undefined'
+  // Client-side: explicitly map variables for Next.js static replacement
+  return {
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_USE_NATIVE_TABLE: process.env.NEXT_PUBLIC_USE_NATIVE_TABLE,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS:
+      process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+    NEXT_PUBLIC_TESTING: process.env.NEXT_PUBLIC_TESTING,
+  }
+}
+
+const parsedEnv = envSchema.safeParse(getEnvSource())
 
 if (!parsedEnv.success && isServer) {
   console.error('❌ Invalid environment variables:', parsedEnv.error.format())

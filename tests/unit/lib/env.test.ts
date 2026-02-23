@@ -83,4 +83,25 @@ describe('Environment Variables', () => {
     delete process.env.NEXTAUTH_URL
     await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
   })
+
+  it('should handle client-side environment correctly', async () => {
+    // Simulate client-side environment
+    global.window = {} as any
+    process.env.NODE_ENV = 'production'
+    process.env.NEXT_PUBLIC_TESTING = 'true'
+    // Remove server-side secrets that would normally trigger validation errors in production
+    delete process.env.NEXTAUTH_SECRET
+    delete process.env.NEXTAUTH_URL
+    delete process.env.SPOTIFY_CLIENT_ID
+    delete process.env.SPOTIFY_CLIENT_SECRET
+
+    const { env } = await import('../../../lib/env')
+    expect(env.NODE_ENV).toBe('production')
+    expect(env.NEXT_PUBLIC_TESTING).toBe(true)
+    // Server secrets should be missing, but validation should pass on client
+    expect(env.NEXTAUTH_SECRET).toBeUndefined()
+
+    // Cleanup global window
+    delete (global as any).window
+  })
 })
