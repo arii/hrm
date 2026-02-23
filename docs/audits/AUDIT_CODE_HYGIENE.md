@@ -2,7 +2,7 @@
 
 ## Summary
 
-This audit identifies a mix of strong foundational practices and critical technical debt. While the project benefits from a very strict TypeScript configuration and good security measures like rate limiting, these are undermined by unstable dependencies and build process hacks. Recent efforts have successfully refactored legacy stateful patterns in the core server logic into a robust event-driven singleton architecture.
+This audit identifies a mix of strong foundational practices and critical technical debt. While the project benefits from a very strict TypeScript configuration and good security measures like rate limiting, these are undermined by unstable dependencies and build process hacks. Recent efforts have successfully refactored legacy stateful patterns in the core server logic into a reliable event-driven singleton architecture.
 
 ## Static Analysis Findings
 
@@ -11,7 +11,7 @@ This audit identifies a mix of strong foundational practices and critical techni
 | `package.json`  | **Unstable Dependencies**: The project uses pre-release/canary versions for critical packages (e.g., `next@16.0.8`, `express@^5.1.0`).              | **High**   | Pin all dependencies to the latest stable major or minor versions. Avoid using canary, alpha, or beta releases in a production-oriented application to ensure stability and security.                                                                                                          |
 | `package.json`  | **Build Script Hack**: The `build:server` script uses `cp dist/server.js dist/server.mjs`.                                                          | **Medium** | Resolve the underlying module resolution issue. This likely involves aligning the `module` and `moduleResolution` settings in `tsconfig.build.json` with the project's `"type": "module"` setting to produce the correct file output natively.                                                 |
 | `tsconfig.json` | **(No Issues Found)**: The TypeScript configuration is excellent. It is commendably strict, enforcing a high level of code quality and type safety. | **None**   | Maintain this level of strictness.                                                                                                                                                                                                                                                             |
-| `server.ts`     | **Error Swallowing**: The `SpotifyPolling.create` `try...catch` block creates a "stub" service on failure.                                          | **High**   | Implement a more robust health check and startup sequence. If a critical service like Spotify fails to initialize, the server should either fail to start (fail-fast) or the `/health/ready` endpoint should report as unhealthy, preventing traffic from being routed to a degraded instance. |
+| `server.ts`     | **Error Swallowing**: The `SpotifyPolling.create` `try...catch` block creates a "stub" service on failure.                                          | **High**   | Implement a more reliable health check and startup sequence. If a critical service like Spotify fails to initialize, the server should either fail to start (fail-fast) or the `/health/ready` endpoint should report as unhealthy, preventing traffic from being routed to a degraded instance. |
 
 ## Server/Security Misconfigurations
 
