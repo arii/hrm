@@ -22,9 +22,8 @@ async function safePageTeardown(page: Page) {
     if (!page.isClosed()) {
       await cleanupVisualRegressionTest(page)
     }
-  } catch (error) {
+  } catch {
     // Teardown errors are logged but shouldn't fail the test
-    console.debug('Optional page teardown skipped:', error)
   }
 }
 

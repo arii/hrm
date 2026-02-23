@@ -1,36 +1,13 @@
-import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest, cleanupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { HRM_ROUTES } from './lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
 
-// Reusable page objects
-let dashboardPage: Page
-let context: BrowserContext
-
 // Test suite for VRT
 test.describe('WorkoutSummary Component VRT', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    dashboardPage = setup.dashboardPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  // Explicit cleanup for pages not managed by fixtures
-  test.afterEach(async () => {
-    await cleanupVisualRegressionTest(dashboardPage)
-  })
-
-  test('active state', async () => {
+  test('active state', async ({ dashboardPage }) => {
     // Navigate to experimental dashboard
     await dashboardPage.goto(HRM_ROUTES.EXPERIMENTAL)
     // The dashboard starts in a "list" view. Click "New Workout" to show the summary.
