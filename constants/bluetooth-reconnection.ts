@@ -12,12 +12,16 @@ export const BLUETOOTH_MAX_RECONNECT_ATTEMPTS =
 
 // Reconnection Delay Parameters
 export const RECONNECT_BASE_DELAY_MS = 5000
-export const RECONNECT_DELAY_INCREMENT_MS = 1000
 export const RECONNECT_RANDOM_DELAY_MS = 1000
 
 // Fast Retry Parameters for initial connection attempts
 export const FAST_RECONNECT_DELAY_MS = 1000
 export const FAST_RECONNECT_MAX_ATTEMPTS = 3
+
+// Timing Constants for GATT Stability
+export const GATT_DISCONNECT_COOLDOWN_MS = 800
+export const CONNECTION_STORM_THRESHOLD_MS = 5000
+export const PERMISSIONS_REVOKED_TIMEOUT_MS = 2000
 
 /**
  * @param attempt - The current attempt number (starting from 1).

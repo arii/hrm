@@ -176,13 +176,19 @@ export default function ConnectView({
               disabled={
                 !data.userName.trim() ||
                 !data.userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                deviceStatus.includes('Connecting') ||
+                deviceStatus.includes('Disconnecting')
               }
             >
               {deviceStatus.includes('Connecting') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
+                </Stack>
+              ) : deviceStatus.includes('Disconnecting') ? (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <CircularProgress size={20} color="inherit" />
+                  <span>Disconnecting...</span>
                 </Stack>
               ) : deviceStatus.includes('re-sync') ||
                 deviceStatus.includes('Failed to reconnect') ? (
@@ -224,8 +230,16 @@ export default function ConnectView({
                 size="large"
                 onClick={onDisconnect}
                 color="error"
+                disabled={deviceStatus.includes('Disconnecting')}
               >
-                Disconnect
+                {deviceStatus.includes('Disconnecting') ? (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <CircularProgress size={20} color="inherit" />
+                    <span>Disconnecting...</span>
+                  </Stack>
+                ) : (
+                  'Disconnect'
+                )}
               </Button>
               {deviceStatus !== 'Connected' && (
                 <Typography variant="caption" color="text.secondary">

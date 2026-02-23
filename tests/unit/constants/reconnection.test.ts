@@ -4,9 +4,11 @@
 import {
   BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
   RECONNECT_BASE_DELAY_MS,
-  RECONNECT_DELAY_INCREMENT_MS,
   RECONNECT_RANDOM_DELAY_MS,
   getBackoffDelay,
+  GATT_DISCONNECT_COOLDOWN_MS,
+  CONNECTION_STORM_THRESHOLD_MS,
+  PERMISSIONS_REVOKED_TIMEOUT_MS,
 } from '@/constants/bluetooth-reconnection'
 
 describe('Reconnection Constants', () => {
@@ -18,8 +20,10 @@ describe('Reconnection Constants', () => {
     expect(RECONNECT_BASE_DELAY_MS).toBe(5000)
   })
 
-  it('should have the correct value for "RECONNECT_DELAY_INCREMENT_MS"', () => {
-    expect(RECONNECT_DELAY_INCREMENT_MS).toBe(1000)
+  it('should have the correct values for timing constants', () => {
+    expect(GATT_DISCONNECT_COOLDOWN_MS).toBe(800)
+    expect(CONNECTION_STORM_THRESHOLD_MS).toBe(5000)
+    expect(PERMISSIONS_REVOKED_TIMEOUT_MS).toBe(2000)
   })
 
   it('should have the correct value for "RECONNECT_RANDOM_DELAY_MS"', () => {

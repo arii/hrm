@@ -562,7 +562,6 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
-
     })
 
     it('should successfully reconnect after a disconnection', async () => {

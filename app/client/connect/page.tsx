@@ -123,6 +123,7 @@ export default function ConnectPage() {
     userAge: userAge || 0,
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: handleStartWorkout,
+    isWorkoutActive: hasStarted,
   })
 
   // Automatically start workout or resume when connected to maintain previous behavior
