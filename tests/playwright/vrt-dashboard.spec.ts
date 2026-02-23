@@ -154,7 +154,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4, // Increased tolerance to handle minor layout/height variations in CI
+        maxDiffPixelRatio: 0.3, // Reverted to 0.3 as per PR feedback
       })
     })
 
@@ -163,7 +163,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4,
+        maxDiffPixelRatio: 0.3,
       })
     })
 
@@ -172,7 +172,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4,
+        maxDiffPixelRatio: 0.3,
       })
     })
   })

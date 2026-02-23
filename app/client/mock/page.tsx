@@ -355,7 +355,7 @@ export default function MockPage() {
             disabled={connectionStatus !== 'Connected'}
             startIcon={<HeartBroken />}
             fullWidth
-            sx={{ mb: 1 }}
+            sx={{ mb: 3 }}
             data-testid={
               isStreaming ? 'streaming-stop-button' : 'streaming-start-button'
             }
