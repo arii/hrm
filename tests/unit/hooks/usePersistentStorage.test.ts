@@ -115,4 +115,24 @@ describe('usePersistentStorage', () => {
 
     expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
+
+  it('should reload data when key changes', () => {
+    const OTHER_KEY = 'other-key'
+    const OTHER_VALUE = { bar: 'baz' }
+    window.localStorage.setItem(TEST_KEY, JSON.stringify(UPDATED_VALUE))
+    window.localStorage.setItem(OTHER_KEY, JSON.stringify(OTHER_VALUE))
+
+    const { result, rerender } = renderHook(
+      ({ key }) => usePersistentStorage(key, INITIAL_VALUE),
+      {
+        initialProps: { key: TEST_KEY },
+      }
+    )
+
+    expect(result.current[0]).toEqual(UPDATED_VALUE)
+
+    rerender({ key: OTHER_KEY })
+
+    expect(result.current[0]).toEqual({ ...INITIAL_VALUE, ...OTHER_VALUE })
+  })
 })
