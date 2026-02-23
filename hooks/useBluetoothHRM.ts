@@ -31,7 +31,9 @@ const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
 export const HEARTBEAT_INTERVAL_MS =
-  env.NODE_ENV === 'test' ? HEARTBEAT_INTERVAL_MS_test : HEARTBEAT_INTERVAL_MS_prod
+  env.NODE_ENV === 'test'
+    ? HEARTBEAT_INTERVAL_MS_test
+    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
