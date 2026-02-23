@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -94,7 +94,7 @@ test.describe('Visual Regression Tests', () => {
           value: 145,
           maxHr: 185,
           calories: 300,
-          zone: 'Zone 3',
+          zone: 'ZONE_3',
         },
         {
           clientId: 'user-2',
@@ -102,9 +102,14 @@ test.describe('Visual Regression Tests', () => {
           value: 165,
           maxHr: 190,
           calories: 450,
-          zone: 'Zone 4',
+          zone: 'ZONE_4',
         },
       ])
+
+      // Wait for tiles to appear and reflect mock data
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(2, {
+        timeout: 5000,
+      })
 
       // Assert all HR tiles maintain dimensions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
@@ -127,10 +132,19 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: HR device in different zones
     const zones = [0, 1, 2, 3, 4, 5, 6]
-    for (const zone of zones) {
+    const zoneBpms = [65, 95, 115, 135, 155, 175, 195]
+    for (let i = 0; i < zones.length; i++) {
+      const zone = zones[i]
+      const expectedBpm = zoneBpms[i]
       test(`dashboard with HR in Zone ${zone}`, async () => {
-        await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
+
+        // Wait for the dashboard to reflect the new BPM value and zone color
+        const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
+        await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
+          new RegExp(`^${expectedBpm}`),
+          { timeout: 5000 }
+        )
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {

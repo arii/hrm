@@ -44,6 +44,9 @@ test.describe('Visual Regression Tests', () => {
     // 1. Reset server-side state
     await resetServerState(request)
 
+    // Reset viewport size to default for standard tests
+    await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
+
     // 2. Reload pages to ensure clean client state and fresh WebSocket connection
     await dashboardPage.reload()
     await controlPage.reload()
@@ -152,6 +155,7 @@ test.describe('Visual Regression Tests', () => {
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize({ width: 375, height: 1000 })
       const dashboard = dashboardPage.getByTestId('dashboard')
+      await expect(dashboard).toBeVisible()
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
@@ -161,6 +165,7 @@ test.describe('Visual Regression Tests', () => {
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize({ width: 768, height: 1000 })
       const dashboard = dashboardPage.getByTestId('dashboard')
+      await expect(dashboard).toBeVisible()
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3,
@@ -170,6 +175,7 @@ test.describe('Visual Regression Tests', () => {
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
+      await expect(dashboard).toBeVisible()
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3,
