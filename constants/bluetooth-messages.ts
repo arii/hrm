@@ -20,7 +20,7 @@ export const BLUETOOTH_MESSAGES = {
     `Connecting to: ${deviceName || 'Device'}...`,
   connectedToDevice: (deviceName: string) => `Connected to: ${deviceName}`,
   failedToReconnect: (maxAttempts: number) =>
-    `Failed to reconnect after ${maxAttempts} attempts. Resetting device...`,
+    `Failed to reconnect after ${maxAttempts} attempts. Please re-sync your sensor.`,
   reconnectingAttempt: (reason: string, attempt: number, maxAttempts: number) =>
     `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
   checkingSavedDevices: 'Checking saved devices...',
@@ -30,6 +30,9 @@ export const BLUETOOTH_MESSAGES = {
   connectingToSavedDevice: 'Connecting to saved device...',
   deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
     `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
+  connectionStormDetected:
+    'Connection unstable. Please re-sync your sensor manually.',
+  backgroundReconnectDisabled: 'Reconnection paused while tab is in background.',
 
   // Error Messages
   error: 'Error',
