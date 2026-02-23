@@ -56,6 +56,9 @@ importers:
       framer-motion:
         specifier: ^12.29.2
         version: 12.29.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      he:
+        specifier: ^1.2.0
+        version: 1.2.0
       idb:
         specifier: ^8.0.3
         version: 8.0.3
@@ -168,6 +171,9 @@ importers:
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
+      '@types/he':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -2794,6 +2800,9 @@ packages:
 
   '@types/express@5.0.6':
     resolution: {integrity: sha512-sKYVuV7Sv9fbPIt/442koC7+IIwK5olP1KWeD88e/idgoJqDm3JV/YUiPwkoKK92ylff2MGxSz1CSjsXelx0YA==}
+
+  '@types/he@1.2.3':
+    resolution: {integrity: sha512-q67/qwlxblDzEDvzHhVkwc1gzVWxaNxeyHUBF4xElrvjL11O+Ytze+1fGpBHlr/H9myiBUaUXNnNPmBHxxfAcA==}
 
   '@types/html-minifier-terser@6.1.0':
     resolution: {integrity: sha512-oh/6byDPnL1zeNXFrDXFLyZjkr1MsBG667IM792caf1L2UPOOMf65NFzjUH/ltyfwjAGfs1rsX1eftK0jC/KIg==}
@@ -10486,6 +10495,8 @@ snapshots:
       '@types/body-parser': 1.19.6
       '@types/express-serve-static-core': 5.1.0
       '@types/serve-static': 2.2.0
+
+  '@types/he@1.2.3': {}
 
   '@types/html-minifier-terser@6.1.0': {}
 

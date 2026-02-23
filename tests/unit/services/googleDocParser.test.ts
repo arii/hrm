@@ -146,4 +146,24 @@ describe('parseGoogleDocTable', () => {
       'Cell with break',
     ])
   })
+
+  it('should decode HTML entities in cell contents', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>&lt;Exercise&gt;</td>
+          <td>Sets &amp; Reps</td>
+          <td>Price: &pound;10</td>
+          <td>Note&nbsp;with&nbsp;nbsp</td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([
+      '<Exercise>',
+      'Sets & Reps',
+      'Price: £10',
+      'Note with nbsp',
+    ])
+  })
 })

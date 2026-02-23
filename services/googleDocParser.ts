@@ -1,24 +1,8 @@
 import { parse, HTMLElement } from 'node-html-parser'
+import { decode } from 'he'
 import { WorkoutTableDto } from '@/types/workout'
 
-/**
- * Combined selector for block-level elements that should have spaces inserted
- * around them to prevent text merging during parsing.
- */
-const BLOCK_SELECTOR = [
-  'div',
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'li',
-  'ul',
-  'ol',
-  'blockquote',
-].join(',')
+const BLOCK_SELECTOR = 'div,p,h1,h2,h3,h4,h5,h6,li,ul,ol,blockquote'
 
 /**
  * Extracts text from an HTML cell, ensuring proper spacing for block elements and <br> tags.
@@ -33,10 +17,9 @@ const extractCellText = (cell: HTMLElement): string => {
     block.insertAdjacentHTML('afterend', ' ')
   })
 
-  return cell.text
-    .replace(/\u00A0/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  const rawText = cell.text.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim()
+
+  return decode(rawText)
 }
 
 /**
