@@ -31,9 +31,22 @@ const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
 export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+  env.NODE_ENV === 'test'
     ? HEARTBEAT_INTERVAL_MS_test
     : HEARTBEAT_INTERVAL_MS_prod
+
+// Helper to reliably check for testing environment on client,
+// falling back to direct process.env access if lib/env fails sanitization or validation.
+const isTestingEnv = () => {
+  if (env.NEXT_PUBLIC_TESTING) return true
+  if (
+    typeof process !== 'undefined' &&
+    process.env.NEXT_PUBLIC_TESTING === 'true'
+  ) {
+    return true
+  }
+  return false
+}
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -382,10 +395,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     isManualDisconnect.current = false
 
-    if (
-      typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
+    if (typeof window !== 'undefined' && isTestingEnv()) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
@@ -406,10 +416,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (
-        typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
+      if (typeof window !== 'undefined' && isTestingEnv()) {
         if (window.TEST_CONTROLS) {
           delete window.TEST_CONTROLS.setHrmStatus
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage

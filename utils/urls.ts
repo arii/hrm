@@ -2,7 +2,7 @@
 /**
  * Centralized URL configuration for development and production environments
  */
-import { env } from '@/lib/env'
+import { env } from '../lib/env'
 
 /**
  * Builds a WebSocket URL from a standard HTTP/S base URL.
