@@ -2,9 +2,7 @@
  * @jest-environment node
  */
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -17,15 +15,9 @@ import {
 } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
-import { TLSSocket } from 'tls'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import {
-  HrmData,
-  StateSnapshot,
-  ClientCommandMessageSchema,
-  ExtWebSocket,
-} from '../../types/websocket'
+import { HrmData, StateSnapshot, ExtWebSocket } from '../../types/websocket'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -155,7 +147,7 @@ describe('WebSocket Manager', () => {
     getSnapshot = jest.fn().mockReturnValue({
       timerData: {},
       spotifyData: {},
-    } as any)
+    } as unknown as StateSnapshot)
 
     initSocketManager(mockWss, getSnapshot, mockServices)
     const mockReq = createMockRequest()
@@ -237,7 +229,9 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       const mockBroadcast = broadcast as jest.Mock
-      const updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      const updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       expect(updateCalls.length).toBeGreaterThan(0)
       const lastCall = updateCalls[updateCalls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
@@ -256,7 +250,9 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', baselineMessage.toString())
 
       const mockBroadcast = broadcast as jest.Mock
-      let updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      let updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       let lastCall = updateCalls[updateCalls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -269,7 +265,9 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', anomalyMessage.toString())
 
-      updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       lastCall = updateCalls[updateCalls.length - 1]
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -296,7 +294,9 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', initialAnomalyMessage.toString())
 
       const mockBroadcast = broadcast as jest.Mock
-      const updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      const updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       const lastCall = updateCalls[updateCalls.length - 1]
       const finalPayload: HrmData[] = lastCall[1].payload
       const clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -336,7 +336,9 @@ describe('WebSocket Manager', () => {
       )
 
       const mockBroadcast = broadcast as jest.Mock
-      let updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      let updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       let lastCall = updateCalls[updateCalls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -351,7 +353,9 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       lastCall = updateCalls[updateCalls.length - 1]
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -371,7 +375,9 @@ describe('WebSocket Manager', () => {
       )
 
       const mockBroadcast = broadcast as jest.Mock
-      let updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      let updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       let lastCall = updateCalls[updateCalls.length - 1]
       let finalPayload: HrmData[] = lastCall[1].payload
       let clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -386,7 +392,9 @@ describe('WebSocket Manager', () => {
         })
       )
 
-      updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       lastCall = updateCalls[updateCalls.length - 1]
       finalPayload = lastCall[1].payload
       clientData = finalPayload.find((c) => c.clientId === 'test-client')
@@ -502,7 +510,9 @@ describe('WebSocket Manager', () => {
 
       // Verify the broadcast payload contains the other client but not the cleaned-up one
       const mockBroadcast = broadcast as jest.Mock
-      const updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      const updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       const lastCall = updateCalls[updateCalls.length - 1]
       const payload: HrmData[] = lastCall[1].payload
 
@@ -562,7 +572,9 @@ describe('WebSocket Manager', () => {
 
       // Verify that the client's data still exists in the broadcast from the *other* client's cleanup
       const mockBroadcast = broadcast as jest.Mock
-      const updateCalls = mockBroadcast.mock.calls.filter(call => call[1].type === 'HRM_UPDATE')
+      const updateCalls = mockBroadcast.mock.calls.filter(
+        (call) => call[1].type === 'HRM_UPDATE'
+      )
       const lastCall = updateCalls[updateCalls.length - 1]
       const payload: HrmData[] = lastCall[1].payload
 
