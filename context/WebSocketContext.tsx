@@ -103,7 +103,6 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
-
     }
   }, [])
 
