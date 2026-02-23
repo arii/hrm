@@ -11,6 +11,13 @@ import type {
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
 
+/**
+ * A consistent, offline-safe 1x1 transparent PNG image for VRT.
+ * Prevents flaky tests caused by external placeholder services.
+ */
+const MOCK_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
+
 const STABLE_WORKOUT_HTML = `
   <!DOCTYPE html>
   <html><head><style>
@@ -91,7 +98,7 @@ export async function mockSpotifyPlaybackState(
         name: 'Mock Track',
         artist: 'Mock Artist',
         albumName: 'Mock Album',
-        albumArtUrl: 'https://via.placeholder.com/150',
+        albumArtUrl: MOCK_IMAGE,
       },
       is_playing: true,
       volume_percent: 50,
@@ -141,7 +148,7 @@ export async function mockLoggedInSession(
         user: {
           name: 'Test User',
           email: 'test@example.com',
-          image: 'https://via.placeholder.com/150',
+          image: MOCK_IMAGE,
         },
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         accessToken: 'mock-access-token',
@@ -171,7 +178,7 @@ export async function mockSpotifyPlaylists(
             name: 'HIIT',
             uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5',
             id: 'preset-hiit',
-            imageUrl: 'https://via.placeholder.com/150',
+            imageUrl: MOCK_IMAGE,
           },
         ],
         userPlaylists: [
@@ -180,7 +187,7 @@ export async function mockSpotifyPlaylists(
             name: 'My Training Mix',
             uri: 'spotify:playlist:user1',
             description: 'Workout tunes',
-            imageUrl: 'https://via.placeholder.com/150',
+            imageUrl: MOCK_IMAGE,
             trackCount: 25,
             owner: 'Test User',
             public: true,
