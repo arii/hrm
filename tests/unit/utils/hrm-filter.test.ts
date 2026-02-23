@@ -1,5 +1,5 @@
 import { filterHrmData } from '@/utils/hrm'
-import { HrmData } from '@/types/websocket'
+import { HrmData, ConnectedHrmData } from '@/types/websocket'
 import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
 
 describe('filterHrmData (Server Side Logic)', () => {
@@ -85,7 +85,7 @@ describe('filterHrmData (Server Side Logic)', () => {
         calories: 100,
         lastUpdated: now, // Using lastUpdated instead of updatedAt
         maxHr: 180,
-      } as any,
+      } as unknown as ConnectedHrmData,
     ]
     const result = filterHrmData(data, now)
     expect(result).toHaveLength(1)

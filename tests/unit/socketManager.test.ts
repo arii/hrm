@@ -26,6 +26,7 @@ import {
   ClientCommandMessageSchema,
   ExtWebSocket,
   ServerMessage,
+  ClientCommandMessage,
 } from '../../types/websocket'
 import {
   broadcast,
@@ -644,9 +645,9 @@ describe('WebSocket Manager', () => {
 
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' } as any)
+      jest.spyOn(ClientCommandMessageSchema, 'parse').mockReturnValue({
+        type: 'SOME_GARBAGE',
+      } as unknown as ClientCommandMessage)
 
       mockWs.emit('message', message.toString())
 
