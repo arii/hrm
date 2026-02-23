@@ -112,4 +112,58 @@ describe('parseGoogleDocTable', () => {
       'No table found in the Google Doc'
     )
   })
+
+  it('should handle complex nested block elements and prevent text merging', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>
+            <div>Block 1</div>
+            <p>Block 2</p>
+            <ul>
+              <li>Item 1</li>
+              <li>Item 2</li>
+            </ul>
+          </td>
+          <td>
+            <h1>Header</h1>
+            <blockquote>Quote</blockquote>
+          </td>
+          <td>
+            Mixed <span>inline</span> and <div>block</div> text
+          </td>
+          <td>
+            Cell with <br> break
+          </td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([
+      'Block 1 Block 2 Item 1 Item 2',
+      'Header Quote',
+      'Mixed inline and block text',
+      'Cell with break',
+    ])
+  })
+
+  it('should decode HTML entities in cell contents', () => {
+    const html = `
+      <table>
+        <tr>
+          <td>&lt;Exercise&gt;</td>
+          <td>Sets &amp; Reps</td>
+          <td>Price: &pound;10</td>
+          <td>Note&nbsp;with&nbsp;nbsp</td>
+        </tr>
+      </table>
+    `
+    const result = parseGoogleDocTable(html)
+    expect(result.headers).toEqual([
+      '<Exercise>',
+      'Sets & Reps',
+      'Price: £10',
+      'Note with nbsp',
+    ])
+  })
 })
