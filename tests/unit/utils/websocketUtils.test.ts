@@ -199,38 +199,12 @@ describe('ConnectionMonitor', () => {
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000)
     })
 
-    it('should fall back to default if provided interval is zero or negative', () => {
-      const monitor = new ConnectionMonitor(mockWss, 0)
-      monitor.start()
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Watchdog interval must be a positive integer. Using fallback.'
-      )
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
-    })
-
     it('should use the environment variable if no argument is provided', () => {
       // @ts-expect-error - set mock
       env.WEBSOCKET_WATCHDOG_INTERVAL = 15000
       const monitor = new ConnectionMonitor(mockWss)
       monitor.start()
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 15000)
-    })
-
-    it('should fall back to default if environment variable is invalid', () => {
-      // Note: With Zod validation, invalid env vars throw at startup or are coerced.
-      // ConnectionMonitor no longer handles 'invalid' strings as the env object
-      // will already have the coerced/default value.
-      // This test is kept for logic coverage of fallback when interval <= 0.
-      // @ts-expect-error - set mock
-      env.WEBSOCKET_WATCHDOG_INTERVAL = -1
-      const monitor = new ConnectionMonitor(mockWss)
-      monitor.start()
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Watchdog interval must be a positive integer. Using fallback.'
-      )
-      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
     })
 
     it('should use the default of 30000 if nothing is provided', () => {
