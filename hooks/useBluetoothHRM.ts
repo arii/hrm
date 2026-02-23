@@ -5,7 +5,6 @@ import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { requestWakeLock } from '@/utils/wakeLock'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
@@ -15,6 +14,7 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
+import { useBackgroundPersistence } from './useBackgroundPersistence'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -89,8 +89,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
-  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useBackgroundPersistence(status === BluetoothConnectionStatus.CONNECTED)
+
   const hrCharacteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(
     null
   )
@@ -108,49 +109,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     | null
   >(null)
 
-  const stopKeepAlive = useCallback(() => {
-    if (wakeLockRef.current) {
-      wakeLockRef.current.release().catch(() => {})
-      wakeLockRef.current = null
-    }
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause()
-      } catch (err) {
-        logger.debug({ err }, 'Failed to pause silent audio')
-      }
-      audioRef.current = null
-    }
-  }, [])
-
-  const startKeepAlive = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    if (!wakeLockRef.current) {
-      const wl = await requestWakeLock()
-      if (wl) {
-        wl.addEventListener('release', () => {
-          wakeLockRef.current = null
-        })
-        wakeLockRef.current = wl
-      }
-    }
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/assets/silence.mp3')
-      audioRef.current.loop = true
-    }
-    try {
-      const p = audioRef.current.play()
-      if (p instanceof Promise)
-        p.catch((err) => logger.debug({ err }, 'Silent audio play failed'))
-    } catch (err) {
-      logger.debug({ err }, 'Silent audio failed')
-    }
-  }, [])
-
   const cleanupGattConnection = useCallback(() => {
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (abortControllerRef.current) abortControllerRef.current.abort()
-    stopKeepAlive()
+
     const device = deviceRef.current
     if (device) {
       if (activeDisconnectListenerRef.current) {
@@ -178,7 +140,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
     hrCharacteristicRef.current = null
     batteryCharacteristicRef.current = null
-  }, [stopKeepAlive])
+  }, [])
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -506,7 +468,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
         )
-        await startKeepAlive()
+
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
@@ -534,7 +496,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnecting.current = false
       }
     },
-    [onDisconnected, updateSignalPeriod, startKeepAlive]
+    [onDisconnected, updateSignalPeriod]
   )
 
   useEffect(() => {
@@ -611,20 +573,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (document.visibilityState === 'visible') {
         if (statusRef.current === BluetoothConnectionStatus.CONNECTED) {
           if (!deviceRef.current?.gatt?.connected) {
-            if (deviceRef.current)
+            if (deviceRef.current) {
               reconnect(deviceRef.current, 'Background disconnect')
-            else autoConnect()
-          } else {
-            await startKeepAlive()
-            if (audioRef.current?.paused) startKeepAlive()
+            } else {
+              autoConnect()
+            }
           }
-        } else if (!isManualDisconnect.current) autoConnect()
+        } else if (
+          !isManualDisconnect.current &&
+          !isConnecting.current &&
+          !reconnectTimeoutRef.current
+        ) {
+          autoConnect()
+        }
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [reconnect, autoConnect, startKeepAlive])
+  }, [reconnect, autoConnect])
 
   return {
     connectAndStream,
