@@ -33,6 +33,17 @@ export interface WebSocketContextType extends WebSocketState {
   disconnect: () => void
 }
 
+// Helper function to check for test environment
+// This encapsulates the logic to avoid running it on every render inside the component
+const isTestEnvironment = () => {
+  if (typeof window === 'undefined') return false
+  return (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    window.location.search.includes('testing=true')
+  )
+}
+
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
@@ -103,12 +114,6 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
-  const shouldSetTestStatus =
-    typeof window !== 'undefined' &&
-    (process.env.NODE_ENV !== 'production' ||
-      process.env.NEXT_PUBLIC_TESTING === 'true' ||
-      window.location.search.includes('testing=true'))
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')
@@ -116,7 +121,7 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (shouldSetTestStatus) {
+      if (isTestEnvironment()) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
         ).__TEST_CONTROLS__ = {
@@ -126,7 +131,7 @@ export const WebSocketProvider = ({
         }
       }
     }
-  }, [dispatch, shouldSetTestStatus])
+  }, [dispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -193,7 +198,7 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
-      if (shouldSetTestStatus) {
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -229,7 +234,7 @@ export const WebSocketProvider = ({
       )
       setConnectionStatus('Disconnected')
 
-      if (shouldSetTestStatus) {
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'disconnected'
       }
 
@@ -317,12 +322,7 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-    if (
-      typeof window !== 'undefined' &&
-      (process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        window.location.search.includes('testing=true'))
-    ) {
+    if (isTestEnvironment()) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }
       ).__TEST_CONTROLS__
