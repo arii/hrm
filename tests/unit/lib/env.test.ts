@@ -2,20 +2,17 @@ import { z } from 'zod'
 
 describe('Environment Variables', () => {
   const OLD_ENV = process.env
-  // @ts-ignore
   const originalWindow = global.window
 
   beforeEach(() => {
     jest.resetModules()
     process.env = { ...OLD_ENV }
     // Ensure we start as "server" by default
-    // @ts-ignore
     delete global.window
   })
 
   afterAll(() => {
     process.env = OLD_ENV
-    // @ts-ignore
     global.window = originalWindow
   })
 
@@ -83,7 +80,7 @@ describe('Environment Variables', () => {
   })
 
   it('should not throw on client even if server variables are missing', async () => {
-    // @ts-ignore - simulate client
+    // simulate client
     global.window = {}
 
     process.env.NODE_ENV = 'test'
@@ -96,12 +93,12 @@ describe('Environment Variables', () => {
 
     const { env } = await import('../../../lib/env')
     expect(env.NEXT_PUBLIC_API_URL).toBe('http://api.test')
-    // @ts-ignore - checking that it's undefined on client mapping
+    // checking that it's undefined on client mapping
     expect(env.NEXTAUTH_URL).toBeUndefined()
   })
 
   it('should still validate public variables on client', async () => {
-    // @ts-ignore - simulate client
+    // simulate client
     global.window = {}
 
     process.env.NODE_ENV = 'test'

@@ -5,8 +5,13 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import * as WebSocketContext from '@/context/WebSocketContext'
+<<<<<<< HEAD
 import Cookies from 'js-cookie'
 import { env } from '@/lib/env'
+=======
+import * as cookieUtils from '@/utils/cookies'
+import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
+>>>>>>> ae6540bc (feat(medium): Refactor lib/env.ts and harden Bluetooth reconnection logic (#9196))
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -497,7 +502,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
-    it(`should attempt to reconnect on disconnection and give up after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
+    it(`should attempt to reconnect on disconnection and give up after ${BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // First connection is successful
@@ -524,27 +529,23 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
       expect(result.current.deviceStatus).toMatch(
         new RegExp(
-          `reconnecting.*attempt 1/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+          `reconnecting.*attempt 1/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
           'i'
         )
       )
 
       // --- Reconnection attempts ---
-      for (
-        let i = 1;
-        i <= env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS;
-        i++
-      ) {
+      for (let i = 1; i <= BLUETOOTH_MAX_RECONNECT_ATTEMPTS; i++) {
         await act(async () => {
           jest.runOnlyPendingTimers()
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
-        if (i < env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
+        if (i < BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
           expect(result.current.deviceStatus).toMatch(
             new RegExp(
               `reconnecting.*attempt ${
                 i + 1
-              }/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+              }/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
               'i'
             )
           )
@@ -559,7 +560,7 @@ describe('useBluetoothHRM', () => {
       await waitFor(() => {
         expect(result.current.deviceStatus).toMatch(
           new RegExp(
-            `failed to reconnect after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
+            `failed to reconnect after ${BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
             'i'
           )
         )
@@ -568,7 +569,7 @@ describe('useBluetoothHRM', () => {
         )
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
-        env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+        BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
 <<<<<<< HEAD
 
@@ -614,7 +615,7 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
       expect(result.current.deviceStatus).toMatch(
         new RegExp(
-          `reconnecting.*attempt 2/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
+          `reconnecting.*attempt 2/${BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
           'i'
         )
       )
@@ -696,32 +697,6 @@ describe('useBluetoothHRM', () => {
         expect(result.current.isConnected).toBe(true)
         expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
       })
-    })
-  })
-
-  describe('Configurable Reconnection Attempts', () => {
-    const originalEnv = process.env
-
-    beforeEach(() => {
-      jest.resetModules() // Important to re-evaluate env variables
-      process.env = { ...originalEnv }
-    })
-
-    afterAll(() => {
-      process.env = originalEnv
-    })
-
-    it('should use the default max reconnection attempts when the environment variable is not set', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(2)
-    })
-
-    it('should use the custom max reconnection attempts from the environment variable', async () => {
-      process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS = '10'
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { env } = require('@/lib/env')
-      expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(10)
     })
   })
 })
