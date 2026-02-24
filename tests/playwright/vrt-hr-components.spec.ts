@@ -5,10 +5,9 @@ import {
   getHrMasks,
   setupVisualRegressionTest,
   mockMultipleHrDevices,
-  resetServerState,
+  prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -34,25 +33,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
-    // 1. Reset server-side state
-    await resetServerState(request)
-
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await dashboardPage.reload()
-    await mockPage.reload()
-
-    // 3. Wait for pages to be ready and connected
-    await waitForPageReady(dashboardPage)
-    await waitForPageReady(mockPage)
-
-    await dashboardPage.waitForFunction(
-      () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
-    )
-    await mockPage.waitForFunction(
-      () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
-    )
+    await prepareVrtEnvironment(request, [dashboardPage, mockPage])
 
     // Ensure the mock athlete is registered and visible on the dashboard
     // This prevents race conditions where the dashboard is connected but hasn't received the first athlete data yet.

@@ -109,6 +109,7 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
+  prepareVrtEnvironment,
   resetServerState,
   // Timer utilities
   stopTimer,
