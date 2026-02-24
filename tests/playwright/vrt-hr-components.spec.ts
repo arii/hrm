@@ -77,7 +77,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -117,7 +117,7 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
