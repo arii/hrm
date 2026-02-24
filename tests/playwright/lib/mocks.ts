@@ -239,19 +239,17 @@ export async function mockSpotifySDK(
             constructor(options) {
               this._options = options;
               this._listeners = {};
-              console.log('[Mock Spotify SDK] Player initialized');
             }
             connect() {
-              console.log('[Mock Spotify SDK] connect() called');
               // Simulate async success
-              setTimeout(() => {
+              Promise.resolve().then(() => {
                 if (this._listeners['ready']) {
                   this._listeners['ready'].forEach(cb => cb({ device_id: 'mock-device-id' }));
                 }
-              }, 100);
+              });
               return Promise.resolve(true);
             }
-            disconnect() { console.log('[Mock Spotify SDK] disconnect() called'); }
+            disconnect() {}
             setVolume() { return Promise.resolve(); }
             addListener(event, cb) {
               if (!this._listeners[event]) this._listeners[event] = [];
@@ -281,7 +279,6 @@ export async function mockSpotifySDK(
       return route.continue()
     }
 
-    console.log('[Mock Spotify Network] Intercepting:', url)
     route.fulfill({
       status: 200,
       contentType: 'application/json',
