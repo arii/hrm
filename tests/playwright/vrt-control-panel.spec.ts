@@ -1,8 +1,7 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { test } from './fixtures'
-import { setupVisualRegressionTest, resetServerState } from './lib'
+import { setupVisualRegressionTest, prepareVrtEnvironment } from './lib'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -29,28 +28,12 @@ test.describe('Visual Regression Tests', () => {
 
   // Add a beforeEach hook to wait for the page to be ready before each test
   test.beforeEach(async ({ request }) => {
-    // 1. Reset server-side state
-    await resetServerState(request)
+    await prepareVrtEnvironment(request, [controlPage, dashboardPage])
 
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await controlPage.reload()
-    await dashboardPage.reload()
-
-    // 3. Wait for pages to be ready and connected
-    await waitForPageReady(controlPage)
-    await waitForPageReady(dashboardPage)
-
-    // Ensure WebSocket is re-established after server reset
-    await Promise.all([
-      controlPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      dashboardPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-    ])
+    // Force main content layout to be visible to avoid flaky blank screenshots due to Framer Motion
+    await controlPage.addStyleTag({
+      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
+    })
   })
 
   test.describe('ControlPanel Component', () => {

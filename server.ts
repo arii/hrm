@@ -143,10 +143,7 @@ app.prepare().then(async () => {
     }
     resetSocketManager()
 
-    // Reset Timer Service to a clean state
-    services.tabataService.stop()
-    services.tabataService.setMode('TABATA')
-    services.tabataService.setConfig({ workDuration: 20, restDuration: 10 })
+    services.tabataService.reset()
 
     logger.info(
       'Server-side state (HRM, Timer) has been reset via /api/debug/reset'

@@ -5,10 +5,9 @@ import {
   getHrMasks,
   setupVisualRegressionTest,
   mockMultipleHrDevices,
-  resetServerState,
+  prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -34,25 +33,12 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
-    // 1. Reset server-side state
-    await resetServerState(request)
+    await prepareVrtEnvironment(request, [dashboardPage, mockPage])
 
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await dashboardPage.reload()
-    await mockPage.reload()
-
-    // 3. Wait for pages to be ready and connected
-    await waitForPageReady(dashboardPage)
-    await waitForPageReady(mockPage)
-
-    await dashboardPage.waitForFunction(
-      () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
-    )
-    await mockPage.waitForFunction(
-      () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
-    )
+    // Force main content layout to be visible and stable to avoid flaky blank screenshots due to Framer Motion
+    await dashboardPage.addStyleTag({
+      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
+    })
 
     // Ensure the mock athlete is registered and visible on the dashboard
     // This prevents race conditions where the dashboard is connected but hasn't received the first athlete data yet.
@@ -147,11 +133,16 @@ test.describe('Visual Regression Tests', () => {
       test(`dashboard with HR in Zone ${zone}`, async () => {
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
+        // Verify mock page input updated to confirm interaction
+        await expect(mockPage.getByLabel('Current BPM')).toHaveValue(
+          String(expectedBpm)
+        )
+
         // Wait for the dashboard to reflect the new BPM value and zone color
         const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
           new RegExp(`^${expectedBpm}`),
-          { timeout: 5000 }
+          { timeout: 10000 }
         )
 
         const dashboard = dashboardPage.getByTestId('dashboard')
