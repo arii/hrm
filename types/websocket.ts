@@ -137,6 +137,8 @@ const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
     .optional(),
 })
 
+export type IncomingHrmData = z.infer<typeof IncomingHrmDataSchema>
+
 const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: IncomingHrmDataSchema,
