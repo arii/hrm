@@ -70,6 +70,7 @@ export async function createServices(
 
   const services = { tabataService, spotifyService, isSpotifyInitialized }
 
+  // Persist instances globally for hot-reloading and API route access (see docs/TYPESCRIPT_PATTERNS.md)
   global.spotifyService = services.spotifyService
   global.tabataService = services.tabataService
   global.isSpotifyInitialized = services.isSpotifyInitialized
