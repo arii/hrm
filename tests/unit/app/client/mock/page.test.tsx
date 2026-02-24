@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, act } from '@testing-library/react'
 import MockPage from '@/app/client/mock/page'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
@@ -36,7 +36,13 @@ describe('app/client/mock/page', () => {
   })
 
   it('sends an HR packet when BPM is changed and not streaming', () => {
+    jest.useFakeTimers()
     render(<MockPage />)
+
+    // Advance time to trigger the debounce
+    act(() => {
+      jest.advanceTimersByTime(500)
+    })
 
     // Metadata packet is sent on mount
     expect(mockSendData).toHaveBeenCalledTimes(1)
@@ -55,11 +61,17 @@ describe('app/client/mock/page', () => {
         data: expect.objectContaining({ value: 125 }),
       })
     )
+    jest.useRealTimers()
   })
 
   it('starts and stops streaming HR data', () => {
     jest.useFakeTimers()
     render(<MockPage />)
+
+    // Advance time to trigger the debounce for initial metadata
+    act(() => {
+      jest.advanceTimersByTime(500)
+    })
 
     const startButton = screen.getByTestId('streaming-start-button')
     fireEvent.click(startButton)
@@ -76,7 +88,9 @@ describe('app/client/mock/page', () => {
     )
 
     // Advance time to trigger the interval
-    jest.advanceTimersByTime(2000)
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
 
     // The mock implementation fluctuates the HR, so we check that it was called again
     // The exact value is random, so we just check the type
@@ -96,7 +110,9 @@ describe('app/client/mock/page', () => {
     expect(screen.getByTestId('streaming-start-button')).toBeInTheDocument()
 
     // Advance time again to ensure no more packets are sent
-    jest.advanceTimersByTime(2000)
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
     expect(mockSendData).toHaveBeenCalledTimes(3) // No new calls
 
     jest.useRealTimers()
