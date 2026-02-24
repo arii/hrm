@@ -159,53 +159,11 @@ const getEnvSource = () => {
 
 const parsedEnv = envSchema.safeParse(getEnvSource())
 
-/**
- * Sanitizes the raw environment source for client-side fallback.
- * Attempts to coerce known boolean and number fields to their correct types
- * to prevent logic errors (e.g., string "false" being truthy).
- */
-const sanitizeClientEnv = (
-  raw: ReturnType<typeof getEnvSource>
-): z.infer<typeof envSchema> => {
-  const safe = { ...raw } as Record<string, unknown>
-
-  // List of boolean keys to coerce from "true"/"false" strings
-  const booleanKeys = [
-    'NEXT_PUBLIC_USE_NATIVE_TABLE',
-    'NEXT_PUBLIC_TESTING',
-  ] as const
-
-  // Coerce booleans
-  booleanKeys.forEach((key) => {
-    if (key in safe) {
-      safe[key] = String(safe[key]) === 'true'
-    } else {
-      safe[key] = false // Default to false if missing
-    }
-  })
-
-  // Numbers are handled by standard JS coercion in application logic usually,
-  // but we can add them if needed. For now, booleans are the critical safety regression.
-
-  return safe as z.infer<typeof envSchema>
-}
-
 if (!parsedEnv.success) {
-  if (isServer) {
-    console.error('❌ Invalid environment variables:', parsedEnv.error.format())
-    throw parsedEnv.error
-  } else {
-    // On the client, we log a warning but don't throw to avoid crashing the app.
-    // We return a sanitized best-effort object to ensure boolean logic safety.
-    console.error(
-      '⚠️ Invalid client-side environment variables:',
-      JSON.stringify(parsedEnv.error.format(), null, 2)
-    )
-  }
+  console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+  throw new Error('Invalid environment variables')
 }
 
-export const env: z.infer<typeof envSchema> = parsedEnv.success
-  ? parsedEnv.data
-  : sanitizeClientEnv(getEnvSource())
+export const env = parsedEnv.data
 
 export { envSchema }
