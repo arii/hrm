@@ -3,6 +3,10 @@ import { Page } from '@playwright/test'
 
 export const injectBluetoothMocks = async (page: Page) => {
   await page.addInitScript(() => {
+    // 0. Set Test Mode Flag
+    // This is critical for exposing window.TEST_CONTROLS in production builds
+    (window as any).__TEST_MODE__ = true
+
     // 2. Internal State for the Mock
     const _pairedDevices: MockBluetoothDevice[] = []
     let _connectedDevice: MockBluetoothDevice | null = null

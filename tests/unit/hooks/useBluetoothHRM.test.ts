@@ -377,23 +377,33 @@ describe('useBluetoothHRM', () => {
       expect(result.current.signalPeriodMs).toBe(1000)
 
       // Simulate first missed heartbeat check
-      jest.spyOn(Date, 'now').mockReturnValue(now + 3000)
+      // With HEARTBEAT_INTERVAL_MS being 500ms in tests, we need to advance carefully
+      // The watchdog triggers signal period updates when:
+      // timeSinceLastData > avgPeriodMs + MISSED_PACKET_THRESHOLD_BUFFER_MS (e.g. 1000 + 500 = 1500)
+      // AND timeSinceLastData > MIN_MISSED_PACKET_THRESHOLD_MS (1500)
+
+      // So we need to simulate a gap > 1500ms for it to trigger
+      jest.spyOn(Date, 'now').mockReturnValue(now + 3000) // 2000ms gap from now+1000
       await act(async () => {
-        // Advance timers enough for the watchdog to run once
-        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
+        // Advance timers enough for the interval to run (500ms in tests)
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 2) // Run loop twice to be safe
       })
 
       // Simulate second missed heartbeat check
-      jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
+      jest.spyOn(Date, 'now').mockReturnValue(now + 4000) // 3000ms gap from now+1000
       await act(async () => {
-        // Advance timers enough for the watchdog to run again
-        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS)
+        jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 2)
       })
 
-      // The heartbeat should have fired twice. The first time, it penalizes
-      // with the time since last data (2000ms from now+1000 to now+3000),
-      // the second time with 3000ms (from now+1000 to now+4000).
+      // The heartbeat should have fired.
+      // 1. First check at now+3000 (delta 2000ms). Threshold ~1500ms. 2000 > 1500, so updateSignalPeriod(2000).
+      // History: [1000, 2000] -> Avg: 1500
+      // 2. Second check at now+4000 (delta 3000ms). Threshold ~1500+500=2000 or 1500.
+      // wait, calculate threshold: Math.max(avgPeriod + 500, 1500).
+      // If avg is 1500, threshold is 2000.
+      // Delta is 3000. 3000 > 2000, so updateSignalPeriod(3000).
       // History: [1000, 2000, 3000] -> Avg: 2000
+
       expect(result.current.signalPeriodMs).toBe(2000)
 
       // A real packet arrives after the drop
@@ -506,7 +516,7 @@ describe('useBluetoothHRM', () => {
 
       // Advance time to avoid "Connection Storm" detection (needs > 5s)
       await act(async () => {
-        jest.advanceTimersByTime(6000)
+        jest.advanceTimersByTime(11000) // Increased to > 10s to clear the new sliding window
       })
 
       // Subsequent connection attempts will fail
@@ -574,7 +584,7 @@ describe('useBluetoothHRM', () => {
 
       // Advance time to avoid "Connection Storm" detection (needs > 5s)
       await act(async () => {
-        jest.advanceTimersByTime(6000)
+        jest.advanceTimersByTime(11000) // Increased to > 10s
       })
 
       // First reconnect attempt fails, second succeeds
@@ -651,7 +661,7 @@ describe('useBluetoothHRM', () => {
 
       // Advance time to avoid "Connection Storm" detection (needs > 5s)
       await act(async () => {
-        jest.advanceTimersByTime(6000)
+        jest.advanceTimersByTime(11000) // Increased to > 10s
       })
 
       // Mock the next connection attempt to be successful
