@@ -85,6 +85,12 @@ test.describe('Visual Regression Tests', () => {
         window.__TEST_CONTROLS__?.disconnect?.()
       })
 
+      // Wait for disconnection to be processed (which resets state) to avoid race conditions
+      // where the mock data is cleared by the disconnection logic immediately after being set.
+      await dashboardPage.waitForFunction(
+        () => document.body.dataset.connectionStatus === 'disconnected'
+      )
+
       await mockMultipleHrDevices(dashboardPage, [
         {
           clientId: 'user-1',
