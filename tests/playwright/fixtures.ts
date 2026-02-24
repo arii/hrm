@@ -2,7 +2,7 @@
 /**
  * Playwright Test Fixtures: Pre-load all HRM endpoints and setup pages
  */
-import type { Page } from '@playwright/test'
+import type { Page, BrowserContext } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
 import { cleanupVisualRegressionTest } from './lib'
 
@@ -32,7 +32,7 @@ async function safePageTeardown(page: Page) {
  * Helper to create a page fixture with optional setup and automatic teardown.
  */
 async function createPageFixture(
-  { context }: { context: any },
+  { context }: { context: BrowserContext },
   applyFixture: (page: Page) => Promise<void>,
   setup?: (page: Page) => void
 ) {
