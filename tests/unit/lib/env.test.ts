@@ -1,5 +1,3 @@
-import { z } from 'zod'
-
 describe('Environment Variables', () => {
   const OLD_ENV = process.env
   const originalWindow = global.window
@@ -57,7 +55,9 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     // We expect it to throw an Error (not necessarily ZodError directly as it's caught and rethrown as Error in lib/env.ts, or just rethrown?)
     // In lib/env.ts: throw new Error('Invalid environment variables')
-    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
+    await expect(import('../../../lib/env')).rejects.toThrow(
+      'Invalid environment variables'
+    )
   })
 
   it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
@@ -78,7 +78,9 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     delete process.env.NEXTAUTH_URL
-    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
+    await expect(import('../../../lib/env')).rejects.toThrow(
+      'Invalid environment variables'
+    )
   })
 
   it('should not throw on client even if server variables are missing', async () => {
@@ -106,6 +108,8 @@ describe('Environment Variables', () => {
     process.env.NODE_ENV = 'test'
     process.env.NEXT_PUBLIC_API_URL = 'invalid-url'
 
-    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
+    await expect(import('../../../lib/env')).rejects.toThrow(
+      'Invalid environment variables'
+    )
   })
 })

@@ -457,10 +457,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isMounted.current = true
     isManualDisconnect.current = false
 
-    if (
-      typeof window !== 'undefined' &&
-      env.NEXT_PUBLIC_TESTING === 'true'
-    ) {
+    if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING === 'true') {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
@@ -485,10 +482,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current.gatt.disconnect()
       }
 
-      if (
-        typeof window !== 'undefined' &&
-        env.NEXT_PUBLIC_TESTING === 'true'
-      ) {
+      if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING === 'true') {
         if (window.TEST_CONTROLS) {
           delete window.TEST_CONTROLS.setHrmStatus
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage
@@ -653,7 +647,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
-        lastConnectTimeRef.current = Date.now()
+        lastDataTime.current = Date.now()
         onConnectRef.current?.()
         return true
       } catch (error) {
