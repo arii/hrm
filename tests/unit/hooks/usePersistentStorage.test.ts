@@ -89,7 +89,7 @@ describe('usePersistentStorage', () => {
     Object.defineProperty(window, 'localStorage', {
       value: {
         setItem: jest.fn((key, _value) => {
-          if (key === 'hrm-storage-test') {
+          if (key === '__hrm_test__') {
             return // Success for check
           }
           throw new Error('QuotaExceeded')
