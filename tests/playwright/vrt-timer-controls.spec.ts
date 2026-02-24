@@ -3,6 +3,7 @@ import { expect, test } from './fixtures'
 import { setupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -31,6 +32,8 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
+    // Ensure fixed viewport to prevent layout shifts
+    await controlPage.setViewportSize(DESKTOP_VIEWPORT)
   })
 
   test.describe('TimerControls Component', () => {
