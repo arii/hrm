@@ -16,6 +16,7 @@ import type { Locator, Page } from '@playwright/test'
  */
 export const VRT_MASK_SELECTORS = {
   liveHrValue: '[data-testid="live-hr-value"]',
+  bpmValue: '[data-testid="bpm-value"]',
   liveHrPercent: '[data-testid="live-hr-percent"]',
   hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
   timerCountdown: '[data-testid="timer-countdown"]',
@@ -33,6 +34,7 @@ export const VRT_MASK_SELECTORS = {
 export function getDynamicContentMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.liveHrValue),
+    page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.liveHrPercent),
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
@@ -49,8 +51,8 @@ export function getDynamicContentMasks(page: Page): Locator[] {
 export function getHrMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.liveHrValue),
+    page.locator(VRT_MASK_SELECTORS.bpmValue),
     page.locator(VRT_MASK_SELECTORS.liveHrPercent),
-    page.locator(VRT_MASK_SELECTORS.hrTileGridItem),
   ]
 }
 
