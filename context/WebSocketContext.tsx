@@ -319,6 +319,15 @@ export const WebSocketProvider = ({
         disconnect,
       }
     }
+
+    // Cleanup to prevent global scope pollution on unmount
+    return () => {
+      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
+        delete window.__TEST_CONTROLS__.dispatch
+        delete window.__TEST_CONTROLS__.connect
+        delete window.__TEST_CONTROLS__.disconnect
+      }
+    }
   }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(

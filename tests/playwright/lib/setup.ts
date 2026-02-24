@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
+import { mockGoogleDocIframe, mockMultipleHrDevices } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
@@ -332,9 +332,13 @@ export async function stopTimer(
   const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
-    // Performance: Fast-fail check for button existence before checking visibility.
-    // count() is an immediate check that doesn't wait for the element to appear.
-    if ((await stopButton.count()) === 0) return
+    // Performance: Wait for button to be attached to DOM before checking visibility.
+    // This handles race conditions during hydration where count() might falsely return 0.
+    try {
+      await stopButton.waitFor({ state: 'attached', timeout: 500 })
+    } catch {
+      return
+    }
 
     // If timer is running, stop it.
     if (await stopButton.isVisible()) {
