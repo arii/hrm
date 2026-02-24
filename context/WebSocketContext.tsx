@@ -372,6 +372,15 @@ export const WebSocketProvider = ({
 >>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
       }
     }
+
+    // Cleanup to prevent global scope pollution on unmount
+    return () => {
+      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
+        delete window.__TEST_CONTROLS__.dispatch
+        delete window.__TEST_CONTROLS__.connect
+        delete window.__TEST_CONTROLS__.disconnect
+      }
+    }
   }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(

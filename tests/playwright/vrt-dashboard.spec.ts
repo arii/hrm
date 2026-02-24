@@ -5,7 +5,10 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { stopTimer } from './lib/setup'
+=======
+>>>>>>> 05de7c3e (test(medium): fix: enhance VRT teardown and cleanup global state (#9249))
 import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 =======
 >>>>>>> 869dda23 (chore: centralize and automate VRT mock HR device cleanup)
@@ -132,7 +135,11 @@ test.describe('Visual Regression Tests', () => {
 
     // NEW: Responsive breakpoint tests
 <<<<<<< HEAD
+<<<<<<< HEAD
     test('mobile viewport', async () => {
+=======
+    test('mobile viewport', async ({ dashboardPage }) => {
+>>>>>>> 05de7c3e (test(medium): fix: enhance VRT teardown and cleanup global state (#9249))
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
 =======
     test('mobile viewport', async ({ dashboardPage }) => {
@@ -146,7 +153,11 @@ test.describe('Visual Regression Tests', () => {
     })
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     test('tablet viewport', async () => {
+=======
+    test('tablet viewport', async ({ dashboardPage }) => {
+>>>>>>> 05de7c3e (test(medium): fix: enhance VRT teardown and cleanup global state (#9249))
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
 =======
     test('tablet viewport', async ({ dashboardPage }) => {
