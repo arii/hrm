@@ -1,10 +1,23 @@
 import { z } from 'zod'
 
-const envSchema = z
-  .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
+const clientEnvSchema = z.object({
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
+  NEXT_PUBLIC_USE_NATIVE_TABLE: z
+    .preprocess((val) => {
+      if (typeof val === 'string') return val.toLowerCase() === 'true'
+      return val === true
+    }, z.boolean())
+    .default(false),
+  NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
+  NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
+  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
+  NEXT_PUBLIC_TESTING: z.string().optional(),
+})
+
+const serverEnvSchema = clientEnvSchema
+  .extend({
     PORT: z.coerce.number().default(3000),
     HOST: z.string().default('0.0.0.0'),
     NEXTAUTH_SECRET: z.string(),
@@ -23,14 +36,6 @@ const envSchema = z
       .default(false),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    NEXT_PUBLIC_USE_NATIVE_TABLE: z
-      .preprocess((val) => {
-        if (typeof val === 'string') return val.toLowerCase() === 'true'
-        return val === true
-      }, z.boolean())
-      .default(false),
-    NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
-    NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
@@ -42,7 +47,6 @@ const envSchema = z
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
     WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
@@ -119,22 +123,16 @@ const getEnvSource = () => {
 }
 
 const parsedEnv = isServer
-  ? envSchema.safeParse(getEnvSource())
-  : ({
-      success: true,
-      data: process.env as unknown as z.infer<typeof envSchema>,
-    } as ReturnType<typeof envSchema.safeParse>)
+  ? serverEnvSchema.safeParse(getEnvSource())
+  : clientEnvSchema.safeParse(getEnvSource())
 
 if (!parsedEnv.success) {
-  if (isServer) {
-    console.error('❌ Invalid environment variables:', parsedEnv.error.format())
-    throw parsedEnv.error
-  }
+  console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+  throw new Error('Invalid environment variables')
 }
 
 // Ensure env is typed correctly. On the client, server-only fields will be undefined.
-export const env = (
-  parsedEnv.success ? parsedEnv.data : getEnvSource()
-) as z.infer<typeof envSchema>
+// We cast to the full server schema so TypeScript doesn't complain, but runtime access to server vars on client will yield undefined.
+export const env = parsedEnv.data as z.infer<typeof serverEnvSchema>
 
-export { envSchema }
+export { serverEnvSchema as envSchema }

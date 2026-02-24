@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-reconnection'
 
 describe('Bluetooth Message Constants', () => {
   describe('Connection Statuses', () => {

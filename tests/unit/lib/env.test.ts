@@ -55,7 +55,9 @@ describe('Environment Variables', () => {
     process.env.NEXTAUTH_SECRET = 'secret'
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    // We expect it to throw an Error (not necessarily ZodError directly as it's caught and rethrown as Error in lib/env.ts, or just rethrown?)
+    // In lib/env.ts: throw new Error('Invalid environment variables')
+    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
   })
 
   it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
@@ -76,7 +78,7 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_CLIENT_ID = 'id'
     process.env.SPOTIFY_CLIENT_SECRET = 'secret'
     delete process.env.NEXTAUTH_URL
-    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
+    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
   })
 
   it('should not throw on client even if server variables are missing', async () => {
@@ -93,20 +95,17 @@ describe('Environment Variables', () => {
 
     const { env } = await import('../../../lib/env')
     expect(env.NEXT_PUBLIC_API_URL).toBe('http://api.test')
-    // checking that it's undefined on client mapping
+    // checking that it's undefined on client mapping (types say it exists but runtime it's undefined)
     expect(env.NEXTAUTH_URL).toBeUndefined()
   })
 
-  it('should still validate public variables on client', async () => {
+  it('should throw on client if public variables are invalid', async () => {
     // simulate client
     global.window = {}
 
     process.env.NODE_ENV = 'test'
     process.env.NEXT_PUBLIC_API_URL = 'invalid-url'
 
-    // We shouldn't throw, but log a warning (which we can't easily assert here without spying)
-    const { env } = await import('../../../lib/env')
-    // Since validation failed, it falls back to getEnvSource()
-    expect(env.NEXT_PUBLIC_API_URL).toBe('invalid-url')
+    await expect(import('../../../lib/env')).rejects.toThrow('Invalid environment variables')
   })
 })
