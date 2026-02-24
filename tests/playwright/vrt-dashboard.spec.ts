@@ -167,6 +167,5 @@ test.describe('Visual Regression Tests', () => {
         maxDiffPixelRatio: 0.3,
       })
     })
-
   })
 })
