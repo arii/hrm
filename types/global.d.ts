@@ -14,6 +14,7 @@ export interface TestControls {
   // From WebSocketProvider context
   dispatch?: (message: ServerMessage) => void
   disconnect?: () => void
+  connect?: () => void
 }
 
 declare global {
@@ -22,6 +23,10 @@ declare global {
   interface Window {
     __TEST_READY__?: boolean
     __TEST_WEBSOCKET_READY__?: boolean
+    __TEST_MODE__?: boolean
+    // Standardized test controls interface (replacing legacy TEST_CONTROLS)
+    __TEST_CONTROLS__?: TestControls
+    // Deprecated alias for backward compatibility (to be removed)
     TEST_CONTROLS?: TestControls
   }
 }

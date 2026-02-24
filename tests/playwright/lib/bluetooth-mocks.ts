@@ -147,6 +147,10 @@ export const injectBluetoothMocks = async (page: Page) => {
     // Inject
     navigator.bluetooth = mockBluetooth
     window.MockBluetoothDevice = MockBluetoothDevice
+    // Signal to application hooks that we are in a test environment with mocks loaded
+    // This allows hooks like useBluetoothHRM to expose test controls even if
+    // build-time environment variables (NEXT_PUBLIC_TESTING) were missing.
+    window.__TEST_MODE__ = true
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
         if (_connectedDevice && _connectedDevice.gatt.connected) {
