@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -46,7 +46,7 @@ const SpotifyControls = () => {
   )
 
   const handleTrackSelect = (uri: string) => {
-    const targetDeviceId = resolveTargetDeviceId()
+    const targetDeviceId = resolveTargetDeviceId
     executeSpotify('PLAY', {
       uri: uri,
       deviceId: targetDeviceId,
@@ -113,6 +113,14 @@ const SpotifyControls = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [devices]) // Rely on devices update to trigger sync
 
+  const hrmDevice = useMemo(
+    () =>
+      devices.find(
+        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+      ),
+    [devices]
+  )
+
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
     if (
@@ -120,27 +128,19 @@ const SpotifyControls = () => {
       !selectedDeviceId &&
       !devices.some((d) => d.is_active)
     ) {
-      const hrmPlayer = devices.find(
-        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
-      )
-      if (hrmPlayer) {
-        setSelectedDeviceId(hrmPlayer.id)
+      if (hrmDevice) {
+        setSelectedDeviceId(hrmDevice.id)
       }
     }
-  }, [devices, selectedDeviceId])
+  }, [devices, selectedDeviceId, hrmDevice])
 
-  const resolveTargetDeviceId = useCallback(() => {
+  const resolveTargetDeviceId = useMemo(() => {
     if (selectedDeviceId) {
       return selectedDeviceId
     }
     const activeDevice = devices.find((device) => device.is_active)
-    if (activeDevice) return activeDevice.id
-
-    const hrmPlayer = devices.find(
-      (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
-    )
-    return hrmPlayer?.id
-  }, [devices, selectedDeviceId])
+    return activeDevice?.id || hrmDevice?.id
+  }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
     (
@@ -150,7 +150,7 @@ const SpotifyControls = () => {
       const deviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
-          : resolveTargetDeviceId()
+          : resolveTargetDeviceId
 
       switch (command) {
         case 'PLAY':
@@ -207,7 +207,7 @@ const SpotifyControls = () => {
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected' || isSyncingVolume) return
-      const targetDeviceId = resolveTargetDeviceId()
+      const targetDeviceId = resolveTargetDeviceId
 
       // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
