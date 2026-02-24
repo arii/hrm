@@ -1,6 +1,6 @@
 import DashboardClient from '@/components/DashboardClient'
 import { env } from '@/lib/env'
-import { extractGoogleDocId } from '@/utils/urls'
+import { extractGoogleDocId } from '@/lib/utils'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
