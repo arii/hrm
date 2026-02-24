@@ -52,6 +52,9 @@ export async function mockGoogleDocIframe(
   html: string = STABLE_WORKOUT_HTML
 ): Promise<void> {
   // Pattern to match any Google Doc publication URL with embedded=true
+  // This regex is specific to the 'publish to web' format used by the dashboard
+  // and will not interfere with other Google services or legitimate traffic
+  // (verified safe for use in global setup or specific tests like /debug/spotify)
   await pageOrContext.route(
     /.*docs\.google\.com\/document\/d\/e\/.*\/pub\?embedded=true.*/,
     (route) => {
