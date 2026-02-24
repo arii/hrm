@@ -7,6 +7,14 @@ const booleanSchema = z.preprocess((val) => {
   return val === true
 }, z.boolean())
 
+// Helper for numeric env vars that might be undefined on client
+// Coerces string to number, but allows undefined to pass through to default()
+// This prevents 'undefined' -> NaN -> validation error
+const numericSchema = z.preprocess(
+  (val) => (val === '' || val === undefined ? undefined : Number(val)),
+  z.number().optional()
+)
+
 /**
  * Schema for all environment variables.
  *
@@ -17,7 +25,7 @@ export const envObjectSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.coerce.number().default(3000),
+  PORT: numericSchema.default(3000),
   HOST: z.string().default('0.0.0.0'),
   NEXTAUTH_SECRET: z.string().optional(),
   NEXTAUTH_URL: z.string().url().optional(),
@@ -37,22 +45,20 @@ export const envObjectSchema = z.object({
     .or(z.literal(''))
     .transform((url) => url?.replace(/\/$/, '')),
   NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-  SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
-  INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
-  GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
+  RATE_LIMIT_WINDOW_MS: numericSchema.default(60000),
+  SPOTIFY_API_MAX_REQUESTS: numericSchema.default(30),
+  INTERNAL_API_MAX_REQUESTS: numericSchema.default(100),
+  GENERAL_API_MAX_REQUESTS: numericSchema.default(200),
   // The default of 1000 provides a generous limit for concurrent WebSocket connections,
   // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
-  WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
-  SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
-  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
-  WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
-  WEBSOCKET_WATCHDOG_INTERVAL: z.coerce
-    .number()
-    .int()
-    .positive()
+  WS_MAX_CONNECTIONS: numericSchema.default(1000),
+  SPOTIFY_POLLING_INTERVAL_MS: numericSchema.default(5000),
+  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: numericSchema.default(10000),
+  WEBSOCKET_GRACE_PERIOD_MS: numericSchema.default(5000),
+  WEBSOCKET_WATCHDOG_INTERVAL: numericSchema
+    .pipe(z.number().int().positive().optional())
     .default(30000),
-  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
+  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: numericSchema.default(8),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
   ANALYZE: booleanSchema.default(false),
   TESTING: booleanSchema.default(false),
@@ -60,7 +66,9 @@ export const envObjectSchema = z.object({
   IS_DEPLOYMENT: booleanSchema.default(false),
   LOG_LEVEL: z.string().optional(),
   WS_URL: z.string().url().optional(),
-  HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),
+  HRM_LIVE_WINDOW_SIZE: numericSchema
+    .pipe(z.number().int().min(1).optional())
+    .default(600),
   npm_package_version: z.string().optional(),
   IGNORE_BUILD_ERRORS: booleanSchema.default(false),
   INCLUDE_MOBILE: booleanSchema.default(false),
@@ -161,7 +169,7 @@ const parsedEnv = envSchema.safeParse(getEnvSource())
 
 if (!parsedEnv.success) {
   console.error('❌ Invalid environment variables:', parsedEnv.error.format())
-  throw new Error('Invalid environment variables')
+  throw parsedEnv.error
 }
 
 export const env = parsedEnv.data

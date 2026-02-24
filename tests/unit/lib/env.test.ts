@@ -126,6 +126,8 @@ describe('Environment Variables', () => {
     publicKeys.forEach((key) => {
       if (key.endsWith('_URL')) {
         process.env[key] = 'http://localhost'
+      } else if (key.endsWith('_ATTEMPTS')) {
+        process.env[key] = '10'
       } else {
         process.env[key] = 'true'
       }
