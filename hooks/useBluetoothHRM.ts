@@ -4,7 +4,6 @@ import {
   HrmMetadataUpdateData,
 } from '@/types/websocket'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -153,7 +152,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       // Prevent sending redundant metadata updates
-      if (!isEqual(lastSentMetadataRef.current, metadataData)) {
+      if (
+        JSON.stringify(lastSentMetadataRef.current) !==
+        JSON.stringify(metadataData)
+      ) {
         const metadata: HrmMetadataUpdateMessage = {
           type: 'HRM_METADATA_UPDATE',
           data: metadataData,
