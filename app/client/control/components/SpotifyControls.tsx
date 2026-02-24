@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -43,6 +43,14 @@ const SpotifyControls = () => {
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const volumeLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
+  )
+
+  const hrmDevice = useMemo(
+    () =>
+      devices.find(
+        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+      ),
+    [devices]
   )
 
   const handleTrackSelect = (uri: string) => {
@@ -118,29 +126,20 @@ const SpotifyControls = () => {
     if (
       devices.length > 0 &&
       !selectedDeviceId &&
-      !devices.some((d) => d.is_active)
+      !devices.some((d) => d.is_active) &&
+      hrmDevice
     ) {
-      const hrmPlayer = devices.find(
-        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
-      )
-      if (hrmPlayer) {
-        setSelectedDeviceId(hrmPlayer.id)
-      }
+      setSelectedDeviceId(hrmDevice.id)
     }
-  }, [devices, selectedDeviceId])
+  }, [devices, selectedDeviceId, hrmDevice])
 
   const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
-    const activeDevice = devices.find((device) => device.is_active)
-    if (activeDevice) return activeDevice.id
-
-    const hrmPlayer = devices.find(
-      (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+    return (
+      selectedDeviceId ||
+      devices.find((device) => device.is_active)?.id ||
+      hrmDevice?.id
     )
-    return hrmPlayer?.id
-  }, [devices, selectedDeviceId])
+  }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
     (
