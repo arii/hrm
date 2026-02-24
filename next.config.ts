@@ -18,9 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  env: {
-    NEXT_PUBLIC_TESTING: String(env.TESTING),
-  },
   async redirects() {
     return [
       {
