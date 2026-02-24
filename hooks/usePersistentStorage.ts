@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
-import isEqual from 'lodash.isequal'
 
 let isLocalStorageAvailable: boolean | null = null
 
@@ -10,14 +9,15 @@ const checkLocalStorage = () => {
     return isLocalStorageAvailable
   }
   try {
-    const testKey = 'hrm-storage-test'
-    window.localStorage.setItem(testKey, 'test')
+    const testKey = '__hrm_test__'
+    window.localStorage.setItem(testKey, testKey)
     window.localStorage.removeItem(testKey)
     isLocalStorageAvailable = true
+    return true
   } catch {
     isLocalStorageAvailable = false
+    return false
   }
-  return isLocalStorageAvailable
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -26,23 +26,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
-/** @public */
-export interface UsePersistentStorageOptions<T> {
-  /**
-   * Optional migration function to handle schema evolution or data sanitization.
-   * Receives the raw data from storage (as unknown) and must return the validated type T.
-   */
-  migrate?: (data: unknown) => T
-}
-
-function usePersistentStorage<T>(
-  key: string,
-  initialValue: T,
-  options: UsePersistentStorageOptions<T> = {}
-) {
+function usePersistentStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(initialValue)
   const lastKeyRef = useRef<string | null>(null)
-  const { migrate } = options
 
   useEffect(() => {
     if (lastKeyRef.current === key) return
@@ -55,16 +41,12 @@ function usePersistentStorage<T>(
         : Cookies.get(key)
 
       if (item) {
-        let parsed = JSON.parse(item)
-
-        if (migrate) {
-          parsed = migrate(parsed)
-        }
+        const parsed = JSON.parse(item)
 
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
           const merged = { ...initialValue, ...parsed } as T
 
-          if (!isEqual(merged, storedValue)) {
+          if (JSON.stringify(merged) !== JSON.stringify(storedValue)) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setStoredValue(merged)
           }
@@ -73,12 +55,12 @@ function usePersistentStorage<T>(
             window.localStorage.setItem(key, JSON.stringify(merged))
           }
         } else {
-          if (!isEqual(parsed, storedValue)) {
+          if (JSON.stringify(parsed) !== JSON.stringify(storedValue)) {
             setStoredValue(parsed)
           }
         }
       } else {
-        if (!isEqual(initialValue, storedValue)) {
+        if (JSON.stringify(initialValue) !== JSON.stringify(storedValue)) {
           setStoredValue(initialValue)
         }
       }
@@ -89,7 +71,7 @@ function usePersistentStorage<T>(
         error
       )
     }
-  }, [key, initialValue, storedValue, migrate])
+  }, [key, initialValue, storedValue])
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
@@ -131,7 +113,7 @@ function usePersistentStorage<T>(
       if (e.key === key && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue)
-          if (!isEqual(parsed, storedValue)) {
+          if (JSON.stringify(parsed) !== JSON.stringify(storedValue)) {
             setStoredValue(parsed)
           }
         } catch (error) {
