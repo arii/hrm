@@ -9,6 +9,7 @@ import {
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -44,6 +45,9 @@ test.describe('Visual Regression Tests', () => {
     // 3. Wait for pages to be ready and connected
     await waitForPageReady(dashboardPage)
     await waitForPageReady(mockPage)
+
+    // Ensure fixed viewport to prevent height mismatches
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
 
     await dashboardPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',

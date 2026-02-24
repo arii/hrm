@@ -22,6 +22,28 @@ import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 import { Gender } from '@/types/core'
 import MenuItem from '@mui/material/MenuItem'
 
+/**
+ * Custom hook to handle intervals declaratively.
+ * @param callback The function to call on every interval.
+ * @param delay The delay in milliseconds, or null to stop the interval.
+ */
+function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef(callback)
+
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback
+  }, [callback])
+
+  // Set up the interval.
+  useEffect(() => {
+    if (delay === null) return
+
+    const id = setInterval(() => savedCallback.current(), delay)
+    return () => clearInterval(id)
+  }, [delay])
+}
+
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
@@ -31,23 +53,13 @@ export default function MockPage() {
   const [heightCm, setHeightCm] = useState(175)
   const [gender, setGender] = useState<Gender>('FEMALE')
   const [calories, setCalories] = useState(0)
-  const [intervalId, setIntervalId] = useState<number | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
 
-  const isStreaming = intervalId !== null
   const maxHr = calculateMaxHr(age)
-
-  // Maintain refs for values accessed inside the interval to avoid stale closures
-  const latestProfile = useRef({ age, weightKg, heightCm, gender, name, maxHr })
-  const sendHrPacketRef = useRef<(hr: number, currentCalories: number) => void>(
-    () => {}
-  )
 
   const sendHrPacket = useCallback(
     (hr: number, currentCalories: number) => {
-      const { zone, percentage } = calculateZoneFromMaxHr(
-        hr,
-        calculateMaxHr(latestProfile.current.age)
-      )
+      const { zone, percentage } = calculateZoneFromMaxHr(hr, maxHr)
       const heartRateZone = toHeartRateZone(zone)
 
       const message: HrmInputMessage = {
@@ -61,12 +73,10 @@ export default function MockPage() {
       }
       sendData(message)
     },
-    [sendData]
+    [sendData, maxHr]
   )
 
   const sendMetadataPacket = useCallback(() => {
-    const { maxHr, name, age, weightKg, heightCm, gender } =
-      latestProfile.current
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
@@ -79,31 +89,19 @@ export default function MockPage() {
       },
     }
     sendData(message)
-  }, [sendData])
+  }, [sendData, maxHr, name, age, weightKg, heightCm, gender])
 
-  // Sync refs and send metadata on every change
+  // Debounce metadata updates
   useEffect(() => {
-    latestProfile.current = { age, weightKg, heightCm, gender, name, maxHr }
-    sendHrPacketRef.current = sendHrPacket
-    sendMetadataPacket()
-  }, [
-    age,
-    weightKg,
-    heightCm,
-    gender,
-    name,
-    maxHr,
-    sendHrPacket,
-    sendMetadataPacket,
-  ])
+    const handler = setTimeout(() => {
+      sendMetadataPacket()
+    }, 500)
 
-  const startStreaming = () => {
-    if (isStreaming || connectionStatus !== 'Connected') return
+    return () => clearTimeout(handler)
+  }, [sendMetadataPacket])
 
-    // Initial send
-    sendHrPacket(hrValue, calories)
-
-    const id = window.setInterval(() => {
+  useInterval(
+    () => {
       setHrValue((prevHr) => {
         const fluctuatedHr = Math.max(
           70,
@@ -111,8 +109,6 @@ export default function MockPage() {
         )
 
         setCalories((prevCalories) => {
-          const { age, weightKg, gender } = latestProfile.current
-
           const caloriesDelta = estimateCaloriesBurned({
             heartRate: fluctuatedHr,
             age,
@@ -122,23 +118,26 @@ export default function MockPage() {
           })
           const newCalories = prevCalories + caloriesDelta
 
-          // Use the ref to ensure we call the latest version of the function
-          sendHrPacketRef.current(fluctuatedHr, newCalories)
+          sendHrPacket(fluctuatedHr, newCalories)
 
           return newCalories
         })
 
         return fluctuatedHr
       })
-    }, 2000)
-    setIntervalId(id)
+    },
+    isStreaming ? 2000 : null
+  )
+
+  const startStreaming = () => {
+    if (isStreaming || connectionStatus !== 'Connected') return
+    setIsStreaming(true)
+    // Initial send
+    sendHrPacket(hrValue, calories)
   }
 
   const stopStreaming = () => {
-    if (intervalId) {
-      window.clearInterval(intervalId)
-      setIntervalId(null)
-    }
+    setIsStreaming(false)
   }
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {

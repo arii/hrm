@@ -242,16 +242,18 @@ export const resetSocketManager = () => {
   }
 }
 
+const withLegacyFields = (data: HrmStreamData) => ({
+  ...data,
+  // Backward compatibility: populate old fields
+  weight: data.weightKg,
+  height: data.heightCm,
+})
+
 const broadcastState = () => {
   const allData = hrmSessionManager.findAll()
   const filteredData = filterHrmData(allData, Date.now(), {
     includeZeroValues: true,
-  }).map((data) => ({
-    ...data,
-    // Backward compatibility: populate old fields
-    weight: data.weightKg,
-    height: data.heightCm,
-  }))
+  }).map(withLegacyFields)
 
   broadcast(
     wsServerInstance,
@@ -301,12 +303,7 @@ const handleIncomingMessage = (
         const allData = hrmSessionManager.findAll()
         const filteredData = filterHrmData(allData, Date.now(), {
           includeZeroValues: true,
-        }).map((data) => ({
-          ...data,
-          // Backward compatibility: populate old fields
-          weight: data.weightKg,
-          height: data.heightCm,
-        }))
+        }).map(withLegacyFields)
 
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
@@ -357,13 +354,6 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_INPUT': {
-        /**
-         * CALORIE OWNERSHIP & SINGLE SOURCE OF TRUTH:
-         * While the mock client simulates calories for real-time responsiveness, the server remains
-         * the authoritative source for the shared application state. The server validates incoming
-         * calorie values to prevent anomalies and persists them in the session manager.
-         * The values broadcasted by the server (via broadcastState) are what all dashboard clients display.
-         */
         const hrmMessage = message as HrmInputMessage
         const existingData = hrmSessionManager.findById(clientId)
         const sessionState = clientSessionState.get(clientId)

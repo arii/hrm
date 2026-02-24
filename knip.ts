@@ -35,6 +35,7 @@ const config: KnipConfig = {
     'tests/unit/mocks/webBluetooth.ts',
     'deploy/ecosystem.config.cjs',
     'deploy/next.config.js',
+    'types/websocket.ts',
   ],
   ignoreDependencies: [
     '@types/web-bluetooth',
