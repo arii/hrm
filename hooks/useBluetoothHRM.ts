@@ -457,7 +457,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isMounted.current = true
     isManualDisconnect.current = false
 
-    if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING === 'true') {
+    if (
+      typeof window !== 'undefined' &&
+      (env.NEXT_PUBLIC_TESTING === 'true' ||
+        (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
+    ) {
       window.TEST_CONTROLS = {
         ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
@@ -482,7 +486,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current.gatt.disconnect()
       }
 
-      if (typeof window !== 'undefined' && env.NEXT_PUBLIC_TESTING === 'true') {
+      if (
+        typeof window !== 'undefined' &&
+        (env.NEXT_PUBLIC_TESTING === 'true' ||
+          (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
+      ) {
         if (window.TEST_CONTROLS) {
           delete window.TEST_CONTROLS.setHrmStatus
           delete window.TEST_CONTROLS.setCustomHrmStatusMessage

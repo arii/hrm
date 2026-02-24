@@ -7,7 +7,8 @@ import {
   RECONNECT_RANDOM_DELAY_MS,
   getBackoffDelay,
   GATT_DISCONNECT_COOLDOWN_MS,
-  CONNECTION_STORM_THRESHOLD_MS,
+  CONNECTION_STORM_WINDOW_MS,
+  CONNECTION_STORM_COUNT,
   PERMISSIONS_REVOKED_TIMEOUT_MS,
 } from '@/constants/bluetooth-reconnection'
 
@@ -22,7 +23,8 @@ describe('Reconnection Constants', () => {
 
   it('should have the correct values for timing constants', () => {
     expect(GATT_DISCONNECT_COOLDOWN_MS).toBe(800)
-    expect(CONNECTION_STORM_THRESHOLD_MS).toBe(5000)
+    expect(CONNECTION_STORM_WINDOW_MS).toBe(10000)
+    expect(CONNECTION_STORM_COUNT).toBe(3)
     expect(PERMISSIONS_REVOKED_TIMEOUT_MS).toBe(2000)
   })
 
