@@ -5,16 +5,8 @@ import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useNow } from '@/hooks/useNow'
 import HrTile from '@/components/HrTile'
-<<<<<<< HEAD
 import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
-=======
-import { getActiveHrmData } from '@/utils/hrm'
-<<<<<<< HEAD
-import { HR_TILE_MAX_HEIGHT } from '@/constants/layout'
->>>>>>> 625d7be3 (feat: standardizes layout constants and implements granular masking for VRT)
-=======
->>>>>>> 90313f6a (make maksing more focused)
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
