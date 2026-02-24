@@ -128,7 +128,7 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Responsive breakpoint tests
-    test('mobile viewport', async () => {
+    test('mobile viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
@@ -137,7 +137,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('tablet viewport', async () => {
+    test('tablet viewport', async ({ dashboardPage }) => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {

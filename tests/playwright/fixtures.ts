@@ -22,41 +22,51 @@ async function safePageTeardown(page: Page) {
     if (!page.isClosed()) {
       await cleanupVisualRegressionTest(page)
     }
-  } catch {
-    // Teardown errors are logged but shouldn't fail the test
+  } catch (error) {
+    // Log teardown errors instead of silently swallowing them
+    console.warn('⚠️ Teardown warning:', error)
   }
+}
+
+/**
+ * Helper to create a page fixture with optional setup and automatic teardown.
+ */
+async function createPageFixture(
+  { context }: { context: any },
+  applyFixture: (page: Page) => Promise<void>,
+  setup?: (page: Page) => void
+) {
+  const page = await context.newPage()
+  if (setup) {
+    setup(page)
+  }
+  await applyFixture(page)
+  await safePageTeardown(page)
 }
 
 export const test = base.extend<PageFixtures>({
   dashboardPage: async ({ context }, applyFixture) => {
-    const page = await context.newPage()
-    page.on('console', (msg) => {
-      const text = msg.text()
-      if (text.includes('DOCS_timing')) return
-      if (text.includes('An error occurred in the Server Components render'))
-        return
-      console.log(`Console ${msg.type()}: ${text}`)
+    await createPageFixture({ context }, applyFixture, (page) => {
+      page.on('console', (msg) => {
+        const text = msg.text()
+        if (text.includes('DOCS_timing')) return
+        if (text.includes('An error occurred in the Server Components render'))
+          return
+        console.log(`Console ${msg.type()}: ${text}`)
+      })
     })
-    await applyFixture(page)
-    await safePageTeardown(page)
   },
 
   controlPage: async ({ context }, applyFixture) => {
-    const page = await context.newPage()
-    await applyFixture(page)
-    await safePageTeardown(page)
+    await createPageFixture({ context }, applyFixture)
   },
 
   mockPage: async ({ context }, applyFixture) => {
-    const page = await context.newPage()
-    await applyFixture(page)
-    await safePageTeardown(page)
+    await createPageFixture({ context }, applyFixture)
   },
 
   connectPage: async ({ context }, applyFixture) => {
-    const page = await context.newPage()
-    await applyFixture(page)
-    await safePageTeardown(page)
+    await createPageFixture({ context }, applyFixture)
   },
 })
 
