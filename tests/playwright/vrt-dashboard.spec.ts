@@ -155,18 +155,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
-=======
-        maxDiffPixelRatio: 0.2, // Relaxed due to mask changes revealing labels
->>>>>>> 2da09077 (feat: relax VRT tolerance for granular masking)
-=======
->>>>>>> ab403aa0 (feat(small): Fix VRT thresholds and HrTile accessibility (#9121))
-=======
-        maxDiffPixelRatio: 0.1,
->>>>>>> 90313f6a (make maksing more focused)
       })
     })
 
@@ -175,13 +164,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-<<<<<<< HEAD
-<<<<<<< HEAD
         maxDiffPixelRatio: 0.3,
-=======
-=======
-        maxDiffPixelRatio: 0.1,
->>>>>>> 90313f6a (make maksing more focused)
       })
     })
 
@@ -190,11 +173,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-<<<<<<< HEAD
->>>>>>> ab403aa0 (feat(small): Fix VRT thresholds and HrTile accessibility (#9121))
-=======
         maxDiffPixelRatio: 0.1,
->>>>>>> 90313f6a (make maksing more focused)
       })
     })
   })

@@ -79,7 +79,6 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
-      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
 
       // Assert HR tile height is within limits
       await assertFixedDimensions(hrTile, {
