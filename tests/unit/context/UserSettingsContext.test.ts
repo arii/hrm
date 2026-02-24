@@ -1,4 +1,8 @@
-import { migratePreferences, DEFAULT_PREFERENCES, UserPreferences } from '../../../context/UserSettingsContext'
+import {
+  migratePreferences,
+  DEFAULT_PREFERENCES,
+  UserPreferences,
+} from '../../../context/UserSettingsContext'
 
 describe('migratePreferences', () => {
   it('should return default preferences if stored value is null or not an object', () => {
@@ -17,7 +21,9 @@ describe('migratePreferences', () => {
     expect(result.theme).toBe('light')
     expect(result.volumeLevel).toBe(50)
     // Should verify other fields are defaults
-    expect(result.defaultWorkDuration).toBe(DEFAULT_PREFERENCES.defaultWorkDuration)
+    expect(result.defaultWorkDuration).toBe(
+      DEFAULT_PREFERENCES.defaultWorkDuration
+    )
   })
 
   it('should fix the critical bug: preserve numeric values for nullable fields (userAge, userWeight)', () => {
@@ -49,7 +55,7 @@ describe('migratePreferences', () => {
 
   it('should add missing keys from defaults', () => {
     const stored = {
-      theme: 'light'
+      theme: 'light',
     }
     const result = migratePreferences(stored)
     expect(result).toEqual({ ...DEFAULT_PREFERENCES, theme: 'light' })
@@ -58,9 +64,9 @@ describe('migratePreferences', () => {
   it('should strip unknown keys', () => {
     const stored = {
       theme: 'light',
-      unknownKey: 'should be removed'
+      unknownKey: 'should be removed',
     }
     const result = migratePreferences(stored)
-    expect((result as any).unknownKey).toBeUndefined()
+    expect((result as Record<string, unknown>).unknownKey).toBeUndefined()
   })
 })
