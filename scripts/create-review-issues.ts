@@ -6,23 +6,9 @@ import crypto from 'crypto'
 import { z } from 'zod'
 
 // --- Constants ---
-const DEFAULT_MIN_DESCRIPTION_LENGTH = 50
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
-// Load config once at module level for efficiency
-const config = (() => {
-  try {
-    const CONFIG_PATH = path.resolve(process.cwd(), 'scripts/issue-config.json')
-    const content = readFileSync(CONFIG_PATH, 'utf-8')
-    return JSON.parse(content)
-  } catch (e) {
-    // During tests or if file is missing, fallback to empty config
-    return {}
-  }
-})()
-
-const MIN_DESCRIPTION_LENGTH =
-  config.minDescriptionLength ?? DEFAULT_MIN_DESCRIPTION_LENGTH
+const MIN_DESCRIPTION_LENGTH = 50
 
 // --- Label Configuration ---
 
