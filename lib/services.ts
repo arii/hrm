@@ -12,8 +12,7 @@ export interface AppServices {
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
-  // Reuse existing instances in development to avoid duplicate connections.
-  // Implementation of the Next.js Singleton pattern: docs/TYPESCRIPT_PATTERNS.md
+  // Reuse existing instances in development (Next.js Singleton Pattern)
   if (
     process.env.NODE_ENV !== 'production' &&
     global.spotifyService &&
@@ -26,7 +25,7 @@ export async function createServices(
     }
   }
 
-  // Cleanup existing services if we're re-initializing partially (edge case)
+  // Cleanup partial state if necessary
   if (process.env.NODE_ENV !== 'production') {
     global.spotifyService?.cleanup()
     global.tabataService?.cleanup()
@@ -71,7 +70,6 @@ export async function createServices(
 
   const services = { tabataService, spotifyService, isSpotifyInitialized }
 
-  // Expose instances globally (required for API routes and persistence)
   global.spotifyService = services.spotifyService
   global.tabataService = services.tabataService
   global.isSpotifyInitialized = services.isSpotifyInitialized

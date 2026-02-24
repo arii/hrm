@@ -232,6 +232,7 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   public cleanup() {
+    // Stop all intervals to prevent leaks
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
