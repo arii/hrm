@@ -101,7 +101,11 @@ const DataTier = ({
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
+    <MetricItem
+      value={Math.floor(calories)}
+      label="KCAL"
+      testId="calories-value"
+    />
   </Box>
 )
 
