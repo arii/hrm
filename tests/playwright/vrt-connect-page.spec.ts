@@ -3,7 +3,6 @@ import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { MOBILE_VIEWPORT } from './lib/viewports'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
-import { VRT_TIMEOUTS } from './lib/timeouts'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
