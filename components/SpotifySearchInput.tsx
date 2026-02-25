@@ -39,10 +39,8 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const [hasSearched, setHasSearched] = useState(false)
   const { enqueueSnackbar } = useSnackbar()
 
-  // Debounce the search query by 500ms
   const debouncedQuery = useDebounce(query, 500)
 
-  // Effect to trigger search when debounced query changes
   useEffect(() => {
     let active = true
     const searchSpotify = async () => {
@@ -128,7 +126,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             handleClear()
           } else if (newValue && typeof newValue !== 'string') {
             onTrackSelect?.(newValue.uri)
-            // Clear on select behavior
             handleClear()
           } else {
             setValue(newValue)
