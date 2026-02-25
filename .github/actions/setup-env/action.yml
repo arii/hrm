@@ -29,18 +29,16 @@ runs:
           echo "jq already installed: $(jq --version)"
         fi
 
+    - name: 'Setup pnpm'
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9.15.9
+
     - name: 'Setup Node.js'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-
-    - name: 'Enable Corepack'
-      shell: bash
-      run: corepack enable
-
-    - name: 'Setup pnpm'
-      shell: bash
-      run: corepack prepare pnpm@9.15.9 --activate
+        cache: 'pnpm'
 
     - name: Cache Build Artifacts
       if: inputs.use-build-cache == 'true'
@@ -57,7 +55,24 @@ runs:
     - name: 'Install Dependencies'
       shell: bash
       run: |
-        pnpm install --frozen-lockfile
+        # Retry logic for pnpm install to handle transient 403 Forbidden errors
+        MAX_RETRIES=3
+        RETRY_DELAY=10
+        n=0
+        until [ "$n" -ge "$MAX_RETRIES" ]
+        do
+           echo "Attempting pnpm install (Attempt $((n+1))/$MAX_RETRIES)..."
+           pnpm install --frozen-lockfile && break
+           n=$((n+1))
+           if [ "$n" -lt "$MAX_RETRIES" ]; then
+             echo "pnpm install failed, retrying in ${RETRY_DELAY}s..."
+             sleep "$RETRY_DELAY"
+           fi
+        done
+        if [ "$n" -ge "$MAX_RETRIES" ]; then
+          echo "❌ pnpm install failed after $MAX_RETRIES attempts"
+          exit 1
+        fi
 
     - name: Cache Playwright
       uses: actions/cache@v4
