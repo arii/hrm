@@ -81,9 +81,12 @@ test.describe('Visual Regression Tests', () => {
       await expect(
         dashboardPage.getByTestId('hr-tile-card').first()
       ).toBeVisible()
-      await expect(dashboardPage.getByTestId('bpm-value')).toHaveText(/155/, {
-        timeout: 5000,
-      })
+      await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
+        /155/,
+        {
+          timeout: 5000,
+        }
+      )
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
@@ -162,7 +165,7 @@ test.describe('Visual Regression Tests', () => {
         await expect(
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
-        await expect(dashboardPage.getByTestId('bpm-value')).toHaveText(
+        await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
           new RegExp(bpm)
         )
 
