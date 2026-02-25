@@ -225,7 +225,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               px: 2,
               py: 0.5,
             }}
-            aria-label={`Select playlist: ${option.name}`}
           >
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
               {option.imageUrl ? (

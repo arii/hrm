@@ -119,27 +119,10 @@ describe('PlaylistSelector', () => {
     const input = await screen.findByRole('combobox')
     await user.click(input)
 
-    // Check the aria-label for the list item
+    // Check that the list item exists and has correct text
     const rockClassicsItem = await screen.findByText('Rock Classics')
-    let listItem = rockClassicsItem.closest('li')
-    expect(listItem).toHaveAttribute(
-      'aria-label',
-      'Select playlist: Rock Classics'
-    )
-
-    // Click the item to select it
-    await user.click(rockClassicsItem)
-
-    // Re-open the dropdown
-    await user.click(input)
-
-    // Check the aria-label for the list item again
-    const rockClassicsItemAfterClick = await screen.findByText('Rock Classics')
-    listItem = rockClassicsItemAfterClick.closest('li')
-    expect(listItem).toHaveAttribute(
-      'aria-label',
-      'Select playlist: Rock Classics'
-    )
+    const listItem = rockClassicsItem.closest('li')
+    expect(listItem).toBeInTheDocument()
 
     // Check the aria-label for the play button within that list item
     if (!listItem) throw new Error('Playlist item not found')
