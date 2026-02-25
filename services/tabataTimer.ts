@@ -312,6 +312,29 @@ class TabataTimer {
       this.timerInterval = null
     }
   }
+
+  /**
+   * Resets the timer to its default state.
+   * This is primarily used for testing to ensure a clean state between tests.
+   */
+  public reset(): void {
+    this.stop()
+    this.mode = 'TABATA'
+    this.workDuration = DEFAULT_WORK_DURATION
+    this.restDuration = DEFAULT_REST_DURATION
+    this.soundToPlay = undefined
+    this.soundEventId = 0
+    this.lastCountdownSecond = -1
+
+    // Explicitly reset timeRemaining to default for TABATA mode
+    this.timeRemaining = DEFAULT_WORK_DURATION
+    this.pausedTimeRemaining = DEFAULT_WORK_DURATION
+
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.getState(),
+    })
+  }
 }
 
 export default TabataTimer
