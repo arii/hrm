@@ -101,6 +101,34 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
+  // Separate throttled dispatches for different message types to ensure state integrity.
+  // This prevents high-frequency messages from drowning out each other or dropping different types.
+  const throttledHrmDispatch = useMemo(
+    () =>
+      throttle((msg: ServerMessage) => dispatch(msg), 100, {
+        leading: true,
+        trailing: true,
+      }),
+    [dispatch]
+  )
+
+  const throttledTimerDispatch = useMemo(
+    () =>
+      throttle((msg: ServerMessage) => dispatch(msg), 100, {
+        leading: true,
+        trailing: true,
+      }),
+    [dispatch]
+  )
+
+  // Cleanup throttles on unmount
+  useEffect(() => {
+    return () => {
+      throttledHrmDispatch.cancel()
+      throttledTimerDispatch.cancel()
+    }
+  }, [throttledHrmDispatch, throttledTimerDispatch])
+
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
@@ -281,8 +309,15 @@ export const WebSocketProvider = ({
           return // Pong message is handled, no state dispatch needed
         }
 
-        // Dispatch all messages immediately
-        dispatch(message)
+        // Dispatch high-frequency updates with independent throttling to prevent data loss.
+        // Low-frequency updates (Spotify, Alerts) are dispatched immediately.
+        if (message.type === 'HRM_UPDATE') {
+          throttledHrmDispatch(message)
+        } else if (message.type === 'TIMER_UPDATE') {
+          throttledTimerDispatch(message)
+        } else {
+          dispatch(message)
+        }
       } catch (e) {
         logger.error('Failed to parse WebSocket message', {
           error: e,
