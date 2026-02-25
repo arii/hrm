@@ -10,7 +10,6 @@ import {
   ListItemAvatar,
   ListItemText,
   TextField,
-  Typography,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import React, { useEffect, useState } from 'react'
@@ -43,52 +42,39 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
 
   useEffect(() => {
     let active = true
-    const searchSpotify = async () => {
-      if (!debouncedQuery.trim()) {
-        setResults([])
-        setHasSearched(false)
-        return
+    if (!debouncedQuery.trim()) {
+      Promise.resolve().then(() => {
+        if (active) {
+          setResults([])
+          setHasSearched(false)
+        }
+      })
+      return
+    }
+    Promise.resolve().then(() => {
+      if (active) {
+        setIsLoading(true)
+        setHasSearched(true)
       }
-
-      setIsLoading(true)
-      setHasSearched(true)
-
-      try {
-        const res = await fetch(
-          `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
-        )
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error('Please log in to Spotify first.')
-          }
-          throw new Error(`Search failed: ${res.statusText}`)
-        }
-
-        const data = await res.json()
-        const tracks = data.tracks?.items || []
-
+    })
+    fetch(
+      `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
+    )
+      .then((res) =>
+        res.ok
+          ? res.json()
+          : Promise.reject(
+              res.status === 401 ? 'Log in to Spotify' : 'Search failed'
+            )
+      )
+      .then((data) => active && setResults(data.tracks?.items || []))
+      .catch((err) => {
         if (active) {
-          setResults(tracks)
-        }
-      } catch (error) {
-        console.error('Spotify Search Error:', error)
-        if (active) {
-          enqueueSnackbar(
-            error instanceof Error ? error.message : 'Failed to search Spotify',
-            { variant: 'error' }
-          )
+          enqueueSnackbar(String(err), { variant: 'error' })
           setResults([])
         }
-      } finally {
-        if (active) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    searchSpotify()
-
+      })
+      .finally(() => active && setIsLoading(false))
     return () => {
       active = false
     }
@@ -162,52 +148,37 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             }}
           />
         )}
-        renderOption={(props, track) => {
-          const { key, ...otherProps } = props
-          return (
-            <Box component="li" key={key} {...otherProps} sx={{ px: 2, py: 1 }}>
-              <ListItemAvatar sx={{ minWidth: 56 }}>
-                <Avatar
-                  variant="square"
-                  src={
-                    track.album.images[2]?.url ||
-                    track.album.images[0]?.url ||
-                    ''
-                  }
-                  alt={track.album.name}
-                  sx={{ width: 40, height: 40 }}
-                >
-                  <MusicNote />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={track.name}
-                secondary={`${track.artists
-                  .map((a) => a.name)
-                  .join(', ')} • ${track.album.name}`}
-                primaryTypographyProps={{
-                  noWrap: true,
-                  variant: 'body2',
-                  fontWeight: 'bold',
-                }}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  variant: 'caption',
-                }}
-              />
-            </Box>
-          )
-        }}
+        renderOption={({ key, ...props }, track) => (
+          <Box component="li" key={key} {...props} sx={{ px: 2, py: 1 }}>
+            <ListItemAvatar sx={{ minWidth: 56 }}>
+              <Avatar
+                variant="square"
+                src={
+                  track.album.images[2]?.url || track.album.images[0]?.url || ''
+                }
+                sx={{ width: 40, height: 40 }}
+              >
+                <MusicNote />
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={track.name}
+              secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
+              primaryTypographyProps={{
+                noWrap: true,
+                variant: 'body2',
+                fontWeight: 'bold',
+              }}
+              secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
+            />
+          </Box>
+        )}
         noOptionsText={
-          hasSearched && !isLoading && query ? (
-            <Typography variant="body2" color="text.secondary">
-              No results found for &quot;{query}&quot;
-            </Typography>
-          ) : !query ? (
-            <Typography variant="body2" color="text.secondary">
-              Start typing to search Spotify...
-            </Typography>
-          ) : null
+          hasSearched && !isLoading
+            ? `No results for "${query}"`
+            : !query
+              ? 'Start typing to search...'
+              : null
         }
       />
     </Box>

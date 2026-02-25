@@ -43,42 +43,30 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   useEffect(() => {
     let active = true
-    const fetchPlaylists = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await fetch(API_SPOTIFY_PLAYLISTS)
-        if (!response.ok) {
-          throw new Error('Failed to fetch playlists')
-        }
-        const data = await response.json()
-        if (active) {
-          const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
+    Promise.resolve().then(() => active && setLoading(true))
+    fetch(API_SPOTIFY_PLAYLISTS)
+      .then((res) => (res.ok ? res.json() : Promise.reject('Failed to fetch')))
+      .then((data) => {
+        if (!active) return
+        setPresetPlaylists(
+          (data.presetPlaylists || []).map((p: Playlist) => ({
             ...p,
             isPreset: true,
           }))
-          const user = (data.userPlaylists || []).map((p: Playlist) => ({
+        )
+        setUserPlaylists(
+          (data.userPlaylists || []).map((p: Playlist) => ({
             ...p,
             isPreset: false,
           }))
-          setPresetPlaylists(presets)
-          setUserPlaylists(user)
-        }
-      } catch (error) {
-        if (active) {
-          const message =
-            error instanceof Error ? error.message : 'Failed to fetch playlists'
-          setError(message)
-          console.error('Error fetching playlists:', error)
-        }
-      } finally {
-        if (active) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchPlaylists()
+        )
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : String(err))
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
     }
@@ -87,38 +75,23 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   useEffect(() => {
     let active = true
     if (!debouncedSearch.trim()) {
-      setSearchResults([])
+      Promise.resolve().then(() => active && setSearchResults([]))
       return
     }
-
-    const fetchSearchResults = async () => {
-      setSearchLoading(true)
-      try {
-        const response = await fetch(
-          `/api/spotify/playlists/search?q=${encodeURIComponent(
-            debouncedSearch
-          )}`
-        )
-        if (!response.ok) {
-          throw new Error('Failed to search playlists')
-        }
-        const data = await response.json()
-        if (active) {
-          setSearchResults(data.items || [])
-        }
-      } catch (error) {
-        if (active) {
-          console.error('Error searching playlists:', error)
-          setSearchResults([])
-        }
-      } finally {
-        if (active) {
-          setSearchLoading(false)
-        }
-      }
-    }
-
-    fetchSearchResults()
+    Promise.resolve().then(() => active && setSearchLoading(true))
+    fetch(
+      `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+    )
+      .then((res) => (res.ok ? res.json() : Promise.reject('Search failed')))
+      .then((data) => {
+        if (active) setSearchResults(data.items || [])
+      })
+      .catch(() => {
+        if (active) setSearchResults([])
+      })
+      .finally(() => {
+        if (active) setSearchLoading(false)
+      })
     return () => {
       active = false
     }
@@ -227,105 +200,61 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option) => {
-          // Destructure key out to satisfy React 19/MUI requirements
-          const { key, ...otherProps } = props
-          return (
-            <Box
-              key={key}
-              component="li"
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                width: '100%',
-                py: 0.5,
-                // Use Autocomplete's hover state for background color
-                '&[aria-selected="true"]': {
-                  backgroundColor: 'action.hover',
-                  outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: '-2px',
-                },
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                },
-              }}
-              {...otherProps}
-              aria-label={`Select playlist: ${option.name}, ${
-                selectedPlaylist?.uri === option.uri
-                  ? 'selected'
-                  : 'not selected'
-              }`}
-            >
-              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                {option.imageUrl ? (
-                  <Box
-                    component="img"
-                    src={option.imageUrl}
-                    alt={option.name}
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1,
-                      mr: 1.5,
-                      objectFit: 'cover',
-                    }}
-                  />
-                ) : (
-                  <MusicNote
-                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
-                  />
-                )}
-                <ListItemText
-                  primary={option.name}
-                  secondary={
-                    option.trackCount !== undefined
-                      ? `${option.trackCount} tracks${
-                          option.owner ? ` • ${option.owner}` : ''
-                        }`
-                      : option.owner
-                        ? option.owner
-                        : undefined
-                  }
+        renderOption={({ key, ...props }, option) => (
+          <Box
+            component="li"
+            key={key}
+            {...props}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              p: '4px 16px !important',
+            }}
+            aria-label={`Select playlist: ${option.name}, ${selectedPlaylist?.uri === option.uri ? 'selected' : 'not selected'}`}
+          >
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              {option.imageUrl ? (
+                <Box
+                  component="img"
+                  src={option.imageUrl}
+                  alt=""
+                  sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
                 />
-                {option.isPreset && (
-                  <Chip
-                    label="Preset"
-                    size="small"
-                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-                  />
-                )}
-                {option.isSearchResult && !option.isPreset && (
-                  <Chip
-                    label="Spotify"
-                    size="small"
-                    color="success"
-                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-                  />
-                )}
-              </Box>
-              <Box sx={{ pl: 1, display: 'flex', alignItems: 'center' }}>
-                <IconButton
-                  edge="end"
-                  aria-label={`Play playlist: ${option.name}`}
-                  onClick={(e) => {
-                    // Prevent the click from propagating to the Autocomplete component,
-                    // which would otherwise close the dropdown.
-                    e.stopPropagation()
-                    onPlaylistPlay(option.uri)
-                  }}
-                  sx={{
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                      transform: 'scale(1.1)',
-                    },
-                  }}
-                >
-                  <PlayArrow />
-                </IconButton>
-              </Box>
+              ) : (
+                <MusicNote sx={{ mr: 1.5, color: 'text.secondary' }} />
+              )}
+              <ListItemText
+                primary={option.name}
+                secondary={
+                  option.trackCount !== undefined
+                    ? `${option.trackCount} tracks`
+                    : option.owner
+                }
+              />
+              {option.isPreset && (
+                <Chip label="Preset" size="small" sx={{ height: 20, ml: 1 }} />
+              )}
+              {option.isSearchResult && !option.isPreset && (
+                <Chip
+                  label="Spotify"
+                  size="small"
+                  color="success"
+                  sx={{ height: 20, ml: 1 }}
+                />
+              )}
             </Box>
-          )
-        }}
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPlaylistPlay(option.uri)
+              }}
+              aria-label={`Play playlist: ${option.name}`}
+            >
+              <PlayArrow />
+            </IconButton>
+          </Box>
+        )}
         groupBy={(option) => {
           if (option.isSearchResult) return 'Spotify Results'
           if (option.isPreset) return 'Preset Playlists'
