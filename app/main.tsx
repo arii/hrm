@@ -39,10 +39,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       exit="out"
                       data-testid="main-content-layout"
                       role="main"
-                      sx={{
-                        pb: `${footerHeight}px`,
-                        minHeight: '100vh',
-                      }}
+                      sx={{ pb: `${footerHeight}px`, minHeight: '100vh' }}
                     >
                       {children}
                     </Box>
