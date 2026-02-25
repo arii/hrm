@@ -37,19 +37,6 @@ export const HRM_ROUTES = {
 } as const
 
 /**
- * Legacy routes for backward compatibility
- * @deprecated Use HRM_ROUTES instead for new code
- */
-export const LEGACY_ROUTES = {
-  /** @deprecated Use HRM_ROUTES.CONTROL instead */
-  PHONE: '/phone',
-  /** @deprecated Use HRM_ROUTES.MOCK instead */
-  MOCK: '/mock',
-  /** @deprecated Use HRM_ROUTES.CONNECT instead */
-  CONNECT: '/connect',
-} as const
-
-/**
  * Warmup server endpoints to ensure fast subsequent requests.
  * Useful for parallel test execution.
  *
@@ -275,13 +262,11 @@ export async function setupComprehensiveTest(options: {
   const mockTab = await context.newPage()
   const connectTab = await context.newPage()
 
-  // Note: Uses LEGACY_ROUTES for control/mock/connect for backward compatibility with existing tests.
-  // Dashboard uses HRM_ROUTES.DASHBOARD since it's just '/'.
   await Promise.all([
     dashboardTab.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
-    controlTab.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
-    mockTab.goto(`${baseUrl}${LEGACY_ROUTES.MOCK}`),
-    connectTab.goto(`${baseUrl}${LEGACY_ROUTES.CONNECT}`),
+    controlTab.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
+    mockTab.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
+    connectTab.goto(`${baseUrl}${HRM_ROUTES.CONNECT}`),
   ])
 
   await Promise.all([
