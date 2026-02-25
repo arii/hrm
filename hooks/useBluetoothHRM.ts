@@ -659,7 +659,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
       if (isConnecting.current) {
-        logger.warn('Connection already in progress. Skipping connectAndStream.')
+        logger.warn(
+          'Connection already in progress. Skipping connectAndStream.'
+        )
         return false
       }
 
