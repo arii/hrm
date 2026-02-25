@@ -108,10 +108,13 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           }
         }}
         onChange={(_, newValue, reason) => {
-          if (reason === 'clear') {
-            handleClear()
-          } else if (newValue && typeof newValue !== 'string') {
-            onTrackSelect?.(newValue.uri)
+          if (
+            reason === 'clear' ||
+            (newValue && typeof newValue !== 'string')
+          ) {
+            if (typeof newValue !== 'string' && newValue) {
+              onTrackSelect?.(newValue.uri)
+            }
             handleClear()
           } else {
             setValue(newValue)
