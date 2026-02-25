@@ -72,7 +72,6 @@ test.describe('Component-Specific VRT', () => {
 
     // Force disconnect again after reload to prevent real WebSocket updates from interfering
     await dashboardPage.evaluate(() => {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
       window.__TEST_CONTROLS__?.disconnect()
     })
 

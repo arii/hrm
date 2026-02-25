@@ -145,6 +145,7 @@ const SpotifySearchInput = ({
               <Avatar
                 variant="square"
                 src={track.album.images[2]?.url || ''}
+                alt={track.name}
                 sx={{ width: 40, height: 40 }}
               >
                 <MusicNote />

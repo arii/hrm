@@ -231,7 +231,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 <Box
                   component="img"
                   src={option.imageUrl}
-                  alt=""
+                  alt={option.name}
                   sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
                 />
               ) : (
@@ -241,7 +241,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 primary={option.name}
                 secondary={
                   option.trackCount !== undefined
-                    ? `${option.trackCount} tracks`
+                    ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
                     : option.owner
                 }
               />
