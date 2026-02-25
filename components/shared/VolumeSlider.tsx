@@ -34,7 +34,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   sliderColor = '#1DB954',
   size = 'small',
   disabled = false,
-  sx = {},
+  sx,
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event | React.SyntheticEvent, value: number | number[]) => {
@@ -57,7 +57,13 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       direction="row"
       spacing={2}
       alignItems="center"
-      sx={{ flexGrow: 1, width: '100%', minWidth: 250, px: 1, ...sx }}
+      sx={{
+        flexGrow: 1,
+        width: '100%',
+        minWidth: { xs: 150, md: 250 },
+        px: 1,
+        ...sx,
+      }}
       data-testid="volume-slider-container"
     >
       <IconButton
