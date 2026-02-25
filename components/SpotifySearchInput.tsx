@@ -12,69 +12,60 @@ import {
   TextField,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyTrack {
   id: string
   name: string
   artists: { name: string }[]
-  album: {
-    images: { url: string }[]
-    name: string
-  }
+  album: { images: { url: string }[]; name: string }
   uri: string
 }
 
-interface SpotifySearchInputProps {
-  onTrackSelect?: (trackUri: string) => void
+interface SearchState {
+  results: SpotifyTrack[]
+  loading: boolean
+  hasSearched: boolean
 }
 
-const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
+const SpotifySearchInput = ({
+  onTrackSelect,
+}: {
+  onTrackSelect?: (uri: string) => void
+}) => {
   const [query, setQuery] = useState('')
   const [value, setValue] = useState<SpotifyTrack | string | null>(null)
-  const [results, setResults] = useState<SpotifyTrack[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasSearched, setHasSearched] = useState(false)
+  const [state, dispatch] = useReducer(
+    (s: SearchState, a: Partial<SearchState>) => ({ ...s, ...a }),
+    { results: [], loading: false, hasSearched: false }
+  )
   const { enqueueSnackbar } = useSnackbar()
-
   const debouncedQuery = useDebounce(query, 500)
 
   useEffect(() => {
     let active = true
     if (!debouncedQuery.trim()) {
-      Promise.resolve().then(() => {
-        if (active) {
-          setResults([])
-          setHasSearched(false)
-        }
-      })
+      dispatch({ results: [], hasSearched: false })
       return
     }
-    Promise.resolve().then(() => {
-      if (active) {
-        setIsLoading(true)
-        setHasSearched(true)
-      }
-    })
+    dispatch({ loading: true, hasSearched: true })
     fetch(
       `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
     )
       .then((res) =>
         res.ok
           ? res.json()
-          : Promise.reject(
-              res.status === 401 ? 'Log in to Spotify' : 'Search failed'
-            )
+          : Promise.reject(res.status === 401 ? 'Login' : 'Err')
       )
-      .then((data) => active && setResults(data.tracks?.items || []))
-      .catch((err) => {
-        if (active) {
-          enqueueSnackbar(String(err), { variant: 'error' })
-          setResults([])
-        }
-      })
-      .finally(() => active && setIsLoading(false))
+      .then((data) => active && dispatch({ results: data.tracks?.items || [] }))
+      .catch(
+        (err) =>
+          active &&
+          (enqueueSnackbar(String(err), { variant: 'error' }),
+          dispatch({ results: [] }))
+      )
+      .finally(() => active && dispatch({ loading: false }))
     return () => {
       active = false
     }
@@ -83,55 +74,34 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const handleClear = () => {
     setQuery('')
     setValue(null)
-    setResults([])
-    setHasSearched(false)
+    dispatch({ results: [], hasSearched: false })
   }
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}>
+    <Box sx={{ width: '100%', maxWidth: 600, mx: 'auto' }}>
       <Autocomplete
         freeSolo
-        disableClearable={false}
-        options={results}
-        getOptionLabel={(option) => {
-          if (typeof option === 'string') return option
-          return option.name
-        }}
-        filterOptions={(x) => x} // Results are already filtered by API
-        loading={isLoading}
+        options={state.results}
+        getOptionLabel={(o) => (typeof o === 'string' ? o : o.name)}
+        filterOptions={(x) => x}
+        loading={state.loading}
         value={value}
         inputValue={query}
-        onInputChange={(_, newInputValue) => {
-          setQuery(newInputValue)
-          if (newInputValue === '') {
+        onInputChange={(_, val) => (val ? setQuery(val) : handleClear())}
+        onChange={(_, val, reason) => {
+          if (reason === 'clear' || (val && typeof val !== 'string')) {
+            if (typeof val !== 'string' && val) onTrackSelect?.(val.uri)
             handleClear()
-          }
-        }}
-        onChange={(_, newValue, reason) => {
-          if (
-            reason === 'clear' ||
-            (newValue && typeof newValue !== 'string')
-          ) {
-            if (typeof newValue !== 'string' && newValue) {
-              onTrackSelect?.(newValue.uri)
-            }
-            handleClear()
-          } else {
-            setValue(newValue)
-          }
+          } else setValue(val)
         }}
         slotProps={{
-          clearIndicator: {
-            'aria-label': 'Clear search',
-            title: 'Clear search',
-          },
+          clearIndicator: { 'aria-label': 'Clear', title: 'Clear' },
         }}
         renderInput={(params) => (
           <TextField
             {...params}
             placeholder="Search for a song..."
             size="small"
-            variant="outlined"
             sx={{ backgroundColor: 'background.paper', borderRadius: 1 }}
             InputProps={{
               ...params.InputProps,
@@ -141,12 +111,12 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
                 </InputAdornment>
               ),
               endAdornment: (
-                <React.Fragment>
-                  {isLoading ? (
+                <>
+                  {state.loading && (
                     <CircularProgress color="inherit" size={20} />
-                  ) : null}
+                  )}
                   {params.InputProps.endAdornment}
-                </React.Fragment>
+                </>
               ),
             }}
           />
@@ -156,9 +126,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             <ListItemAvatar sx={{ minWidth: 56 }}>
               <Avatar
                 variant="square"
-                src={
-                  track.album.images[2]?.url || track.album.images[0]?.url || ''
-                }
+                src={track.album.images[2]?.url || ''}
                 sx={{ width: 40, height: 40 }}
               >
                 <MusicNote />
@@ -166,7 +134,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             </ListItemAvatar>
             <ListItemText
               primary={track.name}
-              secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
+              secondary={`${track.artists[0]?.name} • ${track.album.name}`}
               primaryTypographyProps={{
                 noWrap: true,
                 variant: 'body2',
@@ -177,10 +145,10 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           </Box>
         )}
         noOptionsText={
-          hasSearched && !isLoading
+          state.hasSearched && !state.loading
             ? `No results for "${query}"`
             : !query
-              ? 'Start typing to search...'
+              ? 'Type to search...'
               : null
         }
       />
