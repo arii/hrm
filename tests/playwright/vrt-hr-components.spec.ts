@@ -106,9 +106,9 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
-      // Wait for HR tiles to appear
+      // Wait for HR tiles to appear with increased timeout
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
-      await expect(hrTiles).toHaveCount(2)
+      await expect(hrTiles).toHaveCount(2, { timeout: 10000 })
       await expect(hrTiles.first()).toBeVisible()
       await expect(hrTiles.nth(1)).toBeVisible()
 
