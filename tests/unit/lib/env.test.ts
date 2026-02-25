@@ -105,6 +105,31 @@ describe('Environment Variables', () => {
     delete (global as unknown as { window?: unknown }).window
   })
 
+  it('should handle client-side environment correctly with invalid inputs', async () => {
+    // Simulate client-side environment
+    global.window = {} as unknown as Window & typeof globalThis
+    process.env.NODE_ENV = 'production'
+    process.env.NEXT_PUBLIC_API_URL = 'invalid-url'
+    process.env.NEXT_PUBLIC_WS_URL = 'invalid-url'
+    process.env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS = 'invalid-number'
+
+    // Server secrets should be missing
+    delete process.env.NEXTAUTH_SECRET
+    delete process.env.NEXTAUTH_URL
+    delete process.env.SPOTIFY_CLIENT_ID
+    delete process.env.SPOTIFY_CLIENT_SECRET
+
+    const { env } = await import('../../../lib/env')
+
+    // Should fallback to defaults or empty strings via .catch()
+    expect(env.NEXT_PUBLIC_API_URL).toBe('')
+    expect(env.NEXT_PUBLIC_WS_URL).toBe('')
+    expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(8) // Default
+
+    // Cleanup
+    delete (global as unknown as { window?: unknown }).window
+  })
+
   it('should ensure all NEXT_PUBLIC_ variables in schema are mapped in getEnvSource', async () => {
     const { envObjectSchema } = await import('../../../lib/env')
     // Simulate client side

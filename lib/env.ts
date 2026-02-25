@@ -69,6 +69,27 @@ export const envObjectSchema = z.object({
   ALLOW_DEBUG_RESET: booleanSchema.default(false),
 })
 
+/**
+ * Client-side safe schema.
+ * Extends the base schema with resilience for fields that might be malformed
+ * on the client (e.g., from browser extensions or misconfiguration), ensuring
+ * the app doesn't crash.
+ */
+const clientEnvSchema = envObjectSchema.extend({
+  NEXT_PUBLIC_API_URL: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal(''))
+    .transform((url) => url?.replace(/\/$/, ''))
+    .catch(''),
+  NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')).catch(''),
+  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce
+    .number()
+    .default(8)
+    .catch(8),
+})
+
 const envSchema = envObjectSchema
   .superRefine((data, ctx) => {
     // Only perform strict validation on the server.
@@ -157,38 +178,9 @@ const getEnvSource = () => {
   }
 }
 
-const parsedEnv = envSchema.safeParse(getEnvSource())
-
-/**
- * Sanitizes the raw environment source for client-side fallback.
- * Attempts to coerce known boolean and number fields to their correct types
- * to prevent logic errors (e.g., string "false" being truthy).
- */
-const sanitizeClientEnv = (
-  raw: ReturnType<typeof getEnvSource>
-): z.infer<typeof envSchema> => {
-  const safe = { ...raw } as Record<string, unknown>
-
-  // List of boolean keys to coerce from "true"/"false" strings
-  const booleanKeys = [
-    'NEXT_PUBLIC_USE_NATIVE_TABLE',
-    'NEXT_PUBLIC_TESTING',
-  ] as const
-
-  // Coerce booleans
-  booleanKeys.forEach((key) => {
-    if (key in safe) {
-      safe[key] = String(safe[key]) === 'true'
-    } else {
-      safe[key] = false // Default to false if missing
-    }
-  })
-
-  // Numbers are handled by standard JS coercion in application logic usually,
-  // but we can add them if needed. For now, booleans are the critical safety regression.
-
-  return safe as z.infer<typeof envSchema>
-}
+const parsedEnv = isServer
+  ? envSchema.safeParse(getEnvSource())
+  : clientEnvSchema.safeParse(getEnvSource())
 
 if (!parsedEnv.success) {
   if (isServer) {
@@ -196,7 +188,6 @@ if (!parsedEnv.success) {
     throw parsedEnv.error
   } else {
     // On the client, we log a warning but don't throw to avoid crashing the app.
-    // We return a sanitized best-effort object to ensure boolean logic safety.
     console.error(
       '⚠️ Invalid client-side environment variables:',
       JSON.stringify(parsedEnv.error.format(), null, 2)
@@ -206,6 +197,6 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : sanitizeClientEnv(getEnvSource())
+  : (getEnvSource() as unknown as z.infer<typeof envSchema>)
 
 export { envSchema }
