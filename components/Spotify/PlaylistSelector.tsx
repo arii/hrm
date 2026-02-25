@@ -57,28 +57,37 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   useEffect(() => {
     let active = true
-    dispatch({ loading: true })
-    fetch(API_SPOTIFY_PLAYLISTS)
-      .then((res) => (res.ok ? res.json() : Promise.reject('Failed to fetch')))
-      .then((data) => {
+    const fetchPlaylists = async () => {
+      dispatch({ loading: true })
+      try {
+        const res = await fetch(API_SPOTIFY_PLAYLISTS)
         if (!active) return
-        dispatch({
-          presets: (data.presetPlaylists || []).map((p: Playlist) => ({
-            ...p,
-            isPreset: true,
-          })),
-          user: (data.userPlaylists || []).map((p: Playlist) => ({
-            ...p,
-            isPreset: false,
-          })),
-        })
-      })
-      .catch(
-        (err: unknown) =>
-          active &&
+
+        if (!res.ok) throw new Error('Failed to fetch playlists')
+
+        const data = await res.json()
+        if (active) {
+          dispatch({
+            presets: (data.presetPlaylists || []).map((p: Playlist) => ({
+              ...p,
+              isPreset: true,
+            })),
+            user: (data.userPlaylists || []).map((p: Playlist) => ({
+              ...p,
+              isPreset: false,
+            })),
+          })
+        }
+      } catch (err) {
+        if (active) {
           dispatch({ error: err instanceof Error ? err.message : String(err) })
-      )
-      .finally(() => active && dispatch({ loading: false }))
+        }
+      } finally {
+        if (active) dispatch({ loading: false })
+      }
+    }
+
+    fetchPlaylists()
     return () => {
       active = false
     }
@@ -86,18 +95,31 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   useEffect(() => {
     let active = true
-    if (!debouncedSearch.trim()) {
-      dispatch({ results: [] })
-      return
+    const searchPlaylists = async () => {
+      if (!debouncedSearch.trim()) {
+        dispatch({ results: [] })
+        return
+      }
+
+      dispatch({ searchLoading: true })
+      try {
+        const res = await fetch(
+          `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+        )
+        if (!active) return
+
+        if (!res.ok) throw new Error('Search failed')
+
+        const data = await res.json()
+        if (active) dispatch({ results: data.items || [] })
+      } catch {
+        if (active) dispatch({ results: [] })
+      } finally {
+        if (active) dispatch({ searchLoading: false })
+      }
     }
-    dispatch({ searchLoading: true })
-    fetch(
-      `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
-    )
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => active && dispatch({ results: data.items || [] }))
-      .catch(() => active && dispatch({ results: [] }))
-      .finally(() => active && dispatch({ searchLoading: false }))
+
+    searchPlaylists()
     return () => {
       active = false
     }
@@ -126,13 +148,15 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     playlist: Playlist | null,
     reason?: AutocompleteChangeReason
   ) => {
-    if (reason === 'selectOption' && playlist) {
+    if (reason === 'clear') {
+      setSearchQuery('')
+      setSelectedPlaylist(null)
+    } else if (reason === 'selectOption' && playlist) {
       onPlaylistSelected(playlist.uri)
       setSelectedPlaylist(null)
       setSearchQuery('')
     } else {
       setSelectedPlaylist(playlist)
-      if (reason === 'clear') setSearchQuery('')
     }
   }
 
@@ -165,7 +189,10 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         inputValue={searchQuery}
         onInputChange={(_, val) => setSearchQuery(val)}
         slotProps={{
-          clearIndicator: { 'aria-label': 'Clear', title: 'Clear' },
+          clearIndicator: {
+            'aria-label': 'Clear search',
+            title: 'Clear search',
+          },
         }}
         renderInput={(params) => (
           <TextField

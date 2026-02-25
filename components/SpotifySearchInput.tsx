@@ -45,27 +45,38 @@ const SpotifySearchInput = ({
 
   useEffect(() => {
     let active = true
-    if (!debouncedQuery.trim()) {
-      dispatch({ results: [], hasSearched: false })
-      return
+    const searchTracks = async () => {
+      if (!debouncedQuery.trim()) {
+        dispatch({ results: [], hasSearched: false })
+        return
+      }
+
+      dispatch({ loading: true, hasSearched: true })
+      try {
+        const res = await fetch(
+          `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
+        )
+        if (!active) return
+
+        if (!res.ok) {
+          throw new Error(
+            res.status === 401 ? 'Login required' : 'Search failed'
+          )
+        }
+
+        const data = await res.json()
+        if (active) dispatch({ results: data.tracks?.items || [] })
+      } catch (err) {
+        if (active) {
+          enqueueSnackbar(String(err), { variant: 'error' })
+          dispatch({ results: [] })
+        }
+      } finally {
+        if (active) dispatch({ loading: false })
+      }
     }
-    dispatch({ loading: true, hasSearched: true })
-    fetch(
-      `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
-    )
-      .then((res) =>
-        res.ok
-          ? res.json()
-          : Promise.reject(res.status === 401 ? 'Login' : 'Err')
-      )
-      .then((data) => active && dispatch({ results: data.tracks?.items || [] }))
-      .catch(
-        (err) =>
-          active &&
-          (enqueueSnackbar(String(err), { variant: 'error' }),
-          dispatch({ results: [] }))
-      )
-      .finally(() => active && dispatch({ loading: false }))
+
+    searchTracks()
     return () => {
       active = false
     }
@@ -88,14 +99,21 @@ const SpotifySearchInput = ({
         value={value}
         inputValue={query}
         onInputChange={(_, val) => (val ? setQuery(val) : handleClear())}
-        onChange={(_, val, reason) => {
-          if (reason === 'clear' || (val && typeof val !== 'string')) {
-            if (typeof val !== 'string' && val) onTrackSelect?.(val.uri)
+        onChange={(_, newValue, reason) => {
+          if (reason === 'clear') {
             handleClear()
-          } else setValue(val)
+          } else if (newValue && typeof newValue !== 'string') {
+            onTrackSelect?.(newValue.uri)
+            handleClear()
+          } else {
+            setValue(newValue)
+          }
         }}
         slotProps={{
-          clearIndicator: { 'aria-label': 'Clear', title: 'Clear' },
+          clearIndicator: {
+            'aria-label': 'Clear search',
+            title: 'Clear search',
+          },
         }}
         renderInput={(params) => (
           <TextField
@@ -134,7 +152,7 @@ const SpotifySearchInput = ({
             </ListItemAvatar>
             <ListItemText
               primary={track.name}
-              secondary={`${track.artists[0]?.name} • ${track.album.name}`}
+              secondary={`${track.artists[0]?.name || 'Unknown Artist'} • ${track.album.name}`}
               primaryTypographyProps={{
                 noWrap: true,
                 variant: 'body2',
