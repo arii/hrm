@@ -198,12 +198,24 @@ export default function ConnectView({
               }
             >
               {isConnecting ? (
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  role="status"
+                  aria-live="polite"
+                >
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
                 </Stack>
               ) : isDisconnecting ? (
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  role="status"
+                  aria-live="polite"
+                >
                   <CircularProgress size={20} color="inherit" />
                   <span>Disconnecting...</span>
                 </Stack>
@@ -249,7 +261,13 @@ export default function ConnectView({
                 disabled={isDisconnecting}
               >
                 {isDisconnecting ? (
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    role="status"
+                    aria-live="polite"
+                  >
                     <CircularProgress size={20} color="inherit" />
                     <span>Disconnecting...</span>
                   </Stack>
