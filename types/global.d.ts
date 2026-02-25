@@ -18,6 +18,9 @@ export interface TestControls {
   connect?: () => void
 }
 
+/**
+ * Global type definitions for HRM services and testing controls.
+ */
 declare global {
   var spotifyService: SpotifyService | undefined
   var tabataService: TabataTimer | undefined
