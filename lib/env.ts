@@ -42,8 +42,6 @@ export const envObjectSchema = z.object({
   SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
   INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
   GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-  // The default of 1000 provides a generous limit for concurrent WebSocket connections,
-  // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
   WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
   SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
@@ -74,11 +72,8 @@ export const envObjectSchema = z.object({
 
 const envSchema = envObjectSchema
   .superRefine((data, ctx) => {
-    // Only perform strict validation on the server.
-    // On the client, many of these variables will be missing.
     if (!isServer) return
 
-    // Paired validation for Spotify credentials
     if (data.SPOTIFY_CLIENT_ID && !data.SPOTIFY_CLIENT_SECRET) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -95,20 +90,18 @@ const envSchema = envObjectSchema
           'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
       })
     }
-
-    // If Spotify credentials are provided, a callback URL must be available.
-    if (data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
-      if (!data.SPOTIFY_CALLBACK_URL && !data.NEXTAUTH_URL) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['SPOTIFY_CALLBACK_URL'],
-          message:
-            'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.',
-        })
-      }
+    if (
+      data.SPOTIFY_CLIENT_ID &&
+      data.SPOTIFY_CLIENT_SECRET &&
+      !data.SPOTIFY_CALLBACK_URL &&
+      !data.NEXTAUTH_URL
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SPOTIFY_CALLBACK_URL'],
+        message: 'SPOTIFY_CALLBACK_URL or NEXTAUTH_URL is required.',
+      })
     }
-
-    // Production-ready NEXTAUTH_SECRET validation
     if (data.NODE_ENV === 'production') {
       if (!data.NEXTAUTH_SECRET || data.NEXTAUTH_SECRET.length < 32) {
         ctx.addIssue({
@@ -128,27 +121,17 @@ const envSchema = envObjectSchema
     }
   })
   .transform((data) => {
-    // Provide a default NEXTAUTH_URL for non-production environments if not set
     if (!data.NEXTAUTH_URL && data.NODE_ENV !== 'production') {
       data.NEXTAUTH_URL = 'http://localhost:3000'
     }
-
     if (!data.SPOTIFY_CALLBACK_URL && data.NEXTAUTH_URL) {
       data.SPOTIFY_CALLBACK_URL = `${data.NEXTAUTH_URL}/api/auth/callback/spotify`
     }
-
     return data
   })
 
 const getEnvSource = () => {
   if (isServer) return process.env
-
-  /**
-   * Client-side: explicitly map variables for Next.js static replacement.
-   * IMPORTANT: Any new NEXT_PUBLIC_ variable added to the schema MUST be
-   * added here as well, otherwise it will not be available in the browser.
-   * This is due to how Next.js performs static analysis for environment variables.
-   */
   return {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_USE_NATIVE_TABLE: process.env.NEXT_PUBLIC_USE_NATIVE_TABLE,
@@ -167,7 +150,6 @@ if (!parsedEnv.success) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
     throw parsedEnv.error
   } else {
-    // On the client, we log a warning but don't throw to avoid crashing the app.
     console.error(
       '⚠️ Invalid client-side environment variables:',
       JSON.stringify(parsedEnv.error.format(), null, 2)
@@ -177,6 +159,7 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : (process.env as unknown as z.infer<typeof envSchema>)
-
+  : ((isServer ? process.env : getEnvSource()) as unknown as z.infer<
+      typeof envSchema
+    >)
 export { envSchema }
