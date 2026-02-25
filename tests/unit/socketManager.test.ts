@@ -135,6 +135,7 @@ describe('WebSocket Manager', () => {
       setConfig: jest.fn(),
       getState: jest.fn(),
       dispose: jest.fn(),
+      reset: jest.fn(),
     } as unknown as jest.Mocked<TabataTimer>
 
     const mockSpotifyPolling: jest.Mocked<SpotifyPolling> = {

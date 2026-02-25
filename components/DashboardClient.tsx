@@ -92,7 +92,7 @@ const DashboardClient = ({
     : 'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
 
   return (
-    <>
+    <Box sx={{ backgroundColor: 'background.default' }}>
       {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"
@@ -101,7 +101,6 @@ const DashboardClient = ({
         sx={{
           py: { xs: 2, sm: 3 },
           minHeight: '100vh',
-          backgroundColor: 'background.default',
         }}
       >
         <Box sx={mainGridStyles}>
@@ -136,7 +135,7 @@ const DashboardClient = ({
       </Container>
 
       <SpotifyDisplay />
-    </>
+    </Box>
   )
 }
 

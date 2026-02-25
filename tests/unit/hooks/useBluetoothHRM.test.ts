@@ -4,12 +4,16 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
 import * as WebSocketContext from '@/context/WebSocketContext'
-import * as cookieUtils from '@/utils/cookies'
+import Cookies from 'js-cookie'
 import { env } from '@/lib/env'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
-jest.mock('@/utils/cookies')
+jest.mock('js-cookie', () => ({
+  get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
+}))
 
 // Mock logger
 jest.mock('@/utils/logger', () => ({
@@ -63,8 +67,8 @@ describe('useBluetoothHRM', () => {
     })
 
     // Mock cookie functions
-    jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('')
-    jest.spyOn(cookieUtils, 'setCookie').mockImplementation(() => {})
+    ;(Cookies.get as jest.Mock).mockReturnValue('')
+    ;(Cookies.set as jest.Mock).mockImplementation(() => {})
 
     // Mock Bluetooth device
     const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
@@ -123,7 +127,7 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should auto-connect to a saved device', async () => {
-    jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
+    ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -140,7 +144,7 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should handle silent connection failure gracefully', async () => {
-    jest.spyOn(cookieUtils, 'getCookie').mockReturnValue('test-device-id')
+    ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
     const { result } = renderHook(() => useBluetoothHRM())
@@ -562,11 +566,7 @@ describe('useBluetoothHRM', () => {
       await act(async () => {
         jest.advanceTimersByTime(2000) // Run the final timer to forget the device
       })
-      expect(cookieUtils.setCookie).toHaveBeenCalledWith(
-        'hrm_device_id',
-        '',
-        -1
-      )
+      expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
     })
 
     it('should successfully reconnect after a disconnection', async () => {
