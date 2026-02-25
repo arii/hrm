@@ -5,13 +5,11 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import * as WebSocketContext from '@/context/WebSocketContext'
-<<<<<<< HEAD
 import Cookies from 'js-cookie'
-import { env } from '@/lib/env'
-=======
-import * as cookieUtils from '@/utils/cookies'
-import { BLUETOOTH_MAX_RECONNECT_ATTEMPTS } from '@/constants/bluetooth-reconnection'
->>>>>>> ae6540bc (feat(medium): Refactor lib/env.ts and harden Bluetooth reconnection logic (#9196))
+import {
+  BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+  PERMISSIONS_REVOKED_TIMEOUT_MS,
+} from '@/constants/bluetooth-reconnection'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -502,6 +500,27 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
+    it('should remove device ID from cookies on connection timeout', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+      mockGatt.connect.mockRejectedValue(new Error('Connection timeout'))
+
+      await act(async () => {
+        try {
+          await result.current.connectAndStream()
+        } catch {
+          // ignore
+        }
+      })
+
+      // Advance timers to trigger the cookie removal timeout
+      await act(async () => {
+        jest.advanceTimersByTime(PERMISSIONS_REVOKED_TIMEOUT_MS)
+      })
+
+      expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
+      expect(result.current.deviceStatus).toMatch(/permissions/i)
+    })
+
     it(`should attempt to reconnect on disconnection and give up after ${BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
@@ -571,18 +590,6 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         BLUETOOTH_MAX_RECONNECT_ATTEMPTS
       ) // No more calls
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-      // It should also forget the device
-      await act(async () => {
-        jest.advanceTimersByTime(2000) // Run the final timer to forget the device
-      })
-      expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
-=======
->>>>>>> 802319d5 (Refine Bluetooth HRM auto-reconnection strategy for stability)
-=======
->>>>>>> b575afc8 (Refine Bluetooth HRM Auto-Reconnection Strategy to Mitigate GATT Errors and Improve Stability)
     })
 
     it('should successfully reconnect after a disconnection', async () => {

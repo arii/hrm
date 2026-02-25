@@ -89,6 +89,10 @@ test.describe('Visual Regression Tests', () => {
 
     test('in stopwatch mode', async () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
+
+      // Wait for the UI to update: Work Duration input should be hidden in Stopwatch mode
+      await expect(controlPage.getByTestId('work-duration-input')).toBeHidden()
+
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
         // Performance: Skip a11y check for alternate mode; main mode is fully covered

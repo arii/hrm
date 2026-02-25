@@ -173,8 +173,7 @@ export default function ConnectView({
             <Alert
               data-testid="connection-status-alert"
               severity={
-                bluetoothStatus === BluetoothConnectionStatus.ERROR ||
-                deviceStatus.toLowerCase().includes('failed')
+                bluetoothStatus === BluetoothConnectionStatus.ERROR
                   ? 'error'
                   : 'info'
               }
