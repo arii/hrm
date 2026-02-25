@@ -110,16 +110,15 @@ app.prepare().then(async () => {
     )
   }
 
-  // 1. Setup WebSocket Infrastructure
+  // WebSocket Infrastructure
   const wsManager = new WebSocketManager()
 
-  // 2. Setup Services with Broadcaster
+  // Services
   const services: AppServices = await createServices(
     wsManager.createBroadcaster()
   )
-  global.spotifyService = services.spotifyService
 
-  // 3. Initialize Socket Logic (Controllers)
+  // Socket Logic
   const getUnifiedStateSnapshot = (): StateSnapshot => ({
     timerData: services.tabataService.getState(),
     spotifyData: services.spotifyService.getState(),
@@ -128,7 +127,7 @@ app.prepare().then(async () => {
 
   initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
 
-  // 4. Routes
+  // Routes
   expressApp.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
   })
@@ -161,7 +160,7 @@ app.prepare().then(async () => {
 
   expressApp.use((req, res) => handle(req, res))
 
-  // 5. Upgrade Handling
+  // Upgrade Handling
   const wsConnections = new Map<string, number>()
 
   server.on('upgrade', (req, socket, head) => {

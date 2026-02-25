@@ -12,6 +12,25 @@ export interface AppServices {
 export async function createServices(
   broadcast: (data: Partial<ServerMessage>) => void
 ): Promise<AppServices> {
+  // Reuse existing instances in development (Next.js Singleton Pattern)
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    global.spotifyService &&
+    global.tabataService
+  ) {
+    return {
+      spotifyService: global.spotifyService,
+      tabataService: global.tabataService,
+      isSpotifyInitialized: !!global.isSpotifyInitialized,
+    }
+  }
+
+  // Cleanup partial state if necessary
+  if (process.env.NODE_ENV !== 'production') {
+    global.spotifyService?.cleanup()
+    global.tabataService?.cleanup()
+  }
+
   const tabataService = new TabataTimer(broadcast)
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
@@ -49,5 +68,12 @@ export async function createServices(
     }
   }
 
-  return { tabataService, spotifyService, isSpotifyInitialized }
+  const services = { tabataService, spotifyService, isSpotifyInitialized }
+
+  // Persist instances globally for hot-reloading and API route access (see docs/TYPESCRIPT_PATTERNS.md)
+  global.spotifyService = services.spotifyService
+  global.tabataService = services.tabataService
+  global.isSpotifyInitialized = services.isSpotifyInitialized
+
+  return services
 }
