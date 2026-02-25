@@ -197,3 +197,22 @@ We prefer using official SDKs directly whenever possible. For the Spotify integr
 ### Unified Service Bus (Spotify)
 
 The Spotify integration uses a "Unified Service Bus" architecture. All playback commands (Play/Pause/Skip/Volume) are dispatched from the client via WebSockets as `SPOTIFY_COMMAND` messages. The server handles these messages directly using the official SDK, establishing the server as the single source of truth for both playback execution and state broadcasting. This eliminates complex branching logic between local (browser) and remote (Spotify Connect) devices.
+
+## Service Architecture
+
+The application uses a set of stateful services (Spotify polling, Tabata timer) that are managed by the custom Express server (`server.ts`).
+
+### Service Initialization
+
+Services are initialized once during the server startup process using the `createServices` function in `lib/services.ts`. This function takes a `broadcast` function, which allows services to push updates to all connected WebSocket clients.
+
+### The Singleton Pattern and Next.js Hot-Reloading
+
+In Next.js development mode, the server-side code is frequently recompiled and re-executed. Standard singleton patterns (e.g., `const service = new Service()`) fail because the module is re-executed, creating multiple instances of the service. This can lead to multiple polling loops and inconsistent state.
+
+To solve this, we use a **Global Singleton** pattern. Service instances are attached to `globalThis`, which persists across module re-executions within the same Node.js process.
+
+- **Persistence**: During development, `createServices` checks if service instances already exist on `globalThis`. If they do, it reuses them instead of creating new ones.
+- **Global Access**: Attaching services to `globalThis` also allows Next.js API routes (which run in a different context than the initial server startup) to access the same service instances.
+
+For more details on the implementation of this pattern, see [TypeScript Best Practices](./TYPESCRIPT_PATTERNS.md).

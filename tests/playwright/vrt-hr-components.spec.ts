@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -9,6 +9,7 @@ import {
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -61,17 +62,27 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('HR-Related Components', () => {
+    // Reset devices after each test to prevent state pollution
+    test.afterEach(async () => {
+      await mockMultipleHrDevices(dashboardPage, [])
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0)
+    })
+
     test('dashboard with HR data', async () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
-      // Wait for HR tile to appear on dashboard
+      // Wait for HR tile to appear
+      await expect(
+        dashboardPage.getByTestId('hr-tile-card').first()
+      ).toBeVisible()
+
+      // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
-      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
 
       // Assert HR tile height is within limits
       await assertFixedDimensions(hrTile, {
-        minHeight: 180,
+        minHeight: HR_TILE_MIN_HEIGHT,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -106,12 +117,17 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
-      // Assert all HR tiles maintain dimensions
+      // Wait for HR tiles to appear
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
+      await expect(hrTiles).toHaveCount(2)
+      await expect(hrTiles.first()).toBeVisible()
+      await expect(hrTiles.nth(1)).toBeVisible()
+
+      // Assert all HR tiles maintain dimensions
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {
-          minHeight: 180,
+          minHeight: HR_TILE_MIN_HEIGHT,
         })
       }
 
@@ -131,6 +147,11 @@ test.describe('Visual Regression Tests', () => {
       test(`dashboard with HR in Zone ${zone}`, async () => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
+
+        // Wait for HR tile to appear
+        await expect(
+          dashboardPage.getByTestId('hr-tile-card').first()
+        ).toBeVisible()
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
