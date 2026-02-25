@@ -12,7 +12,6 @@ declare global {
   interface Window {
     /** Flag used by Playwright to ensure the application is fully hydrated and ready for interaction. */
     __TEST_READY__?: boolean
-<<<<<<< HEAD
     /** Flag used by Playwright to verify that the WebSocket connection is active. */
     __TEST_WEBSOCKET_READY__?: boolean
 
@@ -33,12 +32,6 @@ declare global {
       /** Set a custom message to be displayed in the HRM status UI. */
       setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
     }
-
-    /** @deprecated Use __TEST_CONTROLS__ instead. */
-    TEST_CONTROLS?: Window['__TEST_CONTROLS__']
-=======
-    TEST_CONTROLS?: TestControls
->>>>>>> origin/leader
   }
 }
 

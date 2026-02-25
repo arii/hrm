@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { expect } from '@playwright/test'
-=======
-import { type BrowserContext, type Page, expect } from '@playwright/test'
->>>>>>> origin/leader
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
@@ -42,17 +38,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('HR-Related Components', () => {
-<<<<<<< HEAD
     test('dashboard with HR data', async ({ dashboardPage, mockPage }) => {
-=======
-    // Reset devices after each test to prevent state pollution
-    test.afterEach(async () => {
-      await mockMultipleHrDevices(dashboardPage, [])
-      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0)
-    })
-
-    test('dashboard with HR data', async () => {
->>>>>>> origin/leader
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
@@ -114,24 +100,12 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
-<<<<<<< HEAD
       // Explicitly wait for the correct number of tiles to prevent race conditions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
       await expect(hrTiles).toHaveCount(expectedCount, { timeout: 5000 })
 
       // Assert all HR tiles maintain dimensions
       for (let i = 0; i < expectedCount; i++) {
-=======
-      // Wait for HR tiles to appear
-      const hrTiles = dashboardPage.getByTestId('hr-tile-card')
-      await expect(hrTiles).toHaveCount(2)
-      await expect(hrTiles.first()).toBeVisible()
-      await expect(hrTiles.nth(1)).toBeVisible()
-
-      // Assert all HR tiles maintain dimensions
-      const count = await hrTiles.count()
-      for (let i = 0; i < count; i++) {
->>>>>>> origin/leader
         await assertFixedDimensions(hrTiles.nth(i), {
           minHeight: HR_TILE_MIN_HEIGHT,
         })
@@ -157,16 +131,9 @@ test.describe('Visual Regression Tests', () => {
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
-<<<<<<< HEAD
         // Wait for HR tile to reflect the update and be stable
         const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await hrTile.waitFor({ state: 'visible', timeout: 5000 })
-=======
-        // Wait for HR tile to appear
-        await expect(
-          dashboardPage.getByTestId('hr-tile-card').first()
-        ).toBeVisible()
->>>>>>> origin/leader
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {

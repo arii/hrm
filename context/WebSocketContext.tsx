@@ -113,19 +113,6 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
-<<<<<<< HEAD
-=======
-
-      if (isTestEnvironment()) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
-          dispatch,
-          disconnect: () => {},
-          connect: () => {},
-        }
-      }
->>>>>>> origin/leader
     }
   }, [])
 
@@ -318,7 +305,6 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-<<<<<<< HEAD
     return () => {
       disconnect()
     }
@@ -328,26 +314,12 @@ export const WebSocketProvider = ({
   // This ensures that all required controls (dispatch, connect, disconnect)
   // are attached consistently and updated whenever their implementations change.
   useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      (process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        window.location.search.includes('testing=true'))
-    ) {
+    if (isTestEnvironment()) {
       window.__TEST_CONTROLS__ = {
         ...window.__TEST_CONTROLS__,
         dispatch,
         connect,
         disconnect,
-=======
-    if (isTestEnvironment()) {
-      const testControls = (
-        window as Window & { __TEST_CONTROLS__?: TestControls }
-      ).__TEST_CONTROLS__
-      if (testControls) {
-        testControls.disconnect = disconnect
-        testControls.connect = connect
->>>>>>> origin/leader
       }
     }
 
