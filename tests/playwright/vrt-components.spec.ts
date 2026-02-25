@@ -5,6 +5,7 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
 } from './lib'
+import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -116,9 +117,14 @@ test.describe('Component-Specific VRT', () => {
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
+
+    // Perform manual accessibility check on the specific menu element to ensure context validity
+    await checkAccessibility(menu)
+
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       maxDiffPixelRatio: 0.15,
       threshold: 0.3,
+      skipA11y: true, // Accessibility checked manually above
     })
   })
 

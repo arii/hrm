@@ -4,6 +4,7 @@
 
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
+import { env } from '@/lib/env'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -44,15 +45,12 @@ export async function GET(req: NextRequest) {
       )
     }
     // 4. Initialize Spotify SDK with access token
-    const spotify = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      {
-        access_token: session.accessToken,
-        token_type: 'Bearer',
-        expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S, // Nominal; managed by NextAuth.
-        refresh_token: session.refreshToken ?? '',
-      }
-    )
+    const spotify = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID || '', {
+      access_token: session.accessToken,
+      token_type: 'Bearer',
+      expires_in: SPOTIFY_DEFAULT_TOKEN_EXPIRY_S, // Nominal; managed by NextAuth.
+      refresh_token: session.refreshToken ?? '',
+    })
 
     // 5. Search for playlists using the SDK
     const searchResponse = await spotify.search(

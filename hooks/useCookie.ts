@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import Cookies from 'js-cookie'
+import { env } from '@/lib/env'
 
 function useCookie<T>(
   key: string,
@@ -43,7 +44,7 @@ function useCookie<T>(
             value instanceof Function ? value(currentStoredValue) : value
           Cookies.set(key, JSON.stringify(valueToStore), {
             expires: 365,
-            secure: process.env.NODE_ENV === 'production',
+            secure: env.NODE_ENV === 'production',
             sameSite: 'strict',
           })
           return valueToStore

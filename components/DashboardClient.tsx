@@ -88,7 +88,7 @@ const DashboardClient = ({
   }
 
   return (
-    <>
+    <Box sx={{ backgroundColor: 'background.default' }}>
       {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"
@@ -97,7 +97,6 @@ const DashboardClient = ({
         sx={{
           py: { xs: 2, sm: 3 },
           minHeight: '100vh',
-          backgroundColor: 'background.default',
         }}
       >
         <Box sx={mainGridStyles}>
@@ -127,7 +126,7 @@ const DashboardClient = ({
         </Box>
       </Container>
       <SpotifyDisplay />
-    </>
+    </Box>
   )
 }
 

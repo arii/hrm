@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 import { ApiError } from '@/lib/errors'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
+import { env } from '@/lib/env'
 
 /**
  * Creates a Spotify SDK instance for the authenticated user.
@@ -16,7 +17,7 @@ import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
   const session = await getServerSession(authOptions)
 
-  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+  if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
     throw new ApiError(500, 'Spotify client ID or secret not configured.')
   }
 
@@ -33,5 +34,5 @@ export async function getAuthenticatedSpotifyApi(): Promise<SpotifyApi> {
     refresh_token: session.refreshToken ?? '',
   }
 
-  return SpotifyApi.withAccessToken(process.env.SPOTIFY_CLIENT_ID, token)
+  return SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, token)
 }

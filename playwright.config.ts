@@ -2,22 +2,27 @@
  * Playwright Test Configuration for HRM Comprehensive Assessment
  * Optimized for performance and parallel execution
  */
+<<<<<<< HEAD
 import {
   defineConfig,
   devices,
   type ReporterDescription,
 } from '@playwright/test'
 import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
+=======
+import { defineConfig, devices } from '@playwright/test'
+import { env } from './lib/env'
+>>>>>>> 6937b84c (Migrate direct process.env usages to lib/env.ts)
 
 // Define the port for the test server
-const port = process.env.PORT || 3000
+const port = env.PORT || 3000
 const baseURL = `http://127.0.0.1:${port}`
 
 // Check if Spotify/NextAuth credentials are available
 const hasSpotifyCredentials = !!(
-  process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET
+  env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET
 )
-const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
+const hasNextAuthSecret = !!env.NEXTAUTH_SECRET
 
 // Optimized ignore list - run more tests by default
 const testIgnoreList = [
@@ -71,14 +76,14 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: false,
-  workers: process.env.CI ? 2 : 1,
+  workers: env.CI ? 2 : 1,
   timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
-  forbidOnly: !!process.env.CI,
+  forbidOnly: !!env.CI,
 
   // Retry failed tests on CI
-  retries: process.env.CI ? 2 : 0,
+  retries: env.CI ? 2 : 0,
 
   // Test execution optimizations - Fail Fast Strategy
   expect: {
@@ -140,7 +145,7 @@ export default defineConfig({
       },
     },
     // Mobile testing (optional, can be enabled via environment variable)
-    ...(process.env.INCLUDE_MOBILE
+    ...(env.INCLUDE_MOBILE
       ? [
           {
             name: 'Mobile Chrome',
@@ -155,13 +160,12 @@ export default defineConfig({
   ],
 
   // Web Server Configuration
-  webServer: process.env.SKIP_WEBSERVER
+  webServer: env.SKIP_WEBSERVER
     ? undefined
     : {
-        command:
-          process.env.SKIP_BUILD === 'true'
-            ? 'NODE_ENV=production bash scripts/start-production.sh'
-            : 'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
+        command: env.SKIP_BUILD
+          ? 'NODE_ENV=production bash scripts/start-production.sh'
+          : 'NODE_ENV=production pnpm run build && bash scripts/start-production.sh',
         url: `${baseURL}/api/health/simple`,
         timeout: 120 * 1000, // 2 minutes
         reuseExistingServer: !process.env.CI,

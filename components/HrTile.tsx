@@ -17,6 +17,7 @@ const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
     <Typography
+      data-testid="hr-tile-name"
       variant="h4"
       sx={{
         fontWeight: 900,

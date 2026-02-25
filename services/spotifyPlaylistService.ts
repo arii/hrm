@@ -2,6 +2,7 @@
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem } from '../types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
+import { env } from '../lib/env'
 
 /**
  * Fetches user playlists from Spotify API.
@@ -27,7 +28,7 @@ export async function getUserPlaylists(
     }
 
     const sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || 'client_id_placeholder', // Client ID is needed even if we have token? Yes, usually.
+      env.SPOTIFY_CLIENT_ID || 'client_id_placeholder', // Client ID is needed even if we have token? Yes, usually.
       tokenObject
     )
 

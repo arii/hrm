@@ -1,6 +1,7 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
+import { env } from './env'
 
 export type HealthCheckResult = {
   healthy: boolean
@@ -25,7 +26,7 @@ export function checkMemoryUsage(): HealthCheckResult {
 
 export async function checkWebSocketService(): Promise<HealthCheckResult> {
   try {
-    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
+    const wsUrl = env.WS_URL || 'ws://localhost:3000' // Corrected default URL
     // Check if WebSocket server is accepting connections
     const wsHealth = await new Promise((resolve) => {
       const testWs = new WebSocket(wsUrl)

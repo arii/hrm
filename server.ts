@@ -98,7 +98,7 @@ app.prepare().then(async () => {
 
   // --- Static Asset Serving (Production Only) ---
   if (env.NODE_ENV === 'production') {
-    const isDeployment = process.env.IS_DEPLOYMENT === 'true'
+    const isDeployment = env.IS_DEPLOYMENT
     const nextDir = isDeployment ? '.next_prod' : '.next'
     const staticPath = path.join(process.cwd(), nextDir, 'static')
     expressApp.use(

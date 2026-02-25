@@ -6,6 +6,13 @@ import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
+// Mock env
+jest.mock('@/lib/env', () => ({
+  env: {
+    NEXTAUTH_SECRET: 'test-secret',
+  },
+}))
+
 // Mock logger
 jest.mock('@/utils/logger.server', () => ({
   __esModule: true,
@@ -23,14 +30,11 @@ const mockSpotifyService = {
 }
 
 describe('POST /api/internal/token-delivery', () => {
-  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
-
   beforeAll(() => {
-    process.env.NEXTAUTH_SECRET = 'test-secret'
+    // NEXTAUTH_SECRET is now mocked via jest.mock('@/lib/env')
   })
 
   afterAll(() => {
-    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
     // @ts-expect-error - Deleting global for test isolation
     delete global.spotifyService
   })

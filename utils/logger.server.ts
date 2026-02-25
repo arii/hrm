@@ -3,6 +3,7 @@ import pino from 'pino'
 import { Request, Response } from 'express'
 import pinoHttp from 'pino-http'
 import { randomUUID } from 'crypto'
+import { env } from '@/lib/env'
 
 // Define a consistent logger interface
 interface Logger {
@@ -15,17 +16,16 @@ interface Logger {
 
 export const pinoOptions: pino.LoggerOptions = {
   level:
-    process.env.NODE_ENV === 'test'
+    env.NODE_ENV === 'test'
       ? 'silent'
-      : process.env.LOG_LEVEL ||
-        (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+      : env.LOG_LEVEL || (env.NODE_ENV === 'production' ? 'info' : 'debug'),
   redact: {
     paths: ['req.headers.cookie', 'req.headers.authorization', 'res.headers'],
     remove: true,
   },
 }
 
-if (process.env.NODE_ENV === 'development') {
+if (env.NODE_ENV === 'development') {
   pinoOptions.transport = {
     target: 'pino-pretty',
     options: {
@@ -50,7 +50,7 @@ const httpLogger = pinoHttp({
     if (res.statusCode >= 400 && res.statusCode < 500) return 'warn'
     if (res.statusCode >= 500 || err) return 'error'
     if (res.statusCode >= 300 && res.statusCode < 400) {
-      return process.env.NODE_ENV === 'production' ? 'silent' : 'info'
+      return env.NODE_ENV === 'production' ? 'silent' : 'info'
     }
     return 'info'
   },

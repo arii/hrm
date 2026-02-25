@@ -1,16 +1,17 @@
 import bundleAnalyzer from '@next/bundle-analyzer'
+import { env } from './lib/env'
+import type { NextConfig } from 'next'
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
+  enabled: env.ANALYZE,
 })
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  distDir: process.env.NODE_ENV === 'production' ? '.next_prod' : '.next',
+const nextConfig: NextConfig = {
+  distDir: env.NODE_ENV === 'production' ? '.next_prod' : '.next',
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: 'i.scdn.co',
         port: '',
         pathname: '/image/**',
@@ -18,7 +19,7 @@ const nextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_TESTING: process.env.TESTING,
+    NEXT_PUBLIC_TESTING: String(env.TESTING),
   },
   async redirects() {
     return [
@@ -73,7 +74,7 @@ const nextConfig = {
     // your project has type errors.
     // We delegate type checking to a separate parallel CI job for better performance.
     // !! WARN !!
-    ignoreBuildErrors: process.env.IGNORE_BUILD_ERRORS === 'true',
+    ignoreBuildErrors: env.IGNORE_BUILD_ERRORS,
   },
 }
 
