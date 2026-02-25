@@ -33,7 +33,9 @@ const SpotifyControls = () => {
   const { showWarning } = useAppSnackbar()
   const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
+  const [prevActiveId, setPrevActiveId] = useState<string | undefined>(
+    undefined
+  )
 
   const hrmDevice = useMemo(
     () =>
@@ -42,6 +44,31 @@ const SpotifyControls = () => {
       ),
     [devices]
   )
+
+  // Sync selected device with active device during render to avoid cascading renders
+  const activeDevice = devices.find((d) => d.is_active)
+  const activeId = activeDevice?.id
+
+  if (activeId !== prevActiveId) {
+    setPrevActiveId(activeId)
+    if (activeId) {
+      setSelectedDeviceId(activeId)
+    }
+  } else if (
+    !selectedDeviceId &&
+    devices.length > 0 &&
+    !activeId &&
+    hrmDevice
+  ) {
+    // Auto-select HRM Web Player if no active device is available
+    setSelectedDeviceId(hrmDevice.id)
+  } else if (
+    selectedDeviceId &&
+    !devices.some((d) => d.id === selectedDeviceId)
+  ) {
+    // If selected device no longer exists, reset or fallback to active
+    setSelectedDeviceId(activeId ?? '')
+  }
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -70,40 +97,6 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Sync selected device with active device
-  useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    const activeId = activeDevice?.id
-
-    // Helper: determine if device should be updated to activeId
-    const shouldUpdateToActive = () => {
-      // Initial sync or active device changed externally
-      if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
-        return Boolean(activeId)
-      }
-      // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
-    }
-
-    if (shouldUpdateToActive()) {
-      setSelectedDeviceId(activeId!)
-    }
-    prevActiveIdRef.current = activeId
-  }, [devices, selectedDeviceId])
-
-  // Auto-select HRM Web Player if no active device is available
-  useEffect(() => {
-    if (
-      devices.length > 0 &&
-      !selectedDeviceId &&
-      !devices.some((d) => d.is_active) &&
-      hrmDevice
-    ) {
-      setSelectedDeviceId(hrmDevice.id)
-    }
-  }, [devices, selectedDeviceId, hrmDevice])
-
   const resolveTargetDeviceId = useCallback(() => {
     return (
       selectedDeviceId ||
@@ -120,7 +113,6 @@ const SpotifyControls = () => {
     serverVolume: spotifyData.playback.volume_percent,
     targetDeviceId: resolveTargetDeviceId(),
     onLocalVolumeChange: setVolume,
-    syncDependencies: [devices],
   })
 
   const handleVolumeChange = useCallback(
@@ -184,7 +176,6 @@ const SpotifyControls = () => {
     },
     [sendSpotifyCommand]
   )
-
 
   return (
     <ControlCard

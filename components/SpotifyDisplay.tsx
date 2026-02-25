@@ -14,7 +14,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useReducer, useRef, useState } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
@@ -60,7 +60,12 @@ const SpotifyDisplay = () => {
 
   // Mute state management (Local to dashboard display)
   const [isMuted, setIsMuted] = useState(spotifyData.playback.isMuted ?? false)
-  const lastVolumeRef = useRef<number>(spotifyData.playback.volume_percent ?? 70)
+  const [prevIsMutedProp, setPrevIsMutedProp] = useState(
+    spotifyData.playback.isMuted
+  )
+  const lastVolumeRef = useRef<number>(
+    spotifyData.playback.volume_percent ?? 70
+  )
 
   // 4. Integrate useReducer for non-volume state
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
@@ -68,6 +73,14 @@ const SpotifyDisplay = () => {
     deviceMenuAnchor: null,
   })
   const { selectedDeviceId, deviceMenuAnchor } = state
+
+  // Synchronize mute state with WebSocket data during render
+  if (spotifyData.playback.isMuted !== prevIsMutedProp) {
+    setPrevIsMutedProp(spotifyData.playback.isMuted)
+    if (typeof spotifyData.playback.isMuted === 'boolean') {
+      setIsMuted(spotifyData.playback.isMuted)
+    }
+  }
 
   const hasActiveDevice =
     !!selectedDeviceId ||
@@ -104,13 +117,6 @@ const SpotifyDisplay = () => {
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
-  // Synchronize mute state with WebSocket data
-  useEffect(() => {
-    if (typeof spotifyData.playback.isMuted === 'boolean') {
-      setIsMuted(spotifyData.playback.isMuted)
-    }
-  }, [spotifyData.playback.isMuted])
-
   // Handler for the VolumeSlider's mute button
   const handleToggleMute = useCallback(() => {
     const newMutedState = !isMuted
@@ -123,27 +129,20 @@ const SpotifyDisplay = () => {
     })
   }, [isMuted, targetDeviceId, executeSpotify])
 
-  // Effect to auto-select the active device
-  useEffect(() => {
-    const devices = spotifyData.devices || []
-    if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
-      }
-      return
-    }
-    const activeDevice = devices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !devices.some((device) => device.id === selectedDeviceId)
-    ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
-    }
-  }, [spotifyData.devices, selectedDeviceId])
+  // Sync selected device with active device during render
+  const devices = spotifyData.devices || []
+  const activeDevice = devices.find((device) => device.is_active)
+
+  if (devices.length === 0 && selectedDeviceId !== '') {
+    dispatch({ type: 'SELECT_DEVICE', payload: '' })
+  } else if (!selectedDeviceId && activeDevice) {
+    dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+  } else if (
+    selectedDeviceId &&
+    !devices.some((device) => device.id === selectedDeviceId)
+  ) {
+    dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
+  }
 
   const handlePlayPauseToggle = () => {
     if (spotifyData.playback.is_playing) {
