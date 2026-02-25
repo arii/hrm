@@ -29,14 +29,18 @@ runs:
           echo "jq already installed: $(jq --version)"
         fi
 
-    - name: 'Setup pnpm'
-      uses: pnpm/action-setup@v4
-
     - name: 'Setup Node.js'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+
+    - name: 'Enable Corepack'
+      shell: bash
+      run: corepack enable
+
+    - name: 'Setup pnpm'
+      shell: bash
+      run: corepack prepare pnpm@9.15.9 --activate
 
     - name: Cache Build Artifacts
       if: inputs.use-build-cache == 'true'
