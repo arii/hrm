@@ -162,6 +162,8 @@ export default function ConnectView({
               data-testid="connection-status-alert"
               severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
               sx={{ mb: 2 }}
+              role="status"
+              aria-live="polite"
             >
               {deviceStatus}
             </Alert>
@@ -178,6 +180,7 @@ export default function ConnectView({
                 !data.userAge.trim() ||
                 deviceStatus.includes('Connecting')
               }
+              aria-busy={deviceStatus.includes('Connecting')}
             >
               {deviceStatus.includes('Connecting') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
