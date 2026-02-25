@@ -3,7 +3,9 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
-import Autocomplete, { AutocompleteChangeReason } from '@mui/material/Autocomplete'
+import Autocomplete, {
+  AutocompleteChangeReason,
+} from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -194,7 +196,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         options={filteredPlaylists}
         getOptionLabel={(option) => option.name}
         value={selectedPlaylist}
-        onChange={(_, newValue, reason) => handlePlaylistSelect(newValue, reason)}
+        onChange={(_, newValue, reason) =>
+          handlePlaylistSelect(newValue, reason)
+        }
         inputValue={searchQuery}
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         slotProps={{
