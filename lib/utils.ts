@@ -96,27 +96,31 @@ export const formatDate = (
  * Securely restricted to non-production environments unless NEXT_PUBLIC_TESTING is explicitly enabled.
  */
 export const isTestEnvironment = (): boolean => {
-  const isTestingEnv =
+  // 1. Build-time designates test environment
+  const isTestingBuild =
     process.env.NEXT_PUBLIC_TESTING === 'true' ||
     process.env.TESTING === 'true' ||
     process.env.NODE_ENV === 'test'
 
-  // Never allow test mode in production unless explicitly enabled via NEXT_PUBLIC_TESTING
-  if (process.env.NODE_ENV === 'production' && !isTestingEnv) {
+  // 2. Production Guard: Never allow test mode in production unless explicitly enabled via build flags.
+  // This addresses a critical security vulnerability where test controls could be exposed via URL params.
+  if (process.env.NODE_ENV === 'production' && !isTestingBuild) {
     return false
   }
 
-  // Priority 1: URL parameter (client-side only)
-  if (
-    typeof window !== 'undefined' &&
-    (window.location.search.includes('testing=true') ||
-      window.location.search.includes('testing=1'))
-  ) {
+  // 3. Client-side URL Toggle (now safe because of the production guard above)
+  if (typeof window !== 'undefined') {
+    const search = window.location.search
+    if (search.includes('testing=true') || search.includes('testing=1')) {
+      return true
+    }
+  }
+
+  // 4. Default to true in development mode for easy testing
+  if (process.env.NODE_ENV === 'development') {
     return true
   }
 
-  if (isTestingEnv) return true
-
-  // Priority 3: Development mode
-  return process.env.NODE_ENV === 'development'
+  // 5. Final fallback to build-time flag
+  return isTestingBuild
 }
