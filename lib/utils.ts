@@ -89,3 +89,16 @@ export const formatDate = (
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)
 }
+
+/**
+ * Determines if the current environment is a test environment.
+ * Checks for NODE_ENV, NEXT_PUBLIC_TESTING, and the presence of 'testing=true' in the URL.
+ */
+export const isTestEnvironment = (): boolean => {
+  if (typeof window === 'undefined') return process.env.NODE_ENV === 'test'
+  return (
+    process.env.NODE_ENV === 'test' ||
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    window.location.search.includes('testing=true')
+  )
+}

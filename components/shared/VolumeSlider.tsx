@@ -58,7 +58,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
-          padding: size === 'small' ? 1.5 : 2, // Increase touch target
+          padding: size === 'small' ? 1 : 1.5, // Standardized touch target for consistency
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
@@ -82,8 +82,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           color: sliderColor,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
-            width: size === 'small' ? 20 : 28, // Gym-friendly touch targets
-            height: size === 'small' ? 20 : 28,
+            width: size === 'small' ? 18 : 26, // Refined gym-friendly touch targets
+            height: size === 'small' ? 18 : 26,
             boxShadow: '0 0 10px rgba(0,0,0,0.3)',
             '&:hover, &.Mui-focusVisible': {
               boxShadow: `0px 0px 0px 8px ${sliderColor}33`,

@@ -231,6 +231,54 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 }
 
 /**
+ * Prepares the environment for a visual regression test by standardizing the viewport,
+ * neutralizing animations, and ensuring the WebSocket connection is stable.
+ *
+ * @param pages - The Playwright Page objects to prepare.
+ */
+export async function prepareVrtEnvironment(...pages: Page[]): Promise<void> {
+  const { DESKTOP_VIEWPORT } = await import('./viewports')
+
+  await Promise.all(
+    pages.map(async (page) => {
+      // 1. Enforce standard desktop viewport for consistency across environments
+      await page.setViewportSize(DESKTOP_VIEWPORT)
+
+      // 2. Neutralize animations and transitions to prevent flaky screenshots
+      // We target data-testid containers and common layout elements
+      await page.addStyleTag({
+        content: `
+          *, *::before, *::after {
+            transition-property: none !important;
+            transform: none !important;
+            animation: none !important;
+          }
+          [data-testid="main-content-layout"],
+          [data-testid="dashboard"],
+          [data-testid="timer-controls"] {
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        `,
+      })
+
+      // 3. Ensure fonts are loaded
+      await waitForFontsLoaded(page)
+
+      // 4. Verify connection status if applicable
+      await page
+        .waitForFunction(
+          () => document.body.dataset.connectionStatus === 'connected',
+          { timeout: 5000 }
+        )
+        .catch(() =>
+          console.warn(`VRT warning: Page ${page.url()} not connected.`)
+        )
+    })
+  )
+}
+
+/**
  * Minimal setup for a single page visual regression test.
  *
  * @param page - The Playwright Page object

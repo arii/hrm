@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { isTestEnvironment } from '@/lib/utils'
 
 // Define a type for the test controls to avoid using 'any'
 interface TestControls {
@@ -31,16 +32,6 @@ export interface WebSocketContextType extends WebSocketState {
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
-}
-
-// This encapsulates the logic to avoid running it on every render inside the component
-const isTestEnvironment = () => {
-  if (typeof window === 'undefined') return false
-  return (
-    process.env.NODE_ENV !== 'production' ||
-    process.env.NEXT_PUBLIC_TESTING === 'true' ||
-    window.location.search.includes('testing=true')
-  )
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
@@ -102,23 +93,25 @@ export const WebSocketProvider = ({
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   // Separate throttled dispatches for different message types to ensure state integrity.
-  // This prevents high-frequency messages from drowning out each other or dropping different types.
+  // In test environment, we use 0ms throttle to ensure deterministic state for VRT.
+  const THROTTLE_MS = process.env.NODE_ENV === 'test' ? 0 : 100
+
   const throttledHrmDispatch = useMemo(
     () =>
-      throttle((msg: ServerMessage) => dispatch(msg), 100, {
+      throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS, {
         leading: true,
         trailing: true,
       }),
-    [dispatch]
+    [dispatch, THROTTLE_MS]
   )
 
   const throttledTimerDispatch = useMemo(
     () =>
-      throttle((msg: ServerMessage) => dispatch(msg), 100, {
+      throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS, {
         leading: true,
         trailing: true,
       }),
-    [dispatch]
+    [dispatch, THROTTLE_MS]
   )
 
   // Cleanup throttles on unmount

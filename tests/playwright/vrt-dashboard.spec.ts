@@ -4,6 +4,7 @@ import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
   resetServerState,
+  prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -71,10 +72,8 @@ test.describe('Visual Regression Tests', () => {
       ),
     ])
 
-    // Force visibility to avoid flaky screenshots due to animations
-    await dashboardPage.addStyleTag({
-      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
-    })
+    // Standardize the VRT environment across all pages
+    await prepareVrtEnvironment(dashboardPage, controlPage, mockPage)
   })
 
   test.describe('Dashboard Component', () => {
