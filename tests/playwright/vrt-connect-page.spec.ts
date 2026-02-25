@@ -15,7 +15,10 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await connectPage.getByLabel('Your Age').fill('30')
 
     await connectPage.waitForFunction(
-      () => window.__TEST_CONTROLS__?.setHrmStatus,
+      () => {
+        const controls = window.__TEST_CONTROLS__
+        return controls && typeof controls.setHrmStatus === 'function'
+      },
       {
         timeout: VRT_TIMEOUTS.HYDRATION,
       }
