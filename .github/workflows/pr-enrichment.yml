@@ -112,6 +112,8 @@ jobs:
       - name: Analyze PR Changes
         if: steps.check-disabled.outputs.disabled == 'false'
         id: analyze
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source scripts/ci/github-utils.sh
 
