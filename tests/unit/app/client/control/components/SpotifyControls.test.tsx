@@ -51,7 +51,15 @@ jest.mock('@/constants/spotify', () => ({
 // Mock VolumeSlider to easily trigger change events
 jest.mock('@/components/shared/VolumeSlider', () => ({
   __esModule: true,
-  default: ({ volume, onVolumeChange, onVolumeChangeCommitted }: any) => (
+  default: ({
+    volume,
+    onVolumeChange,
+    onVolumeChangeCommitted,
+  }: {
+    volume: number
+    onVolumeChange: (val: number) => void
+    onVolumeChangeCommitted: (val: number) => void
+  }) => (
     <input
       data-testid="volume-slider"
       type="range"
