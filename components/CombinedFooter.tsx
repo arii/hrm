@@ -20,13 +20,16 @@ interface CombinedFooterProps {
  * This addresses the "double footer" issue on mobile by reducing vertical space
  * consumption and providing contextual display logic.
  */
-export default function CombinedFooter({ onHeightChange }: CombinedFooterProps) {
+export default function CombinedFooter({
+  onHeightChange,
+}: CombinedFooterProps) {
   const pathname = usePathname()
   const { spotifyData, timerData } = useWebSocket()
   const { isLoggedIn } = useSpotifyAuth()
 
   // Contextual logic for showing the Spotify mini-player
-  const isWorkoutActive = timerData.isRunning || timerData.currentPhase !== 'IDLE'
+  const isWorkoutActive =
+    timerData.isRunning || timerData.currentPhase !== 'IDLE'
   const isMusicPlaying = spotifyData.playback.is_playing
   const isSpotifyPage = pathname === '/client/spotify-selection'
   const isControlPage = pathname === '/client/control'
@@ -45,7 +48,14 @@ export default function CombinedFooter({ onHeightChange }: CombinedFooterProps) 
 
     // Otherwise, hide the bar to reclaim vertical screen real estate.
     return false
-  }, [isControlPage, isMusicPlaying, isWorkoutActive, isSpotifyPage, isLoggedIn, pathname])
+  }, [
+    isControlPage,
+    isMusicPlaying,
+    isWorkoutActive,
+    isSpotifyPage,
+    isLoggedIn,
+    pathname,
+  ])
 
   // Calculate the total height of the footer based on its current state.
   // Spotify mini-player is 48px (integrated), BottomNavBar is 56px.
