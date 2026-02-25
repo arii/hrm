@@ -7,6 +7,7 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 import { RouteContext } from '@/lib/types/index'
+import { Track } from '@spotify/web-api-ts-sdk'
 
 /**
  * GET handler for fetching single playlist details.
@@ -41,7 +42,22 @@ async function getPlaylistDetails(
         : null,
     owner: playlist.owner?.display_name ?? null,
     trackCount: playlist.tracks?.total ?? 0,
-    tracks: playlist.tracks.items.map((item) => item.track),
+    tracks: playlist.tracks.items
+      .filter((item) => item.track !== null && item.track.type === 'track')
+      .map((item) => {
+        const track = item.track as Track
+        return {
+          id: track.id,
+          name: track.name,
+          uri: track.uri,
+          duration_ms: track.duration_ms,
+          artists: track.artists.map((artist) => ({ name: artist.name })),
+          album: {
+            name: track.album.name,
+            images: track.album.images || [],
+          },
+        }
+      }),
   })
 }
 

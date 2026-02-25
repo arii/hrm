@@ -38,6 +38,14 @@ export async function getUserPlaylists(
       id: item.id,
       name: item.name,
       uri: item.uri,
+      description: item.description || null,
+      imageUrl:
+        item.images && item.images.length > 0 && item.images[0]
+          ? item.images[0].url
+          : null,
+      trackCount: item.tracks?.total || 0,
+      owner: item.owner?.display_name || item.owner?.id || 'Unknown',
+      public: item.public || false,
     }))
   } catch (error) {
     console.error('Error fetching user playlists:', error)

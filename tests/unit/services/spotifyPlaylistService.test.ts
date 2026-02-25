@@ -10,8 +10,26 @@ describe('Spotify Playlist Service', () => {
     it('should fetch and return user playlists', async () => {
       const mockPlaylists = {
         items: [
-          { id: '1', name: 'Playlist 1', uri: 'uri:1' },
-          { id: '2', name: 'Playlist 2', uri: 'uri:2' },
+          {
+            id: '1',
+            name: 'Playlist 1',
+            uri: 'uri:1',
+            description: 'desc 1',
+            images: [{ url: 'img1' }],
+            tracks: { total: 10 },
+            owner: { display_name: 'owner 1' },
+            public: true,
+          },
+          {
+            id: '2',
+            name: 'Playlist 2',
+            uri: 'uri:2',
+            description: 'desc 2',
+            images: [{ url: 'img2' }],
+            tracks: { total: 20 },
+            owner: { display_name: 'owner 2' },
+            public: false,
+          },
         ],
       }
       const mockSdk = {
@@ -25,8 +43,26 @@ describe('Spotify Playlist Service', () => {
 
       const playlists = await getUserPlaylists('test_token')
       expect(playlists).toEqual([
-        { id: '1', name: 'Playlist 1', uri: 'uri:1' },
-        { id: '2', name: 'Playlist 2', uri: 'uri:2' },
+        {
+          id: '1',
+          name: 'Playlist 1',
+          uri: 'uri:1',
+          description: 'desc 1',
+          imageUrl: 'img1',
+          trackCount: 10,
+          owner: 'owner 1',
+          public: true,
+        },
+        {
+          id: '2',
+          name: 'Playlist 2',
+          uri: 'uri:2',
+          description: 'desc 2',
+          imageUrl: 'img2',
+          trackCount: 20,
+          owner: 'owner 2',
+          public: false,
+        },
       ])
     })
 
