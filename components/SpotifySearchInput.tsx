@@ -44,6 +44,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
 
   // Effect to trigger search when debounced query changes
   useEffect(() => {
+    let active = true
     const searchSpotify = async () => {
       if (!debouncedQuery.trim()) {
         setResults([])
@@ -68,20 +69,31 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
 
         const data = await res.json()
         const tracks = data.tracks?.items || []
-        setResults(tracks)
+
+        if (active) {
+          setResults(tracks)
+        }
       } catch (error) {
         console.error('Spotify Search Error:', error)
-        enqueueSnackbar(
-          error instanceof Error ? error.message : 'Failed to search Spotify',
-          { variant: 'error' }
-        )
-        setResults([])
+        if (active) {
+          enqueueSnackbar(
+            error instanceof Error ? error.message : 'Failed to search Spotify',
+            { variant: 'error' }
+          )
+          setResults([])
+        }
       } finally {
-        setIsLoading(false)
+        if (active) {
+          setIsLoading(false)
+        }
       }
     }
 
     searchSpotify()
+
+    return () => {
+      active = false
+    }
   }, [debouncedQuery, enqueueSnackbar])
 
   const handleClear = () => {

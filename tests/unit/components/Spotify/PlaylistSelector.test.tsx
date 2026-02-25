@@ -130,7 +130,7 @@ describe('PlaylistSelector', () => {
     // Click the item to select it
     await user.click(rockClassicsItem)
 
-    // Re-open the dropdown to check the updated aria-label
+    // Re-open the dropdown to check that it is still "not selected" due to Clear on Select
     await user.click(input)
 
     // Check the aria-label for the list item again
@@ -138,7 +138,7 @@ describe('PlaylistSelector', () => {
     listItem = rockClassicsItemAfterClick.closest('li')
     expect(listItem).toHaveAttribute(
       'aria-label',
-      'Select playlist: Rock Classics, selected'
+      'Select playlist: Rock Classics, not selected'
     )
 
     // Check the aria-label for the play button within that list item

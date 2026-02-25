@@ -3,7 +3,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
-import Autocomplete from '@mui/material/Autocomplete'
+import Autocomplete, { AutocompleteChangeReason } from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -40,6 +40,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const debouncedSearch = useDebounce(searchQuery, 500)
 
   useEffect(() => {
+    let active = true
     const fetchPlaylists = async () => {
       setLoading(true)
       setError(null)
@@ -49,30 +50,40 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           throw new Error('Failed to fetch playlists')
         }
         const data = await response.json()
-        const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
-          ...p,
-          isPreset: true,
-        }))
-        const user = (data.userPlaylists || []).map((p: Playlist) => ({
-          ...p,
-          isPreset: false,
-        }))
-        setPresetPlaylists(presets)
-        setUserPlaylists(user)
+        if (active) {
+          const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
+            ...p,
+            isPreset: true,
+          }))
+          const user = (data.userPlaylists || []).map((p: Playlist) => ({
+            ...p,
+            isPreset: false,
+          }))
+          setPresetPlaylists(presets)
+          setUserPlaylists(user)
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to fetch playlists'
-        setError(message)
-        console.error('Error fetching playlists:', error)
+        if (active) {
+          const message =
+            error instanceof Error ? error.message : 'Failed to fetch playlists'
+          setError(message)
+          console.error('Error fetching playlists:', error)
+        }
       } finally {
-        setLoading(false)
+        if (active) {
+          setLoading(false)
+        }
       }
     }
 
     fetchPlaylists()
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
+    let active = true
     if (!debouncedSearch.trim()) {
       setSearchResults([])
       return
@@ -90,16 +101,25 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           throw new Error('Failed to search playlists')
         }
         const data = await response.json()
-        setSearchResults(data.items || [])
+        if (active) {
+          setSearchResults(data.items || [])
+        }
       } catch (error) {
-        console.error('Error searching playlists:', error)
-        setSearchResults([])
+        if (active) {
+          console.error('Error searching playlists:', error)
+          setSearchResults([])
+        }
       } finally {
-        setSearchLoading(false)
+        if (active) {
+          setSearchLoading(false)
+        }
       }
     }
 
     fetchSearchResults()
+    return () => {
+      active = false
+    }
   }, [debouncedSearch])
 
   const allPlaylists = useMemo(() => {
@@ -128,10 +148,19 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     return combined
   }, [allPlaylists, debouncedSearch, searchResults])
 
-  const handlePlaylistSelect = (playlist: Playlist | null) => {
-    setSelectedPlaylist(playlist)
-    if (playlist) {
+  const handlePlaylistSelect = (
+    playlist: Playlist | null,
+    reason?: AutocompleteChangeReason
+  ) => {
+    if (reason === 'selectOption' && playlist) {
       onPlaylistSelected(playlist.uri)
+      setSelectedPlaylist(null)
+      setSearchQuery('')
+    } else {
+      setSelectedPlaylist(playlist)
+      if (reason === 'clear') {
+        setSearchQuery('')
+      }
     }
   }
 
@@ -165,7 +194,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         options={filteredPlaylists}
         getOptionLabel={(option) => option.name}
         value={selectedPlaylist}
-        onChange={(_, newValue) => handlePlaylistSelect(newValue)}
+        onChange={(_, newValue, reason) => handlePlaylistSelect(newValue, reason)}
         inputValue={searchQuery}
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         slotProps={{
