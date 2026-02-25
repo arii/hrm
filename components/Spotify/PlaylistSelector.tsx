@@ -222,9 +222,10 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
-              p: '4px 16px !important',
+              px: 2,
+              py: 0.5,
             }}
-            aria-label={`Select playlist: ${option.name}, ${selectedPlaylist?.uri === option.uri ? 'selected' : 'not selected'}`}
+            aria-label={`Select playlist: ${option.name}`}
           >
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
               {option.imageUrl ? (
@@ -242,7 +243,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 secondary={
                   option.trackCount !== undefined
                     ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
-                    : option.owner
+                    : (option.owner || '')
                 }
               />
               {option.isPreset && (
