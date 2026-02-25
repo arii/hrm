@@ -8,11 +8,7 @@ import {
   prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-<<<<<<< HEAD
-=======
-import { waitForPageReady } from './lib/waits'
 import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
->>>>>>> origin/leader
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -110,18 +106,12 @@ test.describe('Visual Regression Tests', () => {
         },
       ])
 
-<<<<<<< HEAD
       // Wait for tiles to appear and reflect mock data
       await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(2, {
         timeout: 5000,
       })
 
-      // Assert all HR tiles maintain dimensions
-=======
-      // Wait for HR tiles to appear
->>>>>>> origin/leader
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
-      await expect(hrTiles).toHaveCount(2)
       await expect(hrTiles.first()).toBeVisible()
       await expect(hrTiles.nth(1)).toBeVisible()
 
@@ -152,19 +142,12 @@ test.describe('Visual Regression Tests', () => {
       test(`dashboard with HR in Zone ${zone}`, async () => {
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
-<<<<<<< HEAD
         // Wait for the dashboard to reflect the new BPM value and zone color
         const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
           new RegExp(`^${expectedBpm}`),
           { timeout: 5000 }
         )
-=======
-        // Wait for HR tile to appear
-        await expect(
-          dashboardPage.getByTestId('hr-tile-card').first()
-        ).toBeVisible()
->>>>>>> origin/leader
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {

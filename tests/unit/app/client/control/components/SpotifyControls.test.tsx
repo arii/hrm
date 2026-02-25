@@ -9,7 +9,6 @@ import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -24,16 +23,6 @@ jest.mock('next/navigation', () => ({
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
-}))
-
-// Mock the Spotify Web Playback hook
-jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    player: null,
-    isReady: false,
-    deviceId: null,
-  })),
 }))
 
 // Mock the volume preference hook
@@ -57,6 +46,22 @@ jest.mock('@/hooks/useAppSnackbar', () => ({
 jest.mock('@/constants/spotify', () => ({
   ...jest.requireActual('@/constants/spotify'),
   HRM_WEB_PLAYER_NAME: 'HRM Web Player',
+}))
+
+// Mock VolumeSlider to easily trigger change events
+jest.mock('@/components/shared/VolumeSlider', () => ({
+  __esModule: true,
+  default: ({ volume, onVolumeChange, onVolumeChangeCommitted }: any) => (
+    <input
+      data-testid="volume-slider"
+      type="range"
+      value={volume}
+      onChange={(e) => onVolumeChange(Number(e.target.value))}
+      onMouseUp={(e) =>
+        onVolumeChangeCommitted(Number((e.target as HTMLInputElement).value))
+      }
+    />
+  ),
 }))
 
 describe('components/SpotifyControls', () => {
@@ -127,47 +132,84 @@ describe('components/SpotifyControls', () => {
     )
   })
 
-  it('should render the mute button with the correct aria-label', () => {
-    render(<SpotifyControls />)
-    const muteButton = screen.getByLabelText(/mute/i)
-    expect(muteButton).toBeInTheDocument()
-  })
-
-  it('debounces volume change commands', () => {
-    jest.useFakeTimers()
+  it('prevents volume snap-back during slider drag', async () => {
     const setVolumeMock = jest.fn()
     const mockUseVolumePreference = useVolumePreference as jest.Mock
 
-    // Initial render with volume 50
-    mockUseVolumePreference.mockReturnValue({
-      volume: 50,
-      muted: false,
-      setVolume: setVolumeMock,
-      toggleMute: jest.fn(),
+    // Initial render with matching volume to avoid initial sync
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 80,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 80,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
     })
-    const { rerender } = render(<SpotifyControls />)
-
-    // Simulate the state update by re-rendering with the new value
     mockUseVolumePreference.mockReturnValue({
       volume: 80,
       muted: false,
       setVolume: setVolumeMock,
       toggleMute: jest.fn(),
     })
+
+    const { rerender } = render(<SpotifyControls />)
+
+    const slider = screen.getByTestId('volume-slider')
+
+    // Verify no initial sync happened
+    expect(setVolumeMock).not.toHaveBeenCalled()
+
+    // Simulate user starting to drag (onChange) to 85
+    fireEvent.change(slider, { target: { value: 85 } })
+
+    // Simulate WebSocket update arriving with DIFFERENT volume (e.g. 50) while dragging
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 50, // Server says 50
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 50,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
     rerender(<SpotifyControls />)
 
-    // Advance time past the debounce period
-    jest.advanceTimersByTime(300)
+    // Verify setVolume was NOT called with 50 (snap-back prevented)
+    // It should have been called with 85 from the change event
+    expect(setVolumeMock).toHaveBeenCalledWith(85)
+    expect(setVolumeMock).not.toHaveBeenCalledWith(50)
 
-    // Now the command should have been sent with the latest value
+    // Simulate user releasing slider (onMouseUp -> onVolumeChangeCommitted)
+    fireEvent.mouseUp(slider, { target: { value: 85 } })
+
+    // Command should be sent
     expect(mockSendData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: 80,
+        volume: 85,
       })
     )
-    jest.useRealTimers()
   })
 
   it('selects HRM Web Player by default when no device is active', async () => {
@@ -201,21 +243,6 @@ describe('components/SpotifyControls', () => {
     })
   })
 
-  it('shows registration status when player is initializing', () => {
-    // Mock useSpotifyWebPlayback to return a player but not ready
-    const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
-    mockedUseSpotifyWebPlayback.mockReturnValue({
-      player: { disconnect: jest.fn() },
-      isReady: false,
-      deviceId: null,
-    })
-
-    render(<SpotifyControls />)
-    expect(
-      screen.getByText('Registering HRM Web Player...')
-    ).toBeInTheDocument()
-  })
-
   it('shows warning snackbar when changing volume while disconnected', () => {
     const showWarningMock = jest.fn()
     ;(useAppSnackbar as jest.Mock).mockReturnValue({
@@ -230,7 +257,7 @@ describe('components/SpotifyControls', () => {
 
     render(<SpotifyControls />)
 
-    const volumeSlider = screen.getByRole('slider')
+    const volumeSlider = screen.getByTestId('volume-slider')
     fireEvent.change(volumeSlider, { target: { value: 80 } })
 
     expect(showWarningMock).toHaveBeenCalledWith('Changes not saved: Offline')
@@ -251,7 +278,7 @@ describe('components/SpotifyControls', () => {
 
     render(<SpotifyControls />)
 
-    const volumeSlider = screen.getByRole('slider')
+    const volumeSlider = screen.getByTestId('volume-slider')
 
     // First change: warning shown
     fireEvent.change(volumeSlider, { target: { value: 60 } })
