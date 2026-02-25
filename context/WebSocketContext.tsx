@@ -33,6 +33,16 @@ export interface WebSocketContextType extends WebSocketState {
   disconnect: () => void
 }
 
+// This encapsulates the logic to avoid running it on every render inside the component
+const isTestEnvironment = () => {
+  if (typeof window === 'undefined') return false
+  return (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    window.location.search.includes('testing=true')
+  )
+}
+
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
@@ -110,12 +120,7 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (
-        process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        (typeof window !== 'undefined' &&
-          window.location.search.includes('testing=true'))
-      ) {
+      if (isTestEnvironment()) {
         ;(
           window as Window & { __TEST_CONTROLS__?: TestControls }
         ).__TEST_CONTROLS__ = {
@@ -192,8 +197,7 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -229,8 +233,7 @@ export const WebSocketProvider = ({
       )
       setConnectionStatus('Disconnected')
 
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'disconnected'
       }
 
@@ -318,12 +321,7 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-    if (
-      typeof window !== 'undefined' &&
-      (process.env.NODE_ENV !== 'production' ||
-        process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        window.location.search.includes('testing=true'))
-    ) {
+    if (isTestEnvironment()) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }
       ).__TEST_CONTROLS__

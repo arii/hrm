@@ -9,7 +9,7 @@ This document provides a consolidated overview of known issues, planned improvem
 ### Key Decisions (from ADRs)
 
 - **Framework**: Next.js is the chosen frontend framework for its rich feature set and performance.
-- **State Management**: React Context is used for global state management to leverage built-in React features and avoid external dependencies.
+- **State Management**: React Context is used for global state management to use built-in React features and avoid external dependencies.
 - **Authentication**: NextAuth.js is used for authentication, supporting OAuth providers like Spotify.
 - **Logging**: Pino is used for structured, high-performance logging.
 - **Asynchronous Control**: `AbortController` is the standard for managing complex asynchronous operations.
@@ -27,7 +27,6 @@ This document provides a consolidated overview of known issues, planned improvem
 - **Build Process**: A hack in the build script (`cp dist/server.js dist/server.mjs`) should be replaced by resolving the underlying module resolution issue.
 - **Error Handling**: The `SpotifyPolling` service has an "error swallowing" pattern that should be replaced with a fail-fast or health-check-based approach.
 - **Security**: The Express server is missing common security headers (e.g., CSP, HSTS), which should be added using a library like `helmet`.
-- **Legacy Patterns**: The Spotify token delivery mechanism in `server.ts` uses fragile `setTimeout` logic and should be refactored to an event-driven model.
 
 ## 3. Testing Strategy
 
