@@ -41,7 +41,10 @@ export async function checkAccessibility(target: Page | Locator) {
     } catch (e) {
       // If the element is already detached from the DOM, we can safely ignore the error
       // as the attribute is gone anyway.
-      console.warn('Failed to remove temporary accessibility attribute (element may have detached):', e)
+      console.warn(
+        'Failed to remove temporary accessibility attribute (element may have detached):',
+        e
+      )
     }
   }
 
