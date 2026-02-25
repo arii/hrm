@@ -8,4 +8,4 @@ export const HRM_WEB_PLAYER_NAME = 'HRM Web Player'
 export const SPOTIFY_DEFAULT_TOKEN_EXPIRY_S = 3600
 
 // Centralized constants for Spotify integration
-export const VOLUME_SYNC_GRACE_PERIOD_MS = 600
+export const SYNC_LOCK_DURATION = 2000 // 2s lock to allow API propagation

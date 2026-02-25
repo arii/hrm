@@ -6,7 +6,8 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import { SYNC_LOCK_DURATION } from '@/constants/spotify'
+import throttle from 'lodash.throttle'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -130,8 +131,7 @@ const SpotifyDisplay = () => {
     spotifyData.devices?.some((device) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
-  const lastVolumeSendTimeRef = useRef<number>(0)
-  const hasPendingSendRef = useRef<boolean>(false)
+  const lastUserInteractionRef = useRef<number>(0)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -144,28 +144,12 @@ const SpotifyDisplay = () => {
   useDashboardRegistration(player)
 
   // Synchronize with WebSocket data whenever it changes.
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
   useEffect(() => {
-    const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
+    const isLocked =
+      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
 
-    // Only apply grace period if a send is pending and within the window.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
-
-    if (state.isSliding || shouldRespectGracePeriod) {
+    if (state.isSliding || isLocked) {
       return
-    }
-
-    // Once grace period has elapsed, clear the pending send flag
-    if (
-      hasPendingSendRef.current &&
-      timeSinceLastSend >= VOLUME_SYNC_GRACE_PERIOD_MS
-    ) {
-      hasPendingSendRef.current = false
     }
 
     dispatch({
@@ -195,8 +179,7 @@ const SpotifyDisplay = () => {
 
       const sanitized = clampVolume(volume)
 
-      lastVolumeSendTimeRef.current = Date.now()
-      hasPendingSendRef.current = true
+      lastUserInteractionRef.current = Date.now()
 
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
@@ -206,16 +189,34 @@ const SpotifyDisplay = () => {
     [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
   )
 
+  // Throttled volume command for live updates (200ms)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const throttledSendVolumeCommand = useCallback(
+    throttle((val: number) => {
+      sendVolumeCommand(val)
+    }, 200),
+    [sendVolumeCommand]
+  )
+
   // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
+    lastUserInteractionRef.current = Date.now()
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
+    throttledSendVolumeCommand(newVolume)
   }
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
+    lastUserInteractionRef.current = Date.now()
     sendVolumeCommand(newVolume)
     dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
   }
+
+  useEffect(() => {
+    return () => {
+      throttledSendVolumeCommand.cancel()
+    }
+  }, [throttledSendVolumeCommand])
 
   // Handler for the VolumeSlider's mute button
   const handleToggleMute = useCallback(() => {

@@ -18,12 +18,10 @@ import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { HRM_WEB_PLAYER_NAME, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-
-const SYNC_LOCK_DURATION = 2000 // 2s lock to allow API propagation
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -96,7 +94,6 @@ const SpotifyControls = () => {
     }
     prevActiveIdRef.current = activeId
 
-    // Sync Volume (if not dragging and not within lock duration after interaction)
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
@@ -241,6 +238,12 @@ const SpotifyControls = () => {
     },
     [sendVolumeCommand]
   )
+
+  useEffect(() => {
+    return () => {
+      throttledSendVolumeCommand.cancel()
+    }
+  }, [throttledSendVolumeCommand])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
