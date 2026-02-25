@@ -21,7 +21,9 @@ interface BluetoothTestContextType {
   registerTestControls: (controls: BluetoothTestControls) => void
 }
 
-const BluetoothTestContext = createContext<BluetoothTestContextType | null>(null)
+const BluetoothTestContext = createContext<BluetoothTestContextType | null>(
+  null
+)
 
 export const BluetoothTestProvider = ({
   children,
@@ -91,5 +93,5 @@ export const useBluetoothTestControls = (controls: BluetoothTestControls) => {
         }
       }
     }
-  }, [context, controls.setHrmStatus, controls.setCustomHrmStatusMessage])
+  }, [context, controls])
 }

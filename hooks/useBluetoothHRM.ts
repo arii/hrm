@@ -4,6 +4,7 @@ import {
   useRef,
   useEffect,
   useLayoutEffect,
+  useMemo,
 } from 'react'
 import {
   HrmMetadataUpdateMessage,
@@ -390,10 +391,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const useIsomorphicLayoutEffect =
     typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-  useBluetoothTestControls({
-    setHrmStatus: setStatus,
-    setCustomHrmStatusMessage: setCustomStatusMessage,
-  })
+  const testControls = useMemo(
+    () => ({
+      setHrmStatus: setStatus,
+      setCustomHrmStatusMessage: setCustomStatusMessage,
+    }),
+    []
+  )
+
+  useBluetoothTestControls(testControls)
 
   useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
