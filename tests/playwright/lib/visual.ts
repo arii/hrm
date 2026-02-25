@@ -26,6 +26,7 @@ import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
  * @property {number} maxDiffPixelRatio - Allowed ratio of differing pixels.
  */
 export const SCREENSHOT_OPTIONS = {
+  fullPage: true,
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
