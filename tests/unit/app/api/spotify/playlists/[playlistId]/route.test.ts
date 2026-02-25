@@ -20,7 +20,22 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       owner: { display_name: 'Test User' },
       tracks: {
         total: 10,
-        items: [{ track: { id: 't1', name: 'Track 1' } }],
+        items: [
+          {
+            track: {
+              id: 't1',
+              name: 'Track 1',
+              uri: 'spotify:track:t1',
+              duration_ms: 180000,
+              type: 'track',
+              artists: [{ name: 'Artist 1' }],
+              album: {
+                name: 'Album 1',
+                images: [{ url: 'http://example.com/art1.jpg' }],
+              },
+            },
+          },
+        ],
       },
     }
     const mockGetPlaylist = jest.fn().mockResolvedValue(mockPlaylist)
@@ -44,7 +59,19 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
       imageUrl: 'http://example.com/image.jpg',
       owner: 'Test User',
       trackCount: 10,
-      tracks: [{ id: 't1', name: 'Track 1' }],
+      tracks: [
+        {
+          id: 't1',
+          name: 'Track 1',
+          uri: 'spotify:track:t1',
+          duration_ms: 180000,
+          artists: [{ name: 'Artist 1' }],
+          album: {
+            name: 'Album 1',
+            images: [{ url: 'http://example.com/art1.jpg' }],
+          },
+        },
+      ],
     })
   })
 })
