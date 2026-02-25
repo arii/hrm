@@ -243,7 +243,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 secondary={
                   option.trackCount !== undefined
                     ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
-                    : (option.owner || '')
+                    : option.owner || ''
                 }
               />
               {option.isPreset && (
