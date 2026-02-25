@@ -31,7 +31,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   onVolumeChangeCommitted,
   onToggleMute,
   showValue = false,
-  sliderColor = '#1DB954',
+  sliderColor,
   size = 'small',
   disabled = false,
   sx,
@@ -91,7 +91,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         size={size}
         disabled={disabled}
         sx={{
-          color: sliderColor,
+          color: sliderColor || 'primary.main',
           height: 6,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',

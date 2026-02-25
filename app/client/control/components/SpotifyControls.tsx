@@ -324,6 +324,7 @@ const SpotifyControls = () => {
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
               showValue
+              sliderColor="#1DB954"
               size="medium"
               sx={{ mt: 3, mb: 1 }}
             />
