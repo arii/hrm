@@ -110,6 +110,8 @@ describe('components/SpotifyControls', () => {
     })
 
     render(<SpotifyControls />)
-    expect(screen.getByTestId('spotify-select-music-button')).toBeInTheDocument()
+    expect(
+      screen.getByTestId('spotify-select-music-button')
+    ).toBeInTheDocument()
   })
 })
