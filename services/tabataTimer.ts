@@ -189,15 +189,6 @@ class TabataTimer {
     })
   }
 
-  /**
-   * Resets the timer to its default state.
-   */
-  public reset(): void {
-    this.stop()
-    this.setMode('TABATA')
-    this.setConfig({ workDuration: 20, restDuration: 10 })
-  }
-
   // --- Internal Timer Logic ---
 
   private updateTimer = (): void => {
