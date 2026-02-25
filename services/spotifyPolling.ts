@@ -1,6 +1,6 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
+import { SpotifyCommandParameters, SpotifyCommand } from '@/types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,

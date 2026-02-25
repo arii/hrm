@@ -1,5 +1,5 @@
 import { Device, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyDevice } from '../types/core'
+import { SpotifyDevice } from '@/types/core'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import logger from '../utils/logger.server.js'
 

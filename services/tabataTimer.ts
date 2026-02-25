@@ -6,7 +6,7 @@
  * It uses absolute timing (performance.now()) to maintain accuracy against drift.
  */
 import { ServerMessage } from '../types/websocket'
-import { TimerData, TimerMode, TimerPhase } from '../types/core'
+import { TimerData, TimerMode, TimerPhase } from '@/types/core'
 import {
   DEFAULT_WORK_DURATION,
   DEFAULT_REST_DURATION,

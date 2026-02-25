@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from '../types/core'
+import { SpotifyTokenResponse } from '@/types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
 
 /**

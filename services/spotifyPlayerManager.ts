@@ -1,4 +1,4 @@
-import { SpotifyCommandParameters } from '../types/core'
+import { SpotifyCommandParameters } from '@/types/core'
 import { ServerMessage, SpotifyCommand, SpotifyData } from '../types/websocket'
 import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'

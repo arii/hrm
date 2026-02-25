@@ -112,6 +112,8 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     )
   }
 
+  const playlistUri = `spotify:playlist:${playlistId}`
+
   return (
     <Box>
       <Paper>
@@ -120,7 +122,6 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
             const isPlaying =
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
-            const playlistUri = `spotify:playlist:${playlistId}`
             const artistsString = track.artists.map((a) => a.name).join(', ')
 
             return (

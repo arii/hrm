@@ -1,6 +1,6 @@
 // Handles playlist-related operations for the standalone Spotify page.
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
-import { SpotifyPlaylist } from '../types/core'
+import { SpotifyPlaylist } from '@/types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
 
 /**
