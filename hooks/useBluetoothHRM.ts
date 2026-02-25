@@ -19,6 +19,7 @@ import {
   CONNECTION_STORM_THRESHOLD_MS,
   PERMISSIONS_REVOKED_TIMEOUT_MS,
 } from '@/constants/bluetooth-reconnection'
+import { env } from '@/lib/env'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -32,7 +33,7 @@ const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
 export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+  env.NODE_ENV === 'test'
     ? HEARTBEAT_INTERVAL_MS_test
     : HEARTBEAT_INTERVAL_MS_prod
 
@@ -103,7 +104,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
   const isDisconnecting = useRef(false)
-  const isMounted = useRef(true)
   const lastConnectTimeRef = useRef<number>(0)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
@@ -237,9 +237,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDisconnecting.current = true
 
     try {
-      if (isMounted.current) {
-        setStatus(BluetoothConnectionStatus.DISCONNECTING)
-      }
+      setStatus(BluetoothConnectionStatus.DISCONNECTING)
       isManualDisconnect.current = true
       isTimeoutDisconnect.current = false
       if (abortControllerRef.current) {
@@ -256,17 +254,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
-      if (isMounted.current) {
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
-        setCustomStatusMessage(null)
-        setSavedDevice(null)
-        setBatteryLevel(null)
-        setConnectionAttempted(false)
-        deviceRef.current = null
-        periodHistory.current = []
-        avgPeriodMs.current = 0
-        setSignalPeriodMs(0)
-      }
+      setStatus(BluetoothConnectionStatus.DISCONNECTED)
+      setCustomStatusMessage(null)
+      setSavedDevice(null)
+      setBatteryLevel(null)
+      setConnectionAttempted(false)
+      deviceRef.current = null
+      periodHistory.current = []
+      avgPeriodMs.current = 0
+      setSignalPeriodMs(0)
     } finally {
       isDisconnecting.current = false
     }
@@ -307,19 +303,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         msg = `Error: ${error.message}`
       }
     }
-    if (isMounted.current) {
-      setStatus(BluetoothConnectionStatus.ERROR)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.errorWithDetails(msg))
-    }
+    setStatus(BluetoothConnectionStatus.ERROR)
+    setCustomStatusMessage(BLUETOOTH_MESSAGES.errorWithDetails(msg))
     logger.error({ error }, msg)
   }, [])
 
   const reconnect = useCallback(
     (device: BluetoothDevice, reason = 'Connection lost') => {
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
-        if (isMounted.current) {
-          setStatus(BluetoothConnectionStatus.ERROR)
-        }
+        setStatus(BluetoothConnectionStatus.ERROR)
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
         )
@@ -337,13 +329,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       const delay = getBackoffDelay(reconnectAttempts.current, isZombieError)
 
-      if (isMounted.current) {
-        setStatus(
-          isZombieError
-            ? BluetoothConnectionStatus.CONNECTING
-            : BluetoothConnectionStatus.RECONNECTING
-        )
-      }
+      setStatus(
+        isZombieError
+          ? BluetoothConnectionStatus.CONNECTING
+          : BluetoothConnectionStatus.RECONNECTING
+      )
 
       const statusMessage = isZombieError
         ? BLUETOOTH_MESSAGES.deviceBusy(
@@ -368,9 +358,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ) {
           if (device.gatt?.connected) {
             logger.info('Device already connected, skipping reconnect attempt.')
-            if (isMounted.current) {
-              setStatus(BluetoothConnectionStatus.CONNECTED)
-            }
+            setStatus(BluetoothConnectionStatus.CONNECTED)
             return
           }
 
@@ -457,7 +445,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   // Cleanup
   useEffect(() => {
-    isMounted.current = true
     isManualDisconnect.current = false
 
     if (
@@ -483,8 +470,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-
-      isMounted.current = false
 
       if (
         typeof window !== 'undefined' &&
@@ -524,12 +509,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current = device
 
         if (!isReconnect) {
-          if (isMounted.current) {
-            setStatus(BluetoothConnectionStatus.CONNECTING)
-            setCustomStatusMessage(
-              BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
-            )
-          }
+          setStatus(BluetoothConnectionStatus.CONNECTING)
+          setCustomStatusMessage(
+            BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
+          )
         }
 
         let server: BluetoothRemoteGATTServer | undefined
@@ -650,12 +633,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
         )
 
-        if (isMounted.current) {
-          setStatus(BluetoothConnectionStatus.CONNECTED)
-          setCustomStatusMessage(
-            BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
-          )
-        }
+        setStatus(BluetoothConnectionStatus.CONNECTED)
+        setCustomStatusMessage(
+          BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
+        )
         setSavedDevice(device)
         Cookies.set('hrm_device_id', device.id, {
           expires: 365,
@@ -698,10 +679,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             { device: device.name },
             'Connection timeout detected. Resetting device and permissions.'
           )
-          if (isMounted.current) {
-            setStatus(BluetoothConnectionStatus.ERROR)
-            setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          }
+          setStatus(BluetoothConnectionStatus.ERROR)
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
           reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
           deviceRef.current = null
 

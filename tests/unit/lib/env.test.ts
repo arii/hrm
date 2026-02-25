@@ -104,9 +104,6 @@ describe('Environment Variables', () => {
     process.env.NODE_ENV = 'test'
     process.env.NEXT_PUBLIC_API_URL = 'invalid-url'
 
-    // We shouldn't throw, but log a warning (which we can't easily assert here without spying)
-    const { env } = await import('../../../lib/env')
-    // Since validation failed, it falls back to getEnvSource()
-    expect(env.NEXT_PUBLIC_API_URL).toBe('invalid-url')
+    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
   })
 })

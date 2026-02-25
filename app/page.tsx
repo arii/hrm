@@ -14,7 +14,6 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     nativeValue === 'true' ||
     (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
 
-  // Check for test-error - only allowed in non-production or test environments
   const testErrorParam = params['test-error']
   const testErrorValue = Array.isArray(testErrorParam)
     ? testErrorParam[0]
