@@ -18,18 +18,24 @@ import '@testing-library/jest-dom'
 // Mock VolumeSlider to easily trigger its callbacks
 jest.mock('@/components/shared/VolumeSlider', () => ({
   __esModule: true,
-  default: jest.fn(({ volume, onVolumeChange, onVolumeChangeCommitted, onToggleMute }) => (
-    <div data-testid="mock-volume-slider">
-      <input
-        type="range"
-        value={volume}
-        onChange={(e) => onVolumeChange(Number(e.target.value))}
-        onMouseUp={(e) => onVolumeChangeCommitted?.(Number((e.target as HTMLInputElement).value))}
-        aria-label="Volume control"
-      />
-      <button onClick={onToggleMute} aria-label="Mute" />
-    </div>
-  )),
+  default: jest.fn(
+    ({ volume, onVolumeChange, onVolumeChangeCommitted, onToggleMute }) => (
+      <div data-testid="mock-volume-slider">
+        <input
+          type="range"
+          value={volume}
+          onChange={(e) => onVolumeChange(Number(e.target.value))}
+          onMouseUp={(e) =>
+            onVolumeChangeCommitted?.(
+              Number((e.target as HTMLInputElement).value)
+            )
+          }
+          aria-label="Volume control"
+        />
+        <button onClick={onToggleMute} aria-label="Mute" />
+      </div>
+    )
+  ),
 }))
 
 // Mock the router
@@ -260,7 +266,6 @@ describe('components/SpotifyControls', () => {
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
     })
   })
-
 
   it('shows warning snackbar when changing volume while disconnected', () => {
     const showWarningMock = jest.fn()
