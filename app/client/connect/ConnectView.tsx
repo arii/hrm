@@ -159,10 +159,10 @@ export default function ConnectView({
 
         {deviceStatus &&
           !isConnected &&
-          !deviceStatus?.includes('Disconnected') && (
+          !deviceStatus.includes('Disconnected') && (
             <Alert
               data-testid="connection-status-alert"
-              severity={deviceStatus?.includes('Failed') ? 'error' : 'info'}
+              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
               sx={{ mb: 2 }}
             >
               {deviceStatus}
@@ -178,10 +178,10 @@ export default function ConnectView({
               disabled={
                 !data.userName.trim() ||
                 !data.userAge.trim() ||
-                deviceStatus?.includes('Connecting')
+                deviceStatus.includes('Connecting')
               }
             >
-              {deviceStatus?.includes('Connecting') ? (
+              {deviceStatus.includes('Connecting') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>

@@ -31,7 +31,6 @@ export const SignalQualityIndicator = ({
   const { palette } = useTheme()
   const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
   const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
-  const stability = isCritical ? 'Critical' : isWarning ? 'Warning' : 'Stable'
 
   const quality =
     !isConnected || periodMs === 0
@@ -42,23 +41,53 @@ export const SignalQualityIndicator = ({
           ? 'good'
           : 'poor'
 
-  const color =
-    isCritical || quality === 'poor'
-      ? palette.error.main
-      : isWarning || quality === 'good'
-        ? palette.warning.main
-        : quality === 'excellent'
-          ? palette.success.main
-          : palette.text.disabled
+  const STATUS_CONFIG = {
+    critical: {
+      color: palette.error.main,
+      label: 'Signal Lost',
+      icon: SignalCellularConnectedNoInternet0BarIcon,
+      isAnimated: true,
+    },
+    warning: {
+      color: palette.warning.main,
+      label: 'Weak Signal',
+      icon: SignalCellularAlt1BarIcon,
+      isAnimated: true,
+    },
+    excellent: {
+      color: palette.success.main,
+      label: `${periodMs}ms`,
+      icon: SignalCellularAltIcon,
+      isAnimated: false,
+    },
+    good: {
+      color: palette.warning.main,
+      label: `${periodMs}ms`,
+      icon: SignalCellularAlt2BarIcon,
+      isAnimated: false,
+    },
+    poor: {
+      color: palette.error.main,
+      label: `${periodMs}ms`,
+      icon: SignalCellularAlt1BarIcon,
+      isAnimated: false,
+    },
+    none: {
+      color: palette.text.disabled,
+      label: 'Disconnected',
+      icon: SignalCellularConnectedNoInternet0BarIcon,
+      isAnimated: false,
+    },
+  } as const
 
-  const Icon =
-    {
-      excellent: SignalCellularAltIcon,
-      good: SignalCellularAlt2BarIcon,
-      poor: SignalCellularAlt1BarIcon,
-      none: SignalCellularConnectedNoInternet0BarIcon,
-    }[quality] || SignalCellularConnectedNoInternet0BarIcon
+  const currentStatusKey = isCritical
+    ? 'critical'
+    : isWarning
+      ? 'warning'
+      : quality
 
+  const config = STATUS_CONFIG[currentStatusKey]
+  const Icon = config.icon
   const reliability = Math.min(100, Math.round(100000 / (periodMs || 1000)))
 
   return (
@@ -78,27 +107,22 @@ export const SignalQualityIndicator = ({
           alignItems: 'center',
           gap: 0.5,
           opacity: isConnected ? 1 : 0.5,
-          color,
-          animation:
-            stability !== 'Stable' ? 'pulse-signal 1.5s infinite' : 'none',
+          color: config.color,
+          animation: config.isAnimated ? 'pulse-signal 1.5s infinite' : 'none',
           // Keyframes are defined in global styles to avoid re-parsing on every render
         }}
       >
-        <Icon sx={{ color }} />
+        <Icon />
         {isConnected && (
           <Typography
             variant="caption"
             sx={{
-              color: stability !== 'Stable' ? color : 'text.secondary',
+              color: config.isAnimated ? config.color : 'text.secondary',
               minWidth: 35,
-              fontWeight: stability !== 'Stable' ? 'bold' : 'normal',
+              fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
-            {isCritical
-              ? 'Signal Lost'
-              : isWarning
-                ? 'Weak Signal'
-                : `${periodMs}ms`}
+            {config.label}
           </Typography>
         )}
       </Box>
