@@ -297,7 +297,7 @@ class TabataTimer {
     }
   }
 
-  public dispose(): void {
+  public cleanup(): void {
     if (this.timerInterval) {
       clearInterval(this.timerInterval)
       this.timerInterval = null

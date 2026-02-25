@@ -64,24 +64,24 @@ describe('HrTile', () => {
 
   it('displays the correct calorie value', () => {
     render(<HrTile name="Test" value={120} percentage={65} calories={123} />)
-    const calorieDisplay = screen.getByText('123')
-    expect(calorieDisplay).toBeInTheDocument()
+    const calorieDisplay = screen.getByTestId('calories-value')
+    expect(calorieDisplay).toHaveTextContent('123')
   })
 
   it('displays 0 calories when the value is 0', () => {
     render(<HrTile name="Test" value={120} percentage={65} calories={0} />)
-    const calorieDisplay = screen.getByText('0')
-    expect(calorieDisplay).toBeInTheDocument()
+    const calorieDisplay = screen.getByTestId('calories-value')
+    expect(calorieDisplay).toHaveTextContent('0')
   })
 
   it('updates the calorie display when the prop changes', () => {
     const { rerender } = render(
       <HrTile name="Test" value={120} percentage={65} calories={100} />
     )
-    expect(screen.getByText('100')).toBeInTheDocument()
+    expect(screen.getByTestId('calories-value')).toHaveTextContent('100')
 
     rerender(<HrTile name="Test" value={120} percentage={65} calories={150} />)
-    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(screen.getByTestId('calories-value')).toHaveTextContent('150')
   })
 
   it('displays the correct zone information when zone prop is provided', () => {
