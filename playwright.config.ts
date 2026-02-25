@@ -174,6 +174,7 @@ export default defineConfig({
           SPOTIFY_CLIENT_ID: 'test_client_id',
           SPOTIFY_CLIENT_SECRET: 'test_client_secret',
           ALLOW_DEBUG_RESET: 'true',
+          WEBSOCKET_WATCHDOG_INTERVAL: '5000',
         },
       },
 
