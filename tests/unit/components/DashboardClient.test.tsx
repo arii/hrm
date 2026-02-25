@@ -120,4 +120,29 @@ describe('DashboardClient', () => {
       parseInt(initialRefreshKey as string) + 1
     )
   })
+
+  it('renders an Alert when configuration is missing (useNativeTable=false, missing iframeUrl)', async () => {
+    render(<DashboardClient useNativeTable={false} docId="mock-doc-id" />)
+    const alert = await screen.findByRole('alert')
+    expect(alert).toBeInTheDocument()
+    expect(alert).toHaveTextContent(
+      'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
+    )
+    expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
+  })
+
+  it('renders an Alert when configuration is missing (useNativeTable=true, missing docId)', async () => {
+    render(
+      <DashboardClient
+        useNativeTable={true}
+        iframeUrl="https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true"
+      />
+    )
+    const alert = await screen.findByRole('alert')
+    expect(alert).toBeInTheDocument()
+    expect(alert).toHaveTextContent(
+      'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
+    )
+    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+  })
 })
