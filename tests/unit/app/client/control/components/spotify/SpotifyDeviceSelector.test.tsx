@@ -8,7 +8,6 @@ import '@testing-library/jest-dom'
 
 describe('components/spotify/SpotifyDeviceSelector', () => {
   const mockOnDeviceChange = jest.fn()
-  const mockOnDeviceSync = jest.fn()
   const devices = [
     createMockSpotifyDevice({ id: '1', name: 'Device 1', is_active: false }),
     createMockSpotifyDevice({ id: '2', name: 'Device 2', is_active: true }),
@@ -24,7 +23,6 @@ describe('components/spotify/SpotifyDeviceSelector', () => {
         devices={devices}
         selectedDeviceId="2"
         onDeviceChange={mockOnDeviceChange}
-        onDeviceSync={mockOnDeviceSync}
       />
     )
 
@@ -35,58 +33,26 @@ describe('components/spotify/SpotifyDeviceSelector', () => {
     const select = screen.getByRole('combobox')
     fireEvent.mouseDown(select)
 
-    // MUI renders the listbox in a portal, so we search globally
     const listbox = await screen.findByRole('listbox')
     expect(within(listbox).getByText(/Device 1/)).toBeInTheDocument()
     expect(within(listbox).getByText(/Device 2 \(Active\)/)).toBeInTheDocument()
   })
 
-  it('calls onDeviceSync when active device changes', () => {
-    const { rerender } = render(
+  it('calls onDeviceChange when a new device is selected', async () => {
+    render(
       <SpotifyDeviceSelector
         devices={devices}
         selectedDeviceId="2"
         onDeviceChange={mockOnDeviceChange}
-        onDeviceSync={mockOnDeviceSync}
       />
     )
 
-    const newDevices = [
-      createMockSpotifyDevice({ id: '1', name: 'Device 1', is_active: true }),
-      createMockSpotifyDevice({ id: '2', name: 'Device 2', is_active: false }),
-    ]
+    const select = screen.getByRole('combobox')
+    fireEvent.mouseDown(select)
 
-    rerender(
-      <SpotifyDeviceSelector
-        devices={newDevices}
-        selectedDeviceId="2"
-        onDeviceChange={mockOnDeviceChange}
-        onDeviceSync={mockOnDeviceSync}
-      />
-    )
+    const listbox = await screen.findByRole('listbox')
+    fireEvent.click(within(listbox).getByText(/Device 1/))
 
-    expect(mockOnDeviceSync).toHaveBeenCalledWith('1')
-  })
-
-  it('auto-selects HRM Web Player when no device is active', () => {
-    const hrmDevice = createMockSpotifyDevice({
-      id: 'hrm',
-      name: 'HRM Web Player',
-    })
-    const inactiveDevices = [
-      createMockSpotifyDevice({ id: '1', name: 'Device 1', is_active: false }),
-    ]
-
-    render(
-      <SpotifyDeviceSelector
-        devices={[...inactiveDevices, hrmDevice]}
-        selectedDeviceId=""
-        onDeviceChange={mockOnDeviceChange}
-        onDeviceSync={mockOnDeviceSync}
-        hrmDevice={hrmDevice}
-      />
-    )
-
-    expect(mockOnDeviceSync).toHaveBeenCalledWith('hrm')
+    expect(mockOnDeviceChange).toHaveBeenCalledWith('1')
   })
 })

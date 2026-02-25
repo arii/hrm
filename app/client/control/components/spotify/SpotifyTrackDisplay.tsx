@@ -1,4 +1,3 @@
-// File: app/client/control/components/spotify/SpotifyTrackDisplay.tsx
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 

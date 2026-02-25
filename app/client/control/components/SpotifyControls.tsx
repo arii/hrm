@@ -1,4 +1,3 @@
-// File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
@@ -8,7 +7,7 @@ import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
@@ -19,14 +18,14 @@ import SpotifySearchInput from '@/components/SpotifySearchInput'
 import SpotifyTrackDisplay from './spotify/SpotifyTrackDisplay'
 import SpotifyVolumeControl from './spotify/SpotifyVolumeControl'
 import SpotifyDeviceSelector from './spotify/SpotifyDeviceSelector'
+import { useSpotifyDeviceSync } from '../hooks/useSpotifyDeviceSync'
 
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const { devices = [] } = spotifyData
 
   const hrmDevice = useMemo(
     () =>
@@ -34,6 +33,11 @@ const SpotifyControls = () => {
         (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
       ),
     [devices]
+  )
+
+  const { selectedDeviceId, setSelectedDeviceId } = useSpotifyDeviceSync(
+    devices,
+    hrmDevice
   )
 
   const handleTrackSelect = (uri: string) => {
@@ -53,7 +57,6 @@ const SpotifyControls = () => {
     spotifyData.playback.track.name !== '' &&
     spotifyData.playback.track.name !== 'No Track Playing'
 
-  // Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -178,8 +181,6 @@ const SpotifyControls = () => {
                   sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                 }
               }}
-              onDeviceSync={setSelectedDeviceId}
-              hrmDevice={hrmDevice}
               disabled={connectionStatus !== 'Connected'}
             />
 

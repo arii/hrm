@@ -1,4 +1,3 @@
-// File: app/client/control/components/spotify/SpotifyVolumeControl.tsx
 import { useCallback, useEffect, useRef, useState } from 'react'
 import VolumeSlider from '@/components/shared/VolumeSlider'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -27,17 +26,14 @@ const SpotifyVolumeControl = ({
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
 
-  // Sync Volume (if not dragging and not within grace period after send)
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
+  // Synchronize local volume state with the server's playback state.
+  // We use a grace period after sending a command to prevent "snap-back"
+  // (the slider jumping back to the old value before the server broadcasts the update).
   useEffect(() => {
     if (isSliding) return
 
     const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
 
-    // Only sync if we haven't sent a volume command recently.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
     const shouldRespectGracePeriod =
       hasPendingSendRef.current &&
       timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
@@ -46,7 +42,6 @@ const SpotifyVolumeControl = ({
       return
     }
 
-    // Clear pending flag after grace period
     if (
       hasPendingSendRef.current &&
       timeSinceLastVolumeSend >= VOLUME_SYNC_GRACE_PERIOD_MS
@@ -60,7 +55,7 @@ const SpotifyVolumeControl = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playbackVolume, isSliding]) // Rely on playbackVolume update to trigger sync
+  }, [playbackVolume, isSliding])
 
   const handleVolumeChange = useCallback(
     (val: number) => {
@@ -68,7 +63,7 @@ const SpotifyVolumeControl = ({
       setVolume(val)
       if (!isConnected) {
         const now = Date.now()
-        // Throttle warning to once every 3 seconds to avoid spam during sliding
+        // Throttle warning to avoid spam during active sliding
         if (now - lastWarningTimeRef.current > 3000) {
           showWarning('Changes not saved: Offline')
           lastWarningTimeRef.current = now
