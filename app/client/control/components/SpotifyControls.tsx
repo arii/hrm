@@ -24,6 +24,7 @@ import {
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
+import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -324,7 +325,7 @@ const SpotifyControls = () => {
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
               showValue
-              sliderColor="#1DB954"
+              sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"
               sx={{ mt: 3, mb: 1 }}
             />

@@ -8,6 +8,7 @@ import {
   Typography,
   SxProps,
   Theme,
+  alpha,
 } from '@mui/material'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
@@ -90,8 +91,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         onChangeCommitted={handleVolumeChangeCommitted}
         size={size}
         disabled={disabled}
-        sx={{
-          color: sliderColor || 'primary.main',
+        sx={(theme) => ({
+          color: sliderColor || theme.palette.primary.main,
           height: 6,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
@@ -99,12 +100,14 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
             height: size === 'small' ? 18 : 22,
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
             '&:hover, &.Mui-focusVisible': {
-              boxShadow: '0 0 0 8px rgba(29, 185, 84, 0.16)',
+              boxShadow: sliderColor
+                ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
+                : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
             },
           },
           '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
           '& .MuiSlider-rail': { opacity: 0.3 },
-        }}
+        })}
         aria-label="Volume control"
         data-testid="volume-slider-input"
       />
