@@ -28,72 +28,49 @@ export const SignalQualityIndicator = ({
   lastPeriodMs = 0,
   isConnected,
 }: SignalQualityIndicatorProps) => {
-  const theme = useTheme()
+  const { palette } = useTheme()
+  const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
+  const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
+  const stability = isCritical ? 'Critical' : isWarning ? 'Warning' : 'Stable'
 
-  // Determine stability for real-time feedback
-  const getStability = () => {
-    if (!isConnected || lastPeriodMs === 0) return 'Stable'
-    if (lastPeriodMs > CRITICAL_THRESHOLD_MS) return 'Critical'
-    if (lastPeriodMs > STABILITY_THRESHOLD_MS) return 'Warning'
-    return 'Stable'
-  }
+  const quality =
+    !isConnected || periodMs === 0
+      ? 'none'
+      : periodMs < 1200
+        ? 'excellent'
+        : periodMs < 2200
+          ? 'good'
+          : 'poor'
 
-  const stability = getStability()
+  const color =
+    isCritical || quality === 'poor'
+      ? palette.error.main
+      : isWarning || quality === 'good'
+        ? palette.warning.main
+        : quality === 'excellent'
+          ? palette.success.main
+          : palette.text.disabled
 
-  // Determine signal quality tier (based on average)
-  let quality: 'excellent' | 'good' | 'poor' | 'none' = 'none'
-  let color = theme.palette.text.disabled
+  const Icon =
+    {
+      excellent: SignalCellularAltIcon,
+      good: SignalCellularAlt2BarIcon,
+      poor: SignalCellularAlt1BarIcon,
+      none: SignalCellularConnectedNoInternet0BarIcon,
+    }[quality] || SignalCellularConnectedNoInternet0BarIcon
 
-  if (isConnected && periodMs > 0) {
-    if (periodMs < 1200) {
-      quality = 'excellent'
-      color = theme.palette.success.main
-    } else if (periodMs < 2200) {
-      quality = 'good'
-      color = theme.palette.warning.main
-    } else {
-      quality = 'poor'
-      color = theme.palette.error.main
-    }
-  }
-
-  // Override color if stability is compromised
-  if (stability === 'Warning') color = theme.palette.warning.main
-  if (stability === 'Critical') color = theme.palette.error.main
-
-  const getIcon = () => {
-    switch (quality) {
-      case 'excellent':
-        return <SignalCellularAltIcon sx={{ color }} />
-      case 'good':
-        return <SignalCellularAlt2BarIcon sx={{ color }} />
-      case 'poor':
-        return <SignalCellularAlt1BarIcon sx={{ color }} />
-      default:
-        return <SignalCellularConnectedNoInternet0BarIcon sx={{ color }} />
-    }
-  }
-
-  // Calculate an approximate "Packet Success Rate" for the tooltip
-  // Assuming 1000ms target.
-  // 1000ms avg = ~100% success. 2000ms avg = ~50% success.
-  const estimatedReliability = Math.min(
-    100,
-    Math.round((1000 / periodMs) * 100)
-  )
+  const reliability = Math.min(100, Math.round(100000 / (periodMs || 1000)))
 
   return (
     <Tooltip
+      arrow
       title={
         isConnected
-          ? `Signal Quality: ${periodMs}ms avg period (~${estimatedReliability}% capture)${
-              lastPeriodMs > STABILITY_THRESHOLD_MS
-                ? ` | Latency: ${lastPeriodMs}ms`
-                : ''
+          ? `Signal Quality: ${periodMs}ms avg (~${reliability}% capture)${
+              isWarning ? ` | Latency: ${lastPeriodMs}ms` : ''
             }`
           : 'No Signal'
       }
-      arrow
     >
       <Box
         sx={{
@@ -105,13 +82,12 @@ export const SignalQualityIndicator = ({
           animation:
             stability !== 'Stable' ? 'pulse-signal 1.5s infinite' : 'none',
           '@keyframes pulse-signal': {
-            '0%': { opacity: 1 },
+            '0%, 100%': { opacity: 1 },
             '50%': { opacity: 0.4 },
-            '100%': { opacity: 1 },
           },
         }}
       >
-        {getIcon()}
+        <Icon sx={{ color }} />
         {isConnected && (
           <Typography
             variant="caption"
@@ -121,9 +97,9 @@ export const SignalQualityIndicator = ({
               fontWeight: stability !== 'Stable' ? 'bold' : 'normal',
             }}
           >
-            {stability === 'Critical'
+            {isCritical
               ? 'Signal Lost'
-              : stability === 'Warning'
+              : isWarning
                 ? 'Weak Signal'
                 : `${periodMs}ms`}
           </Typography>

@@ -193,11 +193,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
           setLastPeriodMs(timeSinceLastData)
-
-          // If it's already past the stability threshold, count it as a slow packet
-          if (timeSinceLastData > STABILITY_THRESHOLD_MS) {
+          if (timeSinceLastData > STABILITY_THRESHOLD_MS)
             setConsecutiveSlowPackets((prev) => prev + 1)
-          }
         }
       }
 
@@ -559,18 +556,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           'characteristicvaluechanged',
           (event: unknown) => {
             const now = Date.now()
-
-            // Calculate Delta (Period) for Signal Quality
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
               setLastPeriodMs(delta)
-
-              if (delta > STABILITY_THRESHOLD_MS) {
-                setConsecutiveSlowPackets((prev) => prev + 1)
-              } else {
-                setConsecutiveSlowPackets(0)
-              }
+              setConsecutiveSlowPackets((p) =>
+                delta > STABILITY_THRESHOLD_MS ? p + 1 : 0
+              )
             }
 
             const e = event as Event
