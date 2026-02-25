@@ -32,8 +32,7 @@ jobs:
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
+
 
       # Caching is disabled for self-hosted runners to improve performance.
       - name: 🟢 Setup Node.js
