@@ -145,6 +145,23 @@ const getEnvSource = () => {
 
 const parsedEnv = envSchema.safeParse(getEnvSource())
 
+// Robust fallback for client-side booleans to prevent "false" string being truthy
+const fallbackEnv = (
+  raw: Record<string, string | undefined>
+): z.infer<typeof envSchema> => {
+  return {
+    ...raw,
+    // Explicitly coerce critical booleans
+    NEXT_PUBLIC_TESTING: raw.NEXT_PUBLIC_TESTING === 'true',
+    NEXT_PUBLIC_USE_NATIVE_TABLE: raw.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true',
+    // Ensure numbers are parsed if they exist as strings
+    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS:
+      raw.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+        ? parseInt(raw.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS, 10)
+        : 8,
+  } as unknown as z.infer<typeof envSchema>
+}
+
 if (!parsedEnv.success) {
   if (isServer) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
@@ -159,7 +176,10 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : ((isServer ? process.env : getEnvSource()) as unknown as z.infer<
-      typeof envSchema
-    >)
+  : fallbackEnv(
+      (isServer ? process.env : getEnvSource()) as Record<
+        string,
+        string | undefined
+      >
+    )
 export { envSchema }
