@@ -7,69 +7,12 @@ const booleanSchema = z.preprocess((val) => {
   return val === true
 }, z.boolean())
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-const envSchema = z
-  .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
-    PORT: z.coerce.number().default(3000),
-    HOST: z.string().default('0.0.0.0'),
-    NEXTAUTH_SECRET: z.string().optional(),
-    NEXTAUTH_URL: z.string().url().optional(),
-    BASE_URL: z.string().url().optional(),
-    SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
-    SPOTIFY_CLIENT_SECRET: z.string().min(1).optional(),
-    SPOTIFY_CALLBACK_URL: z.string().url().optional(),
-    INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
-    SPOTIFY_DEBUG: z.string().optional(),
-    ALLOW_DEBUG_RESET: z
-      .preprocess((val) => {
-        if (typeof val === 'string') return val.toLowerCase() === 'true'
-        return val === true
-      }, z.boolean())
-      .default(false),
-    CI: z.string().optional(),
-    GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema.default(false),
-    NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
-    NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
-    RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-    SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
-    INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
-    GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-    // The default of 1000 provides a generous limit for concurrent WebSocket connections,
-    // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
-    WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
-    SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
-    SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
-    WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
-    WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
-    GEMINI_MODEL_FALLBACKS: z.string().optional(),
-    ANALYZE: booleanSchema.default(false),
-    TESTING: booleanSchema.default(false),
-    NEXT_PUBLIC_TESTING: booleanSchema.optional(),
-    IS_DEPLOYMENT: booleanSchema.default(false),
-    LOG_LEVEL: z.string().optional(),
-    WS_URL: z.string().url().optional(),
-    HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),
-    npm_package_version: z.string().optional(),
-    IGNORE_BUILD_ERRORS: booleanSchema.default(false),
-    INCLUDE_MOBILE: booleanSchema.default(false),
-    SKIP_WEBSERVER: booleanSchema.default(false),
-    SKIP_BUILD: booleanSchema.default(false),
-  })
-=======
-=======
 /**
  * Schema for all environment variables.
  *
  * IMPORTANT: If you add a new `NEXT_PUBLIC_` variable here, you MUST also add it to
  * the `getEnvSource` function below. Otherwise, it will not be available in the client.
  */
->>>>>>> 51341fbb (feat(medium): fix: robust client-side env validation and type safety improvements (#9193))
 export const envObjectSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -84,9 +27,10 @@ export const envObjectSchema = z.object({
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
   INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
   SPOTIFY_DEBUG: z.string().optional(),
+  ALLOW_DEBUG_RESET: booleanSchema.default(false),
   CI: z.string().optional(),
   GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-  NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema.default(false),
+  NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema.default(false).catch(false),
   NEXT_PUBLIC_API_URL: z
     .string()
     .url()
@@ -109,11 +53,11 @@ export const envObjectSchema = z.object({
     .int()
     .positive()
     .default(30000),
-  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
+  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8).catch(8),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
   ANALYZE: booleanSchema.default(false),
   TESTING: booleanSchema.default(false),
-  NEXT_PUBLIC_TESTING: booleanSchema.optional(),
+  NEXT_PUBLIC_TESTING: booleanSchema.optional().catch(undefined),
   IS_DEPLOYMENT: booleanSchema.default(false),
   LOG_LEVEL: z.string().optional(),
   WS_URL: z.string().url().optional(),
@@ -123,11 +67,9 @@ export const envObjectSchema = z.object({
   INCLUDE_MOBILE: booleanSchema.default(false),
   SKIP_WEBSERVER: booleanSchema.default(false),
   SKIP_BUILD: booleanSchema.default(false),
-  ALLOW_DEBUG_RESET: booleanSchema.default(false),
 })
 
 const envSchema = envObjectSchema
->>>>>>> e8c14b42 (feat: enhance environment variable management and validation)
   .superRefine((data, ctx) => {
     // Only perform strict validation on the server.
     // On the client, many of these variables will be missing.
@@ -217,44 +159,12 @@ const getEnvSource = () => {
 
 const parsedEnv = envSchema.safeParse(getEnvSource())
 
-/**
- * Sanitizes the raw environment source for client-side fallback.
- * Attempts to coerce known boolean and number fields to their correct types
- * to prevent logic errors (e.g., string "false" being truthy).
- */
-const sanitizeClientEnv = (
-  raw: ReturnType<typeof getEnvSource>
-): z.infer<typeof envSchema> => {
-  const safe = { ...raw } as Record<string, unknown>
-
-  // List of boolean keys to coerce from "true"/"false" strings
-  const booleanKeys = [
-    'NEXT_PUBLIC_USE_NATIVE_TABLE',
-    'NEXT_PUBLIC_TESTING',
-  ] as const
-
-  // Coerce booleans
-  booleanKeys.forEach((key) => {
-    if (key in safe) {
-      safe[key] = String(safe[key]) === 'true'
-    } else {
-      safe[key] = false // Default to false if missing
-    }
-  })
-
-  // Numbers are handled by standard JS coercion in application logic usually,
-  // but we can add them if needed. For now, booleans are the critical safety regression.
-
-  return safe as z.infer<typeof envSchema>
-}
-
 if (!parsedEnv.success) {
   if (isServer) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
     throw parsedEnv.error
   } else {
     // On the client, we log a warning but don't throw to avoid crashing the app.
-    // We return a sanitized best-effort object to ensure boolean logic safety.
     console.error(
       '⚠️ Invalid client-side environment variables:',
       JSON.stringify(parsedEnv.error.format(), null, 2)
@@ -264,6 +174,6 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : sanitizeClientEnv(getEnvSource())
+  : (process.env as unknown as z.infer<typeof envSchema>)
 
 export { envSchema }
