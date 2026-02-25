@@ -170,8 +170,15 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
                 secondary={`${track.artists
                   .map((a) => a.name)
                   .join(', ')} • ${track.album.name}`}
-                primaryTypographyProps={{ noWrap: true, variant: 'body2', fontWeight: 'bold' }}
-                secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
+                primaryTypographyProps={{
+                  noWrap: true,
+                  variant: 'body2',
+                  fontWeight: 'bold',
+                }}
+                secondaryTypographyProps={{
+                  noWrap: true,
+                  variant: 'caption',
+                }}
               />
             </Box>
           )
