@@ -21,6 +21,7 @@ import { SpotifyCommand } from '@/types/websocket'
 import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
+  SPOTIFY_BRAND_COLOR,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -281,7 +282,7 @@ const SpotifyControls = () => {
           variant="h6"
           sx={{
             mb: 2,
-            color: '#1DB954',
+            color: SPOTIFY_BRAND_COLOR,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -401,7 +402,7 @@ const SpotifyControls = () => {
             sx={{
               textTransform: 'none',
               py: 1.5,
-              bgcolor: '#1DB954',
+              bgcolor: SPOTIFY_BRAND_COLOR,
               '&:hover': { bgcolor: '#1ed760' },
               '&.Mui-disabled': {
                 bgcolor: 'rgba(29, 185, 84, 0.3)',

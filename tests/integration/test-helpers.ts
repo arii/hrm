@@ -17,7 +17,7 @@ export function startServer(
       env: {
         ...process.env,
         PORT: `${port}`,
-        NODE_ENV: 'development',
+        NODE_ENV: 'production',
         NEXTAUTH_SECRET:
           'a-valid-nextauth-secret-for-testing-purposes-long-enough',
         WS_MAX_CONNECTIONS: '100',

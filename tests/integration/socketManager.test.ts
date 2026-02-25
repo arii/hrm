@@ -141,7 +141,7 @@ describe('WebSocket Full Integration Test', () => {
     )
     const hrmInput2: HrmInputMessage = {
       type: 'HRM_INPUT',
-      data: { value: 151 },
+      data: { value: 151, name: 'Grace Test' },
     }
     ws2.send(JSON.stringify(hrmInput2))
     const finalState = (await finalStatePromise) as Extract<
@@ -198,14 +198,9 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    // In production/development mode, unnamed sessions are filtered out from broadcasts.
-    // If clientData is undefined, it confirms the old session was cleaned up.
-    if (!clientData) {
-      expect(clientData).toBeUndefined()
-    } else {
-      // If the environment somehow provides a default name, verify it's a reset state.
-      expect(clientData.value).toBe(0)
-    }
+    // In production mode, unnamed sessions are filtered out from broadcasts.
+    // If clientData is undefined, it confirms the old session was cleaned up and the new session (which is unnamed) is filtered.
+    expect(clientData).toBeUndefined()
 
     ws2.close()
   })
