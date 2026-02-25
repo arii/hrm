@@ -79,12 +79,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
-<<<<<<< HEAD
-
-      // Assert HR tile height is within limits
-=======
-      await hrTile.waitFor({ state: 'visible' }) // Explicit wait
->>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
+      // Use explicit wait before dimension check
+      await hrTile.waitFor({ state: 'visible', timeout: 5000 })
       await assertFixedDimensions(hrTile, {
         minHeight: HR_TILE_MIN_HEIGHT,
       })
@@ -123,15 +119,11 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for HR tiles to appear
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
-<<<<<<< HEAD
       await expect(hrTiles).toHaveCount(2)
       await expect(hrTiles.first()).toBeVisible()
       await expect(hrTiles.nth(1)).toBeVisible()
 
       // Assert all HR tiles maintain dimensions
-=======
-      await hrTiles.first().waitFor({ state: 'visible' }) // wait for at least one
->>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
         await assertFixedDimensions(hrTiles.nth(i), {

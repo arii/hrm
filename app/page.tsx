@@ -19,25 +19,18 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     ? testErrorParam[0]
     : testErrorParam
 
-<<<<<<< HEAD
   // Only allow intentional errors in development or test environments.
   const isTestableEnv =
     process.env.NODE_ENV !== 'production' ||
     env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
     env.CI === 'true' ||
     env.TESTING === 'true' ||
+    params.testing === 'true' ||
     false
-=======
-  const isTestableEnv =
-    env.NODE_ENV !== 'production' ||
-    env.TESTING === 'true' ||
-    env.CI === 'true' ||
-    params.testing === 'true'
 
   if (testErrorValue === 'true' && isTestableEnv) {
     throw new Error('VRT Test Error')
   }
->>>>>>> c4d5f15a (Refine Bluetooth HRM Reconnection Stability and Fix CI Visual Tests)
 
   return (
     <DashboardClient
