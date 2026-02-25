@@ -47,6 +47,13 @@ describe('GoogleDocViewer', () => {
     )
   })
 
+  it('renders nothing if embedUrl is invalid', () => {
+    const { container } = render(
+      <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
+    )
+    expect(container).toBeEmptyDOMElement()
+  })
+
   it('renders nothing if embedUrl is empty', () => {
     const { container } = render(
       <GoogleDocViewer title="Test Doc" embedUrl="" />

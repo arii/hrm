@@ -37,10 +37,13 @@ const GoogleDocViewer = ({
   const [iframeLoading, setIframeLoading] = useState(true)
 
   const finalEmbedUrl = useMemo(() => {
-    if (!embedUrl) return ''
-    const u = new URL(embedUrl)
-    u.searchParams.set('embedded', 'true')
-    return u.toString()
+    try {
+      const u = new URL(embedUrl)
+      u.searchParams.set('embedded', 'true')
+      return u.toString()
+    } catch {
+      return ''
+    }
   }, [embedUrl])
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
