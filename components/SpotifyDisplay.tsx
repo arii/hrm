@@ -198,11 +198,15 @@ const SpotifyDisplay = () => {
   )
 
   // Handler for immediate UI update while sliding
-  const handleVolumeChange = (newVolume: number) => {
-    lastUserInteractionRef.current = Date.now()
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
-    throttledSendVolumeCommand(newVolume)
-  }
+  const handleVolumeChange = useCallback(
+    (newVolume: number) => {
+      lastUserInteractionRef.current = Date.now()
+      dispatch({ type: 'SET_SLIDING', payload: true })
+      dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
+      throttledSendVolumeCommand(newVolume)
+    },
+    [throttledSendVolumeCommand]
+  )
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
