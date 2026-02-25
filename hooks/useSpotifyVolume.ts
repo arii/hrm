@@ -14,10 +14,6 @@ interface UseSpotifyVolumeProps {
   onLocalVolumeChange?: (volume: number) => void
 }
 
-/**
- * Custom hook to manage optimistic volume control for Spotify.
- * Handles interaction locks, throttling, and server synchronization.
- */
 export const useSpotifyVolume = ({
   serverVolume,
   targetDeviceId,
@@ -32,18 +28,22 @@ export const useSpotifyVolume = ({
   const lastUserInteractionRef = useRef<number>(0)
   const lastSentVolumeRef = useRef<string | null>(null)
 
-  // Autoritative sync from server
   useEffect(() => {
-    const isLocked =
-      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
+    const timeSinceInteraction = Date.now() - lastUserInteractionRef.current
+    const isLocked = timeSinceInteraction < SYNC_LOCK_DURATION
 
     if (isSliding || isLocked) {
+      if (isLocked && !isSliding) {
+        const timeout = setTimeout(
+          () => setLockExpiredTick((t) => t + 1),
+          SYNC_LOCK_DURATION - timeSinceInteraction + 50
+        )
+        return () => clearTimeout(timeout)
+      }
       return
     }
 
     if (typeof serverVolume === 'number' && serverVolume !== displayVolume) {
-      // Synchronous sync is required for some tests and immediate UI feedback.
-      // We accept the cascading render as it only happens when authoritative server state diverges.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayVolume(serverVolume)
       onLocalVolumeChange?.(serverVolume)
@@ -56,58 +56,32 @@ export const useSpotifyVolume = ({
     lockExpiredTick,
   ])
 
-  // Timer to trigger re-sync when lock expires
-  useEffect(() => {
-    const timeSinceInteraction = Date.now() - lastUserInteractionRef.current
-    if (timeSinceInteraction < SYNC_LOCK_DURATION) {
-      const timeout = setTimeout(
-        () => {
-          setLockExpiredTick((t) => t + 1)
-        },
-        SYNC_LOCK_DURATION - timeSinceInteraction + 50
-      ) // Small buffer
-      return () => clearTimeout(timeout)
-    }
-    return undefined
-  }, [displayVolume, isSliding])
-
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected' || !targetDeviceId) return
-
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
-
-      // Avoid redundant commands
       if (lastSentVolumeRef.current === messageKey) return
 
       lastUserInteractionRef.current = Date.now()
-
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
         deviceId: targetDeviceId,
       })
-
       lastSentVolumeRef.current = messageKey
     },
     [connectionStatus, targetDeviceId, executeSpotify]
   )
 
-  // Stable reference for throttled function to avoid re-creation and lint issues
-  const sendVolumeCommandRef = useRef(sendVolumeCommand)
+  const sendRef = useRef(sendVolumeCommand)
   useEffect(() => {
-    sendVolumeCommandRef.current = sendVolumeCommand
+    sendRef.current = sendVolumeCommand
   }, [sendVolumeCommand])
 
-  // Use a ref for the throttled function and initialize in useEffect to avoid render access issues
   const throttledRef = useRef<ReturnType<typeof throttle>>(null)
   useEffect(() => {
-    throttledRef.current = throttle((val: number) => {
-      sendVolumeCommandRef.current(val)
-    }, 200)
-    return () => {
-      throttledRef.current?.cancel()
-    }
+    throttledRef.current = throttle((val: number) => sendRef.current(val), 200)
+    return () => throttledRef.current?.cancel()
   }, [])
 
   const handleVolumeChange = useCallback(
@@ -125,12 +99,11 @@ export const useSpotifyVolume = ({
     (newVolume: number) => {
       setIsSliding(false)
       lastUserInteractionRef.current = Date.now()
-      sendVolumeCommand(newVolume) // Final authoritative update
+      sendVolumeCommand(newVolume)
     },
     [sendVolumeCommand]
   )
 
-  // Reset lastSentVolumeRef on disconnect to allow resending same volume on reconnect
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
       lastSentVolumeRef.current = null

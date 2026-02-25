@@ -90,31 +90,12 @@ export const WebSocketProvider = ({
   // In test environment, we use 0ms throttle to ensure deterministic state for VRT.
   const THROTTLE_MS = process.env.NODE_ENV === 'test' ? 0 : 100
 
-  const throttledHrmDispatch = useMemo(
-    () =>
-      throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS, {
-        leading: true,
-        trailing: true,
-      }),
+  const throttledDispatch = useMemo(
+    () => throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS),
     [dispatch, THROTTLE_MS]
   )
 
-  const throttledTimerDispatch = useMemo(
-    () =>
-      throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS, {
-        leading: true,
-        trailing: true,
-      }),
-    [dispatch, THROTTLE_MS]
-  )
-
-  // Cleanup throttles on unmount
-  useEffect(() => {
-    return () => {
-      throttledHrmDispatch.cancel()
-      throttledTimerDispatch.cancel()
-    }
-  }, [throttledHrmDispatch, throttledTimerDispatch])
+  useEffect(() => () => throttledDispatch.cancel(), [throttledDispatch])
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -132,7 +113,8 @@ export const WebSocketProvider = ({
       if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
           ...window.__TEST_CONTROLS__,
-          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) => dispatch(msg),
+          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) =>
+            dispatch(msg),
         }
       }
     }
@@ -285,20 +267,13 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Heartbeat pong check
         if (message.type === 'PONG') {
-          if (pongTimeoutRef.current) {
-            clearTimeout(pongTimeoutRef.current)
-          }
-          return // Pong message is handled, no state dispatch needed
+          if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
+          return
         }
 
-        // Dispatch high-frequency updates with independent throttling to prevent data loss.
-        // Low-frequency updates (Spotify, Alerts) are dispatched immediately.
-        if (message.type === 'HRM_UPDATE') {
-          throttledHrmDispatch(message)
-        } else if (message.type === 'TIMER_UPDATE') {
-          throttledTimerDispatch(message)
+        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
+          throttledDispatch(message)
         } else {
           dispatch(message)
         }
@@ -309,7 +284,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [wsUrl, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, startHeartbeat, stopHeartbeat, throttledDispatch])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
