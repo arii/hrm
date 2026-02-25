@@ -325,7 +325,7 @@ const SpotifyControls = () => {
               onToggleMute={toggleMute}
               showValue
               size="medium"
-              sx={{ mt: 3, mb: 1 }}
+              sx={{ mt: 3, mb: 1, minWidth: 250 }}
             />
 
             {devices.length > 0 && (

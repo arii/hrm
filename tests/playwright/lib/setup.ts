@@ -136,6 +136,22 @@ export async function navigateAndWait(
     }
   })
 
+  // Stabilize VRT by disabling animations, transitions, and backdrop filters
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      [data-testid="main-content-layout"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    `,
+  })
+
   await waitForPageReady(page)
 }
 
@@ -195,19 +211,11 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel
-  const baseUrl = getBaseURL()
+  // Navigate all pages to their respective routes in parallel and stabilize
   await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
-    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
-    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
-  ])
-
-  // Wait for all pages to be fully loaded and idle
-  await Promise.all([
-    waitForPageReady(dashboardPage),
-    waitForPageReady(controlPage),
-    waitForPageReady(mockPage),
+    navigateAndWait(dashboardPage, HRM_ROUTES.DASHBOARD),
+    navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
+    navigateAndWait(mockPage, HRM_ROUTES.MOCK),
   ])
 
   // Wait for WebSocket connections to be established
