@@ -25,6 +25,7 @@ const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 const ROLLING_AVG_HISTORY_LENGTH = 5
 const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+const STABILITY_THRESHOLD_MS = 1500
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
@@ -77,6 +78,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
+  const [lastPeriodMs, setLastPeriodMs] = useState<number>(0)
+  const [consecutiveSlowPackets, setConsecutiveSlowPackets] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -188,6 +191,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
+          setLastPeriodMs(timeSinceLastData)
+
+          // If it's already past the stability threshold, count it as a slow packet
+          if (timeSinceLastData > STABILITY_THRESHOLD_MS) {
+            setConsecutiveSlowPackets((prev) => prev + 1)
+          }
         }
       }
 
@@ -243,6 +252,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
+    setLastPeriodMs(0)
+    setConsecutiveSlowPackets(0)
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -387,10 +398,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       typeof window !== 'undefined' &&
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
+      window.__TEST_CONTROLS__ = {
+        ...window.__TEST_CONTROLS__,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
+        setLastPeriodMs,
+        setConsecutiveSlowPackets,
       }
     }
 
@@ -411,9 +424,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         typeof window !== 'undefined' &&
         process.env.NEXT_PUBLIC_TESTING === 'true'
       ) {
-        if (window.TEST_CONTROLS) {
-          delete window.TEST_CONTROLS.setHrmStatus
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
+        if (window.__TEST_CONTROLS__) {
+          delete window.__TEST_CONTROLS__.setHrmStatus
+          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+          delete window.__TEST_CONTROLS__.setLastPeriodMs
+          delete window.__TEST_CONTROLS__.setConsecutiveSlowPackets
         }
       }
     }
@@ -548,6 +563,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
+              setLastPeriodMs(delta)
+
+              if (delta > STABILITY_THRESHOLD_MS) {
+                setConsecutiveSlowPackets((prev) => prev + 1)
+              } else {
+                setConsecutiveSlowPackets(0)
+              }
             }
 
             const e = event as Event
@@ -825,6 +847,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    lastPeriodMs,
+    consecutiveSlowPackets,
     connectionAttempted,
   }
 }

@@ -331,6 +331,75 @@ describe('useBluetoothHRM', () => {
       // Now the history should be [1050, 1000, 1000, 1000, 1050]
       // Average is (1050 + 1000 + 1000 + 1000 + 1050) / 5 = 1020
       expect(result.current.signalPeriodMs).toBe(1020)
+      expect(result.current.lastPeriodMs).toBe(1050)
+      expect(result.current.consecutiveSlowPackets).toBe(0)
+    })
+
+    it('should track consecutive slow packets', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+      let characteristicValueChangedCallback: (event: {
+        target: { value: DataView }
+      }) => void = () => {}
+
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn((_event, callback) => {
+          characteristicValueChangedCallback = callback
+        }),
+        removeEventListener: jest.fn(),
+      }
+
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+      }
+
+      mockGatt.connect.mockResolvedValue({
+        ...mockGatt,
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
+      })
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+
+      const now = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(now)
+
+      // First packet
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+
+      // Slow packet 1 (1600ms)
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1600)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.consecutiveSlowPackets).toBe(1)
+      expect(result.current.lastPeriodMs).toBe(1600)
+
+      // Slow packet 2 (1700ms)
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1600 + 1700)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.consecutiveSlowPackets).toBe(2)
+
+      // Normal packet (1000ms) - should reset
+      jest.spyOn(Date, 'now').mockReturnValue(now + 1600 + 1700 + 1000)
+      act(() => {
+        characteristicValueChangedCallback({
+          target: { value: new DataView(new ArrayBuffer(2)) },
+        })
+      })
+      expect(result.current.consecutiveSlowPackets).toBe(0)
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
@@ -398,6 +467,11 @@ describe('useBluetoothHRM', () => {
       // the second time with 3000ms (from now+1000 to now+4000).
       // History: [1000, 2000, 3000] -> Avg: 2000
       expect(result.current.signalPeriodMs).toBe(2000)
+      expect(result.current.lastPeriodMs).toBe(3000)
+      // Watchdog increments consecutiveSlowPackets
+      // 1st watchdog: now+3000 (timeSinceLastData=2000) -> +1
+      // 2nd watchdog: now+4000 (timeSinceLastData=3000) -> +1
+      expect(result.current.consecutiveSlowPackets).toBe(2)
 
       // A real packet arrives after the drop
       jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
