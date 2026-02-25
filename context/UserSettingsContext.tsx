@@ -78,7 +78,9 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   // Use the usePersistentStorage hook directly within the provider
   const [userPreferences, setUserPreferences] =
-    usePersistentStorage<UserPreferences>('user-prefs', DEFAULT_PREFERENCES)
+    usePersistentStorage<UserPreferences>('user-prefs', DEFAULT_PREFERENCES, {
+      enableCookieFallback: true,
+    })
 
   useEffect(() => {
     const migrated = migratePreferences(userPreferences)
