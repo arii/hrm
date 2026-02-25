@@ -310,17 +310,21 @@ jobs:
 
           Generate the unified diff for the changes described above.
           PROMPTEOF
-      - name: 'Gemini: Setup pnpm'
-        if: env.AGENT_PROVIDER == 'gemini'
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: 'Gemini: Enable Corepack'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: corepack enable
+
+      - name: 'Gemini: Setup pnpm'
+        if: env.AGENT_PROVIDER == 'gemini'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
 
       - name: 'Gemini: Install Dependencies'
         if: env.AGENT_PROVIDER == 'gemini'
