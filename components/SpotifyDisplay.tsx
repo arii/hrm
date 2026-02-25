@@ -7,6 +7,7 @@ import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -15,7 +16,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
@@ -133,7 +134,8 @@ const SpotifyDisplay = () => {
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   const hasActiveDevice =
-    !!selectedDeviceId || devices.some((device) => device.is_active)
+    !!selectedDeviceId ||
+    devices.some((device: SpotifyDevice) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -188,7 +190,8 @@ const SpotifyDisplay = () => {
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
-        selectedDeviceId || devices.find((device) => device.is_active)?.id
+        selectedDeviceId ||
+        devices.find((device: SpotifyDevice) => device.is_active)?.id
 
       // Refinement: Only attempt to send the command if a target device is identified.
       // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
@@ -240,14 +243,16 @@ const SpotifyDisplay = () => {
       }
       return
     }
-    const activeDevice = devices.find((device) => device.is_active)
+    const activeDevice = devices.find(
+      (device: SpotifyDevice) => device.is_active
+    )
     if (!selectedDeviceId && activeDevice) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
       return
     }
     if (
       selectedDeviceId &&
-      !devices.some((device) => device.id === selectedDeviceId)
+      !devices.some((device: SpotifyDevice) => device.id === selectedDeviceId)
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }

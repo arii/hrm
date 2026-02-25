@@ -18,6 +18,7 @@ import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
+import { SpotifyDevice } from '@/types/core'
 import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
@@ -54,7 +55,8 @@ const SpotifyControls = () => {
   const hrmDevice = useMemo(
     () =>
       devices.find(
-        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+        (d: SpotifyDevice) =>
+          d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
       ),
     [devices]
   )
@@ -76,7 +78,8 @@ const SpotifyControls = () => {
     !['', 'Awaiting Login...', 'No Track Playing'].includes(track.name)
   )
   const shouldShowControls =
-    spotifyServiceInitialized && (hasTrack || devices.some((d) => d.is_active))
+    spotifyServiceInitialized &&
+    (hasTrack || devices.some((d: SpotifyDevice) => d.is_active))
 
   useEffect(() => {
     const refresh = () =>
@@ -90,7 +93,7 @@ const SpotifyControls = () => {
 
   // 4. Sync selected device and volume with active device
   useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
+    const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
     const activeId = activeDevice?.id
 
     // Helper: determine if device should be updated to activeId
@@ -100,7 +103,9 @@ const SpotifyControls = () => {
         return Boolean(activeId)
       }
       // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
+      const selectedStillExists = devices.some(
+        (d: SpotifyDevice) => d.id === selectedDeviceId
+      )
       return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
     }
 
@@ -151,7 +156,7 @@ const SpotifyControls = () => {
     if (
       devices.length > 0 &&
       !selectedDeviceId &&
-      !devices.some((d) => d.is_active) &&
+      !devices.some((d: SpotifyDevice) => d.is_active) &&
       hrmDevice
     ) {
       setSelectedDeviceId(hrmDevice.id)
@@ -161,7 +166,7 @@ const SpotifyControls = () => {
   const resolveTargetDeviceId = useCallback(() => {
     return (
       selectedDeviceId ||
-      devices.find((device) => device.is_active)?.id ||
+      devices.find((device: SpotifyDevice) => device.is_active)?.id ||
       hrmDevice?.id
     )
   }, [devices, selectedDeviceId, hrmDevice])
@@ -356,7 +361,7 @@ const SpotifyControls = () => {
                     }}
                     data-testid="spotify-device-select"
                   >
-                    {devices.map((d) => (
+                    {devices.map((d: SpotifyDevice) => (
                       <MenuItem
                         key={d.id}
                         value={d.id}
