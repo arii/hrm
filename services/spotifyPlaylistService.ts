@@ -1,6 +1,6 @@
 // Handles playlist-related operations for the standalone Spotify page.
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
-import { SpotifyPlaylistItem } from '../types/core'
+import { SpotifyPlaylist } from '../types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
 
 /**
@@ -9,7 +9,7 @@ import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
  */
 export async function getUserPlaylists(
   accessToken: string
-): Promise<SpotifyPlaylistItem[]> {
+): Promise<SpotifyPlaylist[]> {
   if (!accessToken) {
     console.warn('Cannot get user playlists: Access token is missing.')
     return []

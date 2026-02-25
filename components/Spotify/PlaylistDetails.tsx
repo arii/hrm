@@ -1,9 +1,11 @@
 // components/Spotify/PlaylistDetails.tsx
 import MusicNote from '@mui/icons-material/MusicNote'
+import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
@@ -11,6 +13,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { SpotifyPlaylistItem as Track } from '../../types/core'
+import { formatDuration } from '@/lib/utils'
 
 interface PlaylistDetailsProps {
   playlistId: string
@@ -101,16 +104,46 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           }
           scrollableTarget="scrollable-playlist"
         >
-          <List dense>
+          <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
             {tracks.map((track, index) => (
-              <ListItem key={`${track.id}-${index}`} divider disablePadding>
-                <ListItemButton onClick={() => onTrackPlay(track.uri)}>
-                  <MusicNote
-                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-                  />
+              <ListItem
+                key={`${track.id}-${index}`}
+                divider
+                disablePadding
+                secondaryAction={
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {formatDuration(track.duration_ms, {
+                      unit: 'milliseconds',
+                      format: 'MM:SS',
+                    })}
+                  </Typography>
+                }
+              >
+                <ListItemButton
+                  onClick={() => onTrackPlay(track.uri)}
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <ListItemAvatar sx={{ minWidth: 48 }}>
+                    <Avatar
+                      variant="rounded"
+                      src={track.album?.images?.[2]?.url}
+                      sx={{ width: 32, height: 32 }}
+                    >
+                      <MusicNote fontSize="small" />
+                    </Avatar>
+                  </ListItemAvatar>
                   <ListItemText
                     primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
+                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} • ${track.album.name}`}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      noWrap: true,
+                      fontWeight: 'medium',
+                    }}
+                    secondaryTypographyProps={{
+                      variant: 'caption',
+                      noWrap: true,
+                    }}
                   />
                 </ListItemButton>
               </ListItem>

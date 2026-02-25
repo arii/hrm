@@ -14,17 +14,17 @@ describe('PlaylistDetails', () => {
       id: '1',
       name: 'Track 1',
       uri: 'spotify:track:1',
+      duration_ms: 180000,
       artists: [{ name: 'Artist 1' }],
-      album: { name: 'Album 1' },
-      imageUrl: '',
+      album: { name: 'Album 1', images: [] },
     },
     {
       id: '2',
       name: 'Track 2',
       uri: 'spotify:track:2',
+      duration_ms: 240000,
       artists: [{ name: 'Artist 2' }],
-      album: { name: 'Album 2' },
-      imageUrl: '',
+      album: { name: 'Album 2', images: [] },
     },
   ]
 
@@ -77,11 +77,11 @@ describe('PlaylistDetails', () => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
     expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
+      screen.getByText('Artist 1 • Album 1', { exact: false })
     ).toBeInTheDocument()
     expect(screen.getByText('Track 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
+      screen.getByText('Artist 2 • Album 2', { exact: false })
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))
@@ -106,11 +106,11 @@ describe('PlaylistDetails', () => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
     expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
+      screen.getByText('Artist 1 • Album 1', { exact: false })
     ).toBeInTheDocument()
     expect(screen.getByText('Track 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
+      screen.getByText('Artist 2 • Album 2', { exact: false })
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))
