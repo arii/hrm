@@ -26,21 +26,15 @@ const SpotifyVolumeControl = ({
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
 
-  // Synchronize local volume state with the server's playback state.
-  // We use a grace period after sending a command to prevent "snap-back"
-  // (the slider jumping back to the old value before the server broadcasts the update).
   useEffect(() => {
     if (isSliding) return
 
     const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
-
     const shouldRespectGracePeriod =
       hasPendingSendRef.current &&
       timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
 
-    if (shouldRespectGracePeriod) {
-      return
-    }
+    if (shouldRespectGracePeriod) return
 
     if (
       hasPendingSendRef.current &&
@@ -49,14 +43,9 @@ const SpotifyVolumeControl = ({
       hasPendingSendRef.current = false
     }
 
-    if (typeof playbackVolume === 'number') {
-      if (playbackVolume !== volume) {
-        setVolume(playbackVolume)
-      }
+    if (typeof playbackVolume === 'number' && playbackVolume !== volume) {
+      setVolume(playbackVolume)
     }
-    // Justification: We intentionally only want to re-sync when playbackVolume (from server)
-    // or isSliding (local interaction) changes. Other dependencies like 'volume' would
-    // create an infinite loop because setVolume updates it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackVolume, isSliding])
 
