@@ -105,7 +105,11 @@ const spotifyDisplayReducer = (
   }
 }
 
-const SpotifyDisplay = () => {
+interface SpotifyDisplayProps {
+  isIntegrated?: boolean
+}
+
+const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
@@ -273,20 +277,20 @@ const SpotifyDisplay = () => {
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
+          px: isIntegrated ? { xs: 1, sm: 2 } : 3,
+          py: isIntegrated ? 0.5 : 1.5,
+          borderRadius: isIntegrated ? 0 : 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'fixed',
-          bottom: 56,
+          position: isIntegrated ? 'static' : 'fixed',
+          bottom: isIntegrated ? 'auto' : 56,
           left: 0,
           right: 0,
           zIndex: 1100,
-          boxShadow: 3,
+          boxShadow: isIntegrated ? 'none' : 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: isIntegrated ? '48px' : '64px',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -312,20 +316,20 @@ const SpotifyDisplay = () => {
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
-          px: { xs: 2, sm: 3 },
-          py: 1.5,
-          borderRadius: 2,
+          px: isIntegrated ? { xs: 1, sm: 2 } : { xs: 2, sm: 3 },
+          py: isIntegrated ? 0.5 : 1.5,
+          borderRadius: isIntegrated ? 0 : 2,
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
-          position: 'fixed',
-          bottom: 56,
+          position: isIntegrated ? 'static' : 'fixed',
+          bottom: isIntegrated ? 'auto' : 56,
           left: 0,
           right: 0,
           zIndex: 1100,
-          boxShadow: 3,
+          boxShadow: isIntegrated ? 'none' : 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: isIntegrated ? '48px' : '64px',
         }}
       >
         <Box
