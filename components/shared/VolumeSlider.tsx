@@ -1,7 +1,14 @@
 // components/shared/VolumeSlider.tsx
 'use client'
 import React, { memo, useCallback } from 'react'
-import { IconButton, Slider, Stack, Typography } from '@mui/material'
+import {
+  IconButton,
+  Slider,
+  Stack,
+  Typography,
+  SxProps,
+  Theme,
+} from '@mui/material'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {
@@ -14,6 +21,7 @@ interface VolumeSliderProps {
   sliderColor?: string
   size?: 'small' | 'medium'
   disabled?: boolean
+  sx?: SxProps<Theme>
 }
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
@@ -23,9 +31,10 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   onVolumeChangeCommitted,
   onToggleMute,
   showValue = false,
-  sliderColor = '#1DB954', // Default to Spotify green
+  sliderColor = '#1DB954',
   size = 'small',
   disabled = false,
+  sx = {},
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event | React.SyntheticEvent, value: number | number[]) => {
@@ -48,12 +57,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       direction="row"
       spacing={2}
       alignItems="center"
-      sx={{
-        flexGrow: 1,
-        width: '100%',
-        minWidth: 250,
-        px: 1,
-      }}
+      sx={{ flexGrow: 1, width: '100%', minWidth: 250, px: 1, ...sx }}
       data-testid="volume-slider-container"
     >
       <IconButton
@@ -78,8 +82,6 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
-        min={0}
-        max={100}
         size={size}
         disabled={disabled}
         sx={{
@@ -94,8 +96,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
               boxShadow: '0 0 0 8px rgba(29, 185, 84, 0.16)',
             },
           },
-          '& .MuiSlider-track': { height: 6 },
-          '& .MuiSlider-rail': { height: 6, opacity: 0.3 },
+          '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
+          '& .MuiSlider-rail': { opacity: 0.3 },
         }}
         aria-label="Volume control"
         data-testid="volume-slider-input"
