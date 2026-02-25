@@ -54,6 +54,9 @@ const SpotifyVolumeControl = ({
         setVolume(playbackVolume)
       }
     }
+    // Justification: We intentionally only want to re-sync when playbackVolume (from server)
+    // or isSliding (local interaction) changes. Other dependencies like 'volume' would
+    // create an infinite loop because setVolume updates it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackVolume, isSliding])
 

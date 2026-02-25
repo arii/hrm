@@ -41,10 +41,9 @@ const SpotifyControls = () => {
   )
 
   const handleTrackSelect = (uri: string) => {
-    const targetDeviceId = resolveTargetDeviceId()
     executeSpotify('PLAY', {
       uri: uri,
-      deviceId: targetDeviceId,
+      deviceId: selectedDeviceId,
     })
   }
 
@@ -66,23 +65,13 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  const resolveTargetDeviceId = useCallback(() => {
-    return (
-      selectedDeviceId ||
-      devices.find((device) => device.is_active)?.id ||
-      hrmDevice?.id
-    )
-  }, [devices, selectedDeviceId, hrmDevice])
-
   const sendSpotifyCommand = useCallback(
     (
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
       const deviceId =
-        overriddenDeviceId !== undefined
-          ? overriddenDeviceId
-          : resolveTargetDeviceId()
+        overriddenDeviceId !== undefined ? overriddenDeviceId : selectedDeviceId
 
       switch (command) {
         case 'PLAY':
@@ -104,7 +93,7 @@ const SpotifyControls = () => {
           break
       }
     },
-    [resolveTargetDeviceId, executeSpotify]
+    [selectedDeviceId, executeSpotify]
   )
 
   const handlePlaybackCommand = useCallback(
@@ -122,7 +111,6 @@ const SpotifyControls = () => {
   )
 
   const activeDevice = devices.find((d) => d.is_active)
-  const targetDeviceId = resolveTargetDeviceId()
 
   return (
     <ControlCard
@@ -168,7 +156,7 @@ const SpotifyControls = () => {
               playbackVolume={
                 activeDevice ? spotifyData.playback.volume_percent : undefined
               }
-              targetDeviceId={targetDeviceId}
+              targetDeviceId={selectedDeviceId}
               isConnected={connectionStatus === 'Connected'}
             />
 

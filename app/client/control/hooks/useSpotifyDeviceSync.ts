@@ -28,6 +28,9 @@ export const useSpotifyDeviceSync = (
     }
 
     if (shouldUpdateToActive()) {
+      // Justification: Synchronizing local selection state with the server-driven active device.
+      // This is necessary to ensure the UI reflects the current playback target accurately
+      // when it changes externally, and it is guarded by `shouldUpdateToActive` to prevent loops.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDeviceId(activeId!)
     }
@@ -42,6 +45,8 @@ export const useSpotifyDeviceSync = (
       !devices.some((d) => d.is_active) &&
       hrmDevice
     ) {
+      // Justification: Enforcing the HRM Web Player as the default fallback when no other
+      // device is active or selected. This ensures a valid target is always available.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDeviceId(hrmDevice.id)
     }
