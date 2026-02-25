@@ -60,7 +60,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       sx={{
         flexGrow: 1,
         width: '100%',
-        minWidth: 150,
+        minWidth: { xs: 150, md: 250 },
         px: 1,
         ...sx,
       }}

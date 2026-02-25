@@ -40,7 +40,10 @@ export async function checkAccessibility(target: Page | Locator) {
     try {
       await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
     } catch (error) {
-      console.warn('Failed to clean up accessibility uniqueId attribute:', error)
+      console.warn(
+        'Failed to clean up accessibility uniqueId attribute:',
+        error
+      )
     }
   }
 
