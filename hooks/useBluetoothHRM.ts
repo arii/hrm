@@ -77,10 +77,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
-  const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
-  const [lastPeriodMs, setLastPeriodMs] = useState<number>(0)
-  const [consecutiveSlowPackets, setConsecutiveSlowPackets] =
-    useState<number>(0)
+  const [signalPeriodMs, setSignalPeriodMs] = useState(0)
+  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -192,9 +190,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
-          setLastPeriodMs(timeSinceLastData)
-          if (timeSinceLastData > STABILITY_THRESHOLD_MS)
-            setConsecutiveSlowPackets((prev) => prev + 1)
+          setSignalStatus((s) => ({
+            last: timeSinceLastData,
+            slow: timeSinceLastData > STABILITY_THRESHOLD_MS ? s.slow + 1 : 0,
+          }))
         }
       }
 
@@ -250,8 +249,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
-    setLastPeriodMs(0)
-    setConsecutiveSlowPackets(0)
+    setSignalStatus({ last: 0, slow: 0 })
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -400,13 +398,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ...window.__TEST_CONTROLS__,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
-        setLastPeriodMs,
-        setConsecutiveSlowPackets,
+        setSignalStatus,
       }
     }
 
     return () => {
-      // Clean up the disconnected listener to prevent leaks across remounts
       if (deviceRef.current && activeDisconnectListenerRef.current) {
         deviceRef.current.removeEventListener(
           'gattserverdisconnected',
@@ -414,20 +410,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         activeDisconnectListenerRef.current = null
       }
-
-      // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-
       if (
         typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true'
+        process.env.NEXT_PUBLIC_TESTING === 'true' &&
+        window.__TEST_CONTROLS__
       ) {
-        if (window.__TEST_CONTROLS__) {
-          delete window.__TEST_CONTROLS__.setHrmStatus
-          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-          delete window.__TEST_CONTROLS__.setLastPeriodMs
-          delete window.__TEST_CONTROLS__.setConsecutiveSlowPackets
-        }
+        delete window.__TEST_CONTROLS__.setHrmStatus
+        delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+        delete window.__TEST_CONTROLS__.setSignalStatus
       }
     }
   }, [])
@@ -559,10 +550,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
-              setLastPeriodMs(delta)
-              setConsecutiveSlowPackets((p) =>
-                delta > STABILITY_THRESHOLD_MS ? p + 1 : 0
-              )
+              setSignalStatus((s) => ({
+                last: delta,
+                slow: delta > STABILITY_THRESHOLD_MS ? s.slow + 1 : 0,
+              }))
             }
 
             const e = event as Event
@@ -840,8 +831,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
-    lastPeriodMs,
-    consecutiveSlowPackets,
+    lastPeriodMs: signalStatus.last,
+    consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
   }
 }

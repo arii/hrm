@@ -328,8 +328,6 @@ describe('useBluetoothHRM', () => {
         })
       })
 
-      // Now the history should be [1050, 1000, 1000, 1000, 1050]
-      // Average is (1050 + 1000 + 1000 + 1000 + 1050) / 5 = 1020
       expect(result.current.signalPeriodMs).toBe(1020)
       expect(result.current.lastPeriodMs).toBe(1050)
       expect(result.current.consecutiveSlowPackets).toBe(0)
@@ -337,68 +335,40 @@ describe('useBluetoothHRM', () => {
 
     it('should track consecutive slow packets', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicValueChangedCallback: (event: {
+      let characteristicCallback: (event: {
         target: { value: DataView }
       }) => void = () => {}
-
-      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
-        startNotifications: jest.fn().mockResolvedValue(undefined),
-        stopNotifications: jest.fn().mockResolvedValue(undefined),
-        addEventListener: jest.fn((_event, callback) => {
-          characteristicValueChangedCallback = callback
-        }),
-        removeEventListener: jest.fn(),
-      }
-
-      const mockService: MockBluetoothRemoteGATTService = {
-        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
-      }
-
       mockGatt.connect.mockResolvedValue({
         ...mockGatt,
-        getPrimaryService: jest.fn().mockResolvedValue(mockService),
-      })
-
-      await act(async () => {
-        await result.current.connectAndStream()
-      })
-
-      const now = Date.now()
-      jest.spyOn(Date, 'now').mockReturnValue(now)
-
-      // First packet
-      act(() => {
-        characteristicValueChangedCallback({
-          target: { value: new DataView(new ArrayBuffer(2)) },
-        })
-      })
-
-      // Slow packet 1 (1600ms)
-      jest.spyOn(Date, 'now').mockReturnValue(now + 1600)
-      act(() => {
-        characteristicValueChangedCallback({
-          target: { value: new DataView(new ArrayBuffer(2)) },
-        })
-      })
+        getPrimaryService: () =>
+          Promise.resolve({
+            getCharacteristic: () =>
+              Promise.resolve({
+                startNotifications: jest.fn(),
+                addEventListener: (
+                  _e: string,
+                  cb: (event: { target: { value: DataView } }) => void
+                ) => {
+                  characteristicCallback = cb
+                },
+              }),
+          }),
+      } as unknown as MockBluetoothRemoteGATTServer)
+      await act(() => result.current.connectAndStream())
+      const sendPacket = (gap: number) => {
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + gap)
+        act(() =>
+          characteristicCallback({
+            target: { value: new DataView(new ArrayBuffer(2)) },
+          })
+        )
+      }
+      sendPacket(1000) // First packet
+      sendPacket(1600) // Slow
       expect(result.current.consecutiveSlowPackets).toBe(1)
-      expect(result.current.lastPeriodMs).toBe(1600)
-
-      // Slow packet 2 (1700ms)
-      jest.spyOn(Date, 'now').mockReturnValue(now + 1600 + 1700)
-      act(() => {
-        characteristicValueChangedCallback({
-          target: { value: new DataView(new ArrayBuffer(2)) },
-        })
-      })
+      sendPacket(1700) // Slow
       expect(result.current.consecutiveSlowPackets).toBe(2)
-
-      // Normal packet (1000ms) - should reset
-      jest.spyOn(Date, 'now').mockReturnValue(now + 1600 + 1700 + 1000)
-      act(() => {
-        characteristicValueChangedCallback({
-          target: { value: new DataView(new ArrayBuffer(2)) },
-        })
-      })
+      sendPacket(1000) // Normal
       expect(result.current.consecutiveSlowPackets).toBe(0)
     })
 

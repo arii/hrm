@@ -193,9 +193,8 @@ export default function ConnectPage() {
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
   useEffect(() => {
-    if (consecutiveSlowPackets >= 3) {
+    if (consecutiveSlowPackets === 3)
       showWarning('HRM Signal Weak: Check device placement')
-    }
   }, [consecutiveSlowPackets, showWarning])
 
   const handleConnect = () => {
