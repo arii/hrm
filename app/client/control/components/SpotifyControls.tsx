@@ -62,38 +62,22 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData = useMemo(() => {
-    const trackName = spotifyData.playback.track.name
-    return (
-      trackName !== 'Awaiting Login...' &&
-      trackName !== '' &&
-      trackName !== 'No Track Playing'
-    )
-  }, [spotifyData.playback.track.name])
-
-  const hasActiveDevice = useMemo(
-    () => devices.some((d) => d.is_active),
-    [devices]
+  const { track } = spotifyData.playback
+  const hasTrack = !!(
+    track.name &&
+    !['', 'Awaiting Login...', 'No Track Playing'].includes(track.name)
   )
-
   const shouldShowControls =
-    spotifyServiceInitialized && (hasSpotifyData || hasActiveDevice)
+    spotifyServiceInitialized && (hasTrack || devices.some((d) => d.is_active))
 
-  // 3. Request devices on mount, connection, or window focus
   useEffect(() => {
-    const refreshDevices = () => {
-      if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-        sendData({
-          type: 'SPOTIFY_COMMAND',
-          command: 'GET_DEVICES',
-        })
-      }
-    }
-
-    refreshDevices()
-
-    window.addEventListener('focus', refreshDevices)
-    return () => window.removeEventListener('focus', refreshDevices)
+    const refresh = () =>
+      connectionStatus === 'Connected' &&
+      spotifyServiceInitialized &&
+      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+    refresh()
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Sync selected device and volume with active device
@@ -315,37 +299,32 @@ const SpotifyControls = () => {
                 justifyContent: 'center',
               }}
             >
-              <>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 'medium', lineHeight: 1.2 }}
-                >
-                  {spotifyData.playback.track.name}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'grey.400', lineHeight: 1.2 }}
-                >
-                  {spotifyData.playback.track.artist}
-                </Typography>
-              </>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 'medium', lineHeight: 1.2 }}
+              >
+                {track.name}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: 'grey.400', lineHeight: 1.2 }}
+              >
+                {track.artist}
+              </Typography>
             </Box>
-
             <PlaybackControls
               isPlaying={spotifyData.playback.is_playing}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />
-
             <VolumeSlider
               volume={volume}
               muted={muted}
               onVolumeChange={handleVolumeChange}
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
-              showValue={true}
+              showValue
             />
-
             {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
@@ -355,11 +334,9 @@ const SpotifyControls = () => {
                   <Select
                     value={selectedDeviceId}
                     onChange={(e) => {
-                      const deviceId = e.target.value
-                      setSelectedDeviceId(deviceId)
-                      if (deviceId) {
-                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-                      }
+                      const id = e.target.value as string
+                      setSelectedDeviceId(id)
+                      if (id) sendSpotifyCommand('TRANSFER_PLAYBACK', id)
                     }}
                     disabled={connectionStatus !== 'Connected'}
                     sx={{
@@ -367,19 +344,17 @@ const SpotifyControls = () => {
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: 'grey.600',
                       },
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      },
+                      '& .MuiSvgIcon-root': { color: 'white' },
                     }}
                     data-testid="spotify-device-select"
                   >
-                    {devices.map((device) => (
+                    {devices.map((d) => (
                       <MenuItem
-                        key={device.id}
-                        value={device.id}
-                        data-testid={`spotify-device-select-option-${device.id}`}
+                        key={d.id}
+                        value={d.id}
+                        data-testid={`spotify-device-select-option-${d.id}`}
                       >
-                        {device.name} {device.is_active && '(Active)'}
+                        {d.name} {d.is_active && '(Active)'}
                       </MenuItem>
                     ))}
                   </Select>
@@ -391,7 +366,12 @@ const SpotifyControls = () => {
               size="small"
               startIcon={<LibraryMusic />}
               onClick={handleBrowseClick}
-              sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+              sx={{
+                mt: 2,
+                borderColor: 'grey.600',
+                color: 'grey.300',
+                textTransform: 'none',
+              }}
               data-testid="spotify-select-playlist-button"
             >
               Select Playlist
@@ -403,9 +383,9 @@ const SpotifyControls = () => {
             data-testid="spotify-select-music-button"
             fullWidth
             variant="contained"
-            disabled={spotifyServiceInitialized && devices.length === 0}
+            disabled={spotifyServiceInitialized && !devices.length}
             startIcon={
-              spotifyServiceInitialized && devices.length === 0 ? (
+              spotifyServiceInitialized && !devices.length ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
                 <LibraryMusic />
@@ -414,16 +394,15 @@ const SpotifyControls = () => {
             sx={{
               textTransform: 'none',
               py: 1.5,
-              backgroundColor: '#1DB954',
-              '&:hover': { backgroundColor: '#1ed760' },
+              bgcolor: '#1DB954',
+              '&:hover': { bgcolor: '#1ed760' },
               '&.Mui-disabled': {
-                backgroundColor: 'rgba(29, 185, 84, 0.3)',
+                bgcolor: 'rgba(29, 185, 84, 0.3)',
                 color: 'rgba(255, 255, 255, 0.5)',
               },
             }}
-            aria-disabled={spotifyServiceInitialized && devices.length === 0}
           >
-            {spotifyServiceInitialized && devices.length === 0
+            {spotifyServiceInitialized && !devices.length
               ? 'Searching for devices...'
               : 'Connect to HRM Web Player'}
           </Button>

@@ -49,11 +49,15 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('select music button hover state', async () => {
-      const selectMusicButton = controlPage.getByRole('button', {
-        name: 'Select Music',
+      await controlPage.evaluate(() => {
+        window.__TEST_CONTROLS__.dispatch({
+          type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+          payload: false,
+        })
       })
-      await selectMusicButton.hover()
-      await takeScreenshot(selectMusicButton, 'select-music-button-hover.png', {
+      const button = controlPage.getByTestId('spotify-select-music-button')
+      await button.hover()
+      await takeScreenshot(button, 'select-music-button-hover.png', {
         skipA11y: true,
       })
     })

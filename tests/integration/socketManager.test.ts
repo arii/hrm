@@ -198,7 +198,9 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    expect(clientData?.name).toBeUndefined()
+    // In test environment, the server initializes new sessions with a default name
+    // to pass the server-side filters.
+    expect(clientData?.name).toBe('Test Athlete')
     expect(clientData?.value).toBe(0)
 
     ws2.close()
