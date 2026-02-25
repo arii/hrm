@@ -13,8 +13,9 @@ export interface TestControls {
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
 
   // From WebSocketProvider context
-  dispatch?: (message: ServerMessage) => void
+  dispatch?: (message: ServerMessage | { type: 'RESET_STATE' }) => void
   disconnect?: () => void
+  connect?: () => void
 }
 
 declare global {

@@ -9,7 +9,7 @@ import { BluetoothConnectionStatus } from '../../types/bluetooth'
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
-    await connectPage.goto('/client/connect')
+    await connectPage.goto('/client/connect?testing=true')
     await waitForPageReady(connectPage, { timeout: VRT_TIMEOUTS.STANDARD })
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')

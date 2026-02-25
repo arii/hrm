@@ -19,21 +19,22 @@ import {
 } from './waits'
 
 /**
- * Common routes used in HRM testing
+ * Common routes used in HRM testing.
+ * Appends ?testing=true to ensure test controls are initialized.
  */
 export const HRM_ROUTES = {
   /** Main dashboard/viewer page */
-  DASHBOARD: '/',
+  DASHBOARD: '/?testing=true',
   /** Experimental analytics page */
-  EXPERIMENTAL: '/client/experimental',
+  EXPERIMENTAL: '/client/experimental?testing=true',
   /** Control panel for timer and music */
-  CONTROL: '/client/control',
+  CONTROL: '/client/control?testing=true',
   /** Mock HRM client for testing */
-  MOCK: '/client/mock',
+  MOCK: '/client/mock?testing=true',
   /** Connect page for device pairing */
-  CONNECT: '/client/connect',
+  CONNECT: '/client/connect?testing=true',
   /** Debug page for Spotify */
-  DEBUG_SPOTIFY: '/debug/spotify',
+  DEBUG_SPOTIFY: '/debug/spotify?testing=true',
 } as const
 
 /**
@@ -129,9 +130,7 @@ export async function navigateAndWait(
 
   // Force disconnect to remove HrmConnectionPanel skeleton
   await page.evaluate(() => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    if (window.__TEST_CONTROLS__) {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    if (window.__TEST_CONTROLS__?.disconnect) {
       window.__TEST_CONTROLS__.disconnect()
     }
   })
@@ -258,10 +257,6 @@ export async function prepareVrtEnvironment(...pages: Page[]): Promise<void> {
           [data-testid="timer-controls"] {
             opacity: 1 !important;
             transform: none !important;
-          }
-          /* Stabilize dashboard height in VRT */
-          [data-testid="dashboard"] {
-            min-height: auto !important;
           }
         `,
       })
