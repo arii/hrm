@@ -95,7 +95,6 @@ const spotifyDisplayReducer = (
       return {
         ...state,
         selectedDeviceId: action.payload,
-        deviceMenuAnchor: null,
       }
     case 'OPEN_DEVICE_MENU':
       return { ...state, deviceMenuAnchor: action.payload }
@@ -264,6 +263,7 @@ const SpotifyDisplay = () => {
 
   const handleDeviceSelect = (deviceId: string) => {
     dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+    dispatch({ type: 'CLOSE_DEVICE_MENU' })
     executeSpotify('TRANSFER_PLAYBACK', { deviceId })
   }
 

@@ -101,12 +101,6 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  const throttledDispatch = useRef(
-    throttle((message: ServerMessage) => {
-      dispatch(message)
-    }, 100)
-  ).current
-
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
@@ -287,13 +281,8 @@ export const WebSocketProvider = ({
           return // Pong message is handled, no state dispatch needed
         }
 
-        // Throttle high-frequency messages
-        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
-          throttledDispatch(message)
-        } else {
-          // Dispatch critical messages immediately
-          dispatch(message)
-        }
+        // Dispatch all messages immediately
+        dispatch(message)
       } catch (e) {
         logger.error('Failed to parse WebSocket message', {
           error: e,
@@ -301,7 +290,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
