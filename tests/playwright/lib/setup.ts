@@ -127,15 +127,6 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
-  // Force disconnect to remove HrmConnectionPanel skeleton
-  await page.evaluate(() => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    if (window.__TEST_CONTROLS__) {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__.disconnect()
-    }
-  })
-
   // Stabilize VRT by disabling animations, transitions, and backdrop filters
   await page.addStyleTag({
     content: `
@@ -218,11 +209,11 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     navigateAndWait(mockPage, HRM_ROUTES.MOCK),
   ])
 
-  // Wait for WebSocket connections to be established
+  // Wait for WebSocket connections to be established (longer timeout for CI stability)
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage),
-    waitForWebSocketConnection(controlPage),
-    waitForWebSocketConnection(mockPage),
+    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
+    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
+    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
