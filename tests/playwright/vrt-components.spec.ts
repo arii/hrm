@@ -110,6 +110,11 @@ test.describe('Component-Specific VRT', () => {
     const selectorButton = dashboardPage.getByTestId(
       'spotify-device-selector-button'
     )
+    // Ensure the integrated Spotify display is visible within the combined footer
+    await expect(
+      dashboardPage.getByTestId('spotify-display-container')
+    ).toBeVisible({ timeout: VRT_TIMEOUTS.STANDARD })
+
     await expect(selectorButton).toBeVisible({
       timeout: VRT_TIMEOUTS.STANDARD,
     })
