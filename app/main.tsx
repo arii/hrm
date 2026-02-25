@@ -42,15 +42,13 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       sx={{
                         pb: `${footerHeight}px`,
                         minHeight: '100vh',
-                        display: 'flex',
-                        flexDirection: 'column',
                       }}
                     >
                       {children}
-                      <Footer />
                     </Box>
                   </AnimatePresence>
                   <CombinedFooter onHeightChange={setFooterHeight} />
+                  <Footer />
                 </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>

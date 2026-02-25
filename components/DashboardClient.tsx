@@ -80,9 +80,7 @@ const DashboardClient = ({
         }}
       >
         <Box sx={mainGridStyles}>
-          <Box sx={{ height: '100%' }}>
-            <TimerDisplay />
-          </Box>
+          <TimerDisplay />
           <HrmConnectionPanel />
         </Box>
         <Box sx={{ width: '100%', mt: 2 }}>
