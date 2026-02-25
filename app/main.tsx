@@ -39,13 +39,18 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       exit="out"
                       data-testid="main-content-layout"
                       role="main"
-                      sx={{ pb: `${footerHeight}px`, minHeight: '100vh' }}
+                      sx={{
+                        pb: `${footerHeight}px`,
+                        minHeight: '100vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                      }}
                     >
                       {children}
+                      <Footer />
                     </Box>
                   </AnimatePresence>
                   <CombinedFooter onHeightChange={setFooterHeight} />
-                  <Footer />
                 </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>
