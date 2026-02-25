@@ -53,7 +53,10 @@ export const envObjectSchema = z.object({
     .int()
     .positive()
     .default(30000),
-  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8).catch(8),
+  NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce
+    .number()
+    .default(8)
+    .catch(8),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
   ANALYZE: booleanSchema.default(false),
   TESTING: booleanSchema.default(false),
