@@ -1,4 +1,3 @@
-// File: components/Playlist/PlaylistTracksDisplay.tsx
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -11,16 +10,11 @@ import IconButton from '@mui/material/IconButton'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
 import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemAvatar from '@mui/material/ListItemAvatar'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemText from '@mui/material/ListItemText'
-import Avatar from '@mui/material/Avatar'
-import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
-import { formatDuration } from '@/lib/utils'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
+import { SpotifyTrackItem } from '../Spotify/SpotifyTrackItem'
+import { formatDuration } from '@/lib/utils'
 
 interface PlaylistTracksDisplayProps {
   playlistId: string
@@ -65,26 +59,18 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handlePlayTrack = (playlistUri: string, position: number) => {
-    executeSpotify('PLAY', {
-      contextUri: playlistUri,
-      offset: { position },
-    })
-  }
-
-  const handlePause = () => {
-    executeSpotify('PAUSE')
-  }
-
-  const handleNextPage = () => {
-    if (offset + limit < total) {
-      setOffset(offset + limit)
-    }
-  }
-
-  const handlePreviousPage = () => {
-    if (offset - limit >= 0) {
-      setOffset(offset - limit)
+  const handleTogglePlay = (
+    _track: Track,
+    index: number,
+    isPlaying: boolean
+  ) => {
+    if (isPlaying) {
+      executeSpotify('PAUSE')
+    } else {
+      executeSpotify('PLAY', {
+        contextUri: `spotify:playlist:${playlistId}`,
+        offset: { position: index },
+      })
     }
   }
 
@@ -112,8 +98,6 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     )
   }
 
-  const playlistUri = `spotify:playlist:${playlistId}`
-
   return (
     <Box>
       <Paper>
@@ -122,13 +106,13 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
             const isPlaying =
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
-            const artistsString = track.artists.map((a) => a.name).join(', ')
 
             return (
-              <ListItem
+              <SpotifyTrackItem
                 key={track.id}
-                divider
-                disablePadding
+                track={track}
+                isPlaying={isPlaying}
+                onClick={() => handleTogglePlay(track, index, isPlaying)}
                 secondaryAction={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography
@@ -141,11 +125,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                       })}
                     </Typography>
                     <IconButton
-                      onClick={() =>
-                        isPlaying
-                          ? handlePause()
-                          : handlePlayTrack(playlistUri, index)
-                      }
+                      onClick={() => handleTogglePlay(track, index, isPlaying)}
                       aria-label={isPlaying ? 'Pause' : 'Play'}
                       edge="end"
                     >
@@ -153,54 +133,25 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     </IconButton>
                   </Box>
                 }
-                sx={{
-                  backgroundColor: isPlaying ? 'action.selected' : 'inherit',
-                }}
-              >
-                <ListItemButton
-                  onClick={() =>
-                    isPlaying
-                      ? handlePause()
-                      : handlePlayTrack(playlistUri, index)
-                  }
-                  sx={{ py: 0.5, px: 1 }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 48 }}>
-                    <Avatar
-                      variant="rounded"
-                      src={track.album?.images?.[2]?.url}
-                      sx={{ width: 32, height: 32 }}
-                    >
-                      <MusicNoteIcon fontSize="small" />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${artistsString} • ${track.album.name}`}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      noWrap: true,
-                      fontWeight: 'medium',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      noWrap: true,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
+              />
             )
           })}
         </List>
       </Paper>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-        <Button onClick={handlePreviousPage} disabled={offset === 0}>
+        <Button
+          onClick={() => setOffset(offset - limit)}
+          disabled={offset === 0}
+        >
           Previous
         </Button>
         <Typography>
           Showing {offset + 1}-{Math.min(offset + limit, total)} of {total}
         </Typography>
-        <Button onClick={handleNextPage} disabled={offset + limit >= total}>
+        <Button
+          onClick={() => setOffset(offset + limit)}
+          disabled={offset + limit >= total}
+        >
           Next
         </Button>
       </Box>
