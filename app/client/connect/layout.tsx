@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { BluetoothTestProvider } from '@/context/BluetoothTestContext'
 
 export const metadata: Metadata = {
   title: 'HRM Connect',
@@ -10,5 +11,5 @@ export default function ConnectLayout({
 }: {
   children: React.ReactNode
 }) {
-  return children
+  return <BluetoothTestProvider>{children}</BluetoothTestProvider>
 }

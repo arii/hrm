@@ -22,6 +22,7 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
+import { useBluetoothTestControls } from '@/context/BluetoothTestContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -389,20 +390,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const useIsomorphicLayoutEffect =
     typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
+  useBluetoothTestControls({
+    setHrmStatus: setStatus,
+    setCustomHrmStatusMessage: setCustomStatusMessage,
+  })
+
   useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
-
-    if (
-      typeof window !== 'undefined' &&
-      (process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
-    ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
-        setHrmStatus: setStatus,
-        setCustomHrmStatusMessage: setCustomStatusMessage,
-      }
-    }
 
     return () => {
       // Clean up the disconnected listener to prevent leaks across remounts
@@ -416,23 +410,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-
-      if (
-        typeof window !== 'undefined' &&
-        (process.env.NEXT_PUBLIC_TESTING === 'true' ||
-          (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
-      ) {
-        // Only delete if they are still the same functions we set
-        if (window.TEST_CONTROLS?.setHrmStatus === setStatus) {
-          delete window.TEST_CONTROLS.setHrmStatus
-        }
-        if (
-          window.TEST_CONTROLS?.setCustomHrmStatusMessage ===
-          setCustomStatusMessage
-        ) {
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
-        }
-      }
     }
   }, [])
 
