@@ -9,9 +9,10 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useInterval } from '@/hooks/useInterval'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -21,28 +22,6 @@ import { calculateMaxHr } from '@/utils/hrCalculations'
 import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 import { Gender } from '@/types/core'
 import MenuItem from '@mui/material/MenuItem'
-
-/**
- * Custom hook to handle intervals declaratively.
- * @param callback The function to call on every interval.
- * @param delay The delay in milliseconds, or null to stop the interval.
- */
-function useInterval(callback: () => void, delay: number | null) {
-  const savedCallback = useRef(callback)
-
-  // Remember the latest callback.
-  useEffect(() => {
-    savedCallback.current = callback
-  }, [callback])
-
-  // Set up the interval.
-  useEffect(() => {
-    if (delay === null) return
-
-    const id = setInterval(() => savedCallback.current(), delay)
-    return () => clearInterval(id)
-  }, [delay])
-}
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()

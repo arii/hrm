@@ -124,17 +124,20 @@ const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
   value: z.number().nullable(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
-  zone: z
-    .enum([
-      'ZONE_0',
-      'ZONE_1',
-      'ZONE_2',
-      'ZONE_3',
-      'ZONE_4',
-      'ZONE_5',
-      'ZONE_6',
-    ])
-    .optional(),
+  zone: z.preprocess(
+    (val) => (typeof val === 'string' ? val.toUpperCase() : val),
+    z
+      .enum([
+        'ZONE_0',
+        'ZONE_1',
+        'ZONE_2',
+        'ZONE_3',
+        'ZONE_4',
+        'ZONE_5',
+        'ZONE_6',
+      ])
+      .optional()
+  ),
 })
 
 // Exported to support legacy consumers and maintain backward compatibility

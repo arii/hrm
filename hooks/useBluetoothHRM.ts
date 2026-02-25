@@ -4,6 +4,7 @@ import {
   useRef,
   useEffect,
   useLayoutEffect,
+  useContext,
 } from 'react'
 import {
   HrmMetadataUpdateMessage,
@@ -14,6 +15,7 @@ import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { BluetoothTestContext } from '@/context/BluetoothTestContext'
 import { cancellablePromise } from '@/utils/promise'
 import { getCookie, setCookie } from '@/utils/cookies'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
@@ -387,19 +389,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const useIsomorphicLayoutEffect =
     typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
+  const testContext = useContext(BluetoothTestContext)
+
   useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
+    let unregister: (() => void) | undefined
 
-    if (
-      typeof window !== 'undefined' &&
-      (process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
-    ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
-        setHrmStatus: setStatus,
-        setCustomHrmStatusMessage: setCustomStatusMessage,
-      }
+    if (testContext) {
+      unregister = testContext.registerControls({
+        setStatus,
+        setCustomStatusMessage,
+      })
     }
 
     return () => {
@@ -415,24 +415,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (
-        typeof window !== 'undefined' &&
-        (process.env.NEXT_PUBLIC_TESTING === 'true' ||
-          (window as unknown as { __TEST_MODE__?: boolean }).__TEST_MODE__)
-      ) {
-        // Only delete if they are still the same functions we set
-        if (window.TEST_CONTROLS?.setHrmStatus === setStatus) {
-          delete window.TEST_CONTROLS.setHrmStatus
-        }
-        if (
-          window.TEST_CONTROLS?.setCustomHrmStatusMessage ===
-          setCustomStatusMessage
-        ) {
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
-        }
+      if (unregister) {
+        unregister()
       }
     }
-  }, [])
+  }, [testContext])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
