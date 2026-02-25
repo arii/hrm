@@ -9,9 +9,12 @@ import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 test.describe('Component-Specific VRT', () => {
   test.beforeEach(async ({ dashboardPage }) => {
+    // Enforce desktop viewport to prevent height mismatches in screenshots
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -117,6 +120,9 @@ test.describe('Component-Specific VRT', () => {
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
+
+    // Ensure menu is stable and animations are finished before VRT/A11y
+    await dashboardPage.waitForTimeout(500)
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)

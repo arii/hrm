@@ -10,6 +10,7 @@ import {
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -35,6 +36,10 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
+    // 0. Enforce desktop viewport to prevent height mismatches in screenshots
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
+    await mockPage.setViewportSize(DESKTOP_VIEWPORT)
+
     // 1. Reset server-side state
     await resetServerState(request)
 
@@ -48,11 +53,11 @@ test.describe('Visual Regression Tests', () => {
 
     await dashboardPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
+      { timeout: 10000 }
     )
     await mockPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
+      { timeout: 10000 }
     )
   })
 

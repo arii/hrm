@@ -3,6 +3,7 @@ import { expect, test } from './fixtures'
 import { setupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -29,6 +30,10 @@ test.describe('Visual Regression Tests', () => {
 
   // Add a beforeEach hook to wait for the page to be ready before each test
   test.beforeEach(async () => {
+    // Enforce desktop viewport to prevent height mismatches in screenshots
+    await controlPage.setViewportSize(DESKTOP_VIEWPORT)
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
+
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
   })
