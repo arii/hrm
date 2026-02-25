@@ -31,7 +31,14 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
+  const {
+    devices = [],
+    playback = {
+      track: { name: '', artist: '' },
+      is_playing: false,
+      volume_percent: 0,
+    },
+  } = spotifyData || {}
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -62,7 +69,7 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const { track } = spotifyData.playback
+  const { track } = playback
   const hasTrack = !!(
     track.name &&
     !['', 'Awaiting Login...', 'No Track Playing'].includes(track.name)
@@ -104,7 +111,7 @@ const SpotifyControls = () => {
     // Sync Volume (if not dragging and not within grace period after send)
     // We rely on the server as the source of truth for volume, but use a grace period
     // to prevent local sliders from "jumping" while the user is actively adjusting them.
-    const playbackVolume = spotifyData.playback.volume_percent
+    const playbackVolume = playback.volume_percent
 
     if (isSliding) return
 
@@ -313,7 +320,7 @@ const SpotifyControls = () => {
               </Typography>
             </Box>
             <PlaybackControls
-              isPlaying={spotifyData.playback.is_playing}
+              isPlaying={playback.is_playing}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />
