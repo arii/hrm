@@ -363,4 +363,67 @@ describe('components/SpotifyControls', () => {
       })
     )
   })
+
+  it('shows playback controls when an active device exists even if no track is playing', () => {
+    const mockWebSocket = useWebSocket as jest.Mock
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            id: 'no-track',
+            name: 'No Track Playing',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            name: 'Device 1',
+            is_active: true,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    // NEW behavior (fixed): Should NOT show "Connect to HRM Web Player" button
+    expect(
+      screen.queryByText('Connect to HRM Web Player')
+    ).not.toBeInTheDocument()
+    // and should show playback controls
+    expect(screen.getByTestId('spotify-play-pause')).toBeInTheDocument()
+  })
+
+  it('shows searching state when service is initialized but no devices found', () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        devices: [],
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            ...createMockSpotifyData().playback.track,
+            name: 'No Track Playing',
+          },
+        },
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    expect(screen.getByText('Searching for devices...')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /searching for devices/i })
+    ).toBeDisabled()
+  })
 })

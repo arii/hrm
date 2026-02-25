@@ -4,6 +4,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
@@ -61,19 +62,38 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData =
-    spotifyData.playback.track.name !== 'Awaiting Login...' &&
-    spotifyData.playback.track.name !== '' &&
-    spotifyData.playback.track.name !== 'No Track Playing'
+  const hasSpotifyData = useMemo(() => {
+    const trackName = spotifyData.playback.track.name
+    return (
+      trackName !== 'Awaiting Login...' &&
+      trackName !== '' &&
+      trackName !== 'No Track Playing'
+    )
+  }, [spotifyData.playback.track.name])
 
-  // 3. Request devices on mount or connection
+  const hasActiveDevice = useMemo(
+    () => devices.some((d) => d.is_active),
+    [devices]
+  )
+
+  const shouldShowControls =
+    spotifyServiceInitialized && (hasSpotifyData || hasActiveDevice)
+
+  // 3. Request devices on mount, connection, or window focus
   useEffect(() => {
-    if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
-      })
+    const refreshDevices = () => {
+      if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
+        sendData({
+          type: 'SPOTIFY_COMMAND',
+          command: 'GET_DEVICES',
+        })
+      }
     }
+
+    refreshDevices()
+
+    window.addEventListener('focus', refreshDevices)
+    return () => window.removeEventListener('focus', refreshDevices)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Sync selected device and volume with active device
@@ -283,7 +303,7 @@ const SpotifyControls = () => {
           <SpotifySearchInput onTrackSelect={handleTrackSelect} />
         </Box>
 
-        {hasSpotifyData ? (
+        {shouldShowControls ? (
           <>
             <Box
               sx={{
@@ -381,8 +401,31 @@ const SpotifyControls = () => {
           <Button
             onClick={handleBrowseClick}
             data-testid="spotify-select-music-button"
+            fullWidth
+            variant="contained"
+            disabled={spotifyServiceInitialized && devices.length === 0}
+            startIcon={
+              spotifyServiceInitialized && devices.length === 0 ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <LibraryMusic />
+              )
+            }
+            sx={{
+              textTransform: 'none',
+              py: 1.5,
+              backgroundColor: '#1DB954',
+              '&:hover': { backgroundColor: '#1ed760' },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(29, 185, 84, 0.3)',
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
+            }}
+            aria-disabled={spotifyServiceInitialized && devices.length === 0}
           >
-            Select Music
+            {spotifyServiceInitialized && devices.length === 0
+              ? 'Searching for devices...'
+              : 'Connect to HRM Web Player'}
           </Button>
         )}
       </CardContent>
