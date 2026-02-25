@@ -102,7 +102,6 @@ const SpotifyControls = () => {
     // to prevent local sliders from "jumping" while the user is actively adjusting them.
     const playbackVolume = spotifyData.playback.volume_percent
 
-    // Block sync during active user interaction
     if (isSliding) return
 
     const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current

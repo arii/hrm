@@ -86,4 +86,27 @@ describe('components/shared/VolumeSlider', () => {
     expect(screen.getByText('75')).toBeInTheDocument()
     expect(screen.getByTestId('volume-slider-value')).toHaveTextContent('75')
   })
+
+  it('should call onVolumeChangeCommitted on keyup (keyboard accessibility)', () => {
+    const onVolumeChangeCommitted = jest.fn()
+    const onVolumeChange = jest.fn()
+    render(
+      <VolumeSlider
+        volume={50}
+        muted={false}
+        onVolumeChange={onVolumeChange}
+        onVolumeChangeCommitted={onVolumeChangeCommitted}
+        onToggleMute={() => {}}
+      />
+    )
+    const slider = screen.getByRole('slider')
+    slider.focus()
+    // Simulate arrow right press
+    fireEvent.keyDown(slider, { key: 'ArrowRight', code: 'ArrowRight' })
+
+    // Simulate key up
+    fireEvent.keyUp(slider, { key: 'ArrowRight', code: 'ArrowRight' })
+
+    expect(onVolumeChangeCommitted).toHaveBeenCalled()
+  })
 })
