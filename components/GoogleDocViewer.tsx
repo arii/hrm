@@ -25,6 +25,17 @@ interface GoogleDocViewerProps {
   onRefresh?: () => void
 }
 
+const getEmbedUrl = (url?: string) => {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    u.searchParams.set('embedded', 'true')
+    return u.toString()
+  } catch {
+    return ''
+  }
+}
+
 const GoogleDocViewer = ({
   title,
   embedUrl,
@@ -36,16 +47,7 @@ const GoogleDocViewer = ({
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  let finalEmbedUrl = ''
-  if (embedUrl) {
-    try {
-      const url = new URL(embedUrl)
-      url.searchParams.set('embedded', 'true')
-      finalEmbedUrl = url.toString()
-    } catch {
-      console.warn('Invalid embedUrl provided to GoogleDocViewer:', embedUrl)
-    }
-  }
+  const finalEmbedUrl = getEmbedUrl(embedUrl)
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
