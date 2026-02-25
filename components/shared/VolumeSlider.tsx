@@ -125,6 +125,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         disabled={disabled}
         sliderColor={sliderColor}
         aria-label="Volume control"
+        getAriaValueText={(value) => `${value}%`}
         data-testid="volume-slider-input"
       />
       <VolumeUp sx={{ color: 'grey.400' }} fontSize={size} />
