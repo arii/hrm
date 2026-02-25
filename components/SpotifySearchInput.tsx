@@ -33,6 +33,7 @@ interface SpotifySearchInputProps {
 
 const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const [query, setQuery] = useState('')
+  const [value, setValue] = useState<SpotifyTrack | string | null>(null)
   const [results, setResults] = useState<SpotifyTrack[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
@@ -85,6 +86,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
 
   const handleClear = () => {
     setQuery('')
+    setValue(null)
     setResults([])
     setHasSearched(false)
   }
@@ -93,6 +95,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
     <Box sx={{ width: '100%', maxWidth: 600, margin: '0 auto' }}>
       <Autocomplete
         freeSolo
+        disableClearable={false}
         options={results}
         getOptionLabel={(option) => {
           if (typeof option === 'string') return option
@@ -100,6 +103,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         }}
         filterOptions={(x) => x} // Results are already filtered by API
         loading={isLoading}
+        value={value}
         inputValue={query}
         onInputChange={(_, newInputValue) => {
           setQuery(newInputValue)
@@ -114,6 +118,8 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             onTrackSelect?.(newValue.uri)
             // Clear on select behavior
             handleClear()
+          } else {
+            setValue(newValue)
           }
         }}
         slotProps={{
