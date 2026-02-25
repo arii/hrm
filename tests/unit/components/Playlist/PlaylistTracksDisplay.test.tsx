@@ -123,6 +123,12 @@ describe('PlaylistTracksDisplay', () => {
     )
 
     const playButton = await screen.findByRole('button', { name: /play/i })
+
+    // Verify track info is rendered correctly in the high-density layout
+    expect(screen.getByText('Track 1')).toBeInTheDocument()
+    expect(screen.getByText(/Artist 1 • Album 1/)).toBeInTheDocument()
+    expect(screen.getByText('03:00')).toBeInTheDocument()
+
     fireEvent.click(playButton)
 
     expect(executeMock).toHaveBeenCalledWith(

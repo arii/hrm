@@ -121,9 +121,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
             const playlistUri = `spotify:playlist:${playlistId}`
-            const artistsString = Array.isArray(track.artists)
-              ? track.artists.map((a) => a.name).join(', ')
-              : track.artists
+            const artistsString = track.artists.map((a) => a.name).join(', ')
 
             return (
               <ListItem

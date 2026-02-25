@@ -7,6 +7,7 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 import { RouteContext } from '@/lib/types/index'
+import { Track } from '@spotify/web-api-ts-sdk'
 
 type SpotifyPagingParams =
   | 0
@@ -91,23 +92,22 @@ async function getPlaylistTracks(
   )
 
   const tracks = response.items
+    .filter(({ track }) => track !== null && track.type === 'track')
     .map(({ track }) => {
-      if (track === null || track.type !== 'track') {
-        return null
-      }
+      // At this point track is guaranteed to be a valid TrackObject
+      const t = track as Track
       return {
-        id: track.id,
-        name: track.name,
-        uri: track.uri,
-        duration_ms: track.duration_ms,
-        artists: track.artists.map((artist) => ({ name: artist.name })),
+        id: t.id,
+        name: t.name,
+        uri: t.uri,
+        duration_ms: t.duration_ms,
+        artists: t.artists.map((artist) => ({ name: artist.name })),
         album: {
-          name: track.album.name,
-          images: track.album.images || [],
+          name: t.album.name,
+          images: t.album.images || [],
         },
       }
     })
-    .filter(Boolean)
 
   return NextResponse.json({
     tracks,

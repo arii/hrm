@@ -28,11 +28,6 @@ describe('PlaylistDetails', () => {
     },
   ]
 
-  const mockTracksAsString = mockTracksAsArray.map((track) => ({
-    ...track,
-    artists: track.artists.map((a) => a.name).join(', '),
-  })) as unknown as Track[]
-
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -63,35 +58,6 @@ describe('PlaylistDetails', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ tracks: mockTracksAsArray }),
-    })
-    const onTrackPlay = jest.fn()
-
-    render(
-      <PlaylistDetails
-        playlistId="test-playlist-id"
-        onTrackPlay={onTrackPlay}
-      />
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText('Track 1')).toBeInTheDocument()
-    })
-    expect(
-      screen.getByText('Artist 1 • Album 1', { exact: false })
-    ).toBeInTheDocument()
-    expect(screen.getByText('Track 2')).toBeInTheDocument()
-    expect(
-      screen.getByText('Artist 2 • Album 2', { exact: false })
-    ).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('Track 1'))
-    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1')
-  })
-
-  it('displays the track list and handles play clicks when artists is a string', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
     })
     const onTrackPlay = jest.fn()
 

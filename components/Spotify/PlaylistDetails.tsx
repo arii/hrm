@@ -137,7 +137,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                   </ListItemAvatar>
                   <ListItemText
                     primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} • ${track.album.name}`}
+                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
                     primaryTypographyProps={{
                       variant: 'body2',
                       noWrap: true,
