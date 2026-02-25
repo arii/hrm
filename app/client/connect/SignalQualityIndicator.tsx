@@ -124,8 +124,8 @@ export const SignalQualityIndicator = ({
             {stability === 'Critical'
               ? 'Signal Lost'
               : stability === 'Warning'
-              ? 'Weak Signal'
-              : `${periodMs}ms`}
+                ? 'Weak Signal'
+                : `${periodMs}ms`}
           </Typography>
         )}
       </Box>

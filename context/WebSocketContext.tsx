@@ -15,12 +15,6 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 

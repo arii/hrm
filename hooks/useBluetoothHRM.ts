@@ -79,7 +79,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [lastPeriodMs, setLastPeriodMs] = useState<number>(0)
-  const [consecutiveSlowPackets, setConsecutiveSlowPackets] = useState<number>(0)
+  const [consecutiveSlowPackets, setConsecutiveSlowPackets] =
+    useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
