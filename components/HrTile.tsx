@@ -10,9 +10,9 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 import { HrTileProps } from '@/types'
+import { HR_TILE_MIN_HEIGHT } from '@/constants/layout'
 
 const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
-const HR_TILE_MIN_HEIGHT = 180
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
@@ -42,7 +42,7 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
     }}
   >
     <Typography
-      data-testid="live-hr-percent"
+      data-testid="bpm-percent"
       variant="h2"
       component="div"
       sx={{
@@ -101,7 +101,11 @@ const DataTier = ({
     }}
   >
     <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
-    <MetricItem value={Math.floor(calories)} label="KCAL" />
+    <MetricItem
+      value={Math.floor(calories)}
+      label="KCAL"
+      testId="calories-value"
+    />
   </Box>
 )
 
