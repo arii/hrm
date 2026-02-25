@@ -153,6 +153,11 @@ test.describe('Visual Regression Tests', () => {
           },
         ])
 
+        // Wait for connection to be re-established
+        await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(1, {
+          timeout: 10000,
+        })
+
         // Ensure the zone update happens via the mock controls if needed, but direct injection is safer
         // We still click the button to ensure the UI state on the mock page matches if we were using it for control
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
