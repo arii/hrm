@@ -132,7 +132,7 @@ export const WebSocketProvider = ({
       if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
           ...window.__TEST_CONTROLS__,
-          dispatch,
+          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) => dispatch(msg),
         }
       }
     }
@@ -332,8 +332,8 @@ export const WebSocketProvider = ({
     if (isTestEnvironment()) {
       window.__TEST_CONTROLS__ = {
         ...window.__TEST_CONTROLS__,
-        disconnect,
-        connect,
+        disconnect: () => disconnect(),
+        connect: () => connect(),
       }
     }
 
