@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest } from './lib'
+import { setupVisualRegressionTest, stabilizePageForVrt } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -31,6 +31,12 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
+
+    // Ensure pages are stabilized
+    await Promise.all([
+      stabilizePageForVrt(controlPage),
+      stabilizePageForVrt(dashboardPage),
+    ])
   })
 
   test.describe('TimerControls Component', () => {

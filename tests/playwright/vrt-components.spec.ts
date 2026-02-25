@@ -4,6 +4,7 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
+  stabilizePageForVrt,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -69,6 +70,13 @@ test.describe('Component-Specific VRT', () => {
     await mockLoggedInSession(context)
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
+    await stabilizePageForVrt(dashboardPage)
+
+    // Ensure the WebSocket is connected before mocking state
+    await dashboardPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 10000 }
+    )
 
     // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {

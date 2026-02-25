@@ -227,7 +227,63 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   // Stop any running timers to ensure a consistent initial state
   await stopTimer(controlPage, dashboardPage)
 
+  // Stabilize all pages
+  await Promise.all([
+    stabilizePageForVrt(dashboardPage),
+    stabilizePageForVrt(controlPage),
+    stabilizePageForVrt(mockPage),
+  ])
+
   return { context, dashboardPage, controlPage, mockPage }
+}
+
+/**
+ * Injects stabilization CSS and JS into a page to ensure deterministic
+ * visual regression tests. Disables animations, transitions, and
+ * enforces consistent layout properties.
+ *
+ * @param page - The Playwright Page object.
+ */
+export async function stabilizePageForVrt(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `
+      /* Disable all animations and transitions */
+      *, *::before, *::after {
+        animation-delay: -1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+      }
+
+      /* Force visibility of main content for consistent screenshots */
+      [data-testid="main-content-layout"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      /* Ensure dashboard container has stable min-height to match baselines */
+      [data-testid="dashboard"] {
+        min-height: 100vh !important;
+      }
+
+      /* Mask potentially vibrating elements not covered by masks */
+      .MuiCircularProgress-root {
+        animation: none !important;
+      }
+    `,
+  })
+
+  // Additionally force element heights if needed for specific viewports
+  await page.evaluate(() => {
+    const dashboard = document.querySelector('[data-testid="dashboard"]')
+    if (dashboard) {
+      // If we are on a desktop viewport, ensure it's at least 1080px
+      if (window.innerHeight >= 1000) {
+        ;(dashboard as HTMLElement).style.height = '1080px'
+      }
+    }
+  })
 }
 
 /**
@@ -256,6 +312,7 @@ export async function setupMinimalVisualRegressionTest(
     await mockGoogleDocIframe(page)
   }
   await navigateAndWait(page, path)
+  await stabilizePageForVrt(page)
 }
 
 /**

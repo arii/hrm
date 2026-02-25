@@ -110,6 +110,7 @@ export {
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,
+  stabilizePageForVrt,
   // Timer utilities
   stopTimer,
   configureTimer,

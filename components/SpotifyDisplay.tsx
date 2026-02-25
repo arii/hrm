@@ -110,15 +110,22 @@ const SpotifyDisplay = () => {
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
 
+  // Use defensive variables to handle partial or empty data from the WebSocket.
+  const playback = spotifyData?.playback
+  const devices = useMemo(
+    () => spotifyData?.devices || [],
+    [spotifyData?.devices]
+  )
+  const track = playback?.track || { name: 'Awaiting Login...', artist: '' }
+
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
-    displayVolume: spotifyData.playback.volume_percent ?? 70,
-    isMuted: spotifyData.playback.isMuted ?? false,
+    displayVolume: playback?.volume_percent ?? 70,
+    isMuted: playback?.isMuted ?? false,
     isSliding: false,
     lastVolume:
-      spotifyData.playback.volume_percent &&
-      spotifyData.playback.volume_percent > 0
-        ? spotifyData.playback.volume_percent
+      playback?.volume_percent && playback.volume_percent > 0
+        ? playback.volume_percent
         : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
@@ -126,8 +133,7 @@ const SpotifyDisplay = () => {
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   const hasActiveDevice =
-    !!selectedDeviceId ||
-    spotifyData.devices?.some((device) => device.is_active)
+    !!selectedDeviceId || devices.some((device) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -171,23 +177,18 @@ const SpotifyDisplay = () => {
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: {
-        volume: spotifyData.playback.volume_percent,
-        isMuted: spotifyData.playback.isMuted,
+        volume: playback?.volume_percent,
+        isMuted: playback?.isMuted,
       },
     })
-  }, [
-    spotifyData.playback.volume_percent,
-    spotifyData.playback.isMuted,
-    state.isSliding,
-  ])
+  }, [playback?.volume_percent, playback?.isMuted, state.isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
+        selectedDeviceId || devices.find((device) => device.is_active)?.id
 
       // Refinement: Only attempt to send the command if a target device is identified.
       // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
@@ -203,7 +204,7 @@ const SpotifyDisplay = () => {
         deviceId: targetDeviceId,
       })
     },
-    [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
+    [connectionStatus, selectedDeviceId, executeSpotify, devices]
   )
 
   // Handler for immediate UI update while sliding
@@ -233,7 +234,6 @@ const SpotifyDisplay = () => {
 
   // Effect to auto-select the active device
   useEffect(() => {
-    const devices = spotifyData.devices || []
     if (devices.length === 0) {
       if (selectedDeviceId !== '') {
         dispatch({ type: 'SELECT_DEVICE', payload: '' })
@@ -251,10 +251,10 @@ const SpotifyDisplay = () => {
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
-  }, [spotifyData.devices, selectedDeviceId])
+  }, [devices, selectedDeviceId])
 
   const handlePlayPauseToggle = () => {
-    if (spotifyData.playback.is_playing) {
+    if (playback?.is_playing) {
       executeSpotify('PAUSE')
     } else {
       executeSpotify('PLAY')
@@ -295,19 +295,15 @@ const SpotifyDisplay = () => {
   }
 
   if (isLoggedIn) {
-    const isWaiting = spotifyData.playback.track.name === 'Awaiting Login...'
-    const displayTrackName = isWaiting
-      ? 'No Active Playback'
-      : spotifyData.playback.track.name
-    const displayArtist = isWaiting
-      ? ''
-      : `— ${spotifyData.playback.track.artist}`
+    const isWaiting = track.name === 'Awaiting Login...'
+    const displayTrackName = isWaiting ? 'No Active Playback' : track.name
+    const displayArtist = isWaiting ? '' : `— ${track.artist}`
 
     return (
       <Box
         data-testid="spotify-display-container"
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.playback.is_playing ? 'Playing' : 'Paused'
+          playback?.is_playing ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
         sx={{
           backgroundColor: 'grey.900',
@@ -407,14 +403,10 @@ const SpotifyDisplay = () => {
               backgroundColor: 'grey.700',
               '&:hover': { backgroundColor: 'grey.600' },
             }}
-            aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
+            aria-label={playback?.is_playing ? 'Pause' : 'Play'}
             data-testid="spotify-play-pause-button"
           >
-            {spotifyData.playback.is_playing ? (
-              <PauseIcon />
-            ) : (
-              <PlayArrowIcon />
-            )}
+            {playback?.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
           <IconButton
             size="small"
@@ -448,7 +440,7 @@ const SpotifyDisplay = () => {
             disabled={!hasActiveDevice}
           />
           <SpotifyDeviceSelector
-            availableDevices={spotifyData.devices || []}
+            availableDevices={devices}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
             onMenuOpen={(e) =>
