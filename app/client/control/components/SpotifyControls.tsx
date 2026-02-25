@@ -16,7 +16,6 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { SpotifyCommand } from '@/types/websocket'
 import {
   HRM_WEB_PLAYER_NAME,
@@ -31,19 +30,16 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { player, isReady } = useSpotifyWebPlayback()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [isSyncingVolume, setIsSyncingVolume] = useState(false)
+  const [isSliding, setIsSliding] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
-  const volumeLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  )
+  const hasPendingSendRef = useRef<boolean>(false)
 
   const hrmDevice = useMemo(
     () =>
@@ -105,16 +101,34 @@ const SpotifyControls = () => {
     // We rely on the server as the source of truth for volume, but use a grace period
     // to prevent local sliders from "jumping" while the user is actively adjusting them.
     const playbackVolume = spotifyData.playback.volume_percent
-    if (activeDevice && typeof playbackVolume === 'number') {
-      const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
 
-      // Only sync if we haven't sent a volume command recently.
-      // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-      // confirming the new state to all clients.
-      if (timeSinceLastVolumeSend > VOLUME_SYNC_GRACE_PERIOD_MS) {
-        if (playbackVolume !== volume) {
-          setVolume(playbackVolume)
-        }
+    // Block sync during active user interaction
+    if (isSliding) return
+
+    const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
+
+    // Only sync if we haven't sent a volume command recently.
+    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
+    // confirming the new state to all clients.
+    const shouldRespectGracePeriod =
+      hasPendingSendRef.current &&
+      timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
+
+    if (shouldRespectGracePeriod) {
+      return
+    }
+
+    // Clear pending flag after grace period
+    if (
+      hasPendingSendRef.current &&
+      timeSinceLastVolumeSend >= VOLUME_SYNC_GRACE_PERIOD_MS
+    ) {
+      hasPendingSendRef.current = false
+    }
+
+    if (activeDevice && typeof playbackVolume === 'number') {
+      if (playbackVolume !== volume) {
+        setVolume(playbackVolume)
       }
     }
 
@@ -190,6 +204,7 @@ const SpotifyControls = () => {
 
   const handleVolumeChange = useCallback(
     (val: number) => {
+      setIsSliding(true)
       setVolume(val)
       if (connectionStatus !== 'Connected') {
         const now = Date.now()
@@ -205,7 +220,7 @@ const SpotifyControls = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected' || isSyncingVolume) return
+      if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
 
       // Prevent sending volume command if no device is targeted
@@ -215,57 +230,32 @@ const SpotifyControls = () => {
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
-      setIsSyncingVolume(true)
+      hasPendingSendRef.current = true
+      lastVolumeSyncTimeRef.current = Date.now()
+
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
         deviceId: targetDeviceId,
       })
 
       lastSentVolumeRef.current = messageKey
-      lastVolumeSyncTimeRef.current = Date.now()
-
-      // Release lock after a short delay to allow state to settle
-      if (volumeLockTimeoutRef.current) {
-        clearTimeout(volumeLockTimeoutRef.current)
-      }
-      volumeLockTimeoutRef.current = setTimeout(() => {
-        setIsSyncingVolume(false)
-        volumeLockTimeoutRef.current = null
-      }, 500)
     },
-    [connectionStatus, resolveTargetDeviceId, executeSpotify, isSyncingVolume]
+    [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  const debounceTimeoutRef = useRef<number | null>(null)
+  const handleVolumeChangeCommitted = useCallback(
+    (val: number) => {
+      setIsSliding(false)
+      sendVolumeCommand(val)
+    },
+    [sendVolumeCommand]
+  )
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
       lastSentVolumeRef.current = null
     }
   }, [connectionStatus])
-
-  useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimeoutRef.current) {
-      window.clearTimeout(debounceTimeoutRef.current)
-    }
-
-    // Set a new timer to send the volume command after 300ms
-    debounceTimeoutRef.current = window.setTimeout(() => {
-      sendVolumeCommand(volume)
-    }, 300)
-
-    // Cleanup function to clear the timeout if the component unmounts
-    // or if the volume changes again before the timeout has passed
-    return () => {
-      if (debounceTimeoutRef.current) {
-        window.clearTimeout(debounceTimeoutRef.current)
-      }
-      if (volumeLockTimeoutRef.current) {
-        clearTimeout(volumeLockTimeoutRef.current)
-      }
-    }
-  }, [volume, sendVolumeCommand])
 
   return (
     <ControlCard
@@ -306,26 +296,20 @@ const SpotifyControls = () => {
                 justifyContent: 'center',
               }}
             >
-              {player && !isReady ? (
-                <Typography variant="body2" sx={{ color: 'orange' }}>
-                  Registering HRM Web Player...
+              <>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 'medium', lineHeight: 1.2 }}
+                >
+                  {spotifyData.playback.track.name}
                 </Typography>
-              ) : (
-                <>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 'medium', lineHeight: 1.2 }}
-                  >
-                    {spotifyData.playback.track.name}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: 'grey.400', lineHeight: 1.2 }}
-                  >
-                    {spotifyData.playback.track.artist}
-                  </Typography>
-                </>
-              )}
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'grey.400', lineHeight: 1.2 }}
+                >
+                  {spotifyData.playback.track.artist}
+                </Typography>
+              </>
             </Box>
 
             <PlaybackControls
@@ -338,6 +322,7 @@ const SpotifyControls = () => {
               volume={volume}
               muted={muted}
               onVolumeChange={handleVolumeChange}
+              onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
               showValue={true}
             />
