@@ -789,39 +789,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) return
-
-    const savedDeviceId = Cookies.get('hrm_device_id')
-    if (!savedDeviceId) {
-      logger.info('No saved device ID found for auto-connect. Skipping.')
-      setConnectionAttempted(true)
-      return
-    }
-
+    // connectAndStream handles isConnecting guard and savedDeviceId check
+    setConnectionAttempted(true)
     try {
-      setConnectionAttempted(true)
-      setStatus(BluetoothConnectionStatus.CONNECTING)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
-
-      const deviceFoundAndAttempted = await connectAndStream(
-        undefined,
-        undefined,
-        { silent: true }
-      )
-
-      if (!deviceFoundAndAttempted) {
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
-        setCustomStatusMessage(null)
-      }
+      await connectAndStream(undefined, undefined, { silent: true })
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error)
-      logger.error({ error }, 'Auto-connect failed')
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      if (errorMsg.includes('No saved device ID')) {
-        setCustomStatusMessage(null)
-      } else {
+      if (!errorMsg.includes('No saved device ID')) {
+        logger.error({ error }, 'Auto-connect failed')
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
+      // Status is already reset in connectAndStream's catch block for silent connections
     }
   }, [connectAndStream])
 

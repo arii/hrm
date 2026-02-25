@@ -169,10 +169,7 @@ test.describe('Visual Regression Tests', () => {
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
         await expect(dashboardPage.getByTestId('bpm-value')).toHaveText(
-          new RegExp(bpm),
-          {
-            timeout: 10000, // Increased timeout for WebSocket sync in CI
-          }
+          new RegExp(bpm)
         )
 
         const dashboard = dashboardPage.getByTestId('dashboard')

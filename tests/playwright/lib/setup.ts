@@ -212,9 +212,9 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Wait for WebSocket connections to be established
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage, { timeout: 15000 }),
-    waitForWebSocketConnection(controlPage, { timeout: 15000 }),
-    waitForWebSocketConnection(mockPage, { timeout: 15000 }),
+    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
+    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
+    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
