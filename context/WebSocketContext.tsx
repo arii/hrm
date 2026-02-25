@@ -250,9 +250,12 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
+        // Heartbeat pong check
         if (message.type === 'PONG') {
-          if (pongTimeoutRef.current) clearTimeout(pongTimeoutRef.current)
-          return
+          if (pongTimeoutRef.current) {
+            clearTimeout(pongTimeoutRef.current)
+          }
+          return // Pong message is handled, no state dispatch needed
         }
 
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
@@ -288,9 +291,10 @@ export const WebSocketProvider = ({
       const savedActions = localStorage.getItem('pendingActions')
       if (savedActions) pendingActions.current = JSON.parse(savedActions)
 
+      // Expose test controls for E2E and unit testing
       if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
-          ...window.__TEST_CONTROLS__,
+          ...(window.__TEST_CONTROLS__ || {}),
           dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) =>
             dispatch(msg),
           disconnect: () => disconnect(),
