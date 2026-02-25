@@ -153,7 +153,7 @@ const SpotifySearchInput = ({
             </ListItemAvatar>
             <ListItemText
               primary={track.name}
-              secondary={`${track.artists[0]?.name || 'Unknown Artist'} • ${track.album.name}`}
+              secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
               primaryTypographyProps={{
                 noWrap: true,
                 variant: 'body2',
