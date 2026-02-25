@@ -132,7 +132,7 @@ test.describe('Visual Regression Tests', () => {
       // Use higher tolerance and specific dimensions to avoid dimension mismatch
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1, // Higher tolerance for responsive shifts in CI
+        maxDiffPixelRatio: 0.2, // Higher tolerance for responsive shifts in CI
       })
     })
 

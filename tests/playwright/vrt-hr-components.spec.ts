@@ -137,13 +137,20 @@ test.describe('Visual Regression Tests', () => {
       const zone = zones[i]
       const expectedBpm = zoneBpms[i]
       test(`dashboard with HR in Zone ${zone}`, async () => {
+        // Ensure the zone update happens
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
+        // Wait for the mock page input to reflect the update to confirm action was registered
+        await expect(mockPage.getByLabel('Current BPM')).toHaveValue(
+          String(expectedBpm),
+          { timeout: 5000 }
+        )
 
         // Wait for the dashboard to reflect the new BPM value and zone color
+        // Increased timeout to 10s to account for WebSocket latency in CI
         const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
           new RegExp(`^${expectedBpm}`),
-          { timeout: 5000 }
+          { timeout: 10000 }
         )
 
         const dashboard = dashboardPage.getByTestId('dashboard')
