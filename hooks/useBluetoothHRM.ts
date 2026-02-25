@@ -23,7 +23,7 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
-import { useBluetoothTestControls } from '@/context/BluetoothTestContext'
+import { useTestControls } from '@/hooks/useTestControls'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -399,7 +399,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     []
   )
 
-  useBluetoothTestControls(testControls)
+  useTestControls(testControls)
 
   useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
