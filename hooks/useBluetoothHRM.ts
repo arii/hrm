@@ -451,14 +451,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnecting.current) {
-        logger.warn(
-          { device: device.name },
-          'Connection already in progress. Skipping.'
-        )
-        return false
-      }
-
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
         logger.warn(
@@ -718,6 +710,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
+      if (isConnecting.current) {
+        logger.warn(
+          'Connection already in progress. Skipping connectAndStream.'
+        )
+        return false
+      }
+
       const { silent = false } = options
 
       userDetailsRef.current = {
@@ -732,6 +731,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw err
       }
 
+      isConnecting.current = true
       try {
         logger.info(
           { connectionStatus, savedDevice },
@@ -750,6 +750,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               { savedDeviceId },
               'Aborting silent connect: No saved device ID.'
             )
+            // Reset status before throwing to avoid UI stuck in connecting
+            setStatus(BluetoothConnectionStatus.DISCONNECTED)
+            setCustomStatusMessage(null)
             throw new Error('No saved device ID for silent connection.')
           }
 
@@ -818,12 +821,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
+          setCustomStatusMessage(null)
           throw error
         }
         if (!silent) {
           throw error
         }
         return false
+      } finally {
+        isConnecting.current = false
       }
     },
     [
@@ -838,6 +844,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const autoConnect = useCallback(async (): Promise<void> => {
     if (isConnecting.current) return
+
+    const savedDeviceId = Cookies.get('hrm_device_id')
+    if (!savedDeviceId) {
+      logger.info('No saved device ID found for auto-connect. Skipping.')
+      setConnectionAttempted(true)
+      return
+    }
 
     try {
       setConnectionAttempted(true)
