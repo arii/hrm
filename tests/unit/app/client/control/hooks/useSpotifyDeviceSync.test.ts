@@ -40,12 +40,17 @@ describe('useSpotifyDeviceSync', () => {
   })
 
   it('falls back to HRM Web Player if no device is active', () => {
-    const hrmDevice = createMockSpotifyDevice({ id: 'hrm', name: 'HRM Web Player' })
+    const hrmDevice = createMockSpotifyDevice({
+      id: 'hrm',
+      name: 'HRM Web Player',
+    })
     const devices = [
       createMockSpotifyDevice({ id: '1', name: 'Dev 1', is_active: false }),
       hrmDevice,
     ]
-    const { result } = renderHook(() => useSpotifyDeviceSync(devices, hrmDevice))
+    const { result } = renderHook(() =>
+      useSpotifyDeviceSync(devices, hrmDevice)
+    )
     expect(result.current.selectedDeviceId).toBe('hrm')
   })
 
