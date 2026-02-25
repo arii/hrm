@@ -52,7 +52,40 @@ describe('usePersistentStorage', () => {
     expect(Cookies.set).not.toHaveBeenCalled()
   })
 
-  it('should use cookies when localStorage is not available', () => {
+  it('should use cookies when localStorage is not available AND fallback is enabled', () => {
+    // Mock localStorage to be unavailable
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        setItem: () => {
+          throw new Error('Storage full')
+        },
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE, {
+        enableCookieFallback: true,
+      })
+    )
+
+    act(() => {
+      const [, setValue] = result.current
+      setValue(UPDATED_VALUE)
+    })
+
+    expect(Cookies.set).toHaveBeenCalledWith(
+      TEST_KEY,
+      JSON.stringify(UPDATED_VALUE),
+      expect.any(Object)
+    )
+  })
+
+  it('should NOT use cookies when localStorage is not available and fallback is disabled', () => {
     // Mock localStorage to be unavailable
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -76,11 +109,9 @@ describe('usePersistentStorage', () => {
       setValue(UPDATED_VALUE)
     })
 
-    expect(Cookies.set).toHaveBeenCalledWith(
-      TEST_KEY,
-      JSON.stringify(UPDATED_VALUE),
-      expect.any(Object)
-    )
+    expect(Cookies.set).not.toHaveBeenCalled()
+    // Should still update state (in-memory)
+    expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
 
   it('should not fallback to cookies when localStorage is available but write fails', () => {
@@ -103,7 +134,9 @@ describe('usePersistentStorage', () => {
     })
 
     const { result } = renderHook(() =>
-      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE, {
+        enableCookieFallback: true,
+      })
     )
 
     act(() => {
@@ -128,7 +161,7 @@ describe('usePersistentStorage', () => {
     expect(result.current[0]).toEqual(UPDATED_VALUE)
   })
 
-  it('should load initial value from cookies if localStorage is not available and cookies have value', () => {
+  it('should load initial value from cookies if localStorage is not available and cookies have value and fallback enabled', () => {
     // Mock localStorage to be unavailable
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -145,7 +178,9 @@ describe('usePersistentStorage', () => {
     ;(Cookies.get as jest.Mock).mockReturnValue(JSON.stringify(UPDATED_VALUE))
 
     const { result } = renderHook(() =>
-      usePersistentStorage(TEST_KEY, INITIAL_VALUE)
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE, {
+        enableCookieFallback: true,
+      })
     )
 
     expect(result.current[0]).toEqual(UPDATED_VALUE)
@@ -169,5 +204,50 @@ describe('usePersistentStorage', () => {
     rerender({ key: OTHER_KEY })
 
     expect(result.current[0]).toEqual({ ...INITIAL_VALUE, ...OTHER_VALUE })
+  })
+
+  it('should merge new fields from initialValue into stored value', () => {
+    const OLD_STORED_VALUE = { foo: 'bar' }
+    const NEW_INITIAL_VALUE = { foo: 'default', newField: 'newValue' }
+    // Expected: foo comes from storage (preserved), newField comes from initialValue
+    const EXPECTED_VALUE = { foo: 'bar', newField: 'newValue' }
+
+    window.localStorage.setItem(TEST_KEY, JSON.stringify(OLD_STORED_VALUE))
+
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, NEW_INITIAL_VALUE)
+    )
+
+    expect(result.current[0]).toEqual(EXPECTED_VALUE)
+
+    // Verify it updated storage with the merged value
+    expect(JSON.parse(window.localStorage.getItem(TEST_KEY)!)).toEqual(
+      EXPECTED_VALUE
+    )
+  })
+
+  it('should update state if initialValue changes dynamically', () => {
+    // This tests the fix for "Problem 2"
+    const { result, rerender } = renderHook(
+      ({ initVal }) => usePersistentStorage(TEST_KEY, initVal),
+      {
+        initialProps: { initVal: INITIAL_VALUE },
+      }
+    )
+
+    // First render: uses INITIAL_VALUE ({ foo: 'bar' })
+    expect(result.current[0]).toEqual(INITIAL_VALUE)
+
+    // Update initialValue
+    const NEW_INITIAL_VALUE = { foo: 'changed' }
+    rerender({ initVal: NEW_INITIAL_VALUE })
+
+    // Since storage was empty, it should pick up the new initial value?
+    // Wait, on first render, it sets state to INITIAL_VALUE.
+    // Storage is empty.
+    // In second render, it checks storage (empty).
+    // Else block: checks if initialValue !== current.
+    // Updates to NEW_INITIAL_VALUE.
+    expect(result.current[0]).toEqual(NEW_INITIAL_VALUE)
   })
 })
