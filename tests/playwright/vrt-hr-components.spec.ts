@@ -8,7 +8,7 @@ import {
   resetServerState,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
+import { waitForPageReady, WAIT_TIMEOUTS } from './lib/waits'
 import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
 import { DESKTOP_VIEWPORT } from './lib/viewports'
 
@@ -53,18 +53,12 @@ test.describe('Visual Regression Tests', () => {
 
     await dashboardPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 10000 }
+      { timeout: WAIT_TIMEOUTS.WEBSOCKET }
     )
     await mockPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 10000 }
+      { timeout: WAIT_TIMEOUTS.WEBSOCKET }
     )
-
-    // Force dashboard height to match the 1080px baseline.
-    // This prevents element growth from content causing size mismatch failures.
-    await dashboardPage.addStyleTag({
-      content: `[data-testid="dashboard"] { height: 1080px !important; overflow: hidden !important; }`,
-    })
   })
 
   test.afterEach(async () => {

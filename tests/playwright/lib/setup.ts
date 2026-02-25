@@ -16,6 +16,7 @@ import {
   waitForFontsLoaded,
   waitForPageReady,
   waitForWebSocketConnection,
+  WAIT_TIMEOUTS,
 } from './waits'
 
 /**
@@ -212,9 +213,13 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Wait for WebSocket connections to be established
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
-    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
-    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
+    waitForWebSocketConnection(dashboardPage, {
+      timeout: WAIT_TIMEOUTS.WEBSOCKET,
+    }),
+    waitForWebSocketConnection(controlPage, {
+      timeout: WAIT_TIMEOUTS.WEBSOCKET,
+    }),
+    waitForWebSocketConnection(mockPage, { timeout: WAIT_TIMEOUTS.WEBSOCKET }),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
@@ -226,14 +231,17 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Inject CSS to stabilize visual tests by disabling animations and forcing layout states.
   // We use addInitScript to ensure stabilization persists across page reloads.
+  // We only target specific elements that are known to be flaky, such as progress bars,
+  // skeletons, and layout transitions, to maintain as much test fidelity as possible.
   const stabilizationCss = `
-    *, *::before, *::after {
-      transition: none !important;
+    .MuiCircularProgress-root, .MuiSkeleton-root, [role="progressbar"] {
       animation: none !important;
+      transition: none !important;
     }
     [data-testid="main-content-layout"], [data-testid="dashboard"], [data-testid="timer-controls"] {
       opacity: 1 !important;
       transform: none !important;
+      transition: none !important;
     }
   `
   const initStabilization = (css: string) => {
@@ -246,13 +254,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     dashboardPage.addInitScript(initStabilization, stabilizationCss),
     controlPage.addInitScript(initStabilization, stabilizationCss),
     mockPage.addInitScript(initStabilization, stabilizationCss),
-  ])
-
-  // Also apply immediately as addInitScript only affects future navigations
-  await Promise.all([
-    dashboardPage.addStyleTag({ content: stabilizationCss }),
-    controlPage.addStyleTag({ content: stabilizationCss }),
-    mockPage.addStyleTag({ content: stabilizationCss }),
   ])
 
   // Stop any running timers to ensure a consistent initial state
@@ -346,7 +347,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     () => {
       return document.body.dataset.connectionStatus === 'connected'
     },
-    { timeout: 10000 }
+    { timeout: WAIT_TIMEOUTS.WEBSOCKET }
   )
 }
 

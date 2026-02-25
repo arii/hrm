@@ -44,12 +44,17 @@ interface MockBluetoothDevice {
   forget(): Promise<void>
 }
 
+import { Dispatch, SetStateAction } from 'react'
+import { BluetoothConnectionStatus } from '../../types/bluetooth'
+
 declare global {
   interface Window {
     __TEST_CONTROLS__?: {
-      dispatch: (message: unknown) => void
-      disconnect: () => void
-      connect: () => void
+      dispatch?: (message: unknown) => void
+      disconnect?: () => void
+      connect?: () => void
+      setHrmStatus?: Dispatch<SetStateAction<BluetoothConnectionStatus>>
+      setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
     }
     bluetoothTestHelpers?: {
       simulateHeartRate: (bpm: number) => Promise<void>

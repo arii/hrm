@@ -46,6 +46,7 @@ const envSchema = z
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
+    NEXT_PUBLIC_TESTING: z.string().optional(),
     IS_DEPLOYMENT: z.string().optional(),
     WS_URL: z.string().url().optional(),
     HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),

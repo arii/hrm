@@ -17,6 +17,16 @@ import {
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
 
+/**
+ * Error thrown when a silent connection is attempted but no saved device ID is found.
+ */
+class NoSavedDeviceError extends Error {
+  constructor() {
+    super('No saved device ID for silent connection')
+    this.name = 'NoSavedDeviceError'
+  }
+}
+
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
@@ -326,19 +336,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       setCustomStatusMessage(statusMessage)
 
-      reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectTimeoutRef.current = setTimeout(async () => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isConnecting.current &&
           !isManualDisconnect.current
         ) {
-          connectToGattRef.current?.(device, true).catch((error: unknown) => {
+          isConnecting.current = true
+          try {
+            await connectToGattRef.current?.(device, true)
+          } catch (error: unknown) {
             logger.warn({ error }, 'Reconnect attempt failed')
             reconnect(
               device,
               error instanceof Error ? error.message : String(error)
             )
-          })
+          } finally {
+            isConnecting.current = false
+          }
         }
       }, delay)
     },
@@ -387,8 +402,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       typeof window !== 'undefined' &&
       process.env.NEXT_PUBLIC_TESTING === 'true'
     ) {
-      window.TEST_CONTROLS = {
-        ...window.TEST_CONTROLS,
+      window.__TEST_CONTROLS__ = {
+        ...window.__TEST_CONTROLS__,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
       }
@@ -411,9 +426,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         typeof window !== 'undefined' &&
         process.env.NEXT_PUBLIC_TESTING === 'true'
       ) {
-        if (window.TEST_CONTROLS) {
-          delete window.TEST_CONTROLS.setHrmStatus
-          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
+        if (window.__TEST_CONTROLS__) {
+          delete window.__TEST_CONTROLS__.setHrmStatus
+          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
         }
       }
     }
@@ -422,7 +437,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
       // Ensure any previous connection attempt is aborted
-      if (abortControllerRef.current) {
+      if (abortControllerRef.current && isConnecting.current) {
         logger.warn(
           { device: device.name },
           'Aborting previous pending connection attempt'
@@ -430,7 +445,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
-      isConnecting.current = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -633,9 +647,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         throw error
       } finally {
-        // This is reset at the end of the function, but if an abort happens,
-        // we need to ensure it's also reset.
-        isConnecting.current = false
+        // We do NOT reset isConnecting.current here as it's managed by the caller
+        // (connectAndStream or reconnect) to ensure the whole sequence is guarded.
+        abortControllerRef.current = null
       }
     },
     [onDisconnected, updateSignalPeriod]
@@ -694,12 +708,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
-            logger.warn(
-              { savedDeviceId },
-              'Aborting silent connect: No saved device ID.'
-            )
             // Error will be handled in catch block which also resets status for silent connections
-            throw new Error('No saved device ID for silent connection.')
+            throw new NoSavedDeviceError()
           }
 
           logger.info(
@@ -757,14 +767,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false // Silent mode: no device available
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error)
         if (error instanceof DOMException && error.name === 'AbortError') {
           throw error
         }
         if (!silent) {
           handleConnectionError(error)
         } else {
-          logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+          if (!(error instanceof NoSavedDeviceError)) {
+            const errorMsg =
+              error instanceof Error ? error.message : String(error)
+            logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+          }
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
@@ -789,14 +802,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
+    if (
+      statusRef.current === BluetoothConnectionStatus.CONNECTED ||
+      isConnecting.current
+    ) {
+      return
+    }
+
+    const savedDeviceId = Cookies.get('hrm_device_id')
+    if (!savedDeviceId) {
+      logger.debug('No saved device ID for auto-connect. Skipping.')
+      setConnectionAttempted(true)
+      return
+    }
+
     // connectAndStream handles isConnecting guard and savedDeviceId check
     setConnectionAttempted(true)
     try {
       await connectAndStream(undefined, undefined, { silent: true })
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      if (!errorMsg.includes('No saved device ID')) {
-        logger.error({ error }, 'Auto-connect failed')
+      if (!(error instanceof NoSavedDeviceError)) {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
       // Status is already reset in connectAndStream's catch block for silent connections

@@ -5,21 +5,34 @@ import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
+import { WAIT_TIMEOUTS } from './lib/waits'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
-    await connectPage.goto('/client/connect')
-    await waitForPageReady(connectPage, { timeout: VRT_TIMEOUTS.STANDARD })
+    await connectPage.goto('/client/connect?testing=true')
+    await waitForPageReady(connectPage, { timeout: WAIT_TIMEOUTS.TEST_READY })
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
-    await connectPage.waitForFunction(
-      () => window.TEST_CONTROLS?.setHrmStatus,
-      {
-        timeout: VRT_TIMEOUTS.HYDRATION,
-      }
-    )
+    // Wait for hydration and test controls to be attached
+    await expect
+      .poll(
+        async () => {
+          return await connectPage.evaluate(() => {
+            return {
+              hasControls: !!window.__TEST_CONTROLS__,
+              hasHrmStatus: !!window.__TEST_CONTROLS__?.setHrmStatus,
+              url: window.location.href,
+            }
+          })
+        },
+        {
+          message: 'Waiting for __TEST_CONTROLS__.setHrmStatus to be attached',
+          timeout: 15000,
+        }
+      )
+      .toEqual(expect.objectContaining({ hasHrmStatus: true }))
 
     await connectPage.waitForTimeout(100)
     await expect(
@@ -29,8 +42,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('scanning state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.TEST_CONTROLS.setHrmStatus(status)
-      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+      window.__TEST_CONTROLS__.setHrmStatus(status)
+      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
         'Checking saved devices...'
       )
     }, BluetoothConnectionStatus.CONNECTING)
@@ -63,8 +76,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('connection error state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.TEST_CONTROLS.setHrmStatus(status)
-      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+      window.__TEST_CONTROLS__.setHrmStatus(status)
+      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
         'Connection Failed: GATT server not found. Please try again.'
       )
     }, BluetoothConnectionStatus.ERROR)
@@ -82,7 +95,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('no devices found state', async ({ connectPage }) => {
     await connectPage.evaluate(
-      (status) => window.TEST_CONTROLS.setHrmStatus(status),
+      (status) => window.__TEST_CONTROLS__.setHrmStatus(status),
       BluetoothConnectionStatus.DISCONNECTED
     )
     // The button should be visible and ready for another attempt.
@@ -98,8 +111,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('auto-connect failed state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.TEST_CONTROLS.setHrmStatus(status)
-      window.TEST_CONTROLS.setCustomHrmStatusMessage(
+      window.__TEST_CONTROLS__.setHrmStatus(status)
+      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
         'Auto-connect failed. Use Connect button to select device.'
       )
     }, BluetoothConnectionStatus.DISCONNECTED)

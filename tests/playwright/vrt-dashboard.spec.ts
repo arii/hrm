@@ -6,7 +6,7 @@ import {
   resetServerState,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
+import { waitForPageReady, WAIT_TIMEOUTS } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
 import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
@@ -59,22 +59,17 @@ test.describe('Visual Regression Tests', () => {
     await Promise.all([
       dashboardPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
+        { timeout: WAIT_TIMEOUTS.LONG }
       ),
       controlPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
+        { timeout: WAIT_TIMEOUTS.LONG }
       ),
       mockPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
+        { timeout: WAIT_TIMEOUTS.LONG }
       ),
     ])
-
-    // Force visibility to avoid flaky screenshots due to animations
-    await dashboardPage.addStyleTag({
-      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
-    })
   })
 
   test.describe('Dashboard Component', () => {

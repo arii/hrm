@@ -131,7 +131,11 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings profile={userProfile} />
+          <UserSettings
+            profile={userProfile}
+            onForgetDevice={handleFullReset}
+            isResetting={isResetting}
+          />
         ) : (
           <Box
             sx={{
