@@ -224,6 +224,23 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     waitForFontsLoaded(mockPage),
   ])
 
+  // Inject CSS to stabilize visual tests by disabling animations and forcing layout states
+  const stabilizationCss = `
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+    [data-testid="main-content-layout"], [data-testid="dashboard"], [data-testid="timer-controls"] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  `
+  await Promise.all([
+    dashboardPage.addStyleTag({ content: stabilizationCss }),
+    controlPage.addStyleTag({ content: stabilizationCss }),
+    mockPage.addStyleTag({ content: stabilizationCss }),
+  ])
+
   // Stop any running timers to ensure a consistent initial state
   await stopTimer(controlPage, dashboardPage)
 

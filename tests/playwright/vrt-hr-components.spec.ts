@@ -90,9 +90,9 @@ test.describe('Visual Regression Tests', () => {
         minHeight: HR_TILE_MIN_HEIGHT,
       })
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
+      // Use the page object instead of locator for the dashboard screenshot
+      // to ensure it respects the 1080px viewport height and avoids size mismatches.
+      await takeScreenshot(dashboardPage, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
@@ -136,8 +136,8 @@ test.describe('Visual Regression Tests', () => {
         })
       }
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
+      // Use the page object instead of locator for the dashboard screenshot
+      await takeScreenshot(dashboardPage, 'dashboard-with-2-hr-devices.png', {
         maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
@@ -158,8 +158,8 @@ test.describe('Visual Regression Tests', () => {
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
 
-        const dashboard = dashboardPage.getByTestId('dashboard')
-        await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
+        // Use the page object instead of locator for the dashboard screenshot
+        await takeScreenshot(dashboardPage, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,
           mask: [
             ...getDynamicContentMasks(dashboardPage),
@@ -172,8 +172,9 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Disconnected state
     test('dashboard with disconnected HR device', async () => {
       await mockMultipleHrDevices(dashboardPage, [])
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
+
+      // Use the page object instead of locator for the dashboard screenshot
+      await takeScreenshot(dashboardPage, 'dashboard-hr-disconnected.png', {
         maxDiffPixelRatio: 0.1,
         mask: [
           ...getDynamicContentMasks(dashboardPage),

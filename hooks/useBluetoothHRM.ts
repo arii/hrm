@@ -698,9 +698,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               { savedDeviceId },
               'Aborting silent connect: No saved device ID.'
             )
-            // Reset status before throwing to avoid UI stuck in connecting
-            setStatus(BluetoothConnectionStatus.DISCONNECTED)
-            setCustomStatusMessage(null)
+            // Error will be handled in catch block which also resets status for silent connections
             throw new Error('No saved device ID for silent connection.')
           }
 
