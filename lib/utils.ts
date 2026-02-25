@@ -95,10 +95,24 @@ export const formatDate = (
  * Checks for NODE_ENV, NEXT_PUBLIC_TESTING, and the presence of 'testing=true' in the URL.
  */
 export const isTestEnvironment = (): boolean => {
-  if (typeof window === 'undefined') return process.env.NODE_ENV === 'test'
-  return (
-    process.env.NODE_ENV === 'test' ||
+  // Priority 1: URL parameter (client-side only)
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('testing=true') ||
+      window.location.search.includes('testing=1'))
+  ) {
+    return true
+  }
+
+  // Priority 2: Environment variables
+  // Note: NEXT_PUBLIC_TESTING is usually injected at build time by Next.js
+  const isTestingEnv =
     process.env.NEXT_PUBLIC_TESTING === 'true' ||
-    window.location.search.includes('testing=true')
-  )
+    process.env.TESTING === 'true' ||
+    process.env.NODE_ENV === 'test'
+
+  if (isTestingEnv) return true
+
+  // Priority 3: Development mode
+  return process.env.NODE_ENV === 'development'
 }

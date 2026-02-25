@@ -136,12 +136,10 @@ export const WebSocketProvider = ({
       }
 
       if (isTestEnvironment()) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
+        const win = window as Window & { __TEST_CONTROLS__?: TestControls }
+        win.__TEST_CONTROLS__ = {
+          ...win.__TEST_CONTROLS__,
           dispatch,
-          disconnect: () => {},
-          connect: () => {},
         }
       }
     }

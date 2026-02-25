@@ -21,6 +21,12 @@ const envSchema = z
         return val === true
       }, z.boolean())
       .default(false),
+    NEXT_PUBLIC_TESTING: z
+      .preprocess((val) => {
+        if (typeof val === 'string') return val.toLowerCase() === 'true'
+        return val === true
+      }, z.boolean())
+      .default(false),
     CI: z.string().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
     NEXT_PUBLIC_USE_NATIVE_TABLE: z

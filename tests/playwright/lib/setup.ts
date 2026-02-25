@@ -259,6 +259,10 @@ export async function prepareVrtEnvironment(...pages: Page[]): Promise<void> {
             opacity: 1 !important;
             transform: none !important;
           }
+          /* Stabilize dashboard height in VRT */
+          [data-testid="dashboard"] {
+            min-height: auto !important;
+          }
         `,
       })
 
