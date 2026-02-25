@@ -58,6 +58,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
+          padding: size === 'small' ? 1.5 : 2, // Increase touch target
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
@@ -81,13 +82,21 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           color: sliderColor,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
-            width: size === 'small' ? 12 : 16,
-            height: size === 'small' ? 12 : 16,
+            width: size === 'small' ? 20 : 28, // Gym-friendly touch targets
+            height: size === 'small' ? 20 : 28,
+            boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: `0px 0px 0px 8px ${sliderColor}33`,
+            },
+            '&.Mui-active': {
+              boxShadow: `0px 0px 0px 14px ${sliderColor}44`,
+            },
           },
-          '& .MuiSlider-track': { height: 3 },
-          '& .MuiSlider-rail': { height: 3 },
+          '& .MuiSlider-track': { height: 6 }, // Thicker track for better visibility
+          '& .MuiSlider-rail': { height: 6, opacity: 0.3 },
         }}
         aria-label="Volume control"
+        getAriaValueText={(value) => `${value}%`}
         data-testid="volume-slider-input"
       />
       <VolumeUp sx={{ color: 'grey.400' }} fontSize={size} />

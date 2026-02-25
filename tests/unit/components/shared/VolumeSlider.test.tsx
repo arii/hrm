@@ -27,6 +27,7 @@ describe('components/shared/VolumeSlider', () => {
     const slider = screen.getByRole('slider')
     expect(slider).toBeInTheDocument()
     expect(slider).toHaveAttribute('aria-label', 'Volume control')
+    expect(slider).toHaveAttribute('aria-valuetext', '50%')
   })
 
   it('should have the correct accessibility attributes when muted', () => {
@@ -108,5 +109,27 @@ describe('components/shared/VolumeSlider', () => {
     fireEvent.keyUp(slider, { key: 'ArrowRight', code: 'ArrowRight' })
 
     expect(onVolumeChangeCommitted).toHaveBeenCalled()
+  })
+
+  it('should update aria-valuetext when volume changes', () => {
+    const { rerender } = render(
+      <VolumeSlider
+        volume={30}
+        muted={false}
+        onVolumeChange={() => {}}
+        onToggleMute={() => {}}
+      />
+    )
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', '30%')
+
+    rerender(
+      <VolumeSlider
+        volume={65}
+        muted={false}
+        onVolumeChange={() => {}}
+        onToggleMute={() => {}}
+      />
+    )
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', '65%')
   })
 })

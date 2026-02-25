@@ -12,18 +12,18 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import throttle from 'lodash.throttle'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
-import {
-  HRM_WEB_PLAYER_NAME,
-  VOLUME_SYNC_GRACE_PERIOD_MS,
-} from '@/constants/spotify'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
+
+const SYNC_LOCK_DURATION = 2000 // 2s lock to allow API propagation
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -38,8 +38,7 @@ const SpotifyControls = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSliding, setIsSliding] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
-  const lastVolumeSyncTimeRef = useRef<number>(0)
-  const hasPendingSendRef = useRef<boolean>(false)
+  const lastUserInteractionRef = useRef<number>(0)
 
   const hrmDevice = useMemo(
     () =>
@@ -97,33 +96,15 @@ const SpotifyControls = () => {
     }
     prevActiveIdRef.current = activeId
 
-    // Sync Volume (if not dragging and not within grace period after send)
-    // We rely on the server as the source of truth for volume, but use a grace period
-    // to prevent local sliders from "jumping" while the user is actively adjusting them.
+    // Sync Volume (if not dragging and not within lock duration after interaction)
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
 
-    const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
+    const isLocked =
+      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
 
-    // Only sync if we haven't sent a volume command recently.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
-
-    if (shouldRespectGracePeriod) {
-      return
-    }
-
-    // Clear pending flag after grace period
-    if (
-      hasPendingSendRef.current &&
-      timeSinceLastVolumeSend >= VOLUME_SYNC_GRACE_PERIOD_MS
-    ) {
-      hasPendingSendRef.current = false
-    }
+    if (isLocked) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {
@@ -201,36 +182,18 @@ const SpotifyControls = () => {
     [sendSpotifyCommand]
   )
 
-  const handleVolumeChange = useCallback(
-    (val: number) => {
-      setIsSliding(true)
-      setVolume(val)
-      if (connectionStatus !== 'Connected') {
-        const now = Date.now()
-        // Throttle warning to once every 3 seconds to avoid spam during sliding
-        if (now - lastWarningTimeRef.current > 3000) {
-          showWarning('Changes not saved: Offline')
-          lastWarningTimeRef.current = now
-        }
-      }
-    },
-    [connectionStatus, showWarning, setVolume]
-  )
-
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
-      hasPendingSendRef.current = true
-      lastVolumeSyncTimeRef.current = Date.now()
+      lastUserInteractionRef.current = Date.now()
 
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
@@ -242,10 +205,39 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
+  // Throttled volume command for live updates (200ms)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const throttledSendVolumeCommand = useCallback(
+    throttle((val: number) => {
+      sendVolumeCommand(val)
+    }, 200),
+    [sendVolumeCommand]
+  )
+
+  const handleVolumeChange = useCallback(
+    (val: number) => {
+      setIsSliding(true)
+      lastUserInteractionRef.current = Date.now()
+      setVolume(val)
+      throttledSendVolumeCommand(val)
+
+      if (connectionStatus !== 'Connected') {
+        const now = Date.now()
+        // Throttle warning to once every 3 seconds to avoid spam during sliding
+        if (now - lastWarningTimeRef.current > 3000) {
+          showWarning('Changes not saved: Offline')
+          lastWarningTimeRef.current = now
+        }
+      }
+    },
+    [connectionStatus, showWarning, setVolume, throttledSendVolumeCommand]
+  )
+
   const handleVolumeChangeCommitted = useCallback(
     (val: number) => {
       setIsSliding(false)
-      sendVolumeCommand(val)
+      lastUserInteractionRef.current = Date.now()
+      sendVolumeCommand(val) // Final authoritative update
     },
     [sendVolumeCommand]
   )
