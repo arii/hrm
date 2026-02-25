@@ -111,7 +111,10 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                 divider
                 disablePadding
                 secondaryAction={
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
                     {formatDuration(track.duration_ms, {
                       unit: 'milliseconds',
                       format: 'MM:SS',
