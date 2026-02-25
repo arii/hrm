@@ -153,4 +153,21 @@ describe('useConnectUserProfile', () => {
     })
     expect(mockCommitHeight).toHaveBeenCalled()
   })
+
+  it('should commit weight and height on unmount', () => {
+    const { result, unmount } = renderHook(() => useConnectUserProfile())
+
+    act(() => {
+      result.current.handlers.setUserWeight('80')
+    })
+
+    unmount()
+
+    expect(mockCommitHeight).toHaveBeenCalled()
+    expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
+    const updater = mockSetUserSettings.mock.calls[0][0]
+    expect(updater(mockUserSettings)).toEqual(
+      expect.objectContaining({ userWeight: 80 })
+    )
+  })
 })

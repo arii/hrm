@@ -232,6 +232,12 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   hrmSessionManager.clear()
   clientSessionState.clear()
+
+  // Reset the timer service to ensure clean state for tests
+  if (services?.tabataService) {
+    services.tabataService.reset()
+  }
+
   // Disconnect all clients to force them to re-register and re-initialize their sessions
   if (wsServerInstance) {
     wsServerInstance.clients.forEach((client) => {

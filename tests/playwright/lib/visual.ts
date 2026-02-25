@@ -70,6 +70,8 @@ export async function assertFixedDimensions(
     maxWidth?: number
   }
 ) {
+  // Wait for the element to be visible before checking its dimensions
+  await locator.waitFor({ state: 'visible', timeout: 5000 })
   const bbox = await locator.boundingBox()
 
   if (!bbox) {

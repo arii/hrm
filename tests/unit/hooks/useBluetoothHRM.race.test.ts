@@ -3,7 +3,7 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import * as cookieUtils from '@/utils/cookies'
+import Cookies from 'js-cookie'
 
 const mockBluetooth = {
   getAvailability: jest.fn().mockResolvedValue(true),
@@ -23,12 +23,11 @@ jest.mock('@/context/WebSocketContext', () => ({
 }))
 
 // Mock cookie utilities
-jest.mock('@/utils/cookies', () => ({
-  getCookie: jest.fn(),
-  setCookie: jest.fn(),
+jest.mock('js-cookie', () => ({
+  get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
 }))
-
-const mockedCookieUtils = cookieUtils as jest.Mocked<typeof cookieUtils>
 
 describe('useBluetoothHRM Race Conditions', () => {
   const originalNavigator = global.navigator
@@ -173,7 +172,7 @@ describe('useBluetoothHRM Race Conditions', () => {
   })
 
   it('attempts connection only once when autoConnect is called multiple times concurrently', async () => {
-    mockedCookieUtils.getCookie.mockReturnValue('test-device-id')
+    ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
 
     const mockSavedDevice = {
       id: 'test-device-id',
