@@ -48,6 +48,7 @@ export const useSpotifyVolume = ({
       setDisplayVolume(serverVolume)
       onLocalVolumeChange?.(serverVolume)
     }
+    return
   }, [
     serverVolume,
     isSliding,
