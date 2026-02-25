@@ -114,6 +114,7 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -139,6 +140,8 @@ export const WebSocketProvider = ({
 >>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
 =======
 >>>>>>> 97be99a0 (fix(test): resolve linting errors in test controls refactor)
+=======
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
     }
   }, [])
 
@@ -333,6 +336,7 @@ export const WebSocketProvider = ({
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (isTestEnvironment()) {
       const testControls = (
         window as Window & { __TEST_CONTROLS__?: TestControls }
@@ -342,6 +346,8 @@ export const WebSocketProvider = ({
         testControls.connect = connect
 =======
 =======
+=======
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
     return () => {
       disconnect()
     }
@@ -351,6 +357,7 @@ export const WebSocketProvider = ({
   // This ensures that all required controls (dispatch, connect, disconnect)
   // are attached consistently and updated whenever their implementations change.
   useEffect(() => {
+<<<<<<< HEAD
 >>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
     if (
       typeof window !== 'undefined' &&
@@ -364,12 +371,18 @@ export const WebSocketProvider = ({
         window.__TEST_CONTROLS__.connect = connect
 >>>>>>> c705c04a (chore: optimize VRT cleanup and standardize on fixtures)
 =======
+=======
+    if (isTestEnvironment()) {
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
       window.__TEST_CONTROLS__ = {
         ...window.__TEST_CONTROLS__,
         dispatch,
         connect,
         disconnect,
+<<<<<<< HEAD
 >>>>>>> 2d78ed1f (test(vrt): unify and automate test control cleanup)
+=======
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
       }
     }
 

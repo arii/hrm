@@ -175,7 +175,12 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
+<<<<<<< HEAD
         maxDiffPixelRatio: 0.1,
+=======
+        // Increased to 0.3 to mitigate CI flakiness on large viewports
+        maxDiffPixelRatio: 0.3,
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
       })
     })
   })

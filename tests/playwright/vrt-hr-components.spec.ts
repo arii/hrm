@@ -39,6 +39,7 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('HR-Related Components', () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Reset devices after each test to prevent state pollution
     test.afterEach(async () => {
       await mockMultipleHrDevices(dashboardPage, [])
@@ -49,6 +50,9 @@ test.describe('Visual Regression Tests', () => {
 =======
     test('dashboard with HR data', async ({ dashboardPage, mockPage }) => {
 >>>>>>> c8cb2a02 (chore: optimize VRT cleanup and standardize on fixtures)
+=======
+    test('dashboard with HR data', async ({ dashboardPage, mockPage }) => {
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
@@ -111,6 +115,7 @@ test.describe('Visual Regression Tests', () => {
       ])
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       // Wait for HR tiles to appear
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
       await expect(hrTiles).toHaveCount(2)
@@ -121,13 +126,18 @@ test.describe('Visual Regression Tests', () => {
       const count = await hrTiles.count()
       for (let i = 0; i < count; i++) {
 =======
+=======
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
       // Explicitly wait for the correct number of tiles to prevent race conditions
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
       await expect(hrTiles).toHaveCount(expectedCount, { timeout: 5000 })
 
       // Assert all HR tiles maintain dimensions
       for (let i = 0; i < expectedCount; i++) {
+<<<<<<< HEAD
 >>>>>>> 9299b281 (chore: standardize mock HR device cleanup in VRT suite)
+=======
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
         await assertFixedDimensions(hrTiles.nth(i), {
           minHeight: HR_TILE_MIN_HEIGHT,
         })
@@ -154,6 +164,7 @@ test.describe('Visual Regression Tests', () => {
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Wait for HR tile to appear
         await expect(
           dashboardPage.getByTestId('hr-tile-card').first()
@@ -163,6 +174,11 @@ test.describe('Visual Regression Tests', () => {
         const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await hrTile.waitFor({ state: 'visible', timeout: 5000 })
 >>>>>>> 9299b281 (chore: standardize mock HR device cleanup in VRT suite)
+=======
+        // Wait for HR tile to reflect the update and be stable
+        const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+        await hrTile.waitFor({ state: 'visible', timeout: 5000 })
+>>>>>>> 2939eb09 (doc: Add comment explaining maxDiffPixelRatio increase in VRT dashboard spec)
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {

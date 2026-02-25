@@ -19,9 +19,7 @@ type PageFixtures = {
  */
 async function safePageTeardown(page: Page) {
   try {
-    if (!page.isClosed()) {
-      await cleanupVisualRegressionTest(page)
-    }
+    await cleanupVisualRegressionTest(page)
   } catch (error) {
     // Log teardown errors instead of silently swallowing them
     console.warn('⚠️ Teardown warning:', error)
