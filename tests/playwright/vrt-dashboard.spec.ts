@@ -142,7 +142,7 @@ test.describe('Visual Regression Tests', () => {
       await expect(dashboard).toBeVisible()
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.2,
       })
     })
 

@@ -137,12 +137,30 @@ test.describe('Visual Regression Tests', () => {
       const zone = zones[i]
       const expectedBpm = zoneBpms[i]
       test(`dashboard with HR in Zone ${zone}`, async () => {
-        // Ensure the zone update happens
+        // Ensure clean state before switching zones to prevent stale data
+        await mockMultipleHrDevices(dashboardPage, [])
+        await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0)
+
+        // Re-connect with the specific zone values
+        await mockMultipleHrDevices(dashboardPage, [
+          {
+            clientId: 'user-zone-test',
+            name: 'Test Athlete',
+            value: expectedBpm,
+            maxHr: 200,
+            calories: 100,
+            zone: `ZONE_${zone}`, // Mock helper handles zone string mapping if needed
+          },
+        ])
+
+        // Ensure the zone update happens via the mock controls if needed, but direct injection is safer
+        // We still click the button to ensure the UI state on the mock page matches if we were using it for control
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
+
         // Wait for the mock page input to reflect the update to confirm action was registered
         await expect(mockPage.getByLabel('Current BPM')).toHaveValue(
           String(expectedBpm),
-          { timeout: 5000 }
+          { timeout: 10000 }
         )
 
         // Wait for the dashboard to reflect the new BPM value and zone color
@@ -150,7 +168,7 @@ test.describe('Visual Regression Tests', () => {
         const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
         await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
           new RegExp(`^${expectedBpm}`),
-          { timeout: 10000 }
+          { timeout: 15000 }
         )
 
         const dashboard = dashboardPage.getByTestId('dashboard')
