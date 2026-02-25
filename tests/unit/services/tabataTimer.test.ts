@@ -262,11 +262,11 @@ describe('TabataTimer (Refactored)', () => {
     })
   })
 
-  // Test dispose method
-  it('should clear the interval on dispose', () => {
+  // Test cleanup method
+  it('should clear the interval on cleanup', () => {
     timer.start()
     expect(jest.getTimerCount()).toBe(1)
-    timer.dispose()
+    timer.cleanup()
     expect(jest.getTimerCount()).toBe(0)
   })
 })

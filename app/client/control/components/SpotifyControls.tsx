@@ -11,8 +11,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
@@ -33,13 +34,23 @@ const SpotifyControls = () => {
   const { player, isReady } = useSpotifyWebPlayback()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
+  const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSyncingVolume, setIsSyncingVolume] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const volumeLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
+  )
+
+  const hrmDevice = useMemo(
+    () =>
+      devices.find(
+        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+      ),
+    [devices]
   )
 
   const handleTrackSelect = (uri: string) => {
@@ -115,24 +126,20 @@ const SpotifyControls = () => {
     if (
       devices.length > 0 &&
       !selectedDeviceId &&
-      !devices.some((d) => d.is_active)
+      !devices.some((d) => d.is_active) &&
+      hrmDevice
     ) {
-      const hrmPlayer = devices.find(
-        (d) => d.name.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
-      )
-      if (hrmPlayer) {
-        setSelectedDeviceId(hrmPlayer.id)
-      }
+      setSelectedDeviceId(hrmDevice.id)
     }
-  }, [devices, selectedDeviceId])
+  }, [devices, selectedDeviceId, hrmDevice])
 
   const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
-    const activeDevice = devices.find((device) => device.is_active)
-    return activeDevice?.id
-  }, [devices, selectedDeviceId])
+    return (
+      selectedDeviceId ||
+      devices.find((device) => device.is_active)?.id ||
+      hrmDevice?.id
+    )
+  }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
     (
@@ -179,6 +186,21 @@ const SpotifyControls = () => {
       }
     },
     [sendSpotifyCommand]
+  )
+
+  const handleVolumeChange = useCallback(
+    (val: number) => {
+      setVolume(val)
+      if (connectionStatus !== 'Connected') {
+        const now = Date.now()
+        // Throttle warning to once every 3 seconds to avoid spam during sliding
+        if (now - lastWarningTimeRef.current > 3000) {
+          showWarning('Changes not saved: Offline')
+          lastWarningTimeRef.current = now
+        }
+      }
+    },
+    [connectionStatus, showWarning, setVolume]
   )
 
   const sendVolumeCommand = useCallback(
@@ -315,7 +337,7 @@ const SpotifyControls = () => {
             <VolumeSlider
               volume={volume}
               muted={muted}
-              onVolumeChange={setVolume}
+              onVolumeChange={handleVolumeChange}
               onToggleMute={toggleMute}
               showValue={true}
             />

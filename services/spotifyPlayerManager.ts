@@ -247,7 +247,15 @@ export class SpotifyPlayerManager {
     logContext: Record<string, string | number | undefined> = {}
   ): Promise<void> {
     try {
-      await apiCall()
+      const response = await apiCall()
+      // If the SDK returns nullish or empty string, it's often a 204 success
+      if (response == null || response === '') {
+        logger.debug(
+          { command: commandName, ...logContext },
+          'Spotify command successful (Empty response)'
+        )
+        return
+      }
     } catch (error) {
       if (isEmptyResponseError(error)) {
         logger.debug(
