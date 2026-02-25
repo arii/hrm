@@ -11,14 +11,14 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { useSpotifyVolume } from '@/hooks/useSpotifyVolume'
+import { useSpotifyDeviceSync } from '@/hooks/useSpotifyDeviceSync'
 import { SpotifyCommand } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -28,53 +28,26 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
+  const devices = spotifyData.devices || []
   const { setVolume, muted, toggleMute } = useVolumePreference()
   const { showWarning } = useAppSnackbar()
   const lastWarningTimeRef = useRef<number>(0)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [prevActiveId, setPrevActiveId] = useState<string | undefined>(
-    undefined
-  )
 
-  const hrmDevice = useMemo(
-    () =>
-      devices.find(
-        (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
-      ),
-    [devices]
-  )
-
-  // Sync selected device with active device during render to avoid cascading renders
-  const activeDevice = devices.find((d) => d.is_active)
-  const activeId = activeDevice?.id
-
-  if (activeId !== prevActiveId) {
-    setPrevActiveId(activeId)
-    if (activeId) {
-      setSelectedDeviceId(activeId)
-    }
-  } else if (
-    !selectedDeviceId &&
-    devices.length > 0 &&
-    !activeId &&
-    hrmDevice
-  ) {
-    // Auto-select HRM Web Player if no active device is available
-    setSelectedDeviceId(hrmDevice.id)
-  } else if (
-    selectedDeviceId &&
-    !devices.some((d) => d.id === selectedDeviceId)
-  ) {
-    // If selected device no longer exists, reset or fallback to active
-    setSelectedDeviceId(activeId ?? '')
-  }
+  const {
+    selectedDeviceId,
+    handleDeviceSelect,
+    resolveTargetDeviceId,
+    hasActiveDevice,
+  } = useSpotifyDeviceSync({
+    devices,
+    onTransferPlayback: (deviceId) =>
+      executeSpotify('TRANSFER_PLAYBACK', { deviceId }),
+  })
 
   const handleTrackSelect = (uri: string) => {
-    const targetDeviceId = resolveTargetDeviceId()
     executeSpotify('PLAY', {
       uri: uri,
-      deviceId: targetDeviceId,
+      deviceId: resolveTargetDeviceId(),
     })
   }
 
@@ -87,23 +60,11 @@ const SpotifyControls = () => {
     spotifyData.playback.track.name !== '' &&
     spotifyData.playback.track.name !== 'No Track Playing'
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
-      })
+      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
-
-  const resolveTargetDeviceId = useCallback(() => {
-    return (
-      selectedDeviceId ||
-      devices.find((device) => device.is_active)?.id ||
-      hrmDevice?.id
-    )
-  }, [devices, selectedDeviceId, hrmDevice])
 
   const {
     volume: spotifyVolume,
@@ -245,6 +206,7 @@ const SpotifyControls = () => {
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
               showValue={true}
+              disabled={!hasActiveDevice}
             />
 
             {devices.length > 0 && (
@@ -255,13 +217,7 @@ const SpotifyControls = () => {
                 <FormControl fullWidth size="small">
                   <Select
                     value={selectedDeviceId}
-                    onChange={(e) => {
-                      const deviceId = e.target.value
-                      setSelectedDeviceId(deviceId)
-                      if (deviceId) {
-                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-                      }
-                    }}
+                    onChange={(e) => handleDeviceSelect(e.target.value)}
                     disabled={connectionStatus !== 'Connected'}
                     sx={{
                       color: 'white',

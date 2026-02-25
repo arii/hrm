@@ -886,8 +886,6 @@ jobs:
         integration-tests,
       ]
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
@@ -1030,6 +1028,7 @@ jobs:
           PR_NUMBER: ${{ needs.prepare-env.outputs.pr_number }}
           SHA: ${{ needs.prepare-env.outputs.sha }}
           ENABLE_PR_COMMENT: ${{ inputs.enable_pr_comment }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set +e
 

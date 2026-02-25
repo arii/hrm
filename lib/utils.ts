@@ -93,8 +93,19 @@ export const formatDate = (
 /**
  * Determines if the current environment is a test environment.
  * Checks for NODE_ENV, NEXT_PUBLIC_TESTING, and the presence of 'testing=true' in the URL.
+ * Securely restricted to non-production environments unless NEXT_PUBLIC_TESTING is explicitly enabled.
  */
 export const isTestEnvironment = (): boolean => {
+  const isTestingEnv =
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    process.env.TESTING === 'true' ||
+    process.env.NODE_ENV === 'test'
+
+  // Never allow test mode in production unless explicitly enabled via NEXT_PUBLIC_TESTING
+  if (process.env.NODE_ENV === 'production' && !isTestingEnv) {
+    return false
+  }
+
   // Priority 1: URL parameter (client-side only)
   if (
     typeof window !== 'undefined' &&
@@ -103,13 +114,6 @@ export const isTestEnvironment = (): boolean => {
   ) {
     return true
   }
-
-  // Priority 2: Environment variables
-  // Note: NEXT_PUBLIC_TESTING is usually injected at build time by Next.js
-  const isTestingEnv =
-    process.env.NEXT_PUBLIC_TESTING === 'true' ||
-    process.env.TESTING === 'true' ||
-    process.env.NODE_ENV === 'test'
 
   if (isTestingEnv) return true
 

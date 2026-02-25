@@ -103,23 +103,6 @@ export const WebSocketProvider = ({
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
-      }
-
-      if (isTestEnvironment()) {
-        window.__TEST_CONTROLS__ = {
-          ...window.__TEST_CONTROLS__,
-          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) =>
-            dispatch(msg),
-        }
-      }
-    }
-  }, [dispatch])
-
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
     () =>
@@ -301,21 +284,24 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   useEffect(() => {
-    connectRef.current = connect
-    connect()
+    if (typeof window !== 'undefined') {
+      const savedActions = localStorage.getItem('pendingActions')
+      if (savedActions) pendingActions.current = JSON.parse(savedActions)
 
-    if (isTestEnvironment()) {
-      window.__TEST_CONTROLS__ = {
-        ...window.__TEST_CONTROLS__,
-        disconnect: () => disconnect(),
-        connect: () => connect(),
+      if (isTestEnvironment()) {
+        window.__TEST_CONTROLS__ = {
+          ...window.__TEST_CONTROLS__,
+          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) =>
+            dispatch(msg),
+          disconnect: () => disconnect(),
+          connect: () => connect(),
+        }
       }
     }
-
-    return () => {
-      disconnect()
-    }
-  }, [connect, disconnect])
+    connectRef.current = connect
+    connect()
+    return () => disconnect()
+  }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {
