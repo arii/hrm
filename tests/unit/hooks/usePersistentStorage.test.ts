@@ -227,27 +227,27 @@ describe('usePersistentStorage', () => {
   })
 
   it('should update state if initialValue changes dynamically', () => {
-     // This tests the fix for "Problem 2"
-     const { result, rerender } = renderHook(
-       ({ initVal }) => usePersistentStorage(TEST_KEY, initVal),
-       {
-         initialProps: { initVal: INITIAL_VALUE }
-       }
-     )
+    // This tests the fix for "Problem 2"
+    const { result, rerender } = renderHook(
+      ({ initVal }) => usePersistentStorage(TEST_KEY, initVal),
+      {
+        initialProps: { initVal: INITIAL_VALUE },
+      }
+    )
 
-     // First render: uses INITIAL_VALUE ({ foo: 'bar' })
-     expect(result.current[0]).toEqual(INITIAL_VALUE)
+    // First render: uses INITIAL_VALUE ({ foo: 'bar' })
+    expect(result.current[0]).toEqual(INITIAL_VALUE)
 
-     // Update initialValue
-     const NEW_INITIAL_VALUE = { foo: 'changed' }
-     rerender({ initVal: NEW_INITIAL_VALUE })
+    // Update initialValue
+    const NEW_INITIAL_VALUE = { foo: 'changed' }
+    rerender({ initVal: NEW_INITIAL_VALUE })
 
-     // Since storage was empty, it should pick up the new initial value?
-     // Wait, on first render, it sets state to INITIAL_VALUE.
-     // Storage is empty.
-     // In second render, it checks storage (empty).
-     // Else block: checks if initialValue !== current.
-     // Updates to NEW_INITIAL_VALUE.
-     expect(result.current[0]).toEqual(NEW_INITIAL_VALUE)
+    // Since storage was empty, it should pick up the new initial value?
+    // Wait, on first render, it sets state to INITIAL_VALUE.
+    // Storage is empty.
+    // In second render, it checks storage (empty).
+    // Else block: checks if initialValue !== current.
+    // Updates to NEW_INITIAL_VALUE.
+    expect(result.current[0]).toEqual(NEW_INITIAL_VALUE)
   })
 })
