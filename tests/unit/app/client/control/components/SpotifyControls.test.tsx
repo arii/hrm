@@ -261,8 +261,8 @@ describe('components/SpotifyControls', () => {
 
     await waitFor(() => {
       // Check the displayed text in the select component
-      // for MUI components than checking the underlying value attribute.
-      const deviceSelect = screen.getByRole('combobox')
+      // use data-testid to avoid ambiguity with the new Autocomplete in SpotifySearchInput
+      const deviceSelect = screen.getByTestId('spotify-device-select')
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
     })
   })
