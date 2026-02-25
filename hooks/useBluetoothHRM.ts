@@ -4,12 +4,11 @@ import {
   HrmMetadataUpdateData,
 } from '@/types/websocket'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import isEqual from 'lodash.isequal'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
-import { getCookie, setCookie } from '@/utils/cookies'
+import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
@@ -153,7 +152,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       // Prevent sending redundant metadata updates
-      if (!isEqual(lastSentMetadataRef.current, metadataData)) {
+      if (
+        JSON.stringify(lastSentMetadataRef.current) !==
+        JSON.stringify(metadataData)
+      ) {
         const metadata: HrmMetadataUpdateMessage = {
           type: 'HRM_METADATA_UPDATE',
           data: metadataData,
@@ -248,7 +250,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     disconnect()
     setConnectionAttempted(false)
     try {
-      setCookie('hrm_device_id', '', -1)
+      Cookies.remove('hrm_device_id')
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
     } catch (e) {
@@ -572,7 +574,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
         )
         setSavedDevice(device)
-        setCookie('hrm_device_id', device.id)
+        Cookies.set('hrm_device_id', device.id, {
+          expires: 365,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+        })
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
@@ -615,7 +621,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
-            setCookie('hrm_device_id', '', -1)
+            Cookies.remove('hrm_device_id')
             setStatus(BluetoothConnectionStatus.DISCONNECTED)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
             setSavedDevice(null)
@@ -684,7 +690,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device) {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
-          const savedDeviceId = getCookie('hrm_device_id')
+          const savedDeviceId = Cookies.get('hrm_device_id')
 
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
