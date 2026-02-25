@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Cookies from 'js-cookie'
 
 let isLocalStorageAvailable: boolean | null = null
@@ -26,52 +26,69 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === null || proto === Object.prototype
 }
 
-function usePersistentStorage<T>(key: string, initialValue: T) {
+interface PersistentStorageOptions {
+  enableCookieFallback?: boolean
+}
+
+function usePersistentStorage<T>(
+  key: string,
+  initialValue: T,
+  options: PersistentStorageOptions = {}
+) {
+  const { enableCookieFallback = false } = options
   const [storedValue, setStoredValue] = useState<T>(initialValue)
-  const lastKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (lastKeyRef.current === key) return
     if (typeof window === 'undefined') return
 
     try {
-      const useLocal = checkLocalStorage()
-      const item = useLocal
-        ? window.localStorage.getItem(key)
-        : Cookies.get(key)
+      const isLocalAvailable = checkLocalStorage()
+      // Use cookies only if localStorage is unavailable AND fallback is enabled
+      const useCookie = !isLocalAvailable && enableCookieFallback
+
+      let item: string | undefined | null = null
+
+      if (isLocalAvailable) {
+        item = window.localStorage.getItem(key)
+      } else if (useCookie) {
+        item = Cookies.get(key)
+      }
 
       if (item) {
         const parsed = JSON.parse(item)
+        let valueToUse = parsed
 
         if (isPlainObject(parsed) && isPlainObject(initialValue)) {
           const merged = { ...initialValue, ...parsed } as T
+          valueToUse = merged
 
-          if (JSON.stringify(merged) !== JSON.stringify(storedValue)) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setStoredValue(merged)
-          }
-
-          if (useLocal) {
+          // Sync merged value back to storage if using localStorage
+          if (isLocalAvailable) {
             window.localStorage.setItem(key, JSON.stringify(merged))
           }
-        } else {
-          if (JSON.stringify(parsed) !== JSON.stringify(storedValue)) {
-            setStoredValue(parsed)
+        }
+
+        setStoredValue((current) => {
+          if (JSON.stringify(valueToUse) !== JSON.stringify(current)) {
+            return valueToUse
           }
-        }
+          return current
+        })
       } else {
-        if (JSON.stringify(initialValue) !== JSON.stringify(storedValue)) {
-          setStoredValue(initialValue)
-        }
+        setStoredValue((current) => {
+          if (JSON.stringify(initialValue) !== JSON.stringify(current)) {
+            return initialValue
+          }
+          return current
+        })
       }
-      lastKeyRef.current = key
     } catch (error) {
       console.error(
         `Error reading or parsing persistent storage key “${key}”`,
         error
       )
     }
-  }, [key, initialValue, storedValue])
+  }, [key, initialValue, enableCookieFallback])
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
@@ -80,13 +97,15 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
           const valueToStore =
             value instanceof Function ? value(currentStoredValue) : value
 
-          if (checkLocalStorage()) {
+          const isLocalAvailable = checkLocalStorage()
+
+          if (isLocalAvailable) {
             try {
               window.localStorage.setItem(key, JSON.stringify(valueToStore))
             } catch (storageError) {
               console.error('LocalStorage write failed:', storageError)
             }
-          } else {
+          } else if (enableCookieFallback) {
             try {
               Cookies.set(key, JSON.stringify(valueToStore), {
                 expires: 365,
@@ -103,7 +122,7 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
         console.error(`Error setting persistent storage key “${key}”:`, error)
       }
     },
-    [key]
+    [key, enableCookieFallback]
   )
 
   useEffect(() => {
@@ -113,9 +132,12 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
       if (e.key === key && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue)
-          if (JSON.stringify(parsed) !== JSON.stringify(storedValue)) {
-            setStoredValue(parsed)
-          }
+          setStoredValue((current) => {
+            if (JSON.stringify(parsed) !== JSON.stringify(current)) {
+              return parsed
+            }
+            return current
+          })
         } catch (error) {
           console.error(`Error parsing storage change for key “${key}”:`, error)
         }
@@ -125,7 +147,7 @@ function usePersistentStorage<T>(key: string, initialValue: T) {
     return () => {
       window.removeEventListener('storage', handleStorageChange)
     }
-  }, [key, storedValue])
+  }, [key])
 
   return [storedValue, setValue] as const
 }
