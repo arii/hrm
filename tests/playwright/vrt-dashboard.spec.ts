@@ -145,12 +145,20 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
+<<<<<<< HEAD
     test('large desktop viewport', async ({ dashboardPage }) => {
+=======
+    test('large desktop viewport', async () => {
+>>>>>>> origin/leader
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
+<<<<<<< HEAD
         maxDiffPixelRatio: 0.3,
+=======
+        maxDiffPixelRatio: 0.1,
+>>>>>>> origin/leader
       })
     })
   })

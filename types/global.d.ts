@@ -2,13 +2,17 @@ import { Dispatch, SetStateAction } from 'react'
 import { SpotifyService } from './interfaces'
 import { BluetoothConnectionStatus } from './bluetooth'
 import { ServerMessage } from './websocket'
+import TabataTimer from '../services/tabataTimer'
 
 declare global {
   var spotifyService: SpotifyService | undefined
+  var tabataService: TabataTimer | undefined
+  var isSpotifyInitialized: boolean | undefined
 
   interface Window {
     /** Flag used by Playwright to ensure the application is fully hydrated and ready for interaction. */
     __TEST_READY__?: boolean
+<<<<<<< HEAD
     /** Flag used by Playwright to verify that the WebSocket connection is active. */
     __TEST_WEBSOCKET_READY__?: boolean
 
@@ -32,6 +36,9 @@ declare global {
 
     /** @deprecated Use __TEST_CONTROLS__ instead. */
     TEST_CONTROLS?: Window['__TEST_CONTROLS__']
+=======
+    TEST_CONTROLS?: TestControls
+>>>>>>> origin/leader
   }
 }
 

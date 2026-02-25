@@ -27,6 +27,16 @@ export interface WebSocketContextType extends WebSocketState {
   disconnect: () => void
 }
 
+// This encapsulates the logic to avoid running it on every render inside the component
+const isTestEnvironment = () => {
+  if (typeof window === 'undefined') return false
+  return (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    window.location.search.includes('testing=true')
+  )
+}
+
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
@@ -103,6 +113,19 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
+<<<<<<< HEAD
+=======
+
+      if (isTestEnvironment()) {
+        ;(
+          window as Window & { __TEST_CONTROLS__?: TestControls }
+        ).__TEST_CONTROLS__ = {
+          dispatch,
+          disconnect: () => {},
+          connect: () => {},
+        }
+      }
+>>>>>>> origin/leader
     }
   }, [])
 
@@ -171,8 +194,7 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'connected'
       }
 
@@ -208,8 +230,7 @@ export const WebSocketProvider = ({
       )
       setConnectionStatus('Disconnected')
 
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
+      if (isTestEnvironment()) {
         document.body.dataset.connectionStatus = 'disconnected'
       }
 
@@ -297,6 +318,7 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
+<<<<<<< HEAD
     return () => {
       disconnect()
     }
@@ -317,6 +339,15 @@ export const WebSocketProvider = ({
         dispatch,
         connect,
         disconnect,
+=======
+    if (isTestEnvironment()) {
+      const testControls = (
+        window as Window & { __TEST_CONTROLS__?: TestControls }
+      ).__TEST_CONTROLS__
+      if (testControls) {
+        testControls.disconnect = disconnect
+        testControls.connect = connect
+>>>>>>> origin/leader
       }
     }
 

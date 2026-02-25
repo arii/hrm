@@ -15,9 +15,9 @@ import type { Locator, Page } from '@playwright/test'
  * from CSS classes or DOM structure, making tests less brittle.
  */
 export const VRT_MASK_SELECTORS = {
-  liveHrValue: '[data-testid="live-hr-value"]',
-  liveHrPercent: '[data-testid="live-hr-percent"]',
-  hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
+  bpmPercent: '[data-testid="bpm-percent"]',
+  bpmValue: '[data-testid="bpm-value"]',
+  caloriesValue: '[data-testid="calories-value"]',
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
@@ -32,8 +32,9 @@ export const VRT_MASK_SELECTORS = {
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
   return [
-    page.locator(VRT_MASK_SELECTORS.liveHrValue),
-    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmValue),
+    page.locator(VRT_MASK_SELECTORS.caloriesValue),
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
@@ -48,9 +49,9 @@ export function getDynamicContentMasks(page: Page): Locator[] {
  */
 export function getHrMasks(page: Page): Locator[] {
   return [
-    page.locator(VRT_MASK_SELECTORS.liveHrValue),
-    page.locator(VRT_MASK_SELECTORS.liveHrPercent),
-    page.locator(VRT_MASK_SELECTORS.hrTileGridItem),
+    page.locator(VRT_MASK_SELECTORS.bpmPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmValue),
+    page.locator(VRT_MASK_SELECTORS.caloriesValue),
   ]
 }
 
