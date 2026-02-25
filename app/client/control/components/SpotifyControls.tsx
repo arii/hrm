@@ -317,14 +317,17 @@ const SpotifyControls = () => {
               disabled={connectionStatus !== 'Connected'}
             />
 
-            <VolumeSlider
-              volume={volume}
-              muted={muted}
-              onVolumeChange={handleVolumeChange}
-              onVolumeChangeCommitted={handleVolumeChangeCommitted}
-              onToggleMute={toggleMute}
-              showValue={true}
-            />
+            <Box sx={{ width: '100%', mt: 3, mb: 1 }}>
+              <VolumeSlider
+                volume={volume}
+                muted={muted}
+                onVolumeChange={handleVolumeChange}
+                onVolumeChangeCommitted={handleVolumeChangeCommitted}
+                onToggleMute={toggleMute}
+                showValue={true}
+                size="medium"
+              />
+            </Box>
 
             {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
