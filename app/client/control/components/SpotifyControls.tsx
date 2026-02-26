@@ -1,4 +1,3 @@
-// File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
@@ -23,10 +22,15 @@ import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
   SPOTIFY_BRAND_COLOR,
+  SPOTIFY_MSG_AWAITING_LOGIN,
+  SPOTIFY_MSG_NO_TRACK,
+  SPOTIFY_MSG_CONNECT_HRM,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
+
+const EMPTY_DEVICES: SpotifyDevice[] = []
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -35,10 +39,7 @@ const SpotifyControls = () => {
   const { execute: executeSpotify } = useSpotifyCommand()
 
   // Use defensive destructuring to handle partial or empty data from the WebSocket.
-  const devices = useMemo(
-    () => spotifyData?.devices || [],
-    [spotifyData?.devices]
-  )
+  const devices = spotifyData?.devices || EMPTY_DEVICES
   const playback = spotifyData?.playback
   const track = playback?.track || { name: '', artist: '' }
 
@@ -75,7 +76,7 @@ const SpotifyControls = () => {
 
   const hasTrack = !!(
     track.name &&
-    !['', 'Awaiting Login...', 'No Track Playing'].includes(track.name)
+    !['', SPOTIFY_MSG_AWAITING_LOGIN, SPOTIFY_MSG_NO_TRACK].includes(track.name)
   )
   const shouldShowControls =
     spotifyServiceInitialized &&
@@ -91,7 +92,6 @@ const SpotifyControls = () => {
     return () => window.removeEventListener('focus', refresh)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
     const activeId = activeDevice?.id
@@ -417,7 +417,7 @@ const SpotifyControls = () => {
           >
             {spotifyServiceInitialized && !devices.length
               ? 'Searching for devices...'
-              : 'Connect to HRM Web Player'}
+              : SPOTIFY_MSG_CONNECT_HRM}
           </Button>
         )}
       </CardContent>

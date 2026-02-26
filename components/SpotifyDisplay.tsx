@@ -1,12 +1,14 @@
 'use client'
-// File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import {
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+  SPOTIFY_MSG_AWAITING_LOGIN,
+} from '@/constants/spotify'
 import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -16,14 +18,15 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
-// 1. State Shape
+const EMPTY_DEVICES: SpotifyDevice[] = []
+
 interface SpotifyDisplayState {
   displayVolume: number
   isMuted: boolean
@@ -33,7 +36,6 @@ interface SpotifyDisplayState {
   deviceMenuAnchor: null | HTMLElement
 }
 
-// 2. Actions
 type SpotifyDisplayAction =
   | { type: 'SET_VOLUME'; payload: number }
   | { type: 'SET_SLIDING'; payload: boolean }
@@ -46,7 +48,6 @@ type SpotifyDisplayAction =
       payload: { volume?: number; isMuted?: boolean }
     }
 
-// 3. Reducer Logic
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -113,13 +114,12 @@ const SpotifyDisplay = () => {
 
   // Use defensive variables to handle partial or empty data from the WebSocket.
   const playback = spotifyData?.playback
-  const devices = useMemo(
-    () => spotifyData?.devices || [],
-    [spotifyData?.devices]
-  )
-  const track = playback?.track || { name: 'Awaiting Login...', artist: '' }
+  const devices = spotifyData?.devices || EMPTY_DEVICES
+  const track = playback?.track || {
+    name: SPOTIFY_MSG_AWAITING_LOGIN,
+    artist: '',
+  }
 
-  // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
     displayVolume: playback?.volume_percent ?? 70,
     isMuted: playback?.isMuted ?? false,
@@ -300,7 +300,7 @@ const SpotifyDisplay = () => {
   }
 
   if (isLoggedIn) {
-    const isWaiting = track.name === 'Awaiting Login...'
+    const isWaiting = track.name === SPOTIFY_MSG_AWAITING_LOGIN
     const displayTrackName = isWaiting ? 'No Active Playback' : track.name
     const displayArtist = isWaiting ? '' : `— ${track.artist}`
 

@@ -10,3 +10,8 @@ export const SPOTIFY_DEFAULT_TOKEN_EXPIRY_S = 3600
 // Centralized constants for Spotify integration
 export const VOLUME_SYNC_GRACE_PERIOD_MS = 600
 export const SPOTIFY_BRAND_COLOR = '#1DB954'
+
+// Display messages
+export const SPOTIFY_MSG_AWAITING_LOGIN = 'Awaiting Login...'
+export const SPOTIFY_MSG_NO_TRACK = 'No Track Playing'
+export const SPOTIFY_MSG_CONNECT_HRM = 'Connect to HRM Web Player'
