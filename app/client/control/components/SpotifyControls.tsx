@@ -27,6 +27,7 @@ import {
   SPOTIFY_MSG_NO_TRACK,
   SPOTIFY_MSG_CONNECT_HRM,
   SPOTIFY_OFFLINE_WARNING,
+  SPOTIFY_SEARCHING_DEVICES,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -401,7 +402,11 @@ const SpotifyControls = () => {
             disabled={spotifyServiceInitialized && !devices.length}
             startIcon={
               spotifyServiceInitialized && !devices.length ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  aria-label="Loading Spotify status"
+                />
               ) : (
                 <LibraryMusic />
               )
@@ -418,7 +423,7 @@ const SpotifyControls = () => {
             }}
           >
             {spotifyServiceInitialized && !devices.length
-              ? 'Searching for devices...'
+              ? SPOTIFY_SEARCHING_DEVICES
               : SPOTIFY_MSG_CONNECT_HRM}
           </Button>
         )}
