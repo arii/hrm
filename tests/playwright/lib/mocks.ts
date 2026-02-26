@@ -240,13 +240,11 @@ export async function mockSpotifySDK(
 
   // 2. Mock the specific SDK script loading
   // Defined LAST so it takes precedence over the generic regex route above.
-  await pageOrContext.route(
-    /.*spotify-player\.js.*/,
-    (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/javascript',
-        body: `
+  await pageOrContext.route(/.*spotify-player\.js.*/, (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: `
         window.Spotify = {
           Player: class {
             constructor(options) {
@@ -277,9 +275,8 @@ export async function mockSpotifySDK(
           window.onSpotifyWebPlaybackSDKReady();
         }
       `,
-      })
-    }
-  )
+    })
+  })
 }
 
 /**
