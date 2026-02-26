@@ -226,9 +226,22 @@ export async function mockSpotifyPlaylists(
 export async function mockSpotifySDK(
   pageOrContext: Page | BrowserContext
 ): Promise<void> {
-  // 1. Mock the SDK script loading
+  // 1. Intercept generic Spotify-related network requests FIRST.
+  // This covers api.spotify.com, gue1-dealer.g2.spotify.com, and other scdn.co assets
+  // Playwright handles routes in reverse order, so this broad handler is defined first
+  // to let the specific SDK handler (defined next) take precedence.
+  await pageOrContext.route(/\.(spotify\.com|scdn\.co)/, (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({}),
+    })
+  })
+
+  // 2. Mock the specific SDK script loading
+  // Defined LAST so it takes precedence over the generic regex route above.
   await pageOrContext.route(
-    'https://sdk.scdn.co/spotify-player.js',
+    /.*spotify-player\.js.*/,
     (route) => {
       route.fulfill({
         status: 200,
@@ -241,7 +254,6 @@ export async function mockSpotifySDK(
               this._listeners = {};
             }
             connect() {
-              // Simulate async success
               Promise.resolve().then(() => {
                 if (this._listeners['ready']) {
                   this._listeners['ready'].forEach(cb => cb({ device_id: 'mock-device-id' }));
@@ -268,23 +280,6 @@ export async function mockSpotifySDK(
       })
     }
   )
-
-  // 2. Intercept any other Spotify-related network requests to prevent 401s and external calls
-  // This covers api.spotify.com, gue1-dealer.g2.spotify.com, and other scdn.co assets
-  await pageOrContext.route(/\.(spotify\.com|scdn\.co)/, (route) => {
-    const url = route.request().url()
-
-    // Allow the SDK script itself to be handled by the more specific route above
-    if (url.includes('sdk.scdn.co/spotify-player.js')) {
-      return route.continue()
-    }
-
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({}),
-    })
-  })
 }
 
 /**
