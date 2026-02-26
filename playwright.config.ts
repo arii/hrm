@@ -185,5 +185,22 @@ export default defineConfig({
 
   // Output configuration
   outputDir: 'test-results/',
+<<<<<<< HEAD
   reporter: reporters,
+=======
+  reporter: [
+    ['list'],
+    ...(process.env.CI ? [['github']] : []),
+    ['blob'],
+    [
+      'junit',
+      {
+        outputFile:
+          process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME || 'test-results/results.xml',
+      },
+    ],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
+>>>>>>> 5f1e4342 (feat: implement Spotify API and SDK mocking for VRT stability)
 })

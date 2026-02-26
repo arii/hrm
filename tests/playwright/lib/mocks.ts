@@ -224,6 +224,77 @@ export async function mockSpotifyPlaylists(
 }
 
 /**
+ * Comprehensive mock for the Spotify Web Playback SDK and associated API calls.
+ * Intercepts the SDK script loading and provides a mock implementation of window.Spotify.
+ * Also intercepts all network requests to Spotify domains to prevent 401 errors.
+ *
+ * @param pageOrContext - The Playwright Page or BrowserContext object.
+ */
+export async function mockSpotifySDK(
+  pageOrContext: Page | BrowserContext
+): Promise<void> {
+  // 1. Mock the SDK script loading
+  await pageOrContext.route('https://sdk.scdn.co/spotify-player.js', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: `
+        window.Spotify = {
+          Player: class {
+            constructor(options) {
+              this._options = options;
+              this._listeners = {};
+              console.log('[Mock Spotify SDK] Player initialized');
+            }
+            connect() {
+              console.log('[Mock Spotify SDK] connect() called');
+              // Simulate async success
+              setTimeout(() => {
+                if (this._listeners['ready']) {
+                  this._listeners['ready'].forEach(cb => cb({ device_id: 'mock-device-id' }));
+                }
+              }, 100);
+              return Promise.resolve(true);
+            }
+            disconnect() { console.log('[Mock Spotify SDK] disconnect() called'); }
+            setVolume() { return Promise.resolve(); }
+            addListener(event, cb) {
+              if (!this._listeners[event]) this._listeners[event] = [];
+              this._listeners[event].push(cb);
+            }
+            removeListener(event) {
+              delete this._listeners[event];
+            }
+          }
+        };
+        // Signal that the SDK is ready
+        if (typeof window.onSpotifyWebPlaybackSDKReady === 'function') {
+          window.onSpotifyWebPlaybackSDKReady();
+        }
+      `,
+    })
+  })
+
+  // 2. Intercept any other Spotify-related network requests to prevent 401s and external calls
+  // This covers api.spotify.com, gue1-dealer.g2.spotify.com, and other scdn.co assets
+  await pageOrContext.route(/\.(spotify\.com|scdn\.co)/, (route) => {
+    const url = route.request().url()
+
+    // Allow the SDK script itself to be handled by the more specific route above
+    if (url.includes('sdk.scdn.co/spotify-player.js')) {
+      return route.continue()
+    }
+
+    console.log('[Mock Spotify Network] Intercepting:', url)
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({}),
+    })
+  })
+}
+
+/**
  * Mocks the Spotify access token endpoint.
  *
  * @param context - The Playwright BrowserContext object.

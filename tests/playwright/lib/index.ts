@@ -139,6 +139,7 @@ export {
   mockLoggedInSession,
   mockSpotifyAccessToken,
   mockSpotifyPlaylists,
+  mockSpotifySDK,
 } from './mocks'
 
 // ============================================================================

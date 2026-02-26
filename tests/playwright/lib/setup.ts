@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
+import { mockGoogleDocIframe, mockSpotifySDK } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
@@ -184,6 +184,9 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   // Mock the dynamic Google Doc iframe with static, stable content
   await mockGoogleDocIframe(context)
 
+  // Mock Spotify SDK and associated network requests to ensure VRT stability
+  await mockSpotifySDK(context)
+
   // Mock the workout API response for stable VRT
   await context.route('**/api/workout*', async (route) => {
     await route.fulfill({
@@ -253,6 +256,7 @@ export async function setupMinimalVisualRegressionTest(
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {
     await mockGoogleDocIframe(page)
+    await mockSpotifySDK(page)
   }
   await navigateAndWait(page, path)
 }
