@@ -1,13 +1,25 @@
 'use client'
 import Image from 'next/image'
-import { useWebSocket } from '@/context/WebSocketContext'
 import { Box, Typography, Skeleton } from '@mui/material'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
-const CurrentSpotifyItemDisplay = () => {
-  const { spotifyData, connectionStatus } = useWebSocket()
-  const { isReady, deviceId } = useSpotifyWebPlayback()
+interface SpotifyTrackDisplayProps {
+  track: {
+    name: string
+    artist: string
+    albumName: string
+    albumArtUrl: string
+  }
+  isReady: boolean
+  deviceId: string | null
+  connectionStatus: string
+}
 
+const SpotifyTrackDisplay = ({
+  track,
+  isReady,
+  deviceId,
+  connectionStatus,
+}: SpotifyTrackDisplayProps) => {
   if (connectionStatus === 'Connecting') {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -20,10 +32,9 @@ const CurrentSpotifyItemDisplay = () => {
     )
   }
 
-  if (
-    !spotifyData.playback.track.name ||
-    spotifyData.playback.track.name === 'Awaiting Login...'
-  ) {
+  const hasTrack = track.name && track.name !== 'Awaiting Login...'
+
+  if (!hasTrack) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
@@ -46,11 +57,12 @@ const CurrentSpotifyItemDisplay = () => {
       sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
       aria-live="polite"
       aria-atomic="true"
+      data-testid="spotify-track-display"
     >
-      {spotifyData.playback.track.albumArtUrl ? (
+      {track.albumArtUrl ? (
         <Image
-          src={spotifyData.playback.track.albumArtUrl}
-          alt={spotifyData.playback.track.albumName || 'Album art'}
+          src={track.albumArtUrl}
+          alt={track.albumName || 'Album art'}
           width={64}
           height={64}
           style={{ borderRadius: '4px' }}
@@ -69,14 +81,19 @@ const CurrentSpotifyItemDisplay = () => {
         <Typography
           variant="body1"
           sx={{ fontWeight: 600, color: 'common.white' }}
+          data-testid="spotify-now-playing-title"
         >
-          {spotifyData.playback.track.name}
+          {track.name}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'grey.400' }}>
-          {spotifyData.playback.track.artist}
+        <Typography
+          variant="body2"
+          sx={{ color: 'grey.400' }}
+          data-testid="spotify-now-playing-artist"
+        >
+          {track.artist}
         </Typography>
         <Typography variant="caption" sx={{ color: 'grey.500' }}>
-          {spotifyData.playback.track.albumName}
+          {track.albumName}
         </Typography>
       </Box>
       {!isReady && (
@@ -113,4 +130,4 @@ const CurrentSpotifyItemDisplay = () => {
   )
 }
 
-export default CurrentSpotifyItemDisplay
+export default SpotifyTrackDisplay

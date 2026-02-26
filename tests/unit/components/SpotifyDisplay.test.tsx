@@ -53,10 +53,6 @@ jest.mock('@/components/shared/VolumeSlider', () => ({
     </div>
   ),
 }))
-jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
-  __esModule: true,
-  default: () => <div data-testid="current-spotify-item-display" />,
-}))
 jest.mock('@/context/WebSocketContext')
 jest.mock('@/hooks/useSpotifyCommand')
 jest.mock('next-auth/react', () => ({

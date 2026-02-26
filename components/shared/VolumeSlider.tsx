@@ -48,7 +48,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       direction="row"
       spacing={1}
       alignItems="center"
-      sx={{ flexGrow: 1, minWidth: 150 }}
+      sx={{ flexGrow: 1, minWidth: { xs: 150, md: 250 } }}
       data-testid="volume-slider-container"
     >
       <IconButton
@@ -81,11 +81,11 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           color: sliderColor,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
-            width: size === 'small' ? 12 : 16,
-            height: size === 'small' ? 12 : 16,
+            width: size === 'small' ? 18 : 22,
+            height: size === 'small' ? 18 : 22,
           },
-          '& .MuiSlider-track': { height: 3 },
-          '& .MuiSlider-rail': { height: 3 },
+          '& .MuiSlider-track': { height: 6 },
+          '& .MuiSlider-rail': { height: 6 },
         }}
         aria-label="Volume control"
         data-testid="volume-slider-input"
