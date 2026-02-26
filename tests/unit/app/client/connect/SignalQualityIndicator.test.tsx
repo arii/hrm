@@ -52,4 +52,26 @@ describe('SignalQualityIndicator', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText('1000ms')).not.toBeInTheDocument()
   })
+
+  it('should render the "Warning" state for weak signal', () => {
+    render(
+      <SignalQualityIndicator
+        periodMs={1000}
+        lastPeriodMs={2000}
+        isConnected={true}
+      />
+    )
+    expect(screen.getByText('Weak Signal')).toBeInTheDocument()
+  })
+
+  it('should render the "Critical" state for lost signal', () => {
+    render(
+      <SignalQualityIndicator
+        periodMs={1000}
+        lastPeriodMs={3500}
+        isConnected={true}
+      />
+    )
+    expect(screen.getByText('Signal Lost')).toBeInTheDocument()
+  })
 })
