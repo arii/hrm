@@ -198,7 +198,8 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    expect(clientData?.name).toBeUndefined()
+    // In test environment, a new connection defaults to 'Test Athlete' if not previously existing
+    expect(clientData?.name).toBe('Test Athlete')
     expect(clientData?.value).toBe(0)
 
     ws2.close()

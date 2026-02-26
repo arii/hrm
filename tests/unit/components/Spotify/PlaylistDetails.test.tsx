@@ -95,9 +95,7 @@ describe('PlaylistDetails', () => {
       <PlaylistDetails playlistId="test-playlist-id" onTrackPlay={jest.fn()} />
     )
     await waitFor(() => {
-      expect(
-        screen.getByText('Failed to fetch playlist details')
-      ).toBeInTheDocument()
+      expect(screen.getByText('Failed to fetch tracks')).toBeInTheDocument()
     })
     consoleErrorSpy.mockRestore()
   })

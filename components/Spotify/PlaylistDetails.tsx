@@ -1,21 +1,27 @@
-import Box from '@mui/material/Box'
-import CircularProgress from '@mui/material/CircularProgress'
-import List from '@mui/material/List'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
+import {
+  Box,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemText,
+  Avatar,
+  Paper,
+  Typography,
+} from '@mui/material'
+import { MusicNote } from '@mui/icons-material'
 import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
-import { SpotifyTrackItem } from './SpotifyTrackItem'
+import { formatDuration } from '@/lib/utils'
 
-interface PlaylistDetailsProps {
-  playlistId: string
-  onTrackPlay: (trackUri: string) => void
-}
-
-const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
+const PlaylistDetails = ({
   playlistId,
   onTrackPlay,
+}: {
+  playlistId: string
+  onTrackPlay: (uri: string) => void
 }) => {
   const [tracks, setTracks] = useState<Track[]>([])
   const [hasMore, setHasMore] = useState(true)
@@ -27,20 +33,18 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
     async (currentOffset: number) => {
       if (!playlistId) return
       try {
-        const response = await fetch(
+        const res = await fetch(
           `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
         )
-        if (!response.ok) throw new Error('Failed to fetch playlist details')
-        const data = await response.json()
+        if (!res.ok) throw new Error('Failed to fetch tracks')
+        const data = await res.json()
         setTracks((prev) =>
           currentOffset === 0 ? data.tracks : [...prev, ...data.tracks]
         )
         setOffset(currentOffset + data.tracks.length)
         setHasMore(data.tracks.length === limit)
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
+        setError(err instanceof Error ? err.message : 'Unknown error')
       }
     },
     [playlistId]
@@ -72,13 +76,52 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           }
           scrollableTarget="scrollable-playlist"
         >
-          <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+          <List dense sx={{ p: 0 }}>
             {tracks.map((track, index) => (
-              <SpotifyTrackItem
+              <ListItem
                 key={`${track.id}-${index}`}
-                track={track}
-                onClick={() => onTrackPlay(track.uri)}
-              />
+                divider
+                disablePadding
+                secondaryAction={
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {formatDuration(track.duration_ms, {
+                      unit: 'milliseconds',
+                      format: 'MM:SS',
+                    })}
+                  </Typography>
+                }
+              >
+                <ListItemButton
+                  onClick={() => onTrackPlay(track.uri)}
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <ListItemAvatar sx={{ minWidth: 48 }}>
+                    <Avatar
+                      variant="rounded"
+                      src={track.album?.images?.[2]?.url}
+                      sx={{ width: 32, height: 32 }}
+                    >
+                      <MusicNote fontSize="small" />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={track.name}
+                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      noWrap: true,
+                      fontWeight: 'medium',
+                    }}
+                    secondaryTypographyProps={{
+                      variant: 'caption',
+                      noWrap: true,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
           </List>
         </InfiniteScroll>

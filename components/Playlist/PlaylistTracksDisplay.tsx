@@ -2,25 +2,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import IconButton from '@mui/material/IconButton'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import PauseIcon from '@mui/icons-material/Pause'
-import List from '@mui/material/List'
-import Paper from '@mui/material/Paper'
-import Button from '@mui/material/Button'
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  IconButton,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemText,
+  Avatar,
+  Paper,
+  Button,
+} from '@mui/material'
+import { PlayArrow, Pause, MusicNote } from '@mui/icons-material'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
-import { SpotifyTrackItem } from '../Spotify/SpotifyTrackItem'
 import { formatDuration } from '@/lib/utils'
 
-interface PlaylistTracksDisplayProps {
-  playlistId: string
-}
-
-const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
+const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [tracks, setTracks] = useState<Track[]>([])
@@ -34,21 +35,19 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     async (currentOffset: number) => {
       try {
         setLoading(true)
-        const response = await fetch(
+        const res = await fetch(
           `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
         )
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to fetch tracks')
-        }
-        const data = await response.json()
+        if (!res.ok)
+          throw new Error(
+            (await res.json()).message || 'Failed to fetch tracks'
+          )
+        const data = await res.json()
         setTracks(data.tracks)
         setTotal(data.total)
-        setLoading(false)
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
         setLoading(false)
       }
     },
@@ -59,60 +58,47 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handleTogglePlay = (
-    _track: Track,
-    index: number,
-    isPlaying: boolean
-  ) => {
-    if (isPlaying) {
-      executeSpotify('PAUSE')
-    } else {
+  const handleToggle = (index: number, isPlaying: boolean) => {
+    if (isPlaying) executeSpotify('PAUSE')
+    else
       executeSpotify('PLAY', {
         contextUri: `spotify:playlist:${playlistId}`,
-        offset: { position: index },
+        offset: { position: offset + index },
       })
-    }
   }
 
-  if (loading) {
+  if (loading)
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
       </Box>
     )
-  }
-
-  if (error) {
+  if (error)
     return (
       <Alert severity="error" sx={{ mt: 4 }}>
         {error}
       </Alert>
     )
-  }
-
-  if (tracks.length === 0) {
+  if (!tracks.length)
     return (
       <Typography variant="h6" sx={{ mt: 4 }}>
         This playlist is empty.
       </Typography>
     )
-  }
 
   return (
     <Box>
       <Paper>
-        <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+        <List dense sx={{ p: 0 }}>
           {tracks.map((track, index) => {
             const isPlaying =
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
-
             return (
-              <SpotifyTrackItem
-                key={track.id}
-                track={track}
-                isPlaying={isPlaying}
-                onClick={() => handleTogglePlay(track, index, isPlaying)}
+              <ListItem
+                key={`${track.id}-${index}`}
+                divider
+                disablePadding
                 secondaryAction={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography
@@ -125,15 +111,46 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                       })}
                     </Typography>
                     <IconButton
-                      onClick={() => handleTogglePlay(track, index, isPlaying)}
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
+                      onClick={() => handleToggle(index, isPlaying)}
                       edge="end"
+                      aria-label={isPlaying ? 'Pause' : 'Play'}
                     >
-                      {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                      {isPlaying ? <Pause /> : <PlayArrow />}
                     </IconButton>
                   </Box>
                 }
-              />
+                sx={{
+                  backgroundColor: isPlaying ? 'action.selected' : 'inherit',
+                }}
+              >
+                <ListItemButton
+                  onClick={() => handleToggle(index, isPlaying)}
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <ListItemAvatar sx={{ minWidth: 48 }}>
+                    <Avatar
+                      variant="rounded"
+                      src={track.album?.images?.[2]?.url}
+                      sx={{ width: 32, height: 32 }}
+                    >
+                      <MusicNote fontSize="small" />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={track.name}
+                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      noWrap: true,
+                      fontWeight: 'medium',
+                    }}
+                    secondaryTypographyProps={{
+                      variant: 'caption',
+                      noWrap: true,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             )
           })}
         </List>
