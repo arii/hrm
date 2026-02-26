@@ -1,11 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
+import { fireEvent, render, screen, act } from '@testing-library/react'
 import SpotifyVolumeControl from '@/app/client/control/components/spotify/SpotifyVolumeControl'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import '@testing-library/jest-dom'
 
 jest.mock('@/components/shared/VolumeSlider', () => ({
@@ -40,15 +39,11 @@ jest.mock('@/hooks/useAppSnackbar', () => ({
   useAppSnackbar: jest.fn(),
 }))
 
-jest.mock('@/hooks/useSpotifyCommand', () => ({
-  useSpotifyCommand: jest.fn(),
-}))
-
 describe('components/spotify/SpotifyVolumeControl', () => {
   const mockSetVolume = jest.fn()
   const mockToggleMute = jest.fn()
   const mockShowWarning = jest.fn()
-  const mockExecuteSpotify = jest.fn()
+  const mockOnVolumeChangeCommitted = jest.fn()
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -61,38 +56,55 @@ describe('components/spotify/SpotifyVolumeControl', () => {
     ;(useAppSnackbar as jest.Mock).mockReturnValue({
       showWarning: mockShowWarning,
     })
-    ;(useSpotifyCommand as jest.Mock).mockReturnValue({
-      execute: mockExecuteSpotify,
-    })
   })
 
   it('syncs volume when playbackVolume changes', () => {
     const { rerender } = render(
-      <SpotifyVolumeControl isConnected={true} playbackVolume={50} />
+      <SpotifyVolumeControl
+        isConnected={true}
+        playbackVolume={50}
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
+      />
     )
 
-    rerender(<SpotifyVolumeControl isConnected={true} playbackVolume={80} />)
+    rerender(
+      <SpotifyVolumeControl
+        isConnected={true}
+        playbackVolume={80}
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
+      />
+    )
     expect(mockSetVolume).toHaveBeenCalledWith(80)
   })
 
   it('prevents volume sync during sliding', () => {
     const { rerender } = render(
-      <SpotifyVolumeControl isConnected={true} playbackVolume={50} />
+      <SpotifyVolumeControl
+        isConnected={true}
+        playbackVolume={50}
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
+      />
     )
 
     const slider = screen.getByRole('slider')
     fireEvent.change(slider, { target: { value: '60' } })
 
-    rerender(<SpotifyVolumeControl isConnected={true} playbackVolume={80} />)
+    rerender(
+      <SpotifyVolumeControl
+        isConnected={true}
+        playbackVolume={80}
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
+      />
+    )
     expect(mockSetVolume).not.toHaveBeenCalledWith(80)
   })
 
-  it('sends volume command on commit', async () => {
+  it('calls onVolumeChangeCommitted callback on commit', () => {
     render(
       <SpotifyVolumeControl
         isConnected={true}
         playbackVolume={50}
-        targetDeviceId="dev-1"
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
       />
     )
 
@@ -100,17 +112,17 @@ describe('components/spotify/SpotifyVolumeControl', () => {
     fireEvent.change(slider, { target: { value: '70' } })
     fireEvent.mouseUp(slider, { target: { value: '70' } })
 
-    await waitFor(() => {
-      expect(mockExecuteSpotify).toHaveBeenCalledWith('SET_VOLUME', {
-        volume: 70,
-        deviceId: 'dev-1',
-      })
-    })
+    expect(mockOnVolumeChangeCommitted).toHaveBeenCalledWith(70)
   })
 
   it('throttles offline warnings', () => {
     jest.useFakeTimers()
-    render(<SpotifyVolumeControl isConnected={false} />)
+    render(
+      <SpotifyVolumeControl
+        isConnected={false}
+        onVolumeChangeCommitted={mockOnVolumeChangeCommitted}
+      />
+    )
 
     const slider = screen.getByRole('slider')
 

@@ -17,12 +17,10 @@ export const useSpotifyDeviceSync = (
     const activeId = activeDevice?.id
 
     const shouldUpdateToActive = () => {
-      // Sync if the active device changed externally or initial load
       if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
         return Boolean(activeId)
       }
 
-      // Sync if the previously selected device is gone
       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
       return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
     }
