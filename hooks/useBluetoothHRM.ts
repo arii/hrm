@@ -89,6 +89,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const statusRef = useRef(status)
   const lastDataTime = useRef<number>(0)
+  const lastWatchdogMark = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const periodHistory = useRef<number[]>([])
   const avgPeriodMs = useRef<number>(0)
@@ -418,9 +419,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         process.env.NEXT_PUBLIC_TESTING === 'true' &&
         window.__TEST_CONTROLS__
       ) {
-        delete window.__TEST_CONTROLS__.setHrmStatus
-        delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-        delete window.__TEST_CONTROLS__.setSignalStatus
+        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
+          delete window.__TEST_CONTROLS__.setHrmStatus
+        }
+        if (
+          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
+          setCustomStatusMessage
+        ) {
+          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+        }
+        if (window.__TEST_CONTROLS__.setSignalStatus === setSignalStatus) {
+          delete window.__TEST_CONTROLS__.setSignalStatus
+        }
       }
     }
   }, [])
@@ -569,6 +579,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
+            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
             logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'

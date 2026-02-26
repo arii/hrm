@@ -31,17 +31,11 @@ export const SignalQualityIndicator = ({
   isConnected,
 }: SignalQualityIndicatorProps) => {
   const { palette } = useTheme()
-  const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
-  const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
 
-  const quality =
-    !isConnected || periodMs === 0
-      ? 'none'
-      : periodMs < 1200
-        ? 'excellent'
-        : periodMs < 2200
-          ? 'good'
-          : 'poor'
+  const currentStatusKey = useMemo((): SignalStatusKey => {
+    if (!isConnected || periodMs === 0) return 'none'
+    if (lastPeriodMs > CRITICAL_THRESHOLD_MS) return 'critical'
+    if (lastPeriodMs > STABILITY_THRESHOLD_MS) return 'warning'
 
   const STATUS_CONFIG_STATIC = useMemo(
     () => ({
@@ -82,11 +76,10 @@ export const SignalQualityIndicator = ({
     [palette]
   )
 
-  const currentStatusKey = isCritical
-    ? 'critical'
-    : isWarning
-      ? 'warning'
-      : quality
+  const config = useMemo(
+    () => getStatusConfig(currentStatusKey, palette, periodMs, isConnected),
+    [currentStatusKey, palette, periodMs, isConnected]
+  )
 
   const config = STATUS_CONFIG_STATIC[currentStatusKey]
   const Icon = config.icon
@@ -99,7 +92,9 @@ export const SignalQualityIndicator = ({
       title={
         isConnected
           ? `Signal Quality: ${periodMs}ms avg (~${reliability}% capture)${
-              isWarning ? ` | Latency: ${lastPeriodMs}ms` : ''
+              currentStatusKey === 'warning' || currentStatusKey === 'critical'
+                ? ` | Latency: ${lastPeriodMs}ms`
+                : ''
             }`
           : 'No Signal'
       }
@@ -111,7 +106,9 @@ export const SignalQualityIndicator = ({
           gap: 0.5,
           opacity: isConnected ? 1 : 0.5,
           color: config.color,
-          animation: config.isAnimated ? 'pulse-signal 1.5s infinite' : 'none',
+          animation: config.isAnimated
+            ? `pulse-signal ${SIGNAL_PULSE_DURATION_S}s infinite`
+            : 'none',
           // Keyframes are defined in global styles to avoid re-parsing on every render
         }}
       >
@@ -121,7 +118,10 @@ export const SignalQualityIndicator = ({
             variant="caption"
             sx={{
               color: config.isAnimated ? config.color : 'text.secondary',
-              minWidth: 35,
+              // Set a minWidth for ms labels to prevent jitter, but allow text labels to expand
+              minWidth: config.label?.endsWith('ms')
+                ? SIGNAL_LABEL_MIN_WIDTH_PX
+                : 'auto',
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
