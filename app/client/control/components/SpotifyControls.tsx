@@ -82,15 +82,19 @@ const SpotifyControls = () => {
     spotifyServiceInitialized &&
     (hasTrack || devices.some((d: SpotifyDevice) => d.is_active))
 
-  useEffect(() => {
-    const refresh = () =>
+  const refresh = useCallback(
+    () =>
       connectionStatus === 'Connected' &&
       spotifyServiceInitialized &&
-      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' }),
+    [connectionStatus, spotifyServiceInitialized, sendData]
+  )
+
+  useEffect(() => {
     refresh()
     window.addEventListener('focus', refresh)
     return () => window.removeEventListener('focus', refresh)
-  }, [connectionStatus, sendData, spotifyServiceInitialized])
+  }, [refresh])
 
   useEffect(() => {
     const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
@@ -226,7 +230,7 @@ const SpotifyControls = () => {
         const now = Date.now()
         // Throttle warning to once every 3 seconds to avoid spam during sliding
         if (now - lastWarningTimeRef.current > 3000) {
-          showWarning('Changes not saved: Offline')
+          showWarning(SPOTIFY_OFFLINE_WARNING)
           lastWarningTimeRef.current = now
         }
       }
@@ -399,7 +403,11 @@ const SpotifyControls = () => {
             disabled={spotifyServiceInitialized && !devices.length}
             startIcon={
               spotifyServiceInitialized && !devices.length ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  aria-label="Loading Spotify status"
+                />
               ) : (
                 <LibraryMusic />
               )
@@ -408,7 +416,7 @@ const SpotifyControls = () => {
               textTransform: 'none',
               py: 1.5,
               bgcolor: SPOTIFY_BRAND_COLOR,
-              '&:hover': { bgcolor: '#1ed760' },
+              '&:hover': { bgcolor: SPOTIFY_HOVER_COLOR },
               '&.Mui-disabled': {
                 bgcolor: 'rgba(29, 185, 84, 0.3)',
                 color: 'rgba(255, 255, 255, 0.5)',
