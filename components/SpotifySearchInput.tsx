@@ -127,9 +127,7 @@ const SpotifySearchInput = ({
               ),
               endAdornment: (
                 <>
-                  {loading && (
-                    <CircularProgress color="inherit" size={20} />
-                  )}
+                  {loading && <CircularProgress color="inherit" size={20} />}
                   {params.InputProps.endAdornment}
                 </>
               ),

@@ -37,7 +37,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const [error, setError] = useState<string | null>(null)
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
+    null
+  )
   const debouncedSearch = useDebounce(searchQuery, 500)
 
   useEffect(() => {
@@ -52,14 +54,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
         const data = await res.json()
         if (active) {
-          setPresets((data.presetPlaylists || []).map((p: Playlist) => ({
-            ...p,
-            isPreset: true,
-          })))
-          setUserPlaylists((data.userPlaylists || []).map((p: Playlist) => ({
-            ...p,
-            isPreset: false,
-          })))
+          setPresets(
+            (data.presetPlaylists || []).map((p: Playlist) => ({
+              ...p,
+              isPreset: true,
+            }))
+          )
+          setUserPlaylists(
+            (data.userPlaylists || []).map((p: Playlist) => ({
+              ...p,
+              isPreset: false,
+            }))
+          )
         }
       } catch (err) {
         if (active) {
@@ -117,9 +123,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     const query = debouncedSearch.toLowerCase().trim()
     if (!query) return allLocal
 
-    const local = allLocal.filter((p) =>
-      p.name.toLowerCase().includes(query)
-    )
+    const local = allLocal.filter((p) => p.name.toLowerCase().includes(query))
     const combined = [...local]
     const uris = new Set(local.map((p) => p.uri))
 
@@ -236,7 +240,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   }
                 />
                 {option.isPreset && (
-                  <Chip label="Preset" size="small" sx={{ height: 20, ml: 1 }} />
+                  <Chip
+                    label="Preset"
+                    size="small"
+                    sx={{ height: 20, ml: 1 }}
+                  />
                 )}
                 {option.isSearchResult && !option.isPreset && (
                   <Chip
