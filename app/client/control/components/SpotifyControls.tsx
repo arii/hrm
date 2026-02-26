@@ -26,6 +26,8 @@ import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
 import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
+const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
+
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
@@ -257,8 +259,6 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus])
 
-  const volumeSliderSx = useMemo(() => ({ mt: 3, mb: 1 }), [])
-
   return (
     <ControlCard
       data-testid="spotify-controls"
@@ -329,7 +329,7 @@ const SpotifyControls = () => {
               showValue
               sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"
-              sx={volumeSliderSx}
+              sx={VOLUME_SLIDER_SX}
             />
 
             {devices.length > 0 && (
