@@ -76,12 +76,12 @@ export const SignalQualityIndicator = ({
         },
         none: {
           color: palette.text.disabled,
-          label: 'Disconnected',
+          label: isConnected ? 'Waiting...' : 'Disconnected',
           icon: SignalCellularConnectedNoInternet0BarIcon,
           isAnimated: false,
         },
       }) as const,
-    [palette, periodMs]
+    [palette, periodMs, isConnected]
   )
 
   const currentStatusKey = isCritical
@@ -123,7 +123,8 @@ export const SignalQualityIndicator = ({
             variant="caption"
             sx={{
               color: config.isAnimated ? config.color : 'text.secondary',
-              minWidth: 35,
+              // Set a minWidth for ms labels to prevent jitter, but allow text labels to expand
+              minWidth: config.label.endsWith('ms') ? 45 : 'auto',
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
