@@ -108,6 +108,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
+  const isMounted = useRef(true)
+
+  useEffect(() => {
+    isMounted.current = true
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -236,7 +244,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDisconnecting.current = true
 
     try {
-      setStatus(BluetoothConnectionStatus.DISCONNECTING)
+      if (isMounted.current) {
+        setStatus(BluetoothConnectionStatus.DISCONNECTING)
+      }
       isManualDisconnect.current = true
       isTimeoutDisconnect.current = false
       if (abortControllerRef.current) {
@@ -252,6 +262,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
+      if (!isMounted.current) return
+
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(null)
       setSavedDevice(null)
@@ -262,7 +274,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       avgPeriodMs.current = 0
       setSignalPeriodMs(0)
     } finally {
-      isDisconnecting.current = false
+      if (isMounted.current) {
+        isDisconnecting.current = false
+      }
     }
   }, [])
 
@@ -399,7 +413,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return
       }
 
-      // Visibility check
       if (
         typeof document !== 'undefined' &&
         document.visibilityState !== 'visible' &&
@@ -413,7 +426,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return
       }
 
-      // Connection Storm Prevention
       const now = Date.now()
       const timeSinceConnect = now - lastConnectTimeRef.current
       if (

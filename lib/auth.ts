@@ -12,12 +12,6 @@ import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 // Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
 const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET
 
-if (!NEXTAUTH_SECRET) {
-  throw new Error(
-    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
-  )
-}
-
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
   interface Session {

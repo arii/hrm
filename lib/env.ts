@@ -12,7 +12,7 @@ const envSchema = z
       .default('development'),
     PORT: z.coerce.number().default(3000),
     HOST: z.string().default('0.0.0.0'),
-    NEXTAUTH_SECRET: z.string().optional(),
+    NEXTAUTH_SECRET: z.string().default(''),
     NEXTAUTH_URL: z.string().url().optional(),
     BASE_URL: z.string().url().optional(),
     SPOTIFY_CLIENT_ID: z.string().min(1).optional(),
@@ -77,7 +77,7 @@ const envSchema = z
 
       if (
         data.NODE_ENV === 'production' &&
-        (data.NEXTAUTH_SECRET?.length ?? 0) < 32
+        data.NEXTAUTH_SECRET.length < 32
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -86,10 +86,7 @@ const envSchema = z
             'NEXTAUTH_SECRET must be at least 32 characters long in production.',
         })
       }
-      if (
-        data.NODE_ENV !== 'production' &&
-        (data.NEXTAUTH_SECRET?.length ?? 0) < 1
-      ) {
+      if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET.length < 1) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['NEXTAUTH_SECRET'],
