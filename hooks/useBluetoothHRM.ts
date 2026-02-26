@@ -16,16 +16,7 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
-
-/**
- * Error thrown when a silent connection is attempted but no saved device ID is found.
- */
-class NoSavedDeviceError extends Error {
-  constructor() {
-    super('No saved device ID for silent connection')
-    this.name = 'NoSavedDeviceError'
-  }
-}
+import { NoSavedDeviceError } from '@/lib/errors'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
