@@ -81,6 +81,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           color: sliderColor,
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
+            // Explicit pixel sizes for precise touch targets (18px small, 22px medium)
             width: size === 'small' ? 18 : 22,
             height: size === 'small' ? 18 : 22,
           },
