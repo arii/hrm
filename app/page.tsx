@@ -1,5 +1,6 @@
 import DashboardClient from '@/components/DashboardClient'
 import { env } from '@/lib/env'
+import { extractGoogleDocId } from '@/lib/utils'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -14,5 +15,28 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     nativeValue === 'true' ||
     (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
 
-  return <DashboardClient useNativeTable={useNativeTable} />
+  // Check for test-error
+  const testErrorParam = params['test-error']
+  const testErrorValue = Array.isArray(testErrorParam)
+    ? testErrorParam[0]
+    : testErrorParam
+
+  // Only allow intentional errors in development or test environments.
+  const isTestableEnv =
+    process.env.NODE_ENV !== 'production' ||
+    env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
+    env.CI === 'true' ||
+    env.TESTING === 'true' ||
+    false
+
+  const docId = extractGoogleDocId(env.GOOGLE_DOC_WORKOUT_URL)
+
+  return (
+    <DashboardClient
+      useNativeTable={useNativeTable}
+      docId={docId}
+      iframeUrl={env.GOOGLE_DOC_IFRAME_URL}
+      triggerError={isTestableEnv && testErrorValue === 'true'}
+    />
+  )
 }

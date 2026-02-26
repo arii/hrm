@@ -38,6 +38,7 @@ interface ConnectViewProps {
   onForgetDevice: () => Promise<void>
   isSupported: boolean
   signalPeriodMs: number
+  lastPeriodMs: number
   currentHR: number
   hrZoneData: HrZoneData
   connectionStatus: string
@@ -64,6 +65,7 @@ export default function ConnectView({
   onForgetDevice,
   isSupported,
   signalPeriodMs,
+  lastPeriodMs,
   currentHR,
   hrZoneData,
   connectionStatus,
@@ -249,6 +251,7 @@ export default function ConnectView({
                 )}
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
+                  lastPeriodMs={lastPeriodMs}
                   isConnected={isConnected}
                 />
               </Box>

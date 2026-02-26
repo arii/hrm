@@ -103,6 +103,18 @@ setup() {
   assert_output "skip-reason" "quality failure with no detailed report (likely static analysis)"
 }
 
+@test "should skip review when GEMINI_ENABLE_PR_REVIEW is false" {
+  export GEMINI_ENABLE_PR_REVIEW="false"
+  export TRIGGER_EVENT="pull_request"
+  export ACTION_TYPE="opened"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "false"
+  assert_output "skip-reason" "Gemini review is disabled"
+}
+
 # Helper function to assert the output of the script
 assert_output() {
   local key="$1"
