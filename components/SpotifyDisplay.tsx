@@ -8,6 +8,8 @@ import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import {
   VOLUME_SYNC_GRACE_PERIOD_MS,
   SPOTIFY_MSG_AWAITING_LOGIN,
+  EMPTY_DEVICES,
+  SPOTIFY_NO_ACTIVE_PLAYBACK,
 } from '@/constants/spotify'
 import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -24,8 +26,6 @@ import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
-
-const EMPTY_DEVICES: SpotifyDevice[] = []
 
 interface SpotifyDisplayState {
   displayVolume: number
@@ -301,7 +301,7 @@ const SpotifyDisplay = () => {
 
   if (isLoggedIn) {
     const isWaiting = track.name === SPOTIFY_MSG_AWAITING_LOGIN
-    const displayTrackName = isWaiting ? 'No Active Playback' : track.name
+    const displayTrackName = isWaiting ? SPOTIFY_NO_ACTIVE_PLAYBACK : track.name
     const displayArtist = isWaiting ? '' : `— ${track.artist}`
 
     return (

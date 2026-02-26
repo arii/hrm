@@ -28,12 +28,11 @@ import {
   SPOTIFY_MSG_CONNECT_HRM,
   SPOTIFY_OFFLINE_WARNING,
   SPOTIFY_SEARCHING_DEVICES,
+  EMPTY_DEVICES,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-
-const EMPTY_DEVICES: SpotifyDevice[] = []
 
 const SpotifyControls = () => {
   const router = useRouter()

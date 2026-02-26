@@ -1,3 +1,5 @@
+import { SpotifyDevice } from '@/types/core'
+
 export const SPOTIFY_AUTH_LOOP_GUARD_KEY = 'spotify_auth_loop_guard'
 export const SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT = 15000
 export const HRM_WEB_PLAYER_NAME = 'HRM Web Player'
@@ -12,9 +14,13 @@ export const VOLUME_SYNC_GRACE_PERIOD_MS = 600
 export const SPOTIFY_BRAND_COLOR = '#1DB954'
 export const SPOTIFY_HOVER_COLOR = '#1ed760'
 
+// Shared objects
+export const EMPTY_DEVICES: SpotifyDevice[] = []
+
 // Display messages
 export const SPOTIFY_MSG_AWAITING_LOGIN = 'Awaiting Login...'
 export const SPOTIFY_MSG_NO_TRACK = 'No Track Playing'
 export const SPOTIFY_MSG_CONNECT_HRM = 'Connect to HRM Web Player'
 export const SPOTIFY_OFFLINE_WARNING = 'Changes not saved: Offline'
 export const SPOTIFY_SEARCHING_DEVICES = 'Searching for devices...'
+export const SPOTIFY_NO_ACTIVE_PLAYBACK = 'No Active Playback'
