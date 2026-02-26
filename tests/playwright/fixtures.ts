@@ -13,10 +13,6 @@ type PageFixtures = {
   connectPage: Page
 }
 
-/**
- * Safely cleans up a page after a test, clearing HR devices and stopping timers.
- * Swallows errors to prevent teardown failures from masking test results.
- */
 async function safePageTeardown(page: Page) {
   try {
     await cleanupVisualRegressionTest(page)
@@ -26,9 +22,6 @@ async function safePageTeardown(page: Page) {
   }
 }
 
-/**
- * Helper to create a page fixture with optional setup and automatic teardown.
- */
 async function createPageFixture(
   { context }: { context: BrowserContext },
   applyFixture: (page: Page) => Promise<void>,
@@ -38,8 +31,11 @@ async function createPageFixture(
   if (setup) {
     setup(page)
   }
-  await applyFixture(page)
-  await safePageTeardown(page)
+  try {
+    await applyFixture(page)
+  } finally {
+    await safePageTeardown(page)
+  }
 }
 
 export const test = base.extend<PageFixtures>({

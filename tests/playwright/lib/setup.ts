@@ -464,10 +464,7 @@ export async function cleanupVisualRegressionTest(...pages: Page[]) {
 
       if (!hasControls) continue
 
-      // 1. Reset all timers to prevent them from running into the next test
       await stopTimer(page)
-
-      // 2. Clear all mock HR devices to prevent heart rate tile pollution
       await mockMultipleHrDevices(page, [])
     } catch (error) {
       console.warn(
