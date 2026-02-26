@@ -121,7 +121,7 @@ export default function ConnectPage() {
     isSupported,
     signalPeriodMs,
     lastPeriodMs,
-    poorSignalStrikeCount,
+    consecutiveSlowPackets,
     connectionAttempted,
   } = useBluetoothHRM({
     userName,
@@ -193,9 +193,9 @@ export default function ConnectPage() {
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
   useEffect(() => {
-    if (poorSignalStrikeCount === 3)
+    if (consecutiveSlowPackets === 3)
       showWarning('HRM Signal Weak: Check device placement')
-  }, [poorSignalStrikeCount, showWarning])
+  }, [consecutiveSlowPackets, showWarning])
 
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)

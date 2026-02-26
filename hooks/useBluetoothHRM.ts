@@ -79,7 +79,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState(0)
-  const [signalStatus, setSignalStatus] = useState({ last: 0, strikes: 0 })
+  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -89,6 +89,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const statusRef = useRef(status)
   const lastDataTime = useRef<number>(0)
+  const lastWatchdogMark = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const periodHistory = useRef<number[]>([])
   const avgPeriodMs = useRef<number>(0)
@@ -191,11 +192,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
-          setSignalStatus((s) => ({
-            last: timeSinceLastData,
-            strikes:
-              timeSinceLastData > STABILITY_THRESHOLD_MS ? s.strikes + 1 : 0,
-          }))
+
+          // Only increment slow count if we've crossed a new stability window
+          // and haven't already marked this window.
+          const currentStabilityWindows = Math.floor(
+            timeSinceLastData / STABILITY_THRESHOLD_MS
+          )
+          const lastMarkedWindows = Math.floor(
+            lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+          )
+
+          if (currentStabilityWindows > lastMarkedWindows) {
+            setSignalStatus((s) => ({
+              last: timeSinceLastData,
+              slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
+            }))
+            lastWatchdogMark.current = timeSinceLastData
+          } else {
+            setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
+          }
         }
       }
 
@@ -251,7 +266,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
-    setSignalStatus({ last: 0, strikes: 0 })
+    setSignalStatus({ last: 0, slow: 0 })
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -418,9 +433,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         process.env.NEXT_PUBLIC_TESTING === 'true' &&
         window.__TEST_CONTROLS__
       ) {
-        delete window.__TEST_CONTROLS__.setHrmStatus
-        delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-        delete window.__TEST_CONTROLS__.setSignalStatus
+        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
+          delete window.__TEST_CONTROLS__.setHrmStatus
+        }
+        if (
+          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
+          setCustomStatusMessage
+        ) {
+          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+        }
+        if (window.__TEST_CONTROLS__.setSignalStatus === setSignalStatus) {
+          delete window.__TEST_CONTROLS__.setSignalStatus
+        }
       }
     }
   }, [])
@@ -552,10 +576,29 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
-              setSignalStatus((s) => ({
-                last: delta,
-                strikes: delta > STABILITY_THRESHOLD_MS ? s.strikes + 1 : 0,
-              }))
+
+              const isSlow = delta > STABILITY_THRESHOLD_MS
+              const watchdogWindows = Math.floor(
+                lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+              )
+
+              setSignalStatus((s) => {
+                // If the packet arrived and was slow, but the watchdog already counted it,
+                // we don't increment again. If it's fast, we reset the slow counter.
+                let nextSlow = isSlow ? s.slow : 0
+                if (isSlow && watchdogWindows === 0) {
+                  nextSlow = s.slow + 1
+                }
+
+                return {
+                  last: delta,
+                  slow: nextSlow,
+                }
+              })
+
+              // Synchronize watchdog mark with arrival to prevent double-counting
+              // when the watchdog timer next fires.
+              lastWatchdogMark.current = delta
             }
 
             const e = event as Event
@@ -569,6 +612,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
+            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
             logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'
@@ -834,7 +878,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isSupported, // Export this flag
     signalPeriodMs,
     lastPeriodMs: signalStatus.last,
-    poorSignalStrikeCount: signalStatus.strikes,
+    consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
   }
 }
