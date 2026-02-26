@@ -207,12 +207,13 @@ jobs:
   pr-review:
     name: 🤖 Gemini AI Review
     needs: [filter, pr-quality, check-diff]
-    # Requisite: Filter matches AND Quality Gate passed AND Changes are meaningful
+    # We always want a label ("approved", "not approved", or "not reviewed")
+    # So we run this job if the filter matched, regardless of quality gate result.
+    # We skip only if the filter didn't match (non-source changes).
     if: |
       always() &&
       needs.filter.outputs.should_review == 'true' &&
-      needs.pr-quality.result == 'success' &&
-      needs.check-diff.outputs.is_meaningful == 'true'
+      !cancelled()
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: ${{ needs.pr-quality.result }}
