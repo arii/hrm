@@ -94,6 +94,7 @@ jobs:
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
           BOT_USERNAME: 'gemini-bot'
+          GEMINI_ENABLE_PR_REVIEW: ${{ vars.GEMINI_ENABLE_PR_REVIEW }}
         run: |
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh
@@ -101,7 +102,7 @@ jobs:
   gemini-review:
     name: Execute Gemini Review
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.needs-review == 'true'
+    if: vars.GEMINI_ENABLE_PR_REVIEW != 'false' && needs.analyze-changes.outputs.needs-review == 'true'
     runs-on: ubuntu-latest
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
