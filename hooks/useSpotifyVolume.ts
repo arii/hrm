@@ -1,4 +1,3 @@
-// File: hooks/useSpotifyVolume.ts
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -7,6 +6,7 @@ import { clampVolume } from './useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SYNC_LOCK_DURATION } from '@/constants/spotify'
+import { useInteractionLock } from './useInteractionLock'
 
 interface UseSpotifyVolumeProps {
   serverVolume: number | undefined
@@ -24,22 +24,11 @@ export const useSpotifyVolume = ({
 
   const [displayVolume, setDisplayVolume] = useState<number>(serverVolume ?? 70)
   const [isSliding, setIsSliding] = useState(false)
-  const [lockExpiredTick, setLockExpiredTick] = useState(0)
-  const lastUserInteractionRef = useRef<number>(0)
+  const { isLocked, lock } = useInteractionLock(SYNC_LOCK_DURATION)
   const lastSentVolumeRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const timeSinceInteraction = Date.now() - lastUserInteractionRef.current
-    const isLocked = timeSinceInteraction < SYNC_LOCK_DURATION
-
     if (isSliding || isLocked) {
-      if (isLocked && !isSliding) {
-        const timeout = setTimeout(
-          () => setLockExpiredTick((t) => t + 1),
-          SYNC_LOCK_DURATION - timeSinceInteraction + 50
-        )
-        return () => clearTimeout(timeout)
-      }
       return
     }
 
@@ -48,14 +37,7 @@ export const useSpotifyVolume = ({
       setDisplayVolume(serverVolume)
       onLocalVolumeChange?.(serverVolume)
     }
-    return
-  }, [
-    serverVolume,
-    isSliding,
-    displayVolume,
-    onLocalVolumeChange,
-    lockExpiredTick,
-  ])
+  }, [serverVolume, isSliding, isLocked, displayVolume, onLocalVolumeChange])
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
@@ -64,14 +46,14 @@ export const useSpotifyVolume = ({
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
-      lastUserInteractionRef.current = Date.now()
+      lock()
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
         deviceId: targetDeviceId,
       })
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, targetDeviceId, executeSpotify]
+    [connectionStatus, targetDeviceId, executeSpotify, lock]
   )
 
   const sendRef = useRef(sendVolumeCommand)
@@ -88,21 +70,21 @@ export const useSpotifyVolume = ({
   const handleVolumeChange = useCallback(
     (newVolume: number) => {
       setIsSliding(true)
-      lastUserInteractionRef.current = Date.now()
+      lock()
       setDisplayVolume(newVolume)
       onLocalVolumeChange?.(newVolume)
       throttledRef.current?.(newVolume)
     },
-    [onLocalVolumeChange]
+    [onLocalVolumeChange, lock]
   )
 
   const handleVolumeChangeCommitted = useCallback(
     (newVolume: number) => {
       setIsSliding(false)
-      lastUserInteractionRef.current = Date.now()
+      lock()
       sendVolumeCommand(newVolume)
     },
-    [sendVolumeCommand]
+    [sendVolumeCommand, lock]
   )
 
   useEffect(() => {
@@ -117,6 +99,5 @@ export const useSpotifyVolume = ({
     isSliding,
     handleVolumeChange,
     handleVolumeChangeCommitted,
-    lastUserInteractionRef,
   }
 }

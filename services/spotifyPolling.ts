@@ -47,6 +47,7 @@ export class SpotifyPolling implements SpotifyService {
   }
 
   private sdk: SpotifyApi | null = null
+  private lastCommandTime: number = 0
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -76,6 +77,11 @@ export class SpotifyPolling implements SpotifyService {
 
   private getCurrentlyPlaying = async () => {
     try {
+      if (Date.now() - this.lastCommandTime < 2000) {
+        logger.debug('Skipping poll due to recent command execution')
+        return
+      }
+
       if (!this.sdk || !this.playerManager) {
         logger.debug('Spotify SDK not initialized, skipping poll')
         return
@@ -249,6 +255,8 @@ export class SpotifyPolling implements SpotifyService {
       logger.warn('Spotify service not ready, command ignored.', { command })
       return
     }
+
+    this.lastCommandTime = Date.now()
 
     // 1. Immediate Optimistic Broadcast for Play/Pause
     const previousIsPlaying = this.state.playback.is_playing
