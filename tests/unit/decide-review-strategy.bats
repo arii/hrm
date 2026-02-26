@@ -16,6 +16,7 @@ setup() {
   export COMMENT_BODY="@gemini-bot review"
   export MAX_COMMENTS=0 # Prove that this check is bypassed
 
+
   run_script
 
   [ "$status" -eq 0 ]
