@@ -312,15 +312,15 @@ jobs:
           PROMPTEOF
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: pnpm/action-setup@v4
-
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'pnpm'
 
       - name: 'Gemini: Install Dependencies'
         if: env.AGENT_PROVIDER == 'gemini'
