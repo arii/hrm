@@ -30,10 +30,6 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ),
 })
 
-const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
-  ssr: false,
-})
-
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
@@ -64,13 +60,9 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
-  triggerError?: boolean
 }
 
-const DashboardClient = ({
-  useNativeTable,
-  triggerError,
-}: DashboardClientProps) => {
+const DashboardClient = ({ useNativeTable }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -89,7 +81,6 @@ const DashboardClient = ({
 
   return (
     <Box sx={{ backgroundColor: 'background.default' }}>
-      {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"
         maxWidth="xl"

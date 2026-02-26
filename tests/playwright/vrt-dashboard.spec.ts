@@ -152,10 +152,13 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      // Wait for layout stability after viewport change
+      await dashboardPage.waitForTimeout(500)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
+        fullPage: true, // Capture full page to handle dynamic height
       })
     })
 
