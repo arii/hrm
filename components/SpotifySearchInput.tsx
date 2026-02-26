@@ -80,6 +80,8 @@ const SpotifySearchInput = ({
 
   const handleClear = () => {
     setQuery('')
+    setResults([])
+    setHasSearched(false)
     setValue(null)
     setResults([])
     setHasSearched(false)
@@ -94,7 +96,7 @@ const SpotifySearchInput = ({
         loading={loading}
         value={value}
         inputValue={query}
-        onInputChange={(_, val) => (val ? setQuery(val) : handleClear())}
+        onInputChange={(_, val) => setQuery(val)}
         onChange={(_, newValue, reason) => {
           if (reason === 'clear') {
             handleClear()
@@ -131,30 +133,33 @@ const SpotifySearchInput = ({
             }}
           />
         )}
-        renderOption={({ key, ...props }, track) => (
-          <Box component="li" key={key} {...props} sx={{ px: 2, py: 1 }}>
-            <ListItemAvatar sx={{ minWidth: 56 }}>
-              <Avatar
-                variant="square"
-                src={track.album.images[2]?.url || ''}
-                alt={track.name}
-                sx={{ width: 40, height: 40 }}
-              >
-                <MusicNote />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={track.name}
-              secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
-              primaryTypographyProps={{
-                noWrap: true,
-                variant: 'body2',
-                fontWeight: 'bold',
-              }}
-              secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
-            />
-          </Box>
-        )}
+        renderOption={(props, track) => {
+          const { key, ...liProps } = props
+          return (
+            <Box component="li" key={key} {...liProps} sx={{ px: 2, py: 1 }}>
+              <ListItemAvatar sx={{ minWidth: 56 }}>
+                <Avatar
+                  variant="square"
+                  src={track.album.images[2]?.url || ''}
+                  alt={track.name}
+                  sx={{ width: 40, height: 40 }}
+                >
+                  <MusicNote />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={track.name}
+                secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
+                primaryTypographyProps={{
+                  noWrap: true,
+                  variant: 'body2',
+                  fontWeight: 'bold',
+                }}
+                secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
+              />
+            </Box>
+          )
+        }}
         noOptionsText={
           hasSearched && !loading
             ? `No results for "${query}"`

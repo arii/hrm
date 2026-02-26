@@ -15,12 +15,8 @@ export interface TestControls {
   // From WebSocketProvider context
   dispatch?: (message: ServerMessage) => void
   disconnect?: () => void
-  connect?: () => void
 }
 
-/**
- * Global type definitions for HRM services and testing controls.
- */
 declare global {
   var spotifyService: SpotifyService | undefined
   var tabataService: TabataTimer | undefined

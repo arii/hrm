@@ -379,11 +379,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [reconnect]
   )
 
-  // Cleanup and Test Controls registration
+  // Cleanup
   useEffect(() => {
     isManualDisconnect.current = false
 
-    const isTesting =
+    if (
       typeof window !== 'undefined' &&
       (process.env.NEXT_PUBLIC_TESTING === 'true' ||
         window.location.search.includes('testing=true'))
@@ -423,7 +423,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     }
-  }, [setStatus, setCustomStatusMessage])
+  }, [])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
