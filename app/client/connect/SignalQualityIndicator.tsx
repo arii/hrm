@@ -1,8 +1,13 @@
+import { useMemo } from 'react'
 import { Box, Tooltip, Typography, useTheme } from '@mui/material'
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt'
 import SignalCellularAlt2BarIcon from '@mui/icons-material/SignalCellularAlt2Bar'
 import SignalCellularAlt1BarIcon from '@mui/icons-material/SignalCellularAlt1Bar'
 import SignalCellularConnectedNoInternet0BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet0Bar'
+import {
+  STABILITY_THRESHOLD_MS,
+  CRITICAL_THRESHOLD_MS,
+} from '@/constants/bluetooth'
 
 interface SignalQualityIndicatorProps {
   /**
@@ -16,9 +21,6 @@ interface SignalQualityIndicatorProps {
   lastPeriodMs?: number
   isConnected: boolean
 }
-
-const STABILITY_THRESHOLD_MS = 1500
-const CRITICAL_THRESHOLD_MS = 3000
 
 /**
  * Visualizes Bluetooth connection quality based on packet inter-arrival time.
@@ -41,44 +43,44 @@ export const SignalQualityIndicator = ({
           ? 'good'
           : 'poor'
 
-  const STATUS_CONFIG = {
-    critical: {
-      color: palette.error.main,
-      label: 'Signal Lost',
-      icon: SignalCellularConnectedNoInternet0BarIcon,
-      isAnimated: true,
-    },
-    warning: {
-      color: palette.warning.main,
-      label: 'Weak Signal',
-      icon: SignalCellularAlt1BarIcon,
-      isAnimated: true,
-    },
-    excellent: {
-      color: palette.success.main,
-      label: `${periodMs}ms`,
-      icon: SignalCellularAltIcon,
-      isAnimated: false,
-    },
-    good: {
-      color: palette.warning.main,
-      label: `${periodMs}ms`,
-      icon: SignalCellularAlt2BarIcon,
-      isAnimated: false,
-    },
-    poor: {
-      color: palette.error.main,
-      label: `${periodMs}ms`,
-      icon: SignalCellularAlt1BarIcon,
-      isAnimated: false,
-    },
-    none: {
-      color: palette.text.disabled,
-      label: 'Disconnected',
-      icon: SignalCellularConnectedNoInternet0BarIcon,
-      isAnimated: false,
-    },
-  } as const
+  const STATUS_CONFIG_STATIC = useMemo(
+    () => ({
+      critical: {
+        color: palette.error.main,
+        label: 'Signal Lost',
+        icon: SignalCellularConnectedNoInternet0BarIcon,
+        isAnimated: true,
+      },
+      warning: {
+        color: palette.warning.main,
+        label: 'Weak Signal',
+        icon: SignalCellularAlt1BarIcon,
+        isAnimated: true,
+      },
+      excellent: {
+        color: palette.success.main,
+        icon: SignalCellularAltIcon,
+        isAnimated: false,
+      },
+      good: {
+        color: palette.warning.main,
+        icon: SignalCellularAlt2BarIcon,
+        isAnimated: false,
+      },
+      poor: {
+        color: palette.error.main,
+        icon: SignalCellularAlt1BarIcon,
+        isAnimated: false,
+      },
+      none: {
+        color: palette.text.disabled,
+        label: 'Disconnected',
+        icon: SignalCellularConnectedNoInternet0BarIcon,
+        isAnimated: false,
+      },
+    }),
+    [palette]
+  )
 
   const currentStatusKey = isCritical
     ? 'critical'
@@ -86,8 +88,9 @@ export const SignalQualityIndicator = ({
       ? 'warning'
       : quality
 
-  const config = STATUS_CONFIG[currentStatusKey]
+  const config = STATUS_CONFIG_STATIC[currentStatusKey]
   const Icon = config.icon
+  const label = 'label' in config ? config.label : `${periodMs}ms`
   const reliability = Math.min(100, Math.round(100000 / (periodMs || 1000)))
 
   return (
@@ -122,7 +125,7 @@ export const SignalQualityIndicator = ({
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
-            {config.label}
+            {label}
           </Typography>
         )}
       </Box>
