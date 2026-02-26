@@ -1,7 +1,8 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -24,39 +25,28 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [tracks, setTracks] = useState<Track[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
   const [total, setTotal] = useState(0)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
   const limit = 20
 
-  const fetchTracks = useCallback(
-    async (currentOffset: number) => {
-      try {
-        setLoading(true)
-        const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-        )
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to fetch tracks')
-        }
-        const data = await response.json()
-        setTracks(data.tracks)
-        setTotal(data.total)
-        setLoading(false)
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
-        setLoading(false)
-      }
-    },
-    [playlistId]
-  )
+  const { fetchTracks, loading, error } = usePlaylistTracks({
+    playlistId,
+    limit,
+  })
 
   useEffect(() => {
-    fetchTracks(offset)
+    let mounted = true
+    fetchTracks(offset).then((data) => {
+      if (mounted) {
+        setTracks(data.tracks)
+        setTotal(data.total)
+        setIsInitialLoad(false)
+      }
+    })
+    return () => {
+      mounted = false
+    }
   }, [fetchTracks, offset])
 
   const handleTogglePlay = (
@@ -69,12 +59,12 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     } else {
       executeSpotify('PLAY', {
         contextUri: `spotify:playlist:${playlistId}`,
-        offset: { position: index },
+        offset: { position: offset + index },
       })
     }
   }
 
-  if (loading) {
+  if ((loading || isInitialLoad) && tracks.length === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
@@ -90,7 +80,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     )
   }
 
-  if (tracks.length === 0) {
+  if (!loading && !isInitialLoad && tracks.length === 0) {
     return (
       <Typography variant="h6" sx={{ mt: 4 }}>
         This playlist is empty.
@@ -141,7 +131,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
         <Button
           onClick={() => setOffset(offset - limit)}
-          disabled={offset === 0}
+          disabled={offset === 0 || loading}
         >
           Previous
         </Button>
@@ -150,7 +140,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         </Typography>
         <Button
           onClick={() => setOffset(offset + limit)}
-          disabled={offset + limit >= total}
+          disabled={offset + limit >= total || loading}
         >
           Next
         </Button>

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { SpotifyTrackItem } from './SpotifyTrackItem'
+import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
 
 interface PlaylistDetailsProps {
   playlistId: string
@@ -20,35 +21,33 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   const [tracks, setTracks] = useState<Track[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
-  const [error, setError] = useState<string | null>(null)
   const limit = 20
 
-  const fetchTracks = useCallback(
+  const { fetchTracks, error } = usePlaylistTracks({
+    playlistId,
+    limit,
+  })
+
+  const loadTracks = useCallback(
     async (currentOffset: number) => {
-      if (!playlistId) return
-      try {
-        const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-        )
-        if (!response.ok) throw new Error('Failed to fetch playlist details')
-        const data = await response.json()
-        setTracks((prev) =>
-          currentOffset === 0 ? data.tracks : [...prev, ...data.tracks]
-        )
-        setOffset(currentOffset + data.tracks.length)
-        setHasMore(data.tracks.length === limit)
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
-      }
+      const { tracks: newTracks } = await fetchTracks(currentOffset)
+
+      setTracks((prev) =>
+        currentOffset === 0 ? newTracks : [...prev, ...newTracks]
+      )
+      setOffset(currentOffset + newTracks.length)
+      setHasMore(newTracks.length === limit)
     },
-    [playlistId]
+    [fetchTracks, limit]
   )
 
   useEffect(() => {
-    fetchTracks(0)
-  }, [playlistId, fetchTracks])
+    // Reset and load initial tracks when playlistId changes
+    setTracks([])
+    setOffset(0)
+    setHasMore(true)
+    loadTracks(0)
+  }, [playlistId, loadTracks])
 
   return (
     <>
@@ -63,7 +62,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       >
         <InfiniteScroll
           dataLength={tracks.length}
-          next={() => fetchTracks(offset)}
+          next={() => loadTracks(offset)}
           hasMore={hasMore}
           loader={
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>

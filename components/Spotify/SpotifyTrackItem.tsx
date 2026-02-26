@@ -24,6 +24,9 @@ export const SpotifyTrackItem: React.FC<SpotifyTrackItemProps> = ({
   secondaryAction,
   divider = true,
 }) => {
+  const images = track.album?.images
+  const imageUrl = images?.[2]?.url || images?.[0]?.url
+
   return (
     <ListItem
       divider={divider}
@@ -46,7 +49,7 @@ export const SpotifyTrackItem: React.FC<SpotifyTrackItemProps> = ({
         <ListItemAvatar sx={{ minWidth: 48 }}>
           <Avatar
             variant="rounded"
-            src={track.album?.images?.[2]?.url}
+            src={imageUrl}
             sx={{ width: 32, height: 32 }}
           >
             <MusicNote fontSize="small" />
