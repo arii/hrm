@@ -1,48 +1,33 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import Paper from '@mui/material/Paper'
 import Divider from '@mui/material/Divider'
-import SpotifyDisplay from './SpotifyDisplay'
 import BottomNavBar from './BottomNavBar'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { useCombinedFooterState } from '@/hooks/useCombinedFooterState'
 
-export default function CombinedFooter({
-  onHeightChange,
-}: {
-  onHeightChange?: (h: number) => void
-}) {
-  const pathname = usePathname()
-  const { spotifyData, timerData } = useWebSocket()
-  const { isLoggedIn } = useSpotifyAuth()
+const SpotifyDisplay = dynamic(() => import('./SpotifyDisplay'), { ssr: false })
 
-  const showSpotifyBar = useMemo(() => {
-    if (pathname === '/client/control') return false
-    return (
-      spotifyData.playback.is_playing ||
-      timerData.isRunning ||
-      timerData.currentPhase !== 'IDLE' ||
-      pathname === '/client/spotify-selection' ||
-      (!isLoggedIn && pathname === '/')
+export default function CombinedFooter() {
+  const { showSpotifyBar, footerHeight } = useCombinedFooterState()
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--footer-height',
+      `${footerHeight}px`
     )
-  }, [
-    pathname,
-    spotifyData.playback.is_playing,
-    timerData.isRunning,
-    timerData.currentPhase,
-    isLoggedIn,
-  ])
-
-  const height = showSpotifyBar ? 104 : 56
-
-  useEffect(() => onHeightChange?.(height), [height, onHeightChange])
+    return () => {
+      document.documentElement.style.removeProperty('--footer-height')
+    }
+  }, [footerHeight])
 
   return (
     <Paper
+      component="footer"
       elevation={10}
       data-testid="combined-footer"
+      role="contentinfo"
       sx={{
         position: 'fixed',
         bottom: 0,
@@ -52,7 +37,7 @@ export default function CombinedFooter({
         borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
-        height,
+        height: footerHeight,
         transition: 'height 0.3s ease-in-out',
         overflow: 'hidden',
         borderTop: '1px solid',
@@ -61,11 +46,11 @@ export default function CombinedFooter({
     >
       {showSpotifyBar && (
         <>
-          <SpotifyDisplay isIntegrated />
+          <SpotifyDisplay />
           <Divider sx={{ opacity: 0.1 }} />
         </>
       )}
-      <BottomNavBar isIntegrated />
+      <BottomNavBar />
     </Paper>
   )
 }

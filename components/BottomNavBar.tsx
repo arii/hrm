@@ -43,11 +43,7 @@ const NAV_ITEMS = [
   },
 ]
 
-export default function BottomNavBar({
-  isIntegrated = false,
-}: {
-  isIntegrated?: boolean
-}) {
+export default function BottomNavBar() {
   const pathname = usePathname()
 
   const activeValue = NAV_ITEMS.findIndex((item) => {
@@ -62,12 +58,8 @@ export default function BottomNavBar({
       showLabels
       sx={{
         width: '100%',
-        position: isIntegrated ? 'static' : 'fixed',
-        bottom: isIntegrated ? 'auto' : 0,
-        left: 0,
-        right: 0,
+        position: 'static',
         zIndex: 1000,
-        boxShadow: isIntegrated ? 'none' : '0px -2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
       {NAV_ITEMS.map((item, index) => (
