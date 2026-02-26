@@ -20,6 +20,8 @@ export default function CombinedFooter() {
 
   return (
     <Paper
+      component="footer"
+      role="contentinfo"
       elevation={10}
       data-testid="combined-footer"
       sx={{
