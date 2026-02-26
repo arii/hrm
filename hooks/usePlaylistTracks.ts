@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
 
 interface UsePlaylistTracksOptions {
@@ -28,7 +28,9 @@ export const usePlaylistTracks = (
           `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
         )
 
-        let data
+        let data:
+          | { tracks: Track[]; total: number; message?: string }
+          | undefined
         try {
           data = await res.json()
         } catch {
@@ -39,10 +41,17 @@ export const usePlaylistTracks = (
           throw new Error(data?.message || 'Failed to fetch tracks')
         }
 
+        if (!data) {
+          throw new Error('No data returned from Spotify API')
+        }
+
+        const tracksData = data.tracks
         if (mode === 'append') {
-          setTracks((prev) => (offset === 0 ? data.tracks : [...prev, ...data.tracks]))
+          setTracks((prev) =>
+            offset === 0 ? tracksData : [...prev, ...tracksData]
+          )
         } else {
-          setTracks(data.tracks)
+          setTracks(tracksData)
         }
 
         setTotal(data.total)

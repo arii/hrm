@@ -26,7 +26,7 @@ const PlaylistDetails = ({
   const [offset, setOffset] = useState(0)
   const limit = 20
 
-  const { tracks, loading, error, hasMore, fetchTracks } = usePlaylistTracks(
+  const { tracks, error, hasMore, fetchTracks } = usePlaylistTracks(
     playlistId,
     { limit, mode: 'append' }
   )
