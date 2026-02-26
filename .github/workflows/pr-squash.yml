@@ -158,11 +158,28 @@ jobs:
               comment_id: ${{ inputs.comment_id }},
               content: 'confused'
             });
+
+            const footer = `
+---
+#### 🤖 Gemini Manual Trigger Quick Reference
+| Command | Action |
+| :--- | :--- |
+| \`@gemini-bot\` | Run AI Code Review (PR only) |
+| \`@gemini-triage\` | Run Issue Triage |
+| \`@gemini-coder <task>\` | Generate Code |
+| \`@create-review-issues\` | Create issues from review (PR only) |
+| \`@gemini-help\` | Show this help message |
+| \`@pr-squash\` | Squash PR commits (PR only) |
+| \`@conflict-resolve\` | Resolve merge conflicts (PR only) |
+
+[Manual Trigger Guide](${context.payload.repository.html_url}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            `;
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ inputs.pr_number }},
-              body: '❌ Automatic squash and rebase failed. The branch has conflicts with `${{ steps.pr_data.outputs.base_ref }}`. Please resolve the conflicts manually and try again.'
+              body: '❌ Automatic squash and rebase failed. The branch has conflicts with `${{ steps.pr_data.outputs.base_ref }}`. Please resolve the conflicts manually and try again.' + footer
             });
 
       - name: Success
@@ -179,6 +196,22 @@ jobs:
               messageBody = '✅ Commits squashed successfully!';
             }
 
+            const footer = `
+---
+#### 🤖 Gemini Manual Trigger Quick Reference
+| Command | Action |
+| :--- | :--- |
+| \`@gemini-bot\` | Run AI Code Review (PR only) |
+| \`@gemini-triage\` | Run Issue Triage |
+| \`@gemini-coder <task>\` | Generate Code |
+| \`@create-review-issues\` | Create issues from review (PR only) |
+| \`@gemini-help\` | Show this help message |
+| \`@pr-squash\` | Squash PR commits (PR only) |
+| \`@conflict-resolve\` | Resolve merge conflicts (PR only) |
+
+[Manual Trigger Guide](${context.payload.repository.html_url}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            `;
+
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -189,7 +222,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ inputs.pr_number }},
-              body: messageBody
+              body: messageBody + footer
             });
 
   check-for-changes-after-squash:

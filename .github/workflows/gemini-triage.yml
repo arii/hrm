@@ -187,6 +187,8 @@ jobs:
                 \`\`\`
 
                 </details>
+
+                ${footer}
                 `;
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -214,6 +216,8 @@ jobs:
                 \`\`\`
 
                 </details>
+
+                ${footer}
                 `;
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -237,6 +241,20 @@ jobs:
                 });
               }
 
+              const footer = `
+---
+#### 🤖 Gemini Manual Trigger Quick Reference
+| Command | Action |
+| :--- | :--- |
+| \`@gemini-bot\` | Run AI Code Review (PR only) |
+| \`@gemini-triage\` | Run Issue Triage |
+| \`@gemini-coder <task>\` | Generate Code |
+| \`@create-review-issues\` | Create issues from review (PR only) |
+| \`@gemini-help\` | Show this help message |
+
+[Manual Trigger Guide](${context.payload.repository.html_url}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+              `;
+
               const commentBody = `
               ### 🤖 Gemini Smart Triage
 
@@ -249,6 +267,8 @@ jobs:
               ${result.suggested_title && result.suggested_title !== process.env.ORIGINAL_TITLE
                 ? `> **Suggestion:** Consider renaming this issue to: *"${result.suggested_title}"*`
                 : ''}
+
+              ${footer}
               `;
 
               await github.rest.issues.createComment({
@@ -293,6 +313,8 @@ jobs:
               \`\`\`
 
               </details>
+
+              ${footer}
               `;
               try {
                 await github.rest.issues.createComment({
@@ -335,6 +357,17 @@ jobs:
             \`\`\`bash
             gh workflow run gemini-triage.yml -f issue_number=${context.issue.number}
             \`\`\`
+
+            #### 🤖 Manual Trigger Quick Reference
+            | Command | Action |
+            | :--- | :--- |
+            | \`@gemini-bot\` | Run AI Code Review (PR only) |
+            | \`@gemini-triage\` | Run Issue Triage |
+            | \`@gemini-coder <task>\` | Generate Code |
+            | \`@create-review-issues\` | Create issues from review (PR only) |
+            | \`@gemini-help\` | Show this help message |
+
+            Full reference: [Manual Trigger Guide](${context.payload.repository.html_url}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
 
             **To re-enable:** Set repository variable \`GEMINI_ENABLE_TRIAGE=true\`
             `;
