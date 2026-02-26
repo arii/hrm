@@ -1,16 +1,14 @@
-'use client'
-
 import { usePathname } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import { useMemo } from 'react'
 
-export const useCombinedFooterState = () => {
+export const useGlobalPlayerVisibility = () => {
   const pathname = usePathname()
   const { spotifyData, timerData } = useWebSocket()
   const { isLoggedIn } = useSpotifyAuth()
 
-  const showSpotifyBar = useMemo(() => {
+  return useMemo(() => {
     if (pathname === '/client/control') return false
     return (
       spotifyData.playback.is_playing ||
@@ -26,8 +24,4 @@ export const useCombinedFooterState = () => {
     timerData.currentPhase,
     isLoggedIn,
   ])
-
-  const footerHeight = showSpotifyBar ? 104 : 56
-
-  return { showSpotifyBar, footerHeight }
 }

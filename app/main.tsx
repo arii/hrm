@@ -44,7 +44,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                         flexDirection: 'column',
                       }}
                     >
-                      <Box sx={{ flex: 1 }}>{children}</Box>
+                      {children}
                       <Footer />
                     </Box>
                   </AnimatePresence>

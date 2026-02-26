@@ -2,32 +2,26 @@
 
 import Paper from '@mui/material/Paper'
 import Divider from '@mui/material/Divider'
-import BottomNavBar from './BottomNavBar'
+import { SpotifyContent } from './SpotifyDisplay'
+import { BottomNavContent } from './BottomNavBar'
+import { useGlobalPlayerVisibility } from '@/hooks/useGlobalPlayerVisibility'
 import { useEffect } from 'react'
-import dynamic from 'next/dynamic'
-import { useCombinedFooterState } from '@/hooks/useCombinedFooterState'
-
-const SpotifyDisplay = dynamic(() => import('./SpotifyDisplay'), { ssr: false })
 
 export default function CombinedFooter() {
-  const { showSpotifyBar, footerHeight } = useCombinedFooterState()
+  const isVisible = useGlobalPlayerVisibility()
+  const height = isVisible ? 104 : 56
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--footer-height',
-      `${footerHeight}px`
-    )
+    document.documentElement.style.setProperty('--footer-height', `${height}px`)
     return () => {
       document.documentElement.style.removeProperty('--footer-height')
     }
-  }, [footerHeight])
+  }, [height])
 
   return (
     <Paper
-      component="footer"
       elevation={10}
       data-testid="combined-footer"
-      role="contentinfo"
       sx={{
         position: 'fixed',
         bottom: 0,
@@ -37,20 +31,20 @@ export default function CombinedFooter() {
         borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
-        height: footerHeight,
+        height,
         transition: 'height 0.3s ease-in-out',
         overflow: 'hidden',
         borderTop: '1px solid',
         borderColor: 'divider',
       }}
     >
-      {showSpotifyBar && (
+      {isVisible && (
         <>
-          <SpotifyDisplay />
+          <SpotifyContent />
           <Divider sx={{ opacity: 0.1 }} />
         </>
       )}
-      <BottomNavBar />
+      <BottomNavContent />
     </Paper>
   )
 }

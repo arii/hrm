@@ -7,6 +7,7 @@ import ScienceIcon from '@mui/icons-material/Science'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
+import { SxProps, Theme } from '@mui/material/styles'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -43,7 +44,7 @@ const NAV_ITEMS = [
   },
 ]
 
-export default function BottomNavBar() {
+export const BottomNavContent = ({ sx }: { sx?: SxProps<Theme> }) => {
   const pathname = usePathname()
 
   const activeValue = NAV_ITEMS.findIndex((item) => {
@@ -59,7 +60,11 @@ export default function BottomNavBar() {
       sx={{
         width: '100%',
         position: 'static',
+        left: 0,
+        right: 0,
         zIndex: 1000,
+        boxShadow: 'none',
+        ...sx,
       }}
     >
       {NAV_ITEMS.map((item, index) => (
@@ -79,5 +84,17 @@ export default function BottomNavBar() {
         />
       ))}
     </BottomNavigation>
+  )
+}
+
+export default function BottomNavBar() {
+  return (
+    <BottomNavContent
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
+      }}
+    />
   )
 }
