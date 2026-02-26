@@ -245,12 +245,16 @@ For complex scenarios requiring direct interaction with the application's intern
 **Best Practices**:
 
 - **Production Only**: Always wrap the `window.__TEST_CONTROLS__` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
-- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a declaration file (e.g., `playwright-global.d.ts`):
+- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a global declaration file (e.g., `types/global.d.ts`):
   ```typescript
-  interface Window {
-    __TEST_CONTROLS__: {
-      simulateWebSocketMessage: (message: WebSocketMessage) => void
-      // Add other control functions here
+  export interface TestControls {
+    dispatch?: (message: ServerMessage) => void
+    // Add other control functions here
+  }
+
+  declare global {
+    interface Window {
+      __TEST_CONTROLS__?: TestControls
     }
   }
   ```
