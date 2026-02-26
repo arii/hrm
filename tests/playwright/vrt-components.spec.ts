@@ -121,6 +121,12 @@ test.describe('Component-Specific VRT', () => {
     await expect(selectorButton).toBeVisible({
       timeout: VRT_TIMEOUTS.STANDARD,
     })
+
+    // Ensure button is stable before clicking to prevent detachment errors
+    await selectorButton.scrollIntoViewIfNeeded()
+    await expect(selectorButton).toBeEnabled()
+    // Small wait to ensure React hydration/re-renders are complete
+    await dashboardPage.waitForTimeout(100)
     await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
