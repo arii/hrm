@@ -7,3 +7,26 @@ export class NoSavedDeviceError extends Error {
     this.name = 'NoSavedDeviceError'
   }
 }
+
+/**
+ * Custom error class for API errors.
+ */
+export class ApiError extends Error {
+  statusCode: number
+
+  constructor(statusCode: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.statusCode = statusCode
+  }
+}
+
+/**
+ * Error thrown when a service fails to initialize.
+ */
+export class ServiceInitializationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ServiceInitializationError'
+  }
+}
