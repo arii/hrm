@@ -123,13 +123,6 @@ export const WebSocketProvider = ({
         }
       }
     }
-    return () => {
-      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        if (window.__TEST_CONTROLS__.dispatch === dispatch) {
-          delete window.__TEST_CONTROLS__.dispatch
-        }
-      }
-    }
   }, [dispatch])
 
   // Throttled warning for connection issues
@@ -329,14 +322,6 @@ export const WebSocketProvider = ({
     }
 
     return () => {
-      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        if (window.__TEST_CONTROLS__.disconnect === disconnect) {
-          delete window.__TEST_CONTROLS__.disconnect
-        }
-        if (window.__TEST_CONTROLS__.connect === connect) {
-          delete window.__TEST_CONTROLS__.connect
-        }
-      }
       disconnect()
     }
   }, [connect, disconnect])

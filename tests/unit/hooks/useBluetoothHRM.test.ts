@@ -330,10 +330,10 @@ describe('useBluetoothHRM', () => {
 
       expect(result.current.signalPeriodMs).toBe(1020)
       expect(result.current.lastPeriodMs).toBe(1050)
-      expect(result.current.consecutiveSlowPackets).toBe(0)
+      expect(result.current.poorSignalStrikeCount).toBe(0)
     })
 
-    it('should track consecutive slow packets', async () => {
+    it('should track poor signal strikes', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
       let characteristicCallback: (event: {
         target: { value: DataView }
@@ -365,11 +365,11 @@ describe('useBluetoothHRM', () => {
       }
       sendPacket(1000) // First packet
       sendPacket(1600) // Slow
-      expect(result.current.consecutiveSlowPackets).toBe(1)
+      expect(result.current.poorSignalStrikeCount).toBe(1)
       sendPacket(1700) // Slow
-      expect(result.current.consecutiveSlowPackets).toBe(2)
+      expect(result.current.poorSignalStrikeCount).toBe(2)
       sendPacket(1000) // Normal
-      expect(result.current.consecutiveSlowPackets).toBe(0)
+      expect(result.current.poorSignalStrikeCount).toBe(0)
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
@@ -438,10 +438,10 @@ describe('useBluetoothHRM', () => {
       // History: [1000, 2000, 3000] -> Avg: 2000
       expect(result.current.signalPeriodMs).toBe(2000)
       expect(result.current.lastPeriodMs).toBe(3000)
-      // Watchdog increments consecutiveSlowPackets
+      // Watchdog increments poorSignalStrikeCount
       // 1st watchdog: now+3000 (timeSinceLastData=2000) -> +1
       // 2nd watchdog: now+4000 (timeSinceLastData=3000) -> +1
-      expect(result.current.consecutiveSlowPackets).toBe(2)
+      expect(result.current.poorSignalStrikeCount).toBe(2)
 
       // A real packet arrives after the drop
       jest.spyOn(Date, 'now').mockReturnValue(now + 4000)
