@@ -7,78 +7,7 @@ import SignalCellularConnectedNoInternet0BarIcon from '@mui/icons-material/Signa
 import {
   STABILITY_THRESHOLD_MS,
   CRITICAL_THRESHOLD_MS,
-  EXCELLENT_SIGNAL_THRESHOLD_MS,
-  GOOD_SIGNAL_THRESHOLD_MS,
-  SIGNAL_PULSE_DURATION_S,
-  SIGNAL_LABEL_MIN_WIDTH_PX,
 } from '@/constants/bluetooth'
-
-type SignalStatusKey =
-  | 'critical'
-  | 'warning'
-  | 'excellent'
-  | 'good'
-  | 'poor'
-  | 'none'
-
-interface StatusConfig {
-  color: string
-  icon: typeof SignalCellularAltIcon
-  isAnimated: boolean
-  label?: string
-}
-
-const getStatusConfig = (
-  key: SignalStatusKey,
-  palette: Palette,
-  periodMs: number,
-  isConnected: boolean
-): StatusConfig => {
-  switch (key) {
-    case 'critical':
-      return {
-        color: palette.error.main,
-        label: 'Signal Lost',
-        icon: SignalCellularConnectedNoInternet0BarIcon,
-        isAnimated: true,
-      }
-    case 'warning':
-      return {
-        color: palette.warning.main,
-        label: 'Weak Signal',
-        icon: SignalCellularAlt1BarIcon,
-        isAnimated: true,
-      }
-    case 'excellent':
-      return {
-        color: palette.success.main,
-        label: `${periodMs}ms`,
-        icon: SignalCellularAltIcon,
-        isAnimated: false,
-      }
-    case 'good':
-      return {
-        color: palette.warning.main,
-        label: `${periodMs}ms`,
-        icon: SignalCellularAlt2BarIcon,
-        isAnimated: false,
-      }
-    case 'poor':
-      return {
-        color: palette.error.main,
-        label: `${periodMs}ms`,
-        icon: SignalCellularAlt1BarIcon,
-        isAnimated: false,
-      }
-    default:
-      return {
-        color: palette.text.disabled,
-        label: isConnected ? 'Waiting...' : 'Disconnected',
-        icon: SignalCellularConnectedNoInternet0BarIcon,
-        isAnimated: false,
-      }
-  }
-}
 
 interface SignalQualityIndicatorProps {
   /**
@@ -102,16 +31,17 @@ export const SignalQualityIndicator = ({
   isConnected,
 }: SignalQualityIndicatorProps) => {
   const { palette } = useTheme()
+  const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
+  const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
 
-  const currentStatusKey = useMemo((): SignalStatusKey => {
-    if (!isConnected || periodMs === 0) return 'none'
-    if (lastPeriodMs > CRITICAL_THRESHOLD_MS) return 'critical'
-    if (lastPeriodMs > STABILITY_THRESHOLD_MS) return 'warning'
-
-    if (periodMs < EXCELLENT_SIGNAL_THRESHOLD_MS) return 'excellent'
-    if (periodMs < GOOD_SIGNAL_THRESHOLD_MS) return 'good'
-    return 'poor'
-  }, [isConnected, periodMs, lastPeriodMs])
+  const quality =
+    !isConnected || periodMs === 0
+      ? 'none'
+      : periodMs < 1200
+        ? 'excellent'
+        : periodMs < 2200
+          ? 'good'
+          : 'poor'
 
   const STATUS_CONFIG_STATIC = useMemo(
     () => ({
@@ -160,7 +90,8 @@ export const SignalQualityIndicator = ({
 
   const config = STATUS_CONFIG_STATIC[currentStatusKey]
   const Icon = config.icon
-  const label = 'label' in config ? config.label : `${periodMs}ms`
+  // Safe access to label by treating config as a record with optional label
+  const label = (config as { label?: string }).label || `${periodMs}ms`
   const reliability = Math.min(100, Math.round(100000 / (periodMs || 1000)))
 
   return (
@@ -169,9 +100,7 @@ export const SignalQualityIndicator = ({
       title={
         isConnected
           ? `Signal Quality: ${periodMs}ms avg (~${reliability}% capture)${
-              currentStatusKey === 'warning' || currentStatusKey === 'critical'
-                ? ` | Latency: ${lastPeriodMs}ms`
-                : ''
+              isWarning ? ` | Latency: ${lastPeriodMs}ms` : ''
             }`
           : 'No Signal'
       }
@@ -183,9 +112,7 @@ export const SignalQualityIndicator = ({
           gap: 0.5,
           opacity: isConnected ? 1 : 0.5,
           color: config.color,
-          animation: config.isAnimated
-            ? `pulse-signal ${SIGNAL_PULSE_DURATION_S}s infinite`
-            : 'none',
+          animation: config.isAnimated ? 'pulse-signal 1.5s infinite' : 'none',
           // Keyframes are defined in global styles to avoid re-parsing on every render
         }}
       >
@@ -195,10 +122,7 @@ export const SignalQualityIndicator = ({
             variant="caption"
             sx={{
               color: config.isAnimated ? config.color : 'text.secondary',
-              // Set a minWidth for ms labels to prevent jitter, but allow text labels to expand
-              minWidth: config.label?.endsWith('ms')
-                ? SIGNAL_LABEL_MIN_WIDTH_PX
-                : 'auto',
+              minWidth: 35,
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
