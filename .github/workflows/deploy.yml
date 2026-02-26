@@ -38,6 +38,7 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
           NEXTAUTH_URL: 'http://localhost:3000'
           IS_DEPLOYMENT: 'true'
+          NEXT_PUBLIC_USE_NATIVE_TABLE: ${{ vars.NEXT_PUBLIC_USE_NATIVE_TABLE }}
         run: |
           # 1. Use production config with standalone output
           cp deploy/next.config.js next.config.js
@@ -95,7 +96,7 @@ jobs:
           GOOGLE_DOC_WORKOUT_URL="${{ secrets.GOOGLE_DOC_WORKOUT_URL }}"
           SPOTIFY_DEBUG=false
           CI=false
-          NEXT_PUBLIC_USE_NATIVE_TABLE=${{ env.NEXT_PUBLIC_USE_NATIVE_TABLE }}"
+          NEXT_PUBLIC_USE_NATIVE_TABLE=${{ vars.NEXT_PUBLIC_USE_NATIVE_TABLE }}
           NEXT_PUBLIC_API_URL=
           NEXT_PUBLIC_WS_URL=
           RATE_LIMIT_WINDOW_MS=60000
