@@ -677,9 +677,6 @@ async function runReviewPreset(
     context.prLabels.includes('abandon')
   ) {
     console.log('PR is marked as "ai-reviewed" or "abandon". Skipping review.')
-    // If it's already ai-reviewed, we don't necessarily want to label it 'not reviewed'
-    // but the requirement says "always include one".
-    // However, if it's already reviewed, it should already have 'approved' or 'not approved'.
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
@@ -691,11 +688,7 @@ async function runReviewPreset(
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
     await writeOutput(
-      JSON.stringify({
-        reviewComment: '',
-        labels: ['not reviewed'],
-        verdict: 'comment',
-      }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -712,11 +705,7 @@ async function runReviewPreset(
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
     await writeOutput(
-      JSON.stringify({
-        reviewComment: '',
-        labels: ['not reviewed'],
-        verdict: 'comment',
-      }),
+      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
       outputFile
     )
     return
@@ -839,7 +828,7 @@ async function runReviewPreset(
       )
       const fallback = {
         reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
-        labels: ['ai-reviewed', 'approved'],
+        labels: ['ai-reviewed'],
         verdict: 'approve',
       }
       await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
@@ -854,19 +843,6 @@ async function runReviewPreset(
       if (!reviewData.labels) {
         reviewData.labels = []
       }
-
-      // Add status labels based on verdict if not already present
-      if (
-        !reviewData.labels.includes('approved') &&
-        !reviewData.labels.includes('not approved')
-      ) {
-        if (reviewData.verdict === 'approve') {
-          reviewData.labels.push('approved')
-        } else {
-          reviewData.labels.push('not approved')
-        }
-      }
-
       // Output the original, valid JSON.
       await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
     }
@@ -883,7 +859,7 @@ async function runReviewPreset(
       reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.${commitComment}\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
         (result.data as { rawResponse: string }).rawResponse || ''
       }\n\`\`\`\n\n</details>`,
-      labels: ['ci-failure', 'not reviewed'],
+      labels: ['ci-failure'],
       verdict: 'comment',
     }
     await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
@@ -949,7 +925,7 @@ export async function handleError(
     },
     // Provide a valid structure for the review result to avoid breaking the calling workflow
     reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}${commitComment}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
-    labels: ['ci-failure', 'not reviewed'],
+    labels: ['ci-failure'],
     verdict: 'comment',
   }
 

@@ -30,7 +30,6 @@ permissions:
 
 jobs:
   create-review-issues:
-    if: vars.GEMINI_ENABLE_REVIEW_ISSUES != 'false'
     runs-on: ubuntu-latest
     name: Create Issues from Gemini Review
 

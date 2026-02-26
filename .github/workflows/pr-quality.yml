@@ -217,7 +217,6 @@ jobs:
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_ENABLE_SLOP_CHECK: ${{ vars.GEMINI_ENABLE_SLOP_CHECK }}
         run: |
           chmod +x ./scripts/ci-check-slop.sh
           ./scripts/ci-check-slop.sh
