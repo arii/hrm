@@ -94,6 +94,7 @@ jobs:
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
           BOT_USERNAME: 'gemini-bot'
+          GEMINI_ENABLE_PR_REVIEW: ${{ vars.GEMINI_ENABLE_PR_REVIEW }}
         run: |
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh
@@ -101,7 +102,7 @@ jobs:
   gemini-review:
     name: Execute Gemini Review
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.needs-review == 'true'
+    if: vars.GEMINI_ENABLE_PR_REVIEW != 'false' && needs.analyze-changes.outputs.needs-review == 'true'
     runs-on: ubuntu-latest
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
@@ -401,8 +402,12 @@ jobs:
 
   manage-labels:
     name: Manage PR Labels
-    needs: gemini-review
-    if: needs.gemini-review.result != 'skipped'
+    needs: [analyze-changes, gemini-review]
+    # Always run to ensure a label is applied, as long as analyze-changes succeeded
+    if: |
+      always() &&
+      needs.analyze-changes.result == 'success' &&
+      !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -425,11 +430,13 @@ jobs:
         with:
           name: review-result
           path: .
+        continue-on-error: true
 
       - name: Manage Labels
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          NEEDS_REVIEW: ${{ needs.analyze-changes.outputs.needs-review }}
         run: ./.github/scripts/manage-pr-labels.sh
 
   post-skip-check:
