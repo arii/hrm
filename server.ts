@@ -157,7 +157,9 @@ app.prepare().then(async () => {
       // Continue despite file error, as memory reset is priority
     }
 
-    logger.info('Server-side HRM state has been reset via /api/debug/reset-server')
+    logger.info(
+      'Server-side HRM state has been reset via /api/debug/reset-server'
+    )
     return res.status(200).json({ status: 'reset', mode: 'comprehensive' })
   })
 
