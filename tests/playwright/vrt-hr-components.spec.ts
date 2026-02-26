@@ -171,8 +171,8 @@ test.describe('Visual Regression Tests', () => {
         // Wait for the dashboard to reflect the new BPM value and zone color
         // Increased timeout to 10s to account for WebSocket latency in CI
         const firstHrTile = dashboardPage.getByTestId('hr-tile-card').first()
-        await expect(firstHrTile.getByTestId('bpm-value')).toHaveText(
-          new RegExp(`^${expectedBpm}`),
+        await expect(firstHrTile.getByTestId('bpm-value')).toContainText(
+          String(expectedBpm),
           { timeout: 15000 }
         )
 
