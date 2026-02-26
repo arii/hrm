@@ -73,7 +73,7 @@ permissions:
 
 jobs:
   ai-developer:
-    if: (github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code')
+    if: vars.GEMINI_ENABLE_CODER != 'false' && ((github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code'))
     runs-on: self-hosted
 
     steps:
