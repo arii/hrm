@@ -1,6 +1,6 @@
 // components/shared/VolumeSlider.tsx
 'use client'
-import React, { memo, useCallback, useMemo } from 'react'
+import React, { memo, useCallback } from 'react'
 import {
   IconButton,
   Slider,
@@ -83,11 +83,6 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       }
     },
     [onVolumeChangeCommitted]
-  )
-
-  const sliderStyles = useMemo(
-    () => getSliderStyles(size, sliderColor),
-    [size, sliderColor]
   )
 
   return (

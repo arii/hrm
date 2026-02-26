@@ -35,8 +35,16 @@ export async function checkAccessibility(target: Page | Locator) {
   const accessibilityScanResults = await axeBuilder.analyze()
 
   // Clean up the temporary attribute after the scan.
+  // Use try-catch to avoid failing if the element was removed during/after the scan.
   if (selector) {
-    await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+    try {
+      await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+    } catch (error) {
+      console.warn(
+        'Failed to clean up accessibility uniqueId attribute:',
+        error
+      )
+    }
   }
 
   if (accessibilityScanResults.violations.length > 0) {
