@@ -75,10 +75,7 @@ const envSchema = z
         }
       }
 
-      if (
-        data.NODE_ENV === 'production' &&
-        data.NEXTAUTH_SECRET.length < 32
-      ) {
+      if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET.length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['NEXTAUTH_SECRET'],

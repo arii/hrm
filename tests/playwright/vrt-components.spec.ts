@@ -136,5 +136,4 @@ test.describe('Component-Specific VRT', () => {
     await refreshButton.hover()
     await takeScreenshot(refreshButton, 'refresh-icon-button-hover.png')
   })
-
 })
