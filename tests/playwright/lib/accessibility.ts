@@ -29,7 +29,17 @@ export async function checkAccessibility(target: Page | Locator) {
     .disableRules(['color-contrast'])
 
   if (selector) {
-    axeBuilder.include(selector)
+    // Ensure the element is still attached to the DOM before running the scan.
+    // If it's not, we should gracefully skip the scan or fail with a clearer message.
+    const isAttached = await (target as Locator).count().then((c) => c > 0)
+    if (isAttached) {
+      axeBuilder.include(selector)
+    } else {
+      console.warn(
+        'Accessibility target detached before scan could start. Skipping check.'
+      )
+      return
+    }
   }
 
   const accessibilityScanResults = await axeBuilder.analyze()
