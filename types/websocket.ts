@@ -125,15 +125,12 @@ const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
   value: z.number().nullable(),
   calories: z.number().optional(),
   percentage: z.number().optional(),
-  zone: z.preprocess(
-    (val) => {
-      if (typeof val === 'string') {
-        return val.toUpperCase()
-      }
-      return val
-    },
-    z.enum(HR_ZONE_KEYS).optional()
-  ),
+  zone: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      return val.toUpperCase()
+    }
+    return val
+  }, z.enum(HR_ZONE_KEYS).optional()),
 })
 
 // Exported to support legacy consumers and maintain backward compatibility
