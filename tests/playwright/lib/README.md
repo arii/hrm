@@ -198,11 +198,11 @@ await startMockHrStreaming(mockPage)
 await prepareForVisualRegression(dashboardPage, controlPage, mockPage)
 ```
 
-### E2E Test Control Pattern (`TEST_CONTROLS`)
+### E2E Test Control Pattern (`__TEST_CONTROLS__`)
 
-For complex scenarios requiring direct interaction with the application's internal state (e.g., simulating WebSocket messages, triggering state changes), this project uses a `TEST_CONTROLS` pattern.
+For complex scenarios requiring direct interaction with the application's internal state (e.g., simulating WebSocket messages, triggering state changes), this project uses a `__TEST_CONTROLS__` pattern.
 
-**Concept**: In non-production environments, the application exposes a global `window.TEST_CONTROLS` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
+**Concept**: In non-production environments (guarded by `isTestEnvironment()`), the application exposes a global `window.__TEST_CONTROLS__` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
 
 **Implementation**:
 
@@ -211,9 +211,9 @@ For complex scenarios requiring direct interaction with the application's intern
     ```tsx
     // Example in a React component
     useEffect(() => {
-      if (process.env.NODE_ENV !== 'production') {
-        window.TEST_CONTROLS = {
-          ...window.TEST_CONTROLS,
+      if (isTestEnvironment()) {
+        window.__TEST_CONTROLS__ = {
+          ...window.__TEST_CONTROLS__,
           simulateWebSocketMessage: (message) => {
             // Logic to handle the simulated message
             dispatch(message)
@@ -229,7 +229,7 @@ For complex scenarios requiring direct interaction with the application's intern
     // In your Playwright test
     test('should react to a simulated WebSocket message', async ({ page }) => {
       await page.evaluate(() => {
-        window.TEST_CONTROLS.simulateWebSocketMessage({
+        window.__TEST_CONTROLS__.simulateWebSocketMessage({
           type: 'TIMER_UPDATE',
           data: {
             /* ... */
@@ -244,11 +244,11 @@ For complex scenarios requiring direct interaction with the application's intern
 
 **Best Practices**:
 
-- **Production Only**: Always wrap the `window.TEST_CONTROLS` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
-- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a declaration file (e.g., `playwright-global.d.ts`):
+- **Production Guard**: Always use `isTestEnvironment()` to ensure these controls are not exposed in the production build.
+- **TypeScript Definitions**: To ensure type safety, the `Window` interface is extended in `types/global.d.ts`:
   ```typescript
   interface Window {
-    TEST_CONTROLS: {
+    __TEST_CONTROLS__: {
       simulateWebSocketMessage: (message: WebSocketMessage) => void
       // Add other control functions here
     }
