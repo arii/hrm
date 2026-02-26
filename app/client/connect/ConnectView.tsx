@@ -11,7 +11,6 @@ import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -118,7 +117,6 @@ export default function ConnectView({
           Edge, or Bluefy (on iOS).
         </Alert>
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
-        <BottomNavBar />
       </Container>
     )
   }
@@ -285,7 +283,6 @@ export default function ConnectView({
 
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
       </Container>
-      <BottomNavBar />
     </>
   )
 }

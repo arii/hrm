@@ -58,12 +58,8 @@ export default function BottomNavBar() {
       showLabels
       sx={{
         width: '100%',
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        position: 'static',
         zIndex: 1000,
-        boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
       {NAV_ITEMS.map((item, index) => (

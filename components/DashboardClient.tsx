@@ -11,26 +11,6 @@ import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
 
-// Dynamically import SpotifyDisplay with SSR disabled.
-const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: 56,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        width: '100%',
-        minHeight: '64px',
-      }}
-    >
-      <DashboardSectionLoadingSkeleton height="64px" />
-    </Box>
-  ),
-})
-
 const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
   ssr: false,
 })
@@ -104,9 +84,7 @@ const DashboardClient = ({
         }}
       >
         <Box sx={mainGridStyles}>
-          <Box sx={{ height: '100%' }}>
-            <TimerDisplay />
-          </Box>
+          <TimerDisplay />
           <HrmConnectionPanel />
         </Box>
         <Box sx={{ width: '100%', mt: 2 }}>
@@ -133,8 +111,6 @@ const DashboardClient = ({
           )}
         </Box>
       </Container>
-
-      <SpotifyDisplay />
     </Box>
   )
 }
