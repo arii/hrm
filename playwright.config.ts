@@ -2,17 +2,13 @@
  * Playwright Test Configuration for HRM Comprehensive Assessment
  * Optimized for performance and parallel execution
  */
-<<<<<<< HEAD
 import {
   defineConfig,
   devices,
   type ReporterDescription,
 } from '@playwright/test'
 import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
-=======
-import { defineConfig, devices } from '@playwright/test'
 import { env } from './lib/env'
->>>>>>> 6937b84c (Migrate direct process.env usages to lib/env.ts)
 
 // Define the port for the test server
 const port = env.PORT || 3000
