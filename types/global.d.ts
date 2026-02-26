@@ -11,10 +11,12 @@ export interface TestControls {
   // From useBluetoothHRM hook
   setHrmStatus?: Dispatch<SetStateAction<BluetoothConnectionStatus>>
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
+  setSignalStatus?: Dispatch<SetStateAction<{ last: number; slow: number }>>
 
   // From WebSocketProvider context
   dispatch?: (message: ServerMessage) => void
   disconnect?: () => void
+  connect?: () => void
 }
 
 declare global {
@@ -24,7 +26,7 @@ declare global {
 
   interface Window {
     __TEST_READY__?: boolean
-    TEST_CONTROLS?: TestControls
+    __TEST_CONTROLS__?: TestControls
   }
 }
 

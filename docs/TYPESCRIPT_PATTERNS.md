@@ -181,7 +181,7 @@ This approach has several advantages:
 
 Similar to testing private class members, testing the internal state of client-side hooks (e.g., in React) from an E2E testing framework like Playwright can be challenging. We use a global `window` object to expose test controls, which allows our tests to manipulate the state of our application in a controlled way.
 
-### The `window.TEST_CONTROLS` Pattern
+### The `window.__TEST_CONTROLS__` Pattern
 
 This pattern involves conditionally attaching an object to the `window` that contains functions for manipulating the state of a hook or component. This is typically done within the hook or component itself, and is guarded by an environment variable.
 
@@ -193,8 +193,8 @@ useEffect(() => {
     typeof window !== 'undefined' &&
     process.env.NEXT_PUBLIC_TESTING === 'true'
   ) {
-    window.TEST_CONTROLS = {
-      ...window.TEST_CONTROLS,
+    window.__TEST_CONTROLS__ = {
+      ...window.__TEST_CONTROLS__,
       setMyHookState: setMyState,
     }
   }
@@ -203,10 +203,10 @@ useEffect(() => {
 // In your Playwright test file (e.g., tests/playwright/my-feature.spec.ts)
 test('should update state when test control is used', async ({ page }) => {
   await page.goto('/my-feature')
-  await page.waitForFunction(() => window.TEST_CONTROLS?.setMyHookState)
+  await page.waitForFunction(() => window.__TEST_CONTROLS__?.setMyHookState)
 
   await page.evaluate(() => {
-    window.TEST_CONTROLS.setMyHookState('new state')
+    window.__TEST_CONTROLS__.setMyHookState('new state')
   })
 
   await expect(page.getByText('new state')).toBeVisible()
@@ -217,8 +217,8 @@ This pattern offers several benefits:
 
 - **Decoupling:** It decouples the test from the implementation details of the component, allowing you to test the component's behavior without needing to simulate complex user interactions.
 - **Stability:** It can lead to more stable tests, as you are not relying on selectors that might change.
-- **Safety:** By guarding the assignment to `window.TEST_CONTROLS` with an environment variable (`NEXT_PUBLIC_TESTING`), you ensure that these test-only controls are not exposed in your production build.
-- **Type Safety:** The `window.TEST_CONTROLS` object should be typed in a global declaration file (e.g., `types/global.d.ts`) to ensure type safety in your tests.
+- **Safety:** By guarding the assignment to `window.__TEST_CONTROLS__` with an environment variable (`NEXT_PUBLIC_TESTING`), you ensure that these test-only controls are not exposed in your production build.
+- **Type Safety:** The `window.__TEST_CONTROLS__` object should be typed in a global declaration file (e.g., `types/global.d.ts`) to ensure type safety in your tests.
 
 ## Server-Side Service Singletons (Next.js)
 
@@ -226,7 +226,7 @@ In Next.js development mode, modules are frequently re-executed due to hot-reloa
 
 ### The "Double-Singleton" Problem
 
-If you have a service that starts a polling loop or maintains a persistent connection, hot-reloading will create a new instance of that service *without* stopping the old one. Over time, this leads to resource leaks and "ghost" processes.
+If you have a service that starts a polling loop or maintains a persistent connection, hot-reloading will create a new instance of that service _without_ stopping the old one. Over time, this leads to resource leaks and "ghost" processes.
 
 ### Implementation Pattern
 
@@ -253,9 +253,9 @@ export async function createServices(broadcast) {
   // 2. Create new instances if none exist
   // ... initialization logic ...
   const services = {
-     spotifyService: await SpotifyPolling.create(broadcast),
-     tabataService: new TabataTimer(broadcast),
-     isSpotifyInitialized: true,
+    spotifyService: await SpotifyPolling.create(broadcast),
+    tabataService: new TabataTimer(broadcast),
+    isSpotifyInitialized: true,
   }
 
   // 3. Persist to global for future reloads and global access
