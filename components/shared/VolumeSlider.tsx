@@ -10,6 +10,7 @@ import {
   Theme,
   alpha,
 } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {
@@ -24,6 +25,37 @@ interface VolumeSliderProps {
   disabled?: boolean
   sx?: SxProps<Theme>
 }
+
+// Styled component to extract complex styles and ensure accessibility
+const StyledSlider = styled(Slider, {
+  shouldForwardProp: (prop) => prop !== 'sliderColor',
+})<{ sliderColor?: string }>(({ theme, sliderColor, size }) => ({
+  color: sliderColor || theme.palette.primary.main,
+  height: 6,
+  '& .MuiSlider-thumb': {
+    backgroundColor: 'white',
+    width: size === 'small' ? 18 : 22,
+    height: size === 'small' ? 18 : 22,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    '&:hover, &.Mui-focusVisible': {
+      boxShadow: sliderColor
+        ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
+        : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+    },
+    // Ensure 44px touch target (WCAG 2.1 compliance)
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      width: 44,
+      height: 44,
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    },
+  },
+  '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
+  '& .MuiSlider-rail': { opacity: 0.3 },
+}))
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
   volume,
@@ -85,29 +117,13 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         )}
       </IconButton>
 
-      <Slider
+      <StyledSlider
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
         size={size}
         disabled={disabled}
-        sx={(theme) => ({
-          color: sliderColor || theme.palette.primary.main,
-          height: 6,
-          '& .MuiSlider-thumb': {
-            backgroundColor: 'white',
-            width: size === 'small' ? 18 : 22,
-            height: size === 'small' ? 18 : 22,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-            '&:hover, &.Mui-focusVisible': {
-              boxShadow: sliderColor
-                ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
-                : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
-            },
-          },
-          '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
-          '& .MuiSlider-rail': { opacity: 0.3 },
-        })}
+        sliderColor={sliderColor}
         aria-label="Volume control"
         data-testid="volume-slider-input"
       />

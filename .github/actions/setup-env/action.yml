@@ -59,25 +59,7 @@ runs:
 
     - name: 'Install Dependencies'
       shell: bash
-      run: |
-        # Retry logic for pnpm install to handle transient 403 Forbidden errors
-        MAX_RETRIES=3
-        RETRY_DELAY=10
-        n=0
-        until [ "$n" -ge "$MAX_RETRIES" ]
-        do
-           echo "Attempting pnpm install (Attempt $((n+1))/$MAX_RETRIES)..."
-           pnpm install --frozen-lockfile && break
-           n=$((n+1))
-           if [ "$n" -lt "$MAX_RETRIES" ]; then
-             echo "pnpm install failed, retrying in ${RETRY_DELAY}s..."
-             sleep "$RETRY_DELAY"
-           fi
-        done
-        if [ "$n" -ge "$MAX_RETRIES" ]; then
-          echo "❌ pnpm install failed after $MAX_RETRIES attempts"
-          exit 1
-        fi
+      run: pnpm install --frozen-lockfile
 
     - name: Cache Playwright
       uses: actions/cache@v4
