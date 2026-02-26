@@ -389,8 +389,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         window.location.search.includes('testing=true'))
 
     if (isTesting) {
-      window.__TEST_CONTROLS__ = {
-        ...window.__TEST_CONTROLS__,
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
       }
@@ -409,17 +409,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (isTesting && window.__TEST_CONTROLS__) {
+      if (isTesting && window.TEST_CONTROLS) {
         // Only delete if they are the exact same functions we registered
         // This prevents race conditions during remounting
-        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
-          delete window.__TEST_CONTROLS__.setHrmStatus
+        if (window.TEST_CONTROLS.setHrmStatus === setStatus) {
+          delete window.TEST_CONTROLS.setHrmStatus
         }
         if (
-          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
+          window.TEST_CONTROLS.setCustomHrmStatusMessage ===
           setCustomStatusMessage
         ) {
-          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
         }
       }
     }

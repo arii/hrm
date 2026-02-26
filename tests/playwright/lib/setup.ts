@@ -122,15 +122,15 @@ export async function navigateAndWait(
   // Wait for the window object to be available and controls to attach
   // This is a minimal wait to ensure JS has executed
   await page
-    .waitForFunction(() => !!window.__TEST_CONTROLS__, {
+    .waitForFunction(() => !!window.TEST_CONTROLS, {
       timeout: 3000,
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
   // Force disconnect to remove HrmConnectionPanel skeleton
   await page.evaluate(() => {
-    if (window.__TEST_CONTROLS__) {
-      window.__TEST_CONTROLS__.disconnect()
+    if (window.TEST_CONTROLS) {
+      window.TEST_CONTROLS.disconnect()
     }
   })
 

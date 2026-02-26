@@ -46,7 +46,7 @@ interface MockBluetoothDevice {
 
 declare global {
   interface Window {
-    __TEST_CONTROLS__?: {
+    TEST_CONTROLS?: {
       dispatch: (message: unknown) => void
       disconnect: () => void
       connect: () => void

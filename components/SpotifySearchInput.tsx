@@ -12,7 +12,7 @@ import {
   TextField,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyTrack {
@@ -23,23 +23,17 @@ interface SpotifyTrack {
   uri: string
 }
 
-interface SearchState {
-  results: SpotifyTrack[]
-  loading: boolean
-  hasSearched: boolean
-}
-
 const SpotifySearchInput = ({
   onTrackSelect,
 }: {
   onTrackSelect?: (uri: string) => void
 }) => {
   const [query, setQuery] = useState('')
-  const [value, setValue] = useState<SpotifyTrack | string | null>(null)
-  const [state, dispatch] = useReducer(
-    (s: SearchState, a: Partial<SearchState>) => ({ ...s, ...a }),
-    { results: [], loading: false, hasSearched: false }
-  )
+  const [value, setValue] = useState<SpotifyTrack | null>(null)
+  const [results, setResults] = useState<SpotifyTrack[]>([])
+  const [loading, setLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+
   const { enqueueSnackbar } = useSnackbar()
   const debouncedQuery = useDebounce(query, 500)
 
@@ -47,11 +41,13 @@ const SpotifySearchInput = ({
     let active = true
     const searchTracks = async () => {
       if (!debouncedQuery.trim()) {
-        dispatch({ results: [], hasSearched: false })
+        setResults([])
+        setHasSearched(false)
         return
       }
 
-      dispatch({ loading: true, hasSearched: true })
+      setLoading(true)
+      setHasSearched(true)
       try {
         const res = await fetch(
           `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
@@ -65,14 +61,14 @@ const SpotifySearchInput = ({
         }
 
         const data = await res.json()
-        if (active) dispatch({ results: data.tracks?.items || [] })
+        if (active) setResults(data.tracks?.items || [])
       } catch (err) {
         if (active) {
           enqueueSnackbar(String(err), { variant: 'error' })
-          dispatch({ results: [] })
+          setResults([])
         }
       } finally {
-        if (active) dispatch({ loading: false })
+        if (active) setLoading(false)
       }
     }
 
@@ -85,28 +81,26 @@ const SpotifySearchInput = ({
   const handleClear = () => {
     setQuery('')
     setValue(null)
-    dispatch({ results: [], hasSearched: false })
+    setResults([])
+    setHasSearched(false)
   }
 
   return (
     <Box sx={{ width: '100%', maxWidth: 600, mx: 'auto' }}>
       <Autocomplete
-        freeSolo
-        options={state.results}
-        getOptionLabel={(o) => (typeof o === 'string' ? o : o.name)}
+        options={results}
+        getOptionLabel={(o) => o.name}
         filterOptions={(x) => x}
-        loading={state.loading}
+        loading={loading}
         value={value}
         inputValue={query}
         onInputChange={(_, val) => (val ? setQuery(val) : handleClear())}
         onChange={(_, newValue, reason) => {
           if (reason === 'clear') {
             handleClear()
-          } else if (newValue && typeof newValue !== 'string') {
+          } else if (newValue) {
             onTrackSelect?.(newValue.uri)
             handleClear()
-          } else {
-            setValue(newValue)
           }
         }}
         slotProps={{
@@ -130,9 +124,7 @@ const SpotifySearchInput = ({
               ),
               endAdornment: (
                 <>
-                  {state.loading && (
-                    <CircularProgress color="inherit" size={20} />
-                  )}
+                  {loading && <CircularProgress color="inherit" size={20} />}
                   {params.InputProps.endAdornment}
                 </>
               ),
@@ -164,7 +156,7 @@ const SpotifySearchInput = ({
           </Box>
         )}
         noOptionsText={
-          state.hasSearched && !state.loading
+          hasSearched && !loading
             ? `No results for "${query}"`
             : !query
               ? 'Type to search...'

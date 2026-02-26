@@ -28,7 +28,7 @@ declare global {
 
   interface Window {
     __TEST_READY__?: boolean
-    __TEST_CONTROLS__?: TestControls
+    TEST_CONTROLS?: TestControls
   }
 }
 

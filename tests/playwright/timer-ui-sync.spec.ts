@@ -3,34 +3,34 @@ import type { ServerMessage } from '@/types/websocket'
 
 // Helper function to dispatch a WebSocket message from the client-side
 const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
-  await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch)
+  await page.waitForFunction(() => window.TEST_CONTROLS?.dispatch)
   return page.evaluate((msg: ServerMessage) => {
     const dispatch = (
       window as Window & {
-        __TEST_CONTROLS__?: { dispatch: (message: ServerMessage) => void }
+        TEST_CONTROLS?: { dispatch: (message: ServerMessage) => void }
       }
-    ).__TEST_CONTROLS__?.dispatch
+    ).TEST_CONTROLS?.dispatch
     if (dispatch) {
       dispatch(msg)
       return true
     }
-    console.error('__TEST_CONTROLS__.dispatch not found on window object')
+    console.error('TEST_CONTROLS.dispatch not found on window object')
     return false
   }, message)
 }
 
 // Helper function to disconnect the WebSocket from the client-side
 const disconnectWebSocket = async (page: Page) => {
-  await page.waitForFunction(() => window.__TEST_CONTROLS__?.disconnect)
+  await page.waitForFunction(() => window.TEST_CONTROLS?.disconnect)
   return page.evaluate(() => {
     const disconnect = (
-      window as Window & { __TEST_CONTROLS__?: { disconnect: () => void } }
-    ).__TEST_CONTROLS__?.disconnect
+      window as Window & { TEST_CONTROLS?: { disconnect: () => void } }
+    ).TEST_CONTROLS?.disconnect
     if (disconnect) {
       disconnect()
       return true
     }
-    console.error('__TEST_CONTROLS__.disconnect not found on window object')
+    console.error('TEST_CONTROLS.disconnect not found on window object')
     return false
   })
 }

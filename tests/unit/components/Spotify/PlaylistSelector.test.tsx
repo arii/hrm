@@ -134,4 +134,22 @@ describe('PlaylistSelector', () => {
       'Play playlist: Rock Classics'
     )
   })
+
+  it('should have correct accessibility attributes on list items', async () => {
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+    const user = userEvent.setup()
+    const input = await screen.findByRole('combobox')
+    await user.click(input)
+
+    const chillHits = await screen.findByText('Chill Hits')
+    const listItem = chillHits.closest('li')
+
+    expect(listItem).toHaveAttribute('role', 'option')
+    expect(listItem).toHaveAttribute('aria-selected', 'false')
+  })
 })

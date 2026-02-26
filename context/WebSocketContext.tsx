@@ -307,9 +307,9 @@ export const WebSocketProvider = ({
     connect()
 
     if (isTestEnvironment()) {
-      const win = window as Window & { __TEST_CONTROLS__?: TestControls }
-      win.__TEST_CONTROLS__ = {
-        ...win.__TEST_CONTROLS__,
+      const win = window as Window & { TEST_CONTROLS?: TestControls }
+      win.TEST_CONTROLS = {
+        ...win.TEST_CONTROLS,
         dispatch,
         disconnect,
         connect,
@@ -319,16 +319,16 @@ export const WebSocketProvider = ({
     return () => {
       disconnect()
       if (isTestEnvironment()) {
-        const win = window as Window & { __TEST_CONTROLS__?: TestControls }
-        if (win.__TEST_CONTROLS__) {
-          if (win.__TEST_CONTROLS__.dispatch === dispatch) {
-            delete win.__TEST_CONTROLS__.dispatch
+        const win = window as Window & { TEST_CONTROLS?: TestControls }
+        if (win.TEST_CONTROLS) {
+          if (win.TEST_CONTROLS.dispatch === dispatch) {
+            delete win.TEST_CONTROLS.dispatch
           }
-          if (win.__TEST_CONTROLS__.disconnect === disconnect) {
-            delete win.__TEST_CONTROLS__.disconnect
+          if (win.TEST_CONTROLS.disconnect === disconnect) {
+            delete win.TEST_CONTROLS.disconnect
           }
-          if (win.__TEST_CONTROLS__.connect === connect) {
-            delete win.__TEST_CONTROLS__.connect
+          if (win.TEST_CONTROLS.connect === connect) {
+            delete win.TEST_CONTROLS.connect
           }
         }
       }

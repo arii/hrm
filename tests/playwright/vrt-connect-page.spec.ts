@@ -16,7 +16,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
     await connectPage.waitForFunction(
       () => {
-        const controls = window.__TEST_CONTROLS__
+        const controls = window.TEST_CONTROLS
         return controls && typeof controls.setHrmStatus === 'function'
       },
       {
@@ -32,8 +32,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('scanning state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.__TEST_CONTROLS__.setHrmStatus(status)
-      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
+      window.TEST_CONTROLS.setHrmStatus(status)
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
         'Checking saved devices...'
       )
     }, BluetoothConnectionStatus.CONNECTING)
@@ -66,8 +66,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('connection error state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.__TEST_CONTROLS__.setHrmStatus(status)
-      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
+      window.TEST_CONTROLS.setHrmStatus(status)
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
         'Connection Failed: GATT server not found. Please try again.'
       )
     }, BluetoothConnectionStatus.ERROR)
@@ -85,7 +85,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('no devices found state', async ({ connectPage }) => {
     await connectPage.evaluate(
-      (status) => window.__TEST_CONTROLS__.setHrmStatus(status),
+      (status) => window.TEST_CONTROLS.setHrmStatus(status),
       BluetoothConnectionStatus.DISCONNECTED
     )
     // The button should be visible and ready for another attempt.
@@ -101,8 +101,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
   test('auto-connect failed state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
-      window.__TEST_CONTROLS__.setHrmStatus(status)
-      window.__TEST_CONTROLS__.setCustomHrmStatusMessage(
+      window.TEST_CONTROLS.setHrmStatus(status)
+      window.TEST_CONTROLS.setCustomHrmStatusMessage(
         'Auto-connect failed. Use Connect button to select device.'
       )
     }, BluetoothConnectionStatus.DISCONNECTED)

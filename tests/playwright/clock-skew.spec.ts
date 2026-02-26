@@ -11,9 +11,9 @@ test('should handle clock skew correctly', async ({ page }) => {
       () =>
         (
           window as unknown as {
-            __TEST_CONTROLS__?: { dispatch: (m: unknown) => void }
+            TEST_CONTROLS?: { dispatch: (m: unknown) => void }
           }
-        ).__TEST_CONTROLS__?.dispatch,
+        ).TEST_CONTROLS?.dispatch,
       {
         timeout: 10000,
       }
@@ -21,9 +21,9 @@ test('should handle clock skew correctly', async ({ page }) => {
     await page.evaluate((msg) => {
       ;(
         window as unknown as {
-          __TEST_CONTROLS__: { dispatch: (m: unknown) => void }
+          TEST_CONTROLS: { dispatch: (m: unknown) => void }
         }
-      ).__TEST_CONTROLS__.dispatch(msg)
+      ).TEST_CONTROLS.dispatch(msg)
     }, message)
   }
 

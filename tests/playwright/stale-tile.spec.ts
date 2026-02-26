@@ -9,20 +9,20 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: ServerMessage | { type: 'RESET_STATE' }) => {
-    await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch, {
+    await page.waitForFunction(() => window.TEST_CONTROLS?.dispatch, {
       timeout: 10000,
     })
     await page.evaluate((msg) => {
       const win = window as unknown as {
-        __TEST_CONTROLS__: {
+        TEST_CONTROLS: {
           dispatch: (m: unknown) => void
         }
       }
-      const controls = win.__TEST_CONTROLS__
+      const controls = win.TEST_CONTROLS
       if (controls && typeof controls.dispatch === 'function') {
         controls.dispatch(msg)
       } else {
-        throw new Error('__TEST_CONTROLS__.dispatch not found')
+        throw new Error('TEST_CONTROLS.dispatch not found')
       }
     }, message)
   }
