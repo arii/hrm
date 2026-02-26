@@ -16,16 +16,17 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
+import {
+  STABILITY_THRESHOLD_MS,
+  MISSED_PACKET_THRESHOLD_BUFFER_MS,
+  MIN_MISSED_PACKET_THRESHOLD_MS,
+  ROLLING_AVG_HISTORY_LENGTH,
+} from '@/constants/bluetooth'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-const ROLLING_AVG_HISTORY_LENGTH = 5
-const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
-const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
-const STABILITY_THRESHOLD_MS = 1500
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
@@ -78,7 +79,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState(0)
-  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
+  const [signalStatus, setSignalStatus] = useState({ last: 0, strikes: 0 })
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -192,7 +193,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           updateSignalPeriod(timeSinceLastData)
           setSignalStatus((s) => ({
             last: timeSinceLastData,
-            slow: timeSinceLastData > STABILITY_THRESHOLD_MS ? s.slow + 1 : 0,
+            strikes:
+              timeSinceLastData > STABILITY_THRESHOLD_MS ? s.strikes + 1 : 0,
           }))
         }
       }
@@ -249,7 +251,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
-    setSignalStatus({ last: 0, slow: 0 })
+    setSignalStatus({ last: 0, strikes: 0 })
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -552,7 +554,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               updateSignalPeriod(delta)
               setSignalStatus((s) => ({
                 last: delta,
-                slow: delta > STABILITY_THRESHOLD_MS ? s.slow + 1 : 0,
+                strikes: delta > STABILITY_THRESHOLD_MS ? s.strikes + 1 : 0,
               }))
             }
 
@@ -832,7 +834,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isSupported, // Export this flag
     signalPeriodMs,
     lastPeriodMs: signalStatus.last,
-    consecutiveSlowPackets: signalStatus.slow,
+    poorSignalStrikeCount: signalStatus.strikes,
     connectionAttempted,
   }
 }
