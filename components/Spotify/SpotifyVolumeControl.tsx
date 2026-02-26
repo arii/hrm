@@ -3,7 +3,10 @@ import { useCallback, useRef } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import { SPOTIFY_OFFLINE_WARNING } from '@/constants/spotify'
+import {
+  SPOTIFY_OFFLINE_WARNING,
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+} from '@/constants/spotify'
 
 interface SpotifyVolumeControlProps {
   volume: number
@@ -34,7 +37,7 @@ const SpotifyVolumeControl = ({
       setVolume(val)
       if (connectionStatus !== 'Connected') {
         const now = Date.now()
-        if (now - lastWarningTimeRef.current > 3000) {
+        if (now - lastWarningTimeRef.current > VOLUME_SYNC_GRACE_PERIOD_MS) {
           showWarning(SPOTIFY_OFFLINE_WARNING)
           lastWarningTimeRef.current = now
         }

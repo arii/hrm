@@ -103,6 +103,11 @@ test.describe('Timer UI Synchronization', () => {
 
     await disconnectWebSocket(page)
     await expect(page.locator('text=Server: Disconnected')).toBeVisible()
+
+    // Wait for the synchronization lock (2s) to expire before dispatching
+    // the server message, otherwise the component will ignore the update.
+    await page.waitForTimeout(2100)
+
     await dispatchServerMessage(page, {
       type: 'TIMER_UPDATE',
       payload: { isRunning: false },
