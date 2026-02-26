@@ -25,11 +25,12 @@ jobs:
   triage:
     # This job runs for new issues.
     # It uses a Gemini agent to analyze the issue and provide a detailed triage.
-    if: github.event_name == 'issues' && github.actor != 'ari-party-bot'
+    if: vars.GEMINI_ENABLE_TRIAGE != 'false' && github.event_name == 'issues' && github.actor != 'ari-party-bot'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
