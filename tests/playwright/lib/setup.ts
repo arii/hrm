@@ -127,6 +127,22 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
+  // Stabilize VRT by disabling animations, transitions, and backdrop filters
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      [data-testid="main-content-layout"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    `,
+  })
+
   await waitForPageReady(page)
 }
 
