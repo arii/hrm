@@ -129,10 +129,8 @@ export async function navigateAndWait(
 
   // Force disconnect to remove HrmConnectionPanel skeleton
   await page.evaluate(() => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
     if (window.__TEST_CONTROLS__) {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__.disconnect()
+      window.__TEST_CONTROLS__.disconnect!()
     }
   })
 
@@ -252,7 +250,7 @@ export async function stabilizePageForVrt(page: Page): Promise<void> {
         animation-delay: -1ms !important;
         animation-duration: 1ms !important;
         animation-iteration-count: 1 !important;
-        transition-duration: 0s !important;
+        transition-duration: 1ms !important;
         transition-delay: 0s !important;
       }
 

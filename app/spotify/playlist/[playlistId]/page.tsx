@@ -16,7 +16,7 @@ const PlaylistTracksDisplay = dynamic(
   () => import('../../../../components/Playlist/PlaylistTracksDisplay'),
   {
     ssr: false,
-    loading: () => <CircularProgress />,
+    loading: () => <CircularProgress aria-label="Loading playlist tracks" />,
   }
 )
 
@@ -82,7 +82,7 @@ const PlaylistPage = () => {
     return (
       <Container>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
+          <CircularProgress aria-label="Loading playlist details" />
         </Box>
       </Container>
     )

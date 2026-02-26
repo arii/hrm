@@ -176,8 +176,6 @@ const initSocketManager = (
         age: 30,
         calories: 0,
         updatedAt: Date.now(),
-        // Add default name in test env to satisfy server-side filter in existing tests
-        ...(process.env.NODE_ENV === 'test' ? { name: 'Test Athlete' } : {}),
       }
       hrmSessionManager.save(newClient)
       clientSessionState.set(extWs.clientId, {

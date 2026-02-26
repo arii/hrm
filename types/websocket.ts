@@ -8,7 +8,8 @@ import { HeartRateZone } from '@/lib/shared/hr-zones'
 import type {
   HrmStreamData as HrmData,
   TimerData,
-  SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
+  SpotifyPlaybackState,
+  SpotifyDevice,
   TimerMode,
   SpotifyCommand,
 } from './core'
@@ -28,7 +29,15 @@ export interface ExtWebSocket extends WebSocket {
 
 // --- Server Broadcast State Interfaces ---
 
-export type { HrmData, TimerData, SpotifyData, SpotifyCommand }
+export type { HrmData, TimerData, SpotifyCommand }
+
+/**
+ * Represents the current Spotify state, including devices and playback details.
+ */
+export interface SpotifyData {
+  devices: SpotifyDevice[]
+  playback: SpotifyPlaybackState
+}
 
 /**
  * Represents HRM data stored in the client application state (e.g., Redux/Context).

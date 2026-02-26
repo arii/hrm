@@ -11,7 +11,6 @@ import {
   EMPTY_DEVICES,
   SPOTIFY_NO_ACTIVE_PLAYBACK,
 } from '@/constants/spotify'
-import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -134,8 +133,7 @@ const SpotifyDisplay = () => {
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   const hasActiveDevice =
-    !!selectedDeviceId ||
-    devices.some((device: SpotifyDevice) => device.is_active)
+    !!selectedDeviceId || devices.some((device) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -190,8 +188,7 @@ const SpotifyDisplay = () => {
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
-        selectedDeviceId ||
-        devices.find((device: SpotifyDevice) => device.is_active)?.id
+        selectedDeviceId || devices.find((device) => device.is_active)?.id
 
       // Refinement: Only attempt to send the command if a target device is identified.
       // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
@@ -243,16 +240,14 @@ const SpotifyDisplay = () => {
       }
       return
     }
-    const activeDevice = devices.find(
-      (device: SpotifyDevice) => device.is_active
-    )
+    const activeDevice = devices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
       return
     }
     if (
       selectedDeviceId &&
-      !devices.some((device: SpotifyDevice) => device.id === selectedDeviceId)
+      !devices.some((device) => device.id === selectedDeviceId)
     ) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }

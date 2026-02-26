@@ -7,13 +7,20 @@ import { useNow } from '@/hooks/useNow'
 import HrTile from '@/components/HrTile'
 import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
+import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const now = useNow()
 
   const tileData = useMemo(() => {
-    return augmentHrmData(hrmData, activeAlerts, now)
+    // Filter stale data on the client to handle potential clock skew
+    // and ensure consistency with server-side filtering logic.
+    const filtered = hrmData.filter((d) => {
+      const referenceTime = d.updatedAt ?? d.lastUpdated ?? now
+      return now - referenceTime <= HRM_STALE_THRESHOLD_MS
+    })
+    return augmentHrmData(filtered, activeAlerts, now)
   }, [hrmData, activeAlerts, now])
 
   const isLoading =

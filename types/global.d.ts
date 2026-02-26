@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
 import { SpotifyService } from './interfaces'
 import { BluetoothConnectionStatus } from './bluetooth'
-import { ServerMessage } from './websocket'
+import { ServerMessage, SpotifyData } from './websocket'
 import TabataTimer from '../services/tabataTimer'
 
 // Define a comprehensive interface for the global test controls
@@ -13,8 +13,13 @@ export interface TestControls {
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
 
   // From WebSocketProvider context
-  dispatch?: (message: ServerMessage) => void
+  dispatch?: (message: ServerMessage | { type: 'RESET_STATE' }) => void
   disconnect?: () => void
+  connect?: () => void
+
+  // From Spotify components
+  setSpotifyServiceInitialized?: (initialized: boolean) => void
+  injectSpotifyData?: (data: SpotifyData) => void
 }
 
 declare global {
@@ -24,7 +29,7 @@ declare global {
 
   interface Window {
     __TEST_READY__?: boolean
-    TEST_CONTROLS?: TestControls
+    __TEST_CONTROLS__?: TestControls
   }
 }
 
