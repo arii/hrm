@@ -419,9 +419,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         process.env.NEXT_PUBLIC_TESTING === 'true' &&
         window.__TEST_CONTROLS__
       ) {
-        delete window.__TEST_CONTROLS__.setHrmStatus
-        delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-        delete window.__TEST_CONTROLS__.setSignalStatus
+        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
+          delete window.__TEST_CONTROLS__.setHrmStatus
+        }
+        if (
+          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
+          setCustomStatusMessage
+        ) {
+          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+        }
+        if (window.__TEST_CONTROLS__.setSignalStatus === setSignalStatus) {
+          delete window.__TEST_CONTROLS__.setSignalStatus
+        }
       }
     }
   }, [])
