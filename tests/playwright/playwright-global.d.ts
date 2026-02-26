@@ -44,13 +44,11 @@ interface MockBluetoothDevice {
   forget(): Promise<void>
 }
 
+import { TestControls } from '@/types/global'
+
 declare global {
   interface Window {
-    __TEST_CONTROLS__?: {
-      dispatch: (message: unknown) => void
-      disconnect: () => void
-      connect: () => void
-    }
+    __TEST_CONTROLS__?: TestControls
     bluetoothTestHelpers?: {
       simulateHeartRate: (bpm: number) => Promise<void>
     }

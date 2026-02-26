@@ -5,13 +5,8 @@ import type { ServerMessage } from '@/types/websocket'
 const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
   await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch)
   return page.evaluate((msg: ServerMessage) => {
-    const dispatch = (
-      window as Window & {
-        __TEST_CONTROLS__?: { dispatch: (message: ServerMessage) => void }
-      }
-    ).__TEST_CONTROLS__?.dispatch
-    if (dispatch) {
-      dispatch(msg)
+    if (window.__TEST_CONTROLS__?.dispatch) {
+      window.__TEST_CONTROLS__.dispatch(msg)
       return true
     }
     console.error('__TEST_CONTROLS__.dispatch not found on window object')
@@ -23,11 +18,8 @@ const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
 const disconnectWebSocket = async (page: Page) => {
   await page.waitForFunction(() => window.__TEST_CONTROLS__?.disconnect)
   return page.evaluate(() => {
-    const disconnect = (
-      window as Window & { __TEST_CONTROLS__?: { disconnect: () => void } }
-    ).__TEST_CONTROLS__?.disconnect
-    if (disconnect) {
-      disconnect()
+    if (window.__TEST_CONTROLS__?.disconnect) {
+      window.__TEST_CONTROLS__.disconnect()
       return true
     }
     console.error('__TEST_CONTROLS__.disconnect not found on window object')

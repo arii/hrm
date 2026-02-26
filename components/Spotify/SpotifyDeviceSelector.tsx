@@ -40,7 +40,7 @@ const SpotifyDeviceSelector = ({
           }}
           data-testid="spotify-device-select"
         >
-          {devices.map((d: SpotifyDevice) => (
+          {devices.map((d) => (
             <MenuItem
               key={d.id}
               value={d.id}

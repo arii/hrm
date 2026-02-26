@@ -50,7 +50,7 @@ test.describe('Visual Regression Tests', () => {
 
     test('select music button hover state', async () => {
       await controlPage.evaluate(() => {
-        window.__TEST_CONTROLS__.dispatch({
+        window.__TEST_CONTROLS__!.dispatch!({
           type: 'SPOTIFY_SERVICE_INIT_UPDATE',
           payload: false,
         })

@@ -1,7 +1,6 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyDevice } from '@/types/core'
 import {
   VOLUME_SYNC_GRACE_PERIOD_MS,
   HRM_WEB_PLAYER_NAME,
@@ -23,12 +22,11 @@ export const useSpotifyDeviceSync = (
   const hasPendingSendRef = useRef<boolean>(false)
 
   const hrmDevice = devices.find(
-    (d: SpotifyDevice) =>
-      d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
+    (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
   )
 
   useEffect(() => {
-    const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
+    const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
     const shouldUpdateToActive = () => {
@@ -36,7 +34,7 @@ export const useSpotifyDeviceSync = (
         return Boolean(activeId)
       }
       const selectedStillExists = devices.some(
-        (d: SpotifyDevice) => d.id === selectedDeviceId
+        (d) => d.id === selectedDeviceId
       )
       return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
     }
@@ -75,7 +73,7 @@ export const useSpotifyDeviceSync = (
     if (
       devices.length > 0 &&
       !selectedDeviceId &&
-      !devices.some((d: SpotifyDevice) => d.is_active) &&
+      !devices.some((d) => d.is_active) &&
       hrmDevice
     ) {
       setSelectedDeviceId(hrmDevice.id)
@@ -85,7 +83,7 @@ export const useSpotifyDeviceSync = (
   const resolveTargetDeviceId = useCallback(() => {
     return (
       selectedDeviceId ||
-      devices.find((device: SpotifyDevice) => device.is_active)?.id ||
+      devices.find((device) => device.is_active)?.id ||
       hrmDevice?.id
     )
   }, [devices, selectedDeviceId, hrmDevice])
