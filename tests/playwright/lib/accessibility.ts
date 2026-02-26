@@ -36,7 +36,11 @@ export async function checkAccessibility(target: Page | Locator) {
 
   // Clean up the temporary attribute after the scan.
   if (selector) {
-    await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+    try {
+      await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
+    } catch {
+      // Ignore cleanup errors if element is already detached
+    }
   }
 
   if (accessibilityScanResults.violations.length > 0) {
