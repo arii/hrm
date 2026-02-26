@@ -122,10 +122,25 @@ export async function mockSpotifyPlaybackState(
   }
 
   await page.evaluate((payload) => {
+<<<<<<< chore/vrt-cleanup-mock-hr-centralized-teardown-2519976660640063343
     window.__TEST_CONTROLS__?.dispatch?.({
       type: 'SPOTIFY_UPDATE',
       payload,
     })
+=======
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    if (window.__TEST_CONTROLS__) {
+      // Ensure Spotify display is initialized before updating state
+      window.__TEST_CONTROLS__.dispatch({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: true,
+      })
+      window.__TEST_CONTROLS__.dispatch({
+        type: 'SPOTIFY_UPDATE',
+        payload,
+      })
+    }
+>>>>>>> leader
   }, payload)
 }
 
