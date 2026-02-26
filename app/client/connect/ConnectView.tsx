@@ -181,7 +181,11 @@ export default function ConnectView({
             >
               {deviceStatus.includes('Connecting') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
+                  <CircularProgress
+                    size={20}
+                    color="inherit"
+                    aria-label="Connecting to heart rate monitor"
+                  />
                   <span>Connecting...</span>
                 </Stack>
               ) : (

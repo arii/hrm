@@ -9,6 +9,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTheme, alpha } from '@mui/material/styles'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
@@ -30,6 +31,7 @@ import { useSpotifyDeviceSync } from '../hooks/useSpotifyDeviceSync'
 
 const SpotifyControls = () => {
   const router = useRouter()
+  const theme = useTheme()
   const { connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
@@ -128,7 +130,9 @@ const SpotifyControls = () => {
       sx={{
         mb: 3,
         color: 'white',
-        background: 'rgba(30, 41, 59, 0.7)',
+        background: alpha(theme.palette.grey[900], 0.7),
+        backdropFilter: 'blur(20px) saturate(180%)',
+        border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
       }}
     >
       <CardContent sx={{ p: 2 }}>
@@ -213,8 +217,8 @@ const SpotifyControls = () => {
               bgcolor: SPOTIFY_BRAND_COLOR,
               '&:hover': { bgcolor: SPOTIFY_HOVER_COLOR },
               '&.Mui-disabled': {
-                bgcolor: 'rgba(29, 185, 84, 0.3)',
-                color: 'rgba(255, 255, 255, 0.5)',
+                bgcolor: alpha(SPOTIFY_BRAND_COLOR, 0.3),
+                color: alpha(theme.palette.common.white, 0.5),
               },
             }}
           >

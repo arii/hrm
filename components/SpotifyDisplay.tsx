@@ -27,7 +27,6 @@ import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
-// 1. State Shape
 interface SpotifyDisplayState {
   displayVolume: number
   isMuted: boolean
@@ -37,7 +36,6 @@ interface SpotifyDisplayState {
   deviceMenuAnchor: null | HTMLElement
 }
 
-// 2. Actions
 type SpotifyDisplayAction =
   | { type: 'SET_VOLUME'; payload: number }
   | { type: 'SET_SLIDING'; payload: boolean }
@@ -50,7 +48,6 @@ type SpotifyDisplayAction =
       payload: { volume?: number; isMuted?: boolean }
     }
 
-// 3. Reducer Logic
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -120,7 +117,6 @@ const SpotifyDisplay = () => {
   const devices = spotifyData?.devices || EMPTY_DEVICES
   const track = playback?.track || { name: SPOTIFY_AWAITING_LOGIN, artist: '' }
 
-  // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
     displayVolume: playback?.volume_percent ?? 70,
     isMuted: playback?.isMuted ?? false,
