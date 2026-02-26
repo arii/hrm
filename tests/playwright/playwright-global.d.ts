@@ -1,4 +1,6 @@
 // tests/playwright/playwright-global.d.ts
+import type { ServerMessage } from '../../types/websocket'
+import type { BluetoothConnectionStatus } from '../../types/bluetooth'
 
 // Define a more specific type for the event listener
 type MockEventListener = (event: { target: { value: DataView } }) => void
@@ -47,10 +49,10 @@ interface MockBluetoothDevice {
 declare global {
   interface Window {
     __TEST_CONTROLS__?: {
-      dispatch?: (message: unknown) => void
+      dispatch?: (message: ServerMessage) => void
       disconnect?: () => void
       connect?: () => void
-      setHrmStatus?: (status: unknown) => void
+      setHrmStatus?: (status: BluetoothConnectionStatus) => void
       setCustomHrmStatusMessage?: (message: string | null) => void
     }
     bluetoothTestHelpers?: {
