@@ -248,7 +248,6 @@ export async function mockSpotifySDK(
               this._listeners = {};
             }
             connect() {
-              // Simulate async success
               Promise.resolve().then(() => {
                 if (this._listeners['ready']) {
                   this._listeners['ready'].forEach(cb => cb({ device_id: 'mock-device-id' }));
@@ -283,7 +282,7 @@ export async function mockSpotifySDK(
 
     // Allow the SDK script itself to be handled by the more specific route above
     if (url.includes('sdk.scdn.co/spotify-player.js')) {
-      return route.continue()
+      return route.fallback()
     }
 
     route.fulfill({
