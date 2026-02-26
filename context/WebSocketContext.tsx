@@ -15,7 +15,12 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-import { TestControls } from '../types/global'
+// Define a type for the test controls to avoid using 'any'
+interface TestControls {
+  dispatch: (message: ServerMessage) => void
+  disconnect: () => void
+  connect: () => void
+}
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
@@ -114,8 +119,18 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
+
+      if (isTestEnvironment()) {
+        ;(
+          window as Window & { __TEST_CONTROLS__?: TestControls }
+        ).__TEST_CONTROLS__ = {
+          dispatch,
+          disconnect: () => {},
+          connect: () => {},
+        }
+      }
     }
-  }, [])
+  }, [dispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -307,33 +322,19 @@ export const WebSocketProvider = ({
     connect()
 
     if (isTestEnvironment()) {
-      const win = window as Window & { __TEST_CONTROLS__?: TestControls }
-      win.__TEST_CONTROLS__ = {
-        ...win.__TEST_CONTROLS__,
-        dispatch,
-        disconnect,
-        connect,
+      const testControls = (
+        window as Window & { __TEST_CONTROLS__?: TestControls }
+      ).__TEST_CONTROLS__
+      if (testControls) {
+        testControls.disconnect = disconnect
+        testControls.connect = connect
       }
     }
 
     return () => {
       disconnect()
-      if (isTestEnvironment()) {
-        const win = window as Window & { __TEST_CONTROLS__?: TestControls }
-        if (win.__TEST_CONTROLS__) {
-          if (win.__TEST_CONTROLS__.dispatch === dispatch) {
-            delete win.__TEST_CONTROLS__.dispatch
-          }
-          if (win.__TEST_CONTROLS__.disconnect === disconnect) {
-            delete win.__TEST_CONTROLS__.disconnect
-          }
-          if (win.__TEST_CONTROLS__.connect === connect) {
-            delete win.__TEST_CONTROLS__.connect
-          }
-        }
-      }
     }
-  }, [connect, disconnect, dispatch])
+  }, [connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {

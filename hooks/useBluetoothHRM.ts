@@ -379,18 +379,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [reconnect]
   )
 
-  // Cleanup and Test Controls registration
+  // Cleanup
   useEffect(() => {
     isManualDisconnect.current = false
 
-    const isTesting =
+    if (
       typeof window !== 'undefined' &&
-      (process.env.NEXT_PUBLIC_TESTING === 'true' ||
-        window.location.search.includes('testing=true'))
-
-    if (isTesting) {
-      window.__TEST_CONTROLS__ = {
-        ...window.__TEST_CONTROLS__,
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
       }
@@ -409,21 +407,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // This allows auto-reconnect to work properly on component remount
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
 
-      if (isTesting && window.__TEST_CONTROLS__) {
-        // Only delete if they are the exact same functions we registered
-        // This prevents race conditions during remounting
-        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
-          delete window.__TEST_CONTROLS__.setHrmStatus
-        }
-        if (
-          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
-          setCustomStatusMessage
-        ) {
-          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
+      if (
+        typeof window !== 'undefined' &&
+        process.env.NEXT_PUBLIC_TESTING === 'true'
+      ) {
+        if (window.TEST_CONTROLS) {
+          delete window.TEST_CONTROLS.setHrmStatus
+          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
         }
       }
     }
-  }, [setStatus, setCustomStatusMessage])
+  }, [])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {

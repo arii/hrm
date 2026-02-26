@@ -15,7 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import React, { useEffect, useMemo, useReducer, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 import { SpotifyPlaylist as Playlist } from '../../types/core'
@@ -25,40 +25,25 @@ interface PlaylistSelectorProps {
   onPlaylistPlay: (uri: string) => void
 }
 
-interface PlaylistState {
-  presets: Playlist[]
-  user: Playlist[]
-  results: Playlist[]
-  loading: boolean
-  searchLoading: boolean
-  error: string | null
-}
-
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   onPlaylistSelected,
   onPlaylistPlay,
 }) => {
-  const [state, dispatch] = useReducer(
-    (s: PlaylistState, a: Partial<PlaylistState>) => ({ ...s, ...a }),
-    {
-      presets: [],
-      user: [],
-      results: [],
-      loading: true,
-      searchLoading: false,
-      error: null,
-    }
-  )
+  const [presets, setPresets] = useState<Playlist[]>([])
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([])
+  const [searchResults, setSearchResults] = useState<Playlist[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
-    null
-  )
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const debouncedSearch = useDebounce(searchQuery, 500)
 
   useEffect(() => {
     let active = true
     const fetchPlaylists = async () => {
-      dispatch({ loading: true })
+      setLoading(true)
       try {
         const res = await fetch(API_SPOTIFY_PLAYLISTS)
         if (!active) return
@@ -67,23 +52,21 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
         const data = await res.json()
         if (active) {
-          dispatch({
-            presets: (data.presetPlaylists || []).map((p: Playlist) => ({
-              ...p,
-              isPreset: true,
-            })),
-            user: (data.userPlaylists || []).map((p: Playlist) => ({
-              ...p,
-              isPreset: false,
-            })),
-          })
+          setPresets((data.presetPlaylists || []).map((p: Playlist) => ({
+            ...p,
+            isPreset: true,
+          })))
+          setUserPlaylists((data.userPlaylists || []).map((p: Playlist) => ({
+            ...p,
+            isPreset: false,
+          })))
         }
       } catch (err) {
         if (active) {
-          dispatch({ error: err instanceof Error ? err.message : String(err) })
+          setError(err instanceof Error ? err.message : String(err))
         }
       } finally {
-        if (active) dispatch({ loading: false })
+        if (active) setLoading(false)
       }
     }
 
@@ -97,11 +80,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     let active = true
     const searchPlaylists = async () => {
       if (!debouncedSearch.trim()) {
-        dispatch({ results: [] })
+        setSearchResults([])
         return
       }
 
-      dispatch({ searchLoading: true })
+      setSearchLoading(true)
       try {
         const res = await fetch(
           `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
@@ -111,11 +94,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         if (!res.ok) throw new Error('Search failed')
 
         const data = await res.json()
-        if (active) dispatch({ results: data.items || [] })
+        if (active) setSearchResults(data.items || [])
       } catch {
-        if (active) dispatch({ results: [] })
+        if (active) setSearchResults([])
       } finally {
-        if (active) dispatch({ searchLoading: false })
+        if (active) setSearchLoading(false)
       }
     }
 
@@ -125,24 +108,28 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
   }, [debouncedSearch])
 
-  const allPlaylists = useMemo(
-    () => [...state.presets, ...state.user],
-    [state.presets, state.user]
+  const allLocal = useMemo(
+    () => [...presets, ...userPlaylists],
+    [presets, userPlaylists]
   )
 
   const filteredPlaylists = useMemo(() => {
     const query = debouncedSearch.toLowerCase().trim()
-    if (!query) return allPlaylists
-    const local = allPlaylists.filter((p) =>
+    if (!query) return allLocal
+
+    const local = allLocal.filter((p) =>
       p.name.toLowerCase().includes(query)
     )
     const combined = [...local]
     const uris = new Set(local.map((p) => p.uri))
-    state.results.forEach((p) => {
-      if (!uris.has(p.uri)) combined.push({ ...p, isSearchResult: true })
+
+    searchResults.forEach((p) => {
+      if (!uris.has(p.uri)) {
+        combined.push({ ...p, isSearchResult: true })
+      }
     })
     return combined
-  }, [allPlaylists, debouncedSearch, state.results])
+  }, [allLocal, debouncedSearch, searchResults])
 
   const handlePlaylistSelect = (
     playlist: Playlist | null,
@@ -160,7 +147,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
   }
 
-  if (state.loading) {
+  if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
         <CircularProgress />
@@ -169,10 +156,10 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     )
   }
 
-  if (state.error) {
+  if (error) {
     return (
       <Alert severity="error" sx={{ mb: 2 }}>
-        {state.error}
+        {error}
       </Alert>
     )
   }
@@ -205,7 +192,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               ),
               endAdornment: (
                 <>
-                  {state.searchLoading && (
+                  {searchLoading && (
                     <CircularProgress color="inherit" size={20} />
                   )}
                   {params.InputProps.endAdornment}
@@ -214,61 +201,65 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={({ key, ...props }, option) => (
-          <Box
-            component="li"
-            key={key}
-            {...props}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              px: 2,
-              py: 0.5,
-            }}
-          >
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-              {option.imageUrl ? (
-                <Box
-                  component="img"
-                  src={option.imageUrl}
-                  alt={option.name}
-                  sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
-                />
-              ) : (
-                <MusicNote sx={{ mr: 1.5, color: 'text.secondary' }} />
-              )}
-              <ListItemText
-                primary={option.name}
-                secondary={
-                  option.trackCount !== undefined
-                    ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
-                    : option.owner || ''
-                }
-              />
-              {option.isPreset && (
-                <Chip label="Preset" size="small" sx={{ height: 20, ml: 1 }} />
-              )}
-              {option.isSearchResult && !option.isPreset && (
-                <Chip
-                  label="Spotify"
-                  size="small"
-                  color="success"
-                  sx={{ height: 20, ml: 1 }}
-                />
-              )}
-            </Box>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation()
-                onPlaylistPlay(option.uri)
+        renderOption={(props, option, state) => {
+          const { key, ...liProps } = props
+          return (
+            <Box
+              component="li"
+              key={key}
+              {...liProps}
+              aria-label={`Select playlist: ${option.name}, ${state.selected ? 'selected' : 'not selected'}`}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                px: 2,
+                py: 0.5,
               }}
-              aria-label={`Play playlist: ${option.name}`}
             >
-              <PlayArrow />
-            </IconButton>
-          </Box>
-        )}
+              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+                {option.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={option.imageUrl}
+                    alt={option.name}
+                    sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
+                  />
+                ) : (
+                  <MusicNote sx={{ mr: 1.5, color: 'text.secondary' }} />
+                )}
+                <ListItemText
+                  primary={option.name}
+                  secondary={
+                    option.trackCount !== undefined
+                      ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
+                      : option.owner || ''
+                  }
+                />
+                {option.isPreset && (
+                  <Chip label="Preset" size="small" sx={{ height: 20, ml: 1 }} />
+                )}
+                {option.isSearchResult && !option.isPreset && (
+                  <Chip
+                    label="Spotify"
+                    size="small"
+                    color="success"
+                    sx={{ height: 20, ml: 1 }}
+                  />
+                )}
+              </Box>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onPlaylistPlay(option.uri)
+                }}
+                aria-label={`Play playlist: ${option.name}`}
+              >
+                <PlayArrow />
+              </IconButton>
+            </Box>
+          )
+        }}
         groupBy={(option) => {
           if (option.isSearchResult) return 'Spotify Results'
           if (option.isPreset) return 'Preset Playlists'

@@ -70,11 +70,6 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
 
-    // Force disconnect again after reload to prevent real WebSocket updates from interfering
-    await dashboardPage.evaluate(() => {
-      window.__TEST_CONTROLS__?.disconnect()
-    })
-
     // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {
       playback: {

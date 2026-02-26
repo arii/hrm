@@ -72,6 +72,7 @@ export async function mockMultipleHrDevices(
   devices: HrmData[]
 ): Promise<void> {
   await page.evaluate((payload) => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
     window.__TEST_CONTROLS__?.dispatch({
       type: 'HRM_UPDATE',
       payload,
@@ -122,6 +123,7 @@ export async function mockSpotifyPlaybackState(
   }
 
   await page.evaluate((payload) => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
     window.__TEST_CONTROLS__?.dispatch({
       type: 'SPOTIFY_UPDATE',
       payload,
