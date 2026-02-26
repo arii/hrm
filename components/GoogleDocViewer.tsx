@@ -36,11 +36,6 @@ const GoogleDocViewer = ({
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  // Ensure embedUrl always includes ?embedded=true
-  const url = new URL(embedUrl)
-  url.searchParams.set('embedded', 'true')
-  const finalEmbedUrl = url.toString()
-
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
@@ -54,6 +49,18 @@ const GoogleDocViewer = ({
     }, 3000) // Show iframe after 3 seconds regardless
     return () => clearTimeout(timeout)
   }, [refreshKey]) // Rerun on refresh
+
+  if (!embedUrl) return null
+
+  let finalEmbedUrl = ''
+  try {
+    const u = new URL(embedUrl)
+    u.searchParams.set('embedded', 'true')
+    finalEmbedUrl = u.toString()
+  } catch {
+    console.error('Invalid URL:', embedUrl)
+    return null
+  }
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
