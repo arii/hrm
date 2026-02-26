@@ -29,31 +29,30 @@ interface VolumeSliderProps {
  * Generates the sx styles for the Slider component.
  * Extracted to keep the component clean and improve maintainability.
  */
-const getSliderStyles = (
-  size: 'small' | 'medium',
-  sliderColor?: string
-): SxProps<Theme> => (theme) => ({
-  color: sliderColor || theme.palette.primary.main,
-  height: 6,
-  '& .MuiSlider-thumb': {
-    backgroundColor: 'white',
-    width: size === 'small' ? 18 : 22,
-    height: size === 'small' ? 18 : 22,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-    // Expand hit area to 44px for WCAG compliance
-    '&:after': {
-      width: 44,
-      height: 44,
+const getSliderStyles =
+  (size: 'small' | 'medium', sliderColor?: string): SxProps<Theme> =>
+  (theme) => ({
+    color: sliderColor || theme.palette.primary.main,
+    height: 6,
+    '& .MuiSlider-thumb': {
+      backgroundColor: 'white',
+      width: size === 'small' ? 18 : 22,
+      height: size === 'small' ? 18 : 22,
+      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+      // Expand hit area to 44px for WCAG compliance
+      '&:after': {
+        width: 44,
+        height: 44,
+      },
+      '&:hover, &.Mui-focusVisible': {
+        boxShadow: sliderColor
+          ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
+          : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+      },
     },
-    '&:hover, &.Mui-focusVisible': {
-      boxShadow: sliderColor
-        ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
-        : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
-    },
-  },
-  '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
-  '& .MuiSlider-rail': { opacity: 0.3 },
-})
+    '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
+    '& .MuiSlider-rail': { opacity: 0.3 },
+  })
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
   volume,
