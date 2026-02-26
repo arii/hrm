@@ -128,7 +128,7 @@ Return a JSON object with:
 ```json
 {
   "reviewComment": "Markdown review body",
-  "labels": ["label1", "label2"],
+  "labels": ["approved", "label1"], // Use "approved" only if verdict is "approve". Use "not approved" if there are any issues.
   "verdict": "approve" | "request_changes" | "comment",
   "suggestedIssues": [
     {
