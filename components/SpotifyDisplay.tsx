@@ -15,6 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+import { SxProps, Theme } from '@mui/material/styles'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
@@ -105,11 +106,11 @@ const spotifyDisplayReducer = (
   }
 }
 
-interface SpotifyDisplayProps {
-  isIntegrated?: boolean
+interface SpotifyContentProps {
+  sx?: SxProps<Theme>
 }
 
-const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
+export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
@@ -148,14 +149,10 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
   useDashboardRegistration(player)
 
   // Synchronize with WebSocket data whenever it changes.
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
   useEffect(() => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
 
     // Only apply grace period if a send is pending and within the window.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
     const shouldRespectGracePeriod =
       hasPendingSendRef.current &&
       timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
@@ -164,7 +161,6 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
       return
     }
 
-    // Once grace period has elapsed, clear the pending send flag
     if (
       hasPendingSendRef.current &&
       timeSinceLastSend >= VOLUME_SYNC_GRACE_PERIOD_MS
@@ -185,7 +181,6 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
     state.isSliding,
   ])
 
-  // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
@@ -193,8 +188,6 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
         selectedDeviceId ||
         spotifyData.devices?.find((device) => device.is_active)?.id
 
-      // Refinement: Only attempt to send the command if a target device is identified.
-      // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(volume)
@@ -210,20 +203,16 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
     [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
   )
 
-  // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
+    dispatch({ type: 'SET_VOLUME', payload: newVolume })
   }
 
-  // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
     sendVolumeCommand(newVolume)
-    dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
+    dispatch({ type: 'SET_SLIDING', payload: false })
   }
 
-  // Handler for the VolumeSlider's mute button
   const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
     const newMutedState = !isMuted
     const newVolume = newMutedState
       ? 0
@@ -231,11 +220,10 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
         ? state.lastVolume
         : 50
 
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
-    sendVolumeCommand(newVolume) // Send command with the new volume
+    dispatch({ type: 'TOGGLE_MUTE' })
+    sendVolumeCommand(newVolume)
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
-  // Effect to auto-select the active device
   useEffect(() => {
     const devices = spotifyData.devices || []
     if (devices.length === 0) {
@@ -277,20 +265,17 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
-          px: isIntegrated ? { xs: 1, sm: 2 } : 3,
-          py: isIntegrated ? 0.5 : 1.5,
-          borderRadius: isIntegrated ? 0 : 2,
+          px: { xs: 1, sm: 2 },
+          py: 0.5,
+          borderRadius: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: isIntegrated ? 'static' : 'fixed',
-          bottom: isIntegrated ? 'auto' : 56,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          boxShadow: isIntegrated ? 'none' : 3,
+          position: 'static',
+          boxShadow: 'none',
           width: '100%',
-          minHeight: isIntegrated ? '48px' : '64px',
+          minHeight: '48px',
+          ...sx,
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -316,20 +301,17 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
-          px: isIntegrated ? { xs: 1, sm: 2 } : { xs: 2, sm: 3 },
-          py: isIntegrated ? 0.5 : 1.5,
-          borderRadius: isIntegrated ? 0 : 2,
+          px: { xs: 1, sm: 2 },
+          py: 0.5,
+          borderRadius: 0,
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
           alignItems: 'center',
-          position: isIntegrated ? 'static' : 'fixed',
-          bottom: isIntegrated ? 'auto' : 56,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          boxShadow: isIntegrated ? 'none' : 3,
+          position: 'static',
+          boxShadow: 'none',
           width: '100%',
-          minHeight: isIntegrated ? '48px' : '64px',
+          minHeight: '48px',
+          ...sx,
         }}
       >
         <Box
@@ -485,6 +467,22 @@ const SpotifyDisplay = ({ isIntegrated = false }: SpotifyDisplayProps) => {
   }
 
   return null
+}
+
+const SpotifyDisplay = () => {
+  return (
+    <SpotifyContent
+      sx={{
+        px: { xs: 2, sm: 3 },
+        py: 1.5,
+        borderRadius: 2,
+        position: 'fixed',
+        bottom: 56,
+        boxShadow: 3,
+        minHeight: '64px',
+      }}
+    />
+  )
 }
 
 export default SpotifyDisplay
