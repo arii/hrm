@@ -66,7 +66,9 @@ test.describe('Visual Regression Tests', () => {
     test.afterEach(async () => {
       await mockMultipleHrDevices(dashboardPage, [])
       // Increased timeout for cleanup verification to handle server latency in CI
-      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, { timeout: 10000 })
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
+        timeout: 10000,
+      })
     })
 
     test('dashboard with HR data', async () => {
