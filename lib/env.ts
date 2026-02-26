@@ -69,12 +69,7 @@ export const envObjectSchema = z.object({
   IS_DEPLOYMENT: booleanSchema,
   LOG_LEVEL: z.string().optional(),
   WS_URL: z.string().url().optional(),
-  HRM_LIVE_WINDOW_SIZE: z.coerce
-    .number()
-    .int()
-    .finite()
-    .min(1)
-    .default(600),
+  HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().finite().min(1).default(600),
   npm_package_version: z.string().optional(),
   IGNORE_BUILD_ERRORS: booleanSchema,
   INCLUDE_MOBILE: booleanSchema,
