@@ -15,6 +15,10 @@ import { env } from '../lib/env.js'
 import { ServiceInitializationError } from '../lib/errors.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
+import {
+  POLLING_COOLDOWN_MS,
+  POLLING_FORCE_UPDATE_DELAY_MS,
+} from '../constants/spotify.js'
 
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
@@ -77,7 +81,7 @@ export class SpotifyPolling implements SpotifyService {
 
   private getCurrentlyPlaying = async (force: boolean = false) => {
     try {
-      if (!force && Date.now() - this.lastCommandTime < 2000) {
+      if (!force && Date.now() - this.lastCommandTime < POLLING_COOLDOWN_MS) {
         logger.debug('Skipping poll due to recent command execution')
         return
       }
@@ -289,7 +293,10 @@ export class SpotifyPolling implements SpotifyService {
       // A quick check that respects the window (likely skipped if < 2000ms)
       setTimeout(() => this.getCurrentlyPlaying(), 300)
       // A forced check after the window expires to ensure consistency
-      setTimeout(() => this.getCurrentlyPlaying(true), 2100)
+      setTimeout(
+        () => this.getCurrentlyPlaying(true),
+        POLLING_FORCE_UPDATE_DELAY_MS
+      )
     } catch (error) {
       await logSpotifyCommandError(command, error)
       // 3. Revert state on failure

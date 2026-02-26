@@ -9,3 +9,7 @@ export const SPOTIFY_DEFAULT_TOKEN_EXPIRY_S = 3600
 
 // Centralized constants for Spotify integration
 export const SYNC_LOCK_DURATION = 2000 // 2s lock to allow API propagation
+
+// Polling stability constants
+export const POLLING_COOLDOWN_MS = 2000 // Ignore polls for 2s after a command
+export const POLLING_FORCE_UPDATE_DELAY_MS = POLLING_COOLDOWN_MS + 100 // Force update after cooldown expires
