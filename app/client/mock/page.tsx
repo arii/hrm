@@ -79,34 +79,27 @@ export default function MockPage() {
     return () => clearTimeout(handler)
   }, [sendMetadataPacket])
 
-  useInterval(
-    () => {
-      setHrValue((prevHr) => {
-        const fluctuatedHr = Math.max(
-          70,
-          prevHr + Math.floor(Math.random() * 5) - 2
-        )
+  const updateMockData = useCallback(() => {
+    const fluctuatedHr = Math.max(
+      70,
+      hrValue + Math.floor(Math.random() * 5) - 2
+    )
 
-        setCalories((prevCalories) => {
-          const caloriesDelta = estimateCaloriesBurned({
-            heartRate: fluctuatedHr,
-            age,
-            weightKg,
-            gender,
-            durationMinutes: 2 / 60, // 2 seconds interval
-          })
-          const newCalories = prevCalories + caloriesDelta
+    const caloriesDelta = estimateCaloriesBurned({
+      heartRate: fluctuatedHr,
+      age,
+      weightKg,
+      gender,
+      durationMinutes: 2 / 60, // 2 seconds interval
+    })
+    const newCalories = calories + caloriesDelta
 
-          sendHrPacket(fluctuatedHr, newCalories)
+    setHrValue(fluctuatedHr)
+    setCalories(newCalories)
+    sendHrPacket(fluctuatedHr, newCalories)
+  }, [hrValue, calories, age, weightKg, gender, sendHrPacket])
 
-          return newCalories
-        })
-
-        return fluctuatedHr
-      })
-    },
-    isStreaming ? 2000 : null
-  )
+  useInterval(updateMockData, isStreaming ? 2000 : null)
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return

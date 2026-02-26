@@ -89,7 +89,7 @@ export const HR_ZONE_CONFIG: Record<
 /**
  * Pre-calculated order of zone labels for sorting purposes (highest intensity first).
  */
-export const HR_ZONE_ORDER: HeartRateZone[] = [
+export const HR_ZONE_KEYS = [
   'ZONE_6',
   'ZONE_5',
   'ZONE_4',
@@ -97,7 +97,9 @@ export const HR_ZONE_ORDER: HeartRateZone[] = [
   'ZONE_2',
   'ZONE_1',
   'ZONE_0',
-]
+] as const
+
+export const HR_ZONE_ORDER: HeartRateZone[] = [...HR_ZONE_KEYS]
 
 /**
  * Calculates the percentage of max HR and the corresponding zone (0-6) based on Max HR.
