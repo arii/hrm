@@ -12,6 +12,7 @@ import type {
   TimerMode,
   SpotifyCommand,
 } from './core'
+import { HR_ZONE_KEYS } from '@/lib/shared/hr-zones'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -131,17 +132,7 @@ const IncomingHrmDataSchema = HrmCommonDataSchema.extend({
       }
       return val
     },
-    z
-      .enum([
-        'ZONE_0',
-        'ZONE_1',
-        'ZONE_2',
-        'ZONE_3',
-        'ZONE_4',
-        'ZONE_5',
-        'ZONE_6',
-      ])
-      .optional()
+    z.enum(HR_ZONE_KEYS).optional()
   ),
 })
 

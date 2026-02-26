@@ -81,29 +81,23 @@ export default function MockPage() {
 
   useInterval(
     () => {
-      setHrValue((prevHr) => {
-        const fluctuatedHr = Math.max(
-          70,
-          prevHr + Math.floor(Math.random() * 5) - 2
-        )
+      const fluctuatedHr = Math.max(
+        70,
+        hrValue + Math.floor(Math.random() * 5) - 2
+      )
 
-        setCalories((prevCalories) => {
-          const caloriesDelta = estimateCaloriesBurned({
-            heartRate: fluctuatedHr,
-            age,
-            weightKg,
-            gender,
-            durationMinutes: 2 / 60, // 2 seconds interval
-          })
-          const newCalories = prevCalories + caloriesDelta
-
-          sendHrPacket(fluctuatedHr, newCalories)
-
-          return newCalories
-        })
-
-        return fluctuatedHr
+      const caloriesDelta = estimateCaloriesBurned({
+        heartRate: fluctuatedHr,
+        age,
+        weightKg,
+        gender,
+        durationMinutes: 2 / 60, // 2 seconds interval
       })
+      const newCalories = calories + caloriesDelta
+
+      setHrValue(fluctuatedHr)
+      setCalories(newCalories)
+      sendHrPacket(fluctuatedHr, newCalories)
     },
     isStreaming ? 2000 : null
   )

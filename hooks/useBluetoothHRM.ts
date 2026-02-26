@@ -4,7 +4,6 @@ import {
   useRef,
   useEffect,
   useLayoutEffect,
-  useMemo,
 } from 'react'
 import {
   HrmMetadataUpdateMessage,
@@ -23,7 +22,6 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
-import { useBluetoothTestControls } from '@/context/BluetoothTestContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -391,15 +389,36 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const useIsomorphicLayoutEffect =
     typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-  const testControls = useMemo(
-    () => ({
-      setHrmStatus: setStatus,
-      setCustomHrmStatusMessage: setCustomStatusMessage,
-    }),
-    []
-  )
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      process.env.NEXT_PUBLIC_TESTING === 'true'
+    ) {
+      window.TEST_CONTROLS = {
+        ...window.TEST_CONTROLS,
+        setHrmStatus: setStatus,
+        setCustomHrmStatusMessage: setCustomStatusMessage,
+      }
+    }
 
-  useBluetoothTestControls(testControls)
+    return () => {
+      if (
+        typeof window !== 'undefined' &&
+        process.env.NEXT_PUBLIC_TESTING === 'true' &&
+        window.TEST_CONTROLS
+      ) {
+        if (window.TEST_CONTROLS.setHrmStatus === setStatus) {
+          delete window.TEST_CONTROLS.setHrmStatus
+        }
+        if (
+          window.TEST_CONTROLS.setCustomHrmStatusMessage ===
+          setCustomStatusMessage
+        ) {
+          delete window.TEST_CONTROLS.setCustomHrmStatusMessage
+        }
+      }
+    }
+  }, [])
 
   useIsomorphicLayoutEffect(() => {
     isManualDisconnect.current = false
