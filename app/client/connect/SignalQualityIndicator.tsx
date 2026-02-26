@@ -34,14 +34,12 @@ export const SignalQualityIndicator = ({
   const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
   const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
 
-  const quality =
-    !isConnected || periodMs === 0
-      ? 'none'
-      : periodMs < 1200
-        ? 'excellent'
-        : periodMs < 2200
-          ? 'good'
-          : 'poor'
+  const quality = useMemo(() => {
+    if (!isConnected || periodMs === 0) return 'none'
+    if (periodMs < 1200) return 'excellent'
+    if (periodMs < 2200) return 'good'
+    return 'poor'
+  }, [isConnected, periodMs])
 
   const STATUS_CONFIG_STATIC = useMemo(
     () => ({
