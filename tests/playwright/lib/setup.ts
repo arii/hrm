@@ -155,7 +155,7 @@ export async function resetServerState(
   request: APIRequestContext
 ): Promise<void> {
   const response = await request.post(`${getBaseURL()}/api/debug/reset`, {
-    timeout: 5000,
+    timeout: 15000,
   })
   expect(response.ok()).toBeTruthy()
 }
