@@ -22,9 +22,11 @@ import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
   SPOTIFY_BRAND_COLOR,
+  SPOTIFY_HOVER_COLOR,
   SPOTIFY_MSG_AWAITING_LOGIN,
   SPOTIFY_MSG_NO_TRACK,
   SPOTIFY_MSG_CONNECT_HRM,
+  SPOTIFY_OFFLINE_WARNING,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -82,19 +84,15 @@ const SpotifyControls = () => {
     spotifyServiceInitialized &&
     (hasTrack || devices.some((d: SpotifyDevice) => d.is_active))
 
-  const refresh = useCallback(
-    () =>
+  useEffect(() => {
+    const refresh = () =>
       connectionStatus === 'Connected' &&
       spotifyServiceInitialized &&
-      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' }),
-    [connectionStatus, spotifyServiceInitialized, sendData]
-  )
-
-  useEffect(() => {
+      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
     refresh()
     window.addEventListener('focus', refresh)
     return () => window.removeEventListener('focus', refresh)
-  }, [refresh])
+  }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   useEffect(() => {
     const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
@@ -403,11 +401,7 @@ const SpotifyControls = () => {
             disabled={spotifyServiceInitialized && !devices.length}
             startIcon={
               spotifyServiceInitialized && !devices.length ? (
-                <CircularProgress
-                  size={20}
-                  color="inherit"
-                  aria-label="Loading Spotify status"
-                />
+                <CircularProgress size={20} color="inherit" />
               ) : (
                 <LibraryMusic />
               )
