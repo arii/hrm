@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import throttle from 'lodash.throttle'
 import { clampVolume } from './useVolumePreference'
-import { useInteractionLock } from './useInteractionLock'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SYNC_LOCK_DURATION } from '@/constants/spotify'
@@ -29,8 +28,9 @@ export const useSpotifyVolume = ({
   const lastSentVolumeRef = useRef<string | null>(null)
 
   useEffect(() => {
-    // If user is currently interacting, or the grace period hasn't expired, ignore server updates
-    if (isSliding || isLocked) return
+    if (isSliding || isLocked) {
+      return
+    }
 
     if (typeof serverVolume === 'number' && serverVolume !== displayVolume) {
       // eslint-disable-next-line react-hooks/set-state-in-effect

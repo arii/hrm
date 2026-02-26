@@ -254,7 +254,6 @@ export const WebSocketProvider = ({
         if (message.type === 'PONG') {
           if (pongTimeoutRef.current) {
             clearTimeout(pongTimeoutRef.current)
-            pongTimeoutRef.current = null
           }
           return // Pong message is handled, no state dispatch needed
         }

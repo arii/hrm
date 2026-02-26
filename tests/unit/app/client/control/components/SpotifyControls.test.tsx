@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
@@ -259,9 +259,7 @@ describe('components/SpotifyControls', () => {
     fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
 
     // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
-    act(() => {
-      jest.advanceTimersByTime(1000)
-    })
+    jest.advanceTimersByTime(1000)
 
     mockWebSocket.mockReturnValue({
       connectionStatus: 'Connected',
@@ -288,9 +286,7 @@ describe('components/SpotifyControls', () => {
     expect(setVolumeMock).not.toHaveBeenCalledWith(40)
 
     // 3. Advance past the lock duration (another 1.1s, total 2.1s)
-    act(() => {
-      jest.advanceTimersByTime(1100)
-    })
+    jest.advanceTimersByTime(1100)
 
     // Trigger another update to see if it now syncs
     mockWebSocket.mockReturnValue({
@@ -398,9 +394,7 @@ describe('components/SpotifyControls', () => {
     expect(showWarningMock).toHaveBeenCalledTimes(1)
 
     // Advance time past throttle (3000ms)
-    act(() => {
-      jest.advanceTimersByTime(3100)
-    })
+    jest.advanceTimersByTime(3100)
 
     // Change after throttle: warning shown again
     fireEvent.change(volumeSlider, { target: { value: 90 } })
