@@ -130,7 +130,10 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
                   <ListItemAvatar sx={{ minWidth: 48 }}>
                     <Avatar
                       variant="rounded"
-                      src={track.album?.images?.[2]?.url}
+                      src={
+                        track.album?.images?.[2]?.url ||
+                        track.album?.images?.[0]?.url
+                      }
                       sx={{ width: 32, height: 32 }}
                     >
                       <MusicNote fontSize="small" />
