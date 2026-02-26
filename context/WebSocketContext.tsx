@@ -113,8 +113,24 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
+
+      if (isTestEnvironment()) {
+        window.__TEST_CONTROLS__ = {
+          ...window.__TEST_CONTROLS__,
+          dispatch,
+          disconnect: () => {},
+          connect: () => {},
+        }
+      }
     }
-  }, [])
+    return () => {
+      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
+        if (window.__TEST_CONTROLS__.dispatch === dispatch) {
+          delete window.__TEST_CONTROLS__.dispatch
+        }
+      }
+    }
+  }, [dispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -315,21 +331,23 @@ export const WebSocketProvider = ({
   // are attached consistently and updated whenever their implementations change.
   useEffect(() => {
     if (isTestEnvironment()) {
-      window.__TEST_CONTROLS__ = {
-        ...window.__TEST_CONTROLS__,
-        dispatch,
-        connect,
-        disconnect,
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.disconnect = disconnect
+        window.__TEST_CONTROLS__.connect = connect
       }
     }
 
     // Cleanup to prevent global scope pollution on unmount
     return () => {
       if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        delete window.__TEST_CONTROLS__.dispatch
-        delete window.__TEST_CONTROLS__.connect
-        delete window.__TEST_CONTROLS__.disconnect
+        if (window.__TEST_CONTROLS__.disconnect === disconnect) {
+          delete window.__TEST_CONTROLS__.disconnect
+        }
+        if (window.__TEST_CONTROLS__.connect === connect) {
+          delete window.__TEST_CONTROLS__.connect
+        }
       }
+      disconnect()
     }
   }, [dispatch, connect, disconnect])
 

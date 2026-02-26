@@ -15,6 +15,7 @@ import { useConnectUserProfile } from '@/hooks/useConnectUserProfile'
 import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -106,6 +107,8 @@ export default function ConnectPage() {
     [workoutStatus, setCurrentHR, addHrData]
   )
 
+  const { showWarning } = useAppSnackbar()
+
   const {
     connectAndStream,
     autoConnect,
@@ -117,6 +120,8 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
+    lastPeriodMs,
+    consecutiveSlowPackets,
     connectionAttempted,
   } = useBluetoothHRM({
     userName,
@@ -187,6 +192,11 @@ export default function ConnectPage() {
     })
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
+  useEffect(() => {
+    if (consecutiveSlowPackets === 3)
+      showWarning('HRM Signal Weak: Check device placement')
+  }, [consecutiveSlowPackets, showWarning])
+
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
@@ -208,6 +218,7 @@ export default function ConnectPage() {
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
+      lastPeriodMs={lastPeriodMs}
       currentHR={currentHR}
       hrZoneData={{
         percentage,

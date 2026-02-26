@@ -202,7 +202,7 @@ await prepareForVisualRegression(dashboardPage, controlPage, mockPage)
 
 For complex scenarios requiring direct interaction with the application's internal state (e.g., simulating WebSocket messages, triggering state changes), this project uses a `__TEST_CONTROLS__` pattern.
 
-**Concept**: In non-production environments (or when `NEXT_PUBLIC_TESTING=true`), the application exposes a global `window.__TEST_CONTROLS__` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
+**Concept**: In non-production environments, the application exposes a global `window.__TEST_CONTROLS__` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
 
 **Implementation**:
 
@@ -211,10 +211,10 @@ For complex scenarios requiring direct interaction with the application's intern
     ```tsx
     // Example in a React component
     useEffect(() => {
-      if (process.env.NEXT_PUBLIC_TESTING === 'true') {
+      if (process.env.NODE_ENV !== 'production') {
         window.__TEST_CONTROLS__ = {
           ...window.__TEST_CONTROLS__,
-          dispatch: (message) => {
+          simulateWebSocketMessage: (message) => {
             // Logic to handle the simulated message
             dispatch(message)
           },
@@ -229,7 +229,7 @@ For complex scenarios requiring direct interaction with the application's intern
     // In your Playwright test
     test('should react to a simulated WebSocket message', async ({ page }) => {
       await page.evaluate(() => {
-        window.__TEST_CONTROLS__.dispatch({
+        window.__TEST_CONTROLS__.simulateWebSocketMessage({
           type: 'TIMER_UPDATE',
           payload: {
             /* ... */
@@ -244,9 +244,21 @@ For complex scenarios requiring direct interaction with the application's intern
 
 **Best Practices**:
 
-- **Security**: Always wrap the `window.__TEST_CONTROLS__` assignment in a check for `process.env.NEXT_PUBLIC_TESTING === 'true'` (or similar) to ensure these controls are not exposed in the production build.
-- **TypeScript Definitions**: The `__TEST_CONTROLS__` object is explicitly typed in `types/global.d.ts` for discoverability.
-- **Persistence**: Use the spread operator (`...window.__TEST_CONTROLS__`) when assigning controls from different hooks to ensure they coexist.
+- **Production Only**: Always wrap the `window.__TEST_CONTROLS__` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
+- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a global declaration file (e.g., `types/global.d.ts`):
+  ```typescript
+  export interface TestControls {
+    dispatch?: (message: ServerMessage) => void
+    // Add other control functions here
+  }
+
+  declare global {
+    interface Window {
+      __TEST_CONTROLS__?: TestControls
+    }
+  }
+  ```
+- **Centralize**: Keep the `__TEST_CONTROLS__` logic in a single, well-defined place within the application to make it easy to manage and discover.
 
 ## Backward Compatibility
 

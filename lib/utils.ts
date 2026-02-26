@@ -89,3 +89,11 @@ export const formatDate = (
   const d = typeof date === 'number' ? new Date(date) : date
   return d.toLocaleDateString(locale, options)
 }
+
+export const extractGoogleDocId = (url?: string): string | undefined => {
+  if (!url) return undefined
+  // Standard Google Doc IDs are usually 44 chars, but we look for at least 25
+  // characters to avoid false positives with short strings while staying flexible.
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})/)
+  return match ? match[1] : undefined
+}
