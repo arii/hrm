@@ -114,23 +114,20 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
   }, [debouncedSearch])
 
-  const allPlaylists = useMemo(
-    () => [...presets, ...userPlaylists],
-    [presets, userPlaylists]
-  )
-
   const filteredPlaylists = useMemo(() => {
+    const allPlaylists = [...presets, ...userPlaylists]
     const query = debouncedSearch.toLowerCase().trim()
-    if (!query) return allLocal
-
-    const local = allLocal.filter((p) => p.name.toLowerCase().includes(query))
+    if (!query) return allPlaylists
+    const local = allPlaylists.filter((p) =>
+      p.name.toLowerCase().includes(query)
+    )
     const combined = [...local]
     const uris = new Set(local.map((p) => p.uri))
     results.forEach((p) => {
       if (!uris.has(p.uri)) combined.push({ ...p, isSearchResult: true })
     })
     return combined
-  }, [allPlaylists, debouncedSearch, results])
+  }, [presets, userPlaylists, debouncedSearch, results])
 
   const handlePlaylistSelect = (
     playlist: Playlist | null,
@@ -202,69 +199,61 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(props, option, state) => {
-          const { key, ...liProps } = props
-          return (
-            <Box
-              component="li"
-              key={key}
-              {...liProps}
-              aria-label={`Select playlist: ${option.name}, ${state.selected ? 'selected' : 'not selected'}`}
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                px: 2,
-                py: 0.5,
-              }}
-            >
-              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                {option.imageUrl ? (
-                  <Box
-                    component="img"
-                    src={option.imageUrl}
-                    alt={option.name}
-                    sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
-                  />
-                ) : (
-                  <MusicNote sx={{ mr: 1.5, color: 'text.secondary' }} />
-                )}
-                <ListItemText
-                  primary={option.name}
-                  secondary={
-                    option.trackCount !== undefined
-                      ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
-                      : option.owner || ''
-                  }
+        renderOption={({ key, ...props }, option) => (
+          <Box
+            component="li"
+            key={key}
+            {...props}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              px: 2,
+              py: 0.5,
+            }}
+          >
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              {option.imageUrl ? (
+                <Box
+                  component="img"
+                  src={option.imageUrl}
+                  alt={option.name}
+                  sx={{ width: 40, height: 40, borderRadius: 1, mr: 1.5 }}
                 />
-                {option.isPreset && (
-                  <Chip
-                    label="Preset"
-                    size="small"
-                    sx={{ height: 20, ml: 1 }}
-                  />
-                )}
-                {option.isSearchResult && !option.isPreset && (
-                  <Chip
-                    label="Spotify"
-                    size="small"
-                    color="success"
-                    sx={{ height: 20, ml: 1 }}
-                  />
-                )}
-              </Box>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onPlaylistPlay(option.uri)
-                }}
-                aria-label={`Play playlist: ${option.name}`}
-              >
-                <PlayArrow />
-              </IconButton>
+              ) : (
+                <MusicNote sx={{ mr: 1.5, color: 'text.secondary' }} />
+              )}
+              <ListItemText
+                primary={option.name}
+                secondary={
+                  option.trackCount !== undefined
+                    ? `${option.trackCount} tracks${option.owner ? ` • ${option.owner}` : ''}`
+                    : option.owner || ''
+                }
+              />
+              {option.isPreset && (
+                <Chip label="Preset" size="small" sx={{ height: 20, ml: 1 }} />
+              )}
+              {option.isSearchResult && !option.isPreset && (
+                <Chip
+                  label="Spotify"
+                  size="small"
+                  color="success"
+                  sx={{ height: 20, ml: 1 }}
+                />
+              )}
             </Box>
-          )
-        }}
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                onPlaylistPlay(option.uri)
+              }}
+              aria-label={`Play playlist: ${option.name}`}
+            >
+              <PlayArrow />
+            </IconButton>
+          </Box>
+        )}
         groupBy={(option) => {
           if (option.isSearchResult) return 'Spotify Results'
           if (option.isPreset) return 'Preset Playlists'

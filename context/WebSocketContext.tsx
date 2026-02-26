@@ -15,12 +15,7 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
+import { TestControls } from '../types/global'
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
@@ -119,18 +114,8 @@ export const WebSocketProvider = ({
       if (savedActions) {
         pendingActions.current = JSON.parse(savedActions)
       }
-
-      if (isTestEnvironment()) {
-        ;(
-          window as Window & { __TEST_CONTROLS__?: TestControls }
-        ).__TEST_CONTROLS__ = {
-          dispatch,
-          disconnect: () => {},
-          connect: () => {},
-        }
-      }
     }
-  }, [dispatch])
+  }, [])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -348,7 +333,7 @@ export const WebSocketProvider = ({
         }
       }
     }
-  }, [connect, disconnect])
+  }, [connect, disconnect, dispatch])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {
