@@ -5,6 +5,16 @@
 name: Reusable Create Review Issues
 
 on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to create issues for'
+        required: true
+        type: string
+      run_id:
+        description: 'Workflow run ID with review artifacts'
+        required: true
+        type: string
   workflow_call:
     inputs:
       pr_number:
@@ -29,8 +39,51 @@ permissions:
   pull-requests: read
 
 jobs:
+  disabled-guidance:
+    if: |
+      vars.GEMINI_ENABLE_REVIEW_ISSUES == 'false' &&
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Guidance Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### ℹ️ Gemini Review Issue Creation Disabled
+
+            Automatic creation of issues from reviews is currently disabled via \`GEMINI_ENABLE_REVIEW_ISSUES\`. To run it manually:
+
+            **Via Comment:**
+            \`\`\`
+            @create-review-issues
+            \`\`\`
+
+            **Via GitHub Actions:**
+            1. Go to [Actions → Reusable Create Review Issues](${context.payload.repository.html_url}/actions/workflows/reusable-create-review-issues.yml)
+            2. Click "Run workflow"
+            3. Enter PR number: \`${context.payload.pull_request.number}\`
+            4. Enter Run ID from a successful review workflow.
+
+            **Via GitHub CLI:**
+            \`\`\`bash
+            gh workflow run reusable-create-review-issues.yml -f pr_number=${context.payload.pull_request.number} -f run_id=...
+            \`\`\`
+
+            **To re-enable:** Set repository variable \`GEMINI_ENABLE_REVIEW_ISSUES=true\`
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
+
   create-review-issues:
-    if: vars.GEMINI_ENABLE_REVIEW_ISSUES != 'false'
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      vars.GEMINI_ENABLE_REVIEW_ISSUES != 'false'
     runs-on: ubuntu-latest
     name: Create Issues from Gemini Review
 

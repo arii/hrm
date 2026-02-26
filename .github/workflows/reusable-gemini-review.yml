@@ -5,6 +5,17 @@
 name: Reusable Gemini Review
 
 on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
+      force_review:
+        description: 'Force review even if already reviewed'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       trigger_event:
@@ -102,7 +113,9 @@ jobs:
   gemini-review:
     name: Execute Gemini Review
     needs: analyze-changes
-    if: vars.GEMINI_ENABLE_PR_REVIEW != 'false' && needs.analyze-changes.outputs.needs-review == 'true'
+    if: |
+      (github.event_name == 'workflow_dispatch' || inputs.trigger_event == 'comment') ||
+      (vars.GEMINI_ENABLE_PR_REVIEW != 'false' && needs.analyze-changes.outputs.needs-review == 'true')
     runs-on: ubuntu-latest
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
@@ -439,10 +452,52 @@ jobs:
           NEEDS_REVIEW: ${{ needs.analyze-changes.outputs.needs-review }}
         run: ./.github/scripts/manage-pr-labels.sh
 
+  disabled-guidance:
+    if: |
+      vars.GEMINI_ENABLE_PR_REVIEW == 'false' &&
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Guidance Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### ℹ️ Gemini Review Disabled
+
+            Automatic review is currently disabled via \`GEMINI_ENABLE_PR_REVIEW\`. To run review manually:
+
+            **Via Comment:**
+            \`\`\`
+            @gemini-bot
+            \`\`\`
+
+            **Via GitHub Actions:**
+            1. Go to [Actions → Reusable Gemini Review](${context.payload.repository.html_url}/actions/workflows/reusable-gemini-review.yml)
+            2. Click "Run workflow"
+            3. Enter PR number: \`${context.payload.pull_request.number}\`
+
+            **Via GitHub CLI:**
+            \`\`\`bash
+            gh workflow run reusable-gemini-review.yml -f pr_number=${context.payload.pull_request.number}
+            \`\`\`
+
+            **To re-enable:** Set repository variable \`GEMINI_ENABLE_PR_REVIEW=true\`
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
+
   post-skip-check:
     name: Post Skip Check
     needs: analyze-changes
-    if: needs.analyze-changes.outputs.needs-review == 'false'
+    if: |
+      needs.analyze-changes.outputs.needs-review == 'false' &&
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Create skip check

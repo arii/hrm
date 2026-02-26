@@ -49,7 +49,20 @@ if [ "${GEMINI_ENABLE_SLOP_CHECK:-true}" == "false" ]; then
   echo "⚠️ Gemini slop check disabled via GEMINI_ENABLE_SLOP_CHECK" >&2
   # We still want to generate the report based on the regex detector if it ran,
   # but we skip the Gemini API call.
-  echo "Gemini feedback skipped (disabled via environment variable)." > "$GEMINI_SLOP_LOG"
+  {
+    echo "Gemini feedback skipped (disabled via environment variable)."
+    echo ""
+    echo "#### ℹ️ How to run manually"
+    echo "Automatic slop check is currently disabled. To run it manually:"
+    echo "1. Go to **Actions → PR Quality Gate**"
+    echo "2. Click **Run workflow**"
+    echo "3. The slop check will run as part of the quality gate."
+    echo ""
+    echo "Alternatively, use the GitHub CLI:"
+    echo "\`\`\`bash"
+    echo "gh workflow run pr-quality.yml"
+    echo "\`\`\`"
+  } > "$GEMINI_SLOP_LOG"
 else
   echo "Requesting Gemini feedback..."
 

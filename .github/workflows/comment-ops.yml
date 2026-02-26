@@ -18,12 +18,14 @@ permissions:
 jobs:
   router:
     name: 🔍 Route Comment
-    if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     outputs:
       is_review: ${{ steps.route.outputs.is_review || 'false' }}
       is_squash: ${{ steps.route.outputs.is_squash || 'false' }}
       is_resolve: ${{ steps.route.outputs.is_resolve || 'false' }}
+      is_triage: ${{ steps.route.outputs.is_triage || 'false' }}
+      is_coder: ${{ steps.route.outputs.is_coder || 'false' }}
+      is_review_issues: ${{ steps.route.outputs.is_review_issues || 'false' }}
     steps:
       - id: route
         env:
@@ -35,16 +37,93 @@ jobs:
           if echo "$BODY" | grep -qiE "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "^@gemini-triage"; then echo "is_triage=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "^@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "^@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]
-    if: needs.router.outputs.is_review == 'true'
+    if: github.event.issue.pull_request && needs.router.outputs.is_review == 'true'
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: 'not_applicable'
       trigger_event: 'comment'
       comment_body: ${{ github.event.comment.body }}
     secrets: inherit
+
+  execute-triage:
+    needs: [router]
+    if: needs.router.outputs.is_triage == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Triage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run gemini-triage.yml -f issue_number="${{ github.event.issue.number }}"
+
+  execute-coder:
+    needs: [router]
+    if: needs.router.outputs.is_coder == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Coder Task
+        id: extract
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          # Remove '@gemini-coder' and any leading/trailing whitespace
+          TASK=$(echo "$BODY" | sed 's/^@gemini-coder//I' | xargs)
+          if [ -z "$TASK" ]; then
+            echo "::error::No task description provided for @gemini-coder"
+            exit 1
+          fi
+          echo "task=$TASK" >> $GITHUB_OUTPUT
+
+      - name: Trigger Gemini Coder
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run gemini-coder.yml \
+            -f task_description="${{ steps.extract.outputs.task }}" \
+            -f branch_name="ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}"
+
+  execute-create-review-issues:
+    needs: [router]
+    if: github.event.issue.pull_request && needs.router.outputs.is_review_issues == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Latest Review Run
+        id: find-run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Find the branch name of the PR
+          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
+
+          # Find the most recent successful run of 'Gemini Orchestrator' for this branch.
+          # This workflow produces the 'review-result' artifact.
+          RUN_ID=$(gh run list --workflow "Gemini Orchestrator" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+
+          # Fallback: check 'Bot Command Orchestrator' if manual review was triggered
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --workflow "Bot Command Orchestrator" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          fi
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No successful Gemini Review run found for branch $BRANCH to source artifacts from."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Trigger Issue Creation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run reusable-create-review-issues.yml \
+            -f pr_number="${{ github.event.issue.number }}" \
+            -f run_id="${{ steps.find-run.outputs.run_id }}"
 
   prepare-review-issues:
     name: 📝 Prepare Issue Context
@@ -87,7 +166,7 @@ jobs:
 
   execute-squash:
     needs: [router]
-    if: needs.router.outputs.is_squash == 'true'
+    if: github.event.issue.pull_request && needs.router.outputs.is_squash == 'true'
     uses: ./.github/workflows/pr-squash.yml
     with:
       pr_number: ${{ github.event.issue.number }}
@@ -98,7 +177,7 @@ jobs:
   # Restoring conflict resolution logic from gemini-orchestrator.yml
   prepare-resolve:
     needs: [router]
-    if: needs.router.outputs.is_resolve == 'true'
+    if: github.event.issue.pull_request && needs.router.outputs.is_resolve == 'true'
     runs-on: ubuntu-latest
     outputs:
       target_branch: ${{ steps.get_branches.outputs.target_branch }}
@@ -130,7 +209,7 @@ jobs:
 
   execute-resolve:
     needs: [router, prepare-resolve]
-    if: needs.router.outputs.is_resolve == 'true'
+    if: github.event.issue.pull_request && needs.router.outputs.is_resolve == 'true'
     uses: ./.github/workflows/conflict-resolver.yml
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
