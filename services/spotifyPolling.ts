@@ -290,8 +290,6 @@ export class SpotifyPolling implements SpotifyService {
       await this.playerManager!.executeSpotifyCommand(command, params)
 
       // 2. Schedule authoritative polls
-      // A quick check that respects the window (likely skipped if < 2000ms)
-      setTimeout(() => this.getCurrentlyPlaying(), 300)
       // A forced check after the window expires to ensure consistency
       setTimeout(
         () => this.getCurrentlyPlaying(true),
