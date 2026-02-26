@@ -92,7 +92,8 @@ export const SignalQualityIndicator = ({
 
   const config = STATUS_CONFIG[currentStatusKey]
   const Icon = config.icon
-  const reliability = Math.min(100, Math.round(100000 / (periodMs || 1000)))
+  const reliability =
+    periodMs > 0 ? Math.min(100, Math.round(100000 / periodMs)) : 0
 
   return (
     <Tooltip
