@@ -20,10 +20,8 @@ export default function CombinedFooter() {
 
   return (
     <Paper
-      component="footer"
       elevation={10}
       data-testid="combined-footer"
-      role="contentinfo"
       sx={{
         position: 'fixed',
         bottom: 0,
@@ -33,7 +31,7 @@ export default function CombinedFooter() {
         borderRadius: 0,
         display: 'flex',
         flexDirection: 'column',
-        height: footerHeight,
+        height,
         transition: 'height 0.3s ease-in-out',
         overflow: 'hidden',
         borderTop: '1px solid',
