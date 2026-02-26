@@ -17,7 +17,6 @@ import {
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
 
-
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
@@ -764,7 +763,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!silent) {
           handleConnectionError(error)
         } else {
-          if (!(error instanceof Error && error.message === 'NO_SAVED_DEVICE')) {
+          if (
+            !(error instanceof Error && error.message === 'NO_SAVED_DEVICE')
+          ) {
             const errorMsg =
               error instanceof Error ? error.message : String(error)
             logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
