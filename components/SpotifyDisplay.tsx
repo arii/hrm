@@ -1,5 +1,5 @@
 'use client'
-// File: app/components/dashboard/SpotifyDisplay.tsx
+
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
@@ -15,7 +15,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { SxProps, Theme } from '@mui/material/styles'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
@@ -23,17 +22,15 @@ import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
-// 1. State Shape
 interface SpotifyDisplayState {
   displayVolume: number
   isMuted: boolean
   isSliding: boolean
-  lastVolume: number // Last non-zero volume
+  lastVolume: number
   selectedDeviceId: string
   deviceMenuAnchor: null | HTMLElement
 }
 
-// 2. Actions
 type SpotifyDisplayAction =
   | { type: 'SET_VOLUME'; payload: number }
   | { type: 'SET_SLIDING'; payload: boolean }
@@ -46,7 +43,6 @@ type SpotifyDisplayAction =
       payload: { volume?: number; isMuted?: boolean }
     }
 
-// 3. Reducer Logic
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -75,28 +71,18 @@ const spotifyDisplayReducer = (
       }
     case 'TOGGLE_MUTE': {
       const newMutedState = !state.isMuted
-      if (newMutedState) {
-        // Muting: set volume to 0
-        return {
-          ...state,
-          isMuted: true,
-          displayVolume: 0,
-        }
-      } else {
-        // Unmuting: restore to last known volume
-        return {
-          ...state,
-          isMuted: false,
-          displayVolume: state.lastVolume > 0 ? state.lastVolume : 50, // fallback
-        }
+      return {
+        ...state,
+        isMuted: newMutedState,
+        displayVolume: newMutedState
+          ? 0
+          : state.lastVolume > 0
+            ? state.lastVolume
+            : 50,
       }
     }
     case 'SELECT_DEVICE':
-      return {
-        ...state,
-        selectedDeviceId: action.payload,
-        deviceMenuAnchor: null,
-      }
+      return { ...state, selectedDeviceId: action.payload }
     case 'OPEN_DEVICE_MENU':
       return { ...state, deviceMenuAnchor: action.payload }
     case 'CLOSE_DEVICE_MENU':
@@ -106,35 +92,27 @@ const spotifyDisplayReducer = (
   }
 }
 
-interface SpotifyContentProps {
-  sx?: SxProps<Theme>
-}
-
-export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
+export default function SpotifyDisplay() {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
 
-  // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
     displayVolume: spotifyData.playback.volume_percent ?? 70,
     isMuted: spotifyData.playback.isMuted ?? false,
     isSliding: false,
     lastVolume:
-      spotifyData.playback.volume_percent &&
-      spotifyData.playback.volume_percent > 0
-        ? spotifyData.playback.volume_percent
+      (spotifyData.playback.volume_percent ?? 0) > 0
+        ? (spotifyData.playback.volume_percent as number)
         : 70,
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
-  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
+  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
   const hasActiveDevice =
     !!selectedDeviceId ||
     spotifyData.devices?.some((device) => device.is_active)
-
-  // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
 
@@ -144,22 +122,15 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
   }
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
-
-  // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
-  // Synchronize with WebSocket data whenever it changes.
   useEffect(() => {
     const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-
-    // Only apply grace period if a send is pending and within the window.
     const shouldRespectGracePeriod =
       hasPendingSendRef.current &&
       timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
 
-    if (state.isSliding || shouldRespectGracePeriod) {
-      return
-    }
+    if (state.isSliding || shouldRespectGracePeriod) return
 
     if (
       hasPendingSendRef.current &&
@@ -187,26 +158,20 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
       const targetDeviceId =
         selectedDeviceId ||
         spotifyData.devices?.find((device) => device.is_active)?.id
-
       if (!targetDeviceId) return
-
-      const sanitized = clampVolume(volume)
 
       lastVolumeSendTimeRef.current = Date.now()
       hasPendingSendRef.current = true
-
       executeSpotify('SET_VOLUME', {
-        volume: sanitized,
+        volume: clampVolume(volume),
         deviceId: targetDeviceId,
       })
     },
     [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
   )
 
-  const handleVolumeChange = (newVolume: number) => {
+  const handleVolumeChange = (newVolume: number) =>
     dispatch({ type: 'SET_VOLUME', payload: newVolume })
-  }
-
   const handleVolumeChangeCommitted = (newVolume: number) => {
     sendVolumeCommand(newVolume)
     dispatch({ type: 'SET_SLIDING', payload: false })
@@ -219,7 +184,6 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
       : state.lastVolume > 0
         ? state.lastVolume
         : 50
-
     dispatch({ type: 'TOGGLE_MUTE' })
     sendVolumeCommand(newVolume)
   }, [isMuted, state.lastVolume, sendVolumeCommand])
@@ -227,17 +191,14 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
   useEffect(() => {
     const devices = spotifyData.devices || []
     if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
+      if (selectedDeviceId !== '')
         dispatch({ type: 'SELECT_DEVICE', payload: '' })
-      }
       return
     }
     const activeDevice = devices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
       dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return
-    }
-    if (
+    } else if (
       selectedDeviceId &&
       !devices.some((device) => device.id === selectedDeviceId)
     ) {
@@ -245,17 +206,22 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
     }
   }, [spotifyData.devices, selectedDeviceId])
 
-  const handlePlayPauseToggle = () => {
-    if (spotifyData.playback.is_playing) {
-      executeSpotify('PAUSE')
-    } else {
-      executeSpotify('PLAY')
-    }
-  }
-
+  const handlePlayPauseToggle = () =>
+    executeSpotify(spotifyData.playback.is_playing ? 'PAUSE' : 'PLAY')
   const handleDeviceSelect = (deviceId: string) => {
     dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+    dispatch({ type: 'CLOSE_DEVICE_MENU' })
     executeSpotify('TRANSFER_PLAYBACK', { deviceId })
+  }
+
+  const containerStyles = {
+    backgroundColor: 'grey.900',
+    color: 'common.white',
+    px: { xs: 1, sm: 2 },
+    py: 0.5,
+    borderRadius: 0,
+    width: '100%',
+    minHeight: '48px',
   }
 
   if (!isLoggedIn) {
@@ -263,19 +229,10 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
       <Box
         data-testid="spotify-auth-container"
         sx={{
-          backgroundColor: 'grey.900',
-          color: 'common.white',
-          px: { xs: 1, sm: 2 },
-          py: 0.5,
-          borderRadius: 0,
+          ...containerStyles,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'static',
-          boxShadow: 'none',
-          width: '100%',
-          minHeight: '48px',
-          ...sx,
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -283,206 +240,154 @@ export const SpotifyContent = ({ sx }: SpotifyContentProps) => {
     )
   }
 
-  if (isLoggedIn) {
-    const isWaiting = spotifyData.playback.track.name === 'Awaiting Login...'
-    const displayTrackName = isWaiting
-      ? 'No Active Playback'
-      : spotifyData.playback.track.name
-    const displayArtist = isWaiting
-      ? ''
-      : `— ${spotifyData.playback.track.artist}`
+  const isWaiting = spotifyData.playback.track.name === 'Awaiting Login...'
+  const displayTrackName = isWaiting
+    ? 'No Active Playback'
+    : spotifyData.playback.track.name
+  const displayArtist = isWaiting
+    ? ''
+    : `— ${spotifyData.playback.track.artist}`
 
-    return (
+  return (
+    <Box
+      data-testid="spotify-display-container"
+      sx={{
+        ...containerStyles,
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        alignItems: 'center',
+      }}
+    >
       <Box
-        data-testid="spotify-display-container"
-        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.playback.is_playing ? 'Playing' : 'Paused'
-        }${isReady ? ', Browser player ready' : ''}`}
         sx={{
-          backgroundColor: 'grey.900',
-          color: 'common.white',
-          px: { xs: 1, sm: 2 },
-          py: 0.5,
-          borderRadius: 0,
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          display: 'flex',
           alignItems: 'center',
-          position: 'static',
-          boxShadow: 'none',
-          width: '100%',
-          minHeight: '48px',
-          ...sx,
+          justifySelf: 'start',
+          gap: 2,
+          minHeight: '32px',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifySelf: 'start',
-            gap: 2,
-            minHeight: '32px',
-          }}
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600 }}
+          data-testid="spotify-now-playing"
         >
+          {displayTrackName} {displayArtist}
+        </Typography>
+        {!isReady && (
           <Typography
-            variant="body2"
-            sx={{ fontWeight: 600 }}
-            data-testid="spotify-now-playing"
+            variant="caption"
+            sx={{
+              opacity: 0.8,
+              backgroundColor: 'info.main',
+              color: 'common.white',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              whiteSpace: 'nowrap',
+            }}
           >
-            {displayTrackName} {displayArtist}
+            🔄 Connecting...
           </Typography>
-          {!isReady && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'info.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              🔄 Connecting Player...
-            </Typography>
-          )}
-          {isReady && deviceId && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'success.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              🎵 Browser Player Active
-            </Typography>
-          )}
-          <DeviceRecommendation />
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            justifySelf: 'center',
-          }}
-        >
-          <IconButton
-            size="small"
-            onClick={() => executeSpotify('PREVIOUS')}
+        )}
+        {isReady && deviceId && (
+          <Typography
+            variant="caption"
             sx={{
+              opacity: 0.8,
+              backgroundColor: 'success.main',
               color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Previous track"
-            data-testid="spotify-previous-button"
-          >
-            <SkipPreviousIcon />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handlePlayPauseToggle}
-            sx={{
-              color: 'common.white',
-              backgroundColor: 'grey.700',
-              '&:hover': { backgroundColor: 'grey.600' },
-            }}
-            aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
-            data-testid="spotify-play-pause-button"
-          >
-            {spotifyData.playback.is_playing ? (
-              <PauseIcon />
-            ) : (
-              <PlayArrowIcon />
-            )}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => executeSpotify('NEXT')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Next track"
-            data-testid="spotify-next-button"
-          >
-            <SkipNextIcon />
-          </IconButton>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifySelf: 'end',
-            gap: 1,
-          }}
-        >
-          <VolumeSlider
-            volume={displayVolume}
-            muted={isMuted}
-            onVolumeChange={handleVolumeChange}
-            onVolumeChangeCommitted={handleVolumeChangeCommitted}
-            onToggleMute={handleToggleMute}
-            showValue={true}
-            disabled={!hasActiveDevice}
-          />
-          <SpotifyDeviceSelector
-            availableDevices={spotifyData.devices || []}
-            deviceMenuAnchor={deviceMenuAnchor}
-            onDeviceSelect={handleDeviceSelect}
-            onMenuOpen={(e) =>
-              dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
-            }
-            onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleLogout}
-            data-testid="spotify-logout-button"
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              whiteSpace: 'nowrap',
             }}
           >
-            Logout
-          </Button>
-        </Box>
+            🎵 Active
+          </Typography>
+        )}
+        <DeviceRecommendation />
       </Box>
-    )
-  }
 
-  return null
-}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          justifySelf: 'center',
+        }}
+      >
+        <IconButton
+          size="small"
+          onClick={() => executeSpotify('PREVIOUS')}
+          sx={{ color: 'common.white' }}
+          aria-label="Previous track"
+          data-testid="spotify-previous-button"
+        >
+          <SkipPreviousIcon />
+        </IconButton>
+        <IconButton
+          size="medium"
+          onClick={handlePlayPauseToggle}
+          sx={{ color: 'common.white', backgroundColor: 'grey.700' }}
+          aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
+          data-testid="spotify-play-pause-button"
+        >
+          {spotifyData.playback.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={() => executeSpotify('NEXT')}
+          sx={{ color: 'common.white' }}
+          aria-label="Next track"
+          data-testid="spotify-next-button"
+        >
+          <SkipNextIcon />
+        </IconButton>
+      </Box>
 
-const SpotifyDisplay = () => {
-  return (
-    <SpotifyContent
-      sx={{
-        px: { xs: 2, sm: 3 },
-        py: 1.5,
-        borderRadius: 2,
-        position: 'fixed',
-        bottom: 56,
-        boxShadow: 3,
-        minHeight: '64px',
-      }}
-    />
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifySelf: 'end',
+          gap: 1,
+        }}
+      >
+        <VolumeSlider
+          volume={displayVolume}
+          muted={isMuted}
+          onVolumeChange={handleVolumeChange}
+          onVolumeChangeCommitted={handleVolumeChangeCommitted}
+          onToggleMute={handleToggleMute}
+          showValue={true}
+          disabled={!hasActiveDevice}
+        />
+        <SpotifyDeviceSelector
+          availableDevices={spotifyData.devices || []}
+          deviceMenuAnchor={deviceMenuAnchor}
+          onDeviceSelect={handleDeviceSelect}
+          onMenuOpen={(e) =>
+            dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
+          }
+          onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
+        />
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleLogout}
+          data-testid="spotify-logout-button"
+          sx={{
+            color: 'common.white',
+            borderColor: 'grey.600',
+            minWidth: 'auto',
+            px: 1.5,
+            fontSize: '0.75rem',
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
+    </Box>
   )
 }
-
-export default SpotifyDisplay
