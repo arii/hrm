@@ -113,5 +113,19 @@ if [ -n "$NEW_LABELS" ]; then
   endgroup
 
   log "Adding labels: $NEW_LABELS"
-  gh pr edit $PR_NUMBER --add-label "$NEW_LABELS"
+
+  # Retry loop for gh pr edit to handle transient errors
+  for i in {1..3}; do
+    if gh pr edit "$PR_NUMBER" --add-label "$NEW_LABELS"; then
+      log "Successfully added labels."
+      break
+    else
+      if [ $i -lt 3 ]; then
+        log "Failed to add labels, retrying in 2 seconds..."
+        sleep 2
+      else
+        error "Failed to add labels after 3 attempts."
+      fi
+    fi
+  done
 fi
