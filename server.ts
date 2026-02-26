@@ -14,6 +14,7 @@ import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import fs from 'fs'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -132,8 +133,35 @@ app.prepare().then(async () => {
     res.status(200).json({ status: 'ok' })
   })
 
-  // POST /api/debug/reset - Reset the server-side HRM session state (for testing)
-  // Gated to prevent accidental use in production
+  // POST /api/debug/reset-server - Comprehensive server reset for VRT
+  // Bypasses Next.js App Router for direct access to server memory
+  expressApp.post('/api/debug/reset-server', (_req, res) => {
+    if (env.NODE_ENV === 'production' && !env.ALLOW_DEBUG_RESET) {
+      return res
+        .status(403)
+        .json({ error: 'Debug reset not allowed in production' })
+    }
+
+    // 1. Reset in-memory state (Timer, HRM, WebSocket connections)
+    resetSocketManager()
+
+    // 2. Clear persisted Spotify tokens
+    const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
+    try {
+      if (fs.existsSync(tokenFile)) {
+        fs.unlinkSync(tokenFile)
+        logger.info('Spotify token file deleted via reset-server.')
+      }
+    } catch (error) {
+      logger.error('Error deleting token file during reset-server:', error)
+      // Continue despite file error, as memory reset is priority
+    }
+
+    logger.info('Server-side HRM state has been reset via /api/debug/reset-server')
+    return res.status(200).json({ status: 'reset', mode: 'comprehensive' })
+  })
+
+  // POST /api/debug/reset - Legacy endpoint, kept for backward compatibility
   expressApp.post('/api/debug/reset', (_req, res) => {
     if (env.NODE_ENV === 'production' && !env.ALLOW_DEBUG_RESET) {
       return res

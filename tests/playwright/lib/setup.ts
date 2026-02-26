@@ -132,7 +132,7 @@ export async function navigateAndWait(
 export async function resetServerState(
   request: APIRequestContext
 ): Promise<void> {
-  const response = await request.post(`${getBaseURL()}/api/debug/reset`)
+  const response = await request.post(`${getBaseURL()}/api/debug/reset-server`)
   if (!response.ok()) {
     console.warn(
       `Warning: Failed to reset server state. Status: ${response.status()}`
