@@ -1,7 +1,8 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
 import {
   Box,
   Typography,
@@ -18,40 +19,17 @@ import {
   Button,
 } from '@mui/material'
 import { PlayArrow, Pause, MusicNote } from '@mui/icons-material'
-import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { formatDuration } from '@/lib/utils'
 
 const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const [tracks, setTracks] = useState<Track[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
-  const [total, setTotal] = useState(0)
   const limit = 20
 
-  const fetchTracks = useCallback(
-    async (currentOffset: number) => {
-      try {
-        setLoading(true)
-        const res = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-        )
-        if (!res.ok)
-          throw new Error(
-            (await res.json()).message || 'Failed to fetch tracks'
-          )
-        const data = await res.json()
-        setTracks(data.tracks)
-        setTotal(data.total)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setLoading(false)
-      }
-    },
-    [playlistId]
+  const { tracks, loading, error, total, fetchTracks } = usePlaylistTracks(
+    playlistId,
+    { limit }
   )
 
   useEffect(() => {

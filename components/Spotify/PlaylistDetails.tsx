@@ -11,10 +11,10 @@ import {
   Typography,
 } from '@mui/material'
 import { MusicNote } from '@mui/icons-material'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { formatDuration } from '@/lib/utils'
+import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
 
 const PlaylistDetails = ({
   playlistId,
@@ -23,36 +23,23 @@ const PlaylistDetails = ({
   playlistId: string
   onTrackPlay: (uri: string) => void
 }) => {
-  const [tracks, setTracks] = useState<Track[]>([])
-  const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
-  const [error, setError] = useState<string | null>(null)
   const limit = 20
 
-  const fetchTracks = useCallback(
-    async (currentOffset: number) => {
-      if (!playlistId) return
-      try {
-        const res = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-        )
-        if (!res.ok) throw new Error('Failed to fetch tracks')
-        const data = await res.json()
-        setTracks((prev) =>
-          currentOffset === 0 ? data.tracks : [...prev, ...data.tracks]
-        )
-        setOffset(currentOffset + data.tracks.length)
-        setHasMore(data.tracks.length === limit)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      }
-    },
-    [playlistId]
+  const { tracks, loading, error, hasMore, fetchTracks } = usePlaylistTracks(
+    playlistId,
+    { limit, mode: 'append' }
   )
 
   useEffect(() => {
     fetchTracks(0)
   }, [playlistId, fetchTracks])
+
+  const handleLoadMore = () => {
+    const nextOffset = offset + tracks.length
+    setOffset(nextOffset)
+    fetchTracks(nextOffset)
+  }
 
   return (
     <>
@@ -67,7 +54,7 @@ const PlaylistDetails = ({
       >
         <InfiniteScroll
           dataLength={tracks.length}
-          next={() => fetchTracks(offset)}
+          next={handleLoadMore}
           hasMore={hasMore}
           loader={
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
