@@ -29,14 +29,7 @@ export async function checkAccessibility(target: Page | Locator) {
     .disableRules(['color-contrast'])
 
   if (selector) {
-    const count = await page.locator(selector).count()
-    if (count === 0) {
-      console.warn(
-        `Accessibility target ${selector} not found in DOM, skipping specific inclusion.`
-      )
-    } else {
-      axeBuilder.include(selector)
-    }
+    axeBuilder.include(selector)
   }
 
   const accessibilityScanResults = await axeBuilder.analyze()
