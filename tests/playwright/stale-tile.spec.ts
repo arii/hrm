@@ -13,8 +13,14 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
       timeout: 10000,
     })
     await page.evaluate((msg) => {
-      if (window.__TEST_CONTROLS__?.dispatch) {
-        window.__TEST_CONTROLS__.dispatch(msg)
+      const win = window as unknown as {
+        __TEST_CONTROLS__: {
+          dispatch: (m: unknown) => void
+        }
+      }
+      const controls = win.__TEST_CONTROLS__
+      if (controls && typeof controls.dispatch === 'function') {
+        controls.dispatch(msg)
       } else {
         throw new Error('__TEST_CONTROLS__.dispatch not found')
       }

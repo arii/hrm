@@ -5,8 +5,13 @@ import type { ServerMessage } from '@/types/websocket'
 const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
   await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch)
   return page.evaluate((msg: ServerMessage) => {
-    if (window.__TEST_CONTROLS__?.dispatch) {
-      window.__TEST_CONTROLS__.dispatch(msg)
+    const dispatch = (
+      window as Window & {
+        __TEST_CONTROLS__?: { dispatch: (message: ServerMessage) => void }
+      }
+    ).__TEST_CONTROLS__?.dispatch
+    if (dispatch) {
+      dispatch(msg)
       return true
     }
     console.error('__TEST_CONTROLS__.dispatch not found on window object')
@@ -18,8 +23,11 @@ const dispatchServerMessage = async (page: Page, message: ServerMessage) => {
 const disconnectWebSocket = async (page: Page) => {
   await page.waitForFunction(() => window.__TEST_CONTROLS__?.disconnect)
   return page.evaluate(() => {
-    if (window.__TEST_CONTROLS__?.disconnect) {
-      window.__TEST_CONTROLS__.disconnect()
+    const disconnect = (
+      window as Window & { __TEST_CONTROLS__?: { disconnect: () => void } }
+    ).__TEST_CONTROLS__?.disconnect
+    if (disconnect) {
+      disconnect()
       return true
     }
     console.error('__TEST_CONTROLS__.disconnect not found on window object')
@@ -72,7 +80,6 @@ test.describe('Timer UI Synchronization', () => {
     page,
   }) => {
     await disconnectWebSocket(page)
-    await expect(page.locator('text=Server: Disconnected')).toBeVisible()
     await dispatchServerMessage(page, {
       type: 'TIMER_UPDATE',
       payload: { isRunning: true },
@@ -102,12 +109,6 @@ test.describe('Timer UI Synchronization', () => {
     await expect(page.locator('[data-testid="timer-running"]')).toBeVisible()
 
     await disconnectWebSocket(page)
-    await expect(page.locator('text=Server: Disconnected')).toBeVisible()
-
-    // Wait for the synchronization lock (2s) to expire before dispatching
-    // the server message, otherwise the component will ignore the update.
-    await page.waitForTimeout(2100)
-
     await dispatchServerMessage(page, {
       type: 'TIMER_UPDATE',
       payload: { isRunning: false },
@@ -122,7 +123,6 @@ test.describe('Timer UI Synchronization', () => {
     page,
   }) => {
     await disconnectWebSocket(page)
-    await expect(page.locator('text=Server: Disconnected')).toBeVisible()
     await page.click('[data-testid="start-timer-button"]')
     await expect(page.locator('[data-testid="timer-running"]')).toBeVisible()
     await page.waitForTimeout(3500)

@@ -1,3 +1,6 @@
+// File: app/client/control/components/TimerControls.tsx
+'use client'
+// File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
@@ -17,7 +20,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
@@ -58,8 +61,6 @@ const TimerControls = () => {
   const [optimisticAction, setOptimisticAction] = useState<
     'START' | 'STOP' | null
   >(null)
-  const lastInteractionRef = useRef<number>(0)
-  const SYNC_LOCK_DURATION = 2000
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
@@ -67,11 +68,6 @@ const TimerControls = () => {
   // When the server's timer data changes, it becomes the source of truth.
   // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
-    const now = Date.now()
-    if (now - lastInteractionRef.current < SYNC_LOCK_DURATION) {
-      return
-    }
-
     if (optimisticAction !== null) {
       setOptimisticAction(null)
     }
@@ -112,7 +108,6 @@ const TimerControls = () => {
     (command: 'START' | 'STOP') => {
       // Optimistically update the UI
       setOptimisticAction(command)
-      lastInteractionRef.current = Date.now()
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
@@ -342,6 +337,7 @@ const TimerControls = () => {
                 data-testid="start-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('START')}
+                disabled={connectionStatus !== 'Connected'}
                 sx={startButtonSx(theme)}
                 startIcon={<PlayArrow fontSize="large" />}
               >
@@ -352,6 +348,7 @@ const TimerControls = () => {
                 data-testid="stop-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('STOP')}
+                disabled={connectionStatus !== 'Connected'}
                 sx={stopButtonSx(theme)}
                 startIcon={<Stop fontSize="large" />}
               >

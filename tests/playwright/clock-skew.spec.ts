@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test'
-import type { ServerMessage } from '@/types/websocket'
 
 test('should handle clock skew correctly', async ({ page }) => {
   // Use a long timeout for the initial load and build
@@ -8,11 +7,23 @@ test('should handle clock skew correctly', async ({ page }) => {
 
   // Helper to dispatch messages to the reducer
   const dispatch = async (message: unknown) => {
-    await page.waitForFunction(() => window.__TEST_CONTROLS__?.dispatch, {
-      timeout: 10000,
-    })
+    await page.waitForFunction(
+      () =>
+        (
+          window as unknown as {
+            __TEST_CONTROLS__?: { dispatch: (m: unknown) => void }
+          }
+        ).__TEST_CONTROLS__?.dispatch,
+      {
+        timeout: 10000,
+      }
+    )
     await page.evaluate((msg) => {
-      window.__TEST_CONTROLS__!.dispatch!(msg as ServerMessage)
+      ;(
+        window as unknown as {
+          __TEST_CONTROLS__: { dispatch: (m: unknown) => void }
+        }
+      ).__TEST_CONTROLS__.dispatch(msg)
     }, message)
   }
 
