@@ -17,7 +17,7 @@ export const envObjectSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  PORT: z.coerce.number().default(3000),
+  PORT: z.coerce.number().int().finite().default(3000),
   HOST: z.string().default('0.0.0.0'),
   NEXTAUTH_SECRET: z.string().optional(),
   NEXTAUTH_URL: z.string().url().optional(),
@@ -27,10 +27,10 @@ export const envObjectSchema = z.object({
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
   INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
   SPOTIFY_DEBUG: z.string().optional(),
-  ALLOW_DEBUG_RESET: booleanSchema.default(false),
+  ALLOW_DEBUG_RESET: booleanSchema,
   CI: z.string().optional(),
   GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-  NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema.default(false).catch(false),
+  NEXT_PUBLIC_USE_NATIVE_TABLE: booleanSchema,
   NEXT_PUBLIC_API_URL: z
     .string()
     .url()
@@ -38,36 +38,48 @@ export const envObjectSchema = z.object({
     .or(z.literal(''))
     .transform((url) => url?.replace(/\/$/, '')),
   NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-  SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
-  INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
-  GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-  WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
-  SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
-  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
-  WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().finite().default(60000),
+  SPOTIFY_API_MAX_REQUESTS: z.coerce.number().int().finite().default(30),
+  INTERNAL_API_MAX_REQUESTS: z.coerce.number().int().finite().default(100),
+  GENERAL_API_MAX_REQUESTS: z.coerce.number().int().finite().default(200),
+  WS_MAX_CONNECTIONS: z.coerce.number().int().finite().default(1000),
+  SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().int().finite().default(5000),
+  SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce
+    .number()
+    .int()
+    .finite()
+    .default(10000),
+  WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().int().finite().default(5000),
   WEBSOCKET_WATCHDOG_INTERVAL: z.coerce
     .number()
     .int()
+    .finite()
     .positive()
     .default(30000),
   NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce
     .number()
+    .int()
+    .finite()
     .default(8)
     .catch(8),
   GEMINI_MODEL_FALLBACKS: z.string().optional(),
-  ANALYZE: booleanSchema.default(false),
-  TESTING: booleanSchema.default(false),
-  NEXT_PUBLIC_TESTING: booleanSchema.optional().catch(undefined),
-  IS_DEPLOYMENT: booleanSchema.default(false),
+  ANALYZE: booleanSchema,
+  TESTING: booleanSchema,
+  NEXT_PUBLIC_TESTING: booleanSchema.optional(),
+  IS_DEPLOYMENT: booleanSchema,
   LOG_LEVEL: z.string().optional(),
   WS_URL: z.string().url().optional(),
-  HRM_LIVE_WINDOW_SIZE: z.coerce.number().int().min(1).default(600),
+  HRM_LIVE_WINDOW_SIZE: z.coerce
+    .number()
+    .int()
+    .finite()
+    .min(1)
+    .default(600),
   npm_package_version: z.string().optional(),
-  IGNORE_BUILD_ERRORS: booleanSchema.default(false),
-  INCLUDE_MOBILE: booleanSchema.default(false),
-  SKIP_WEBSERVER: booleanSchema.default(false),
-  SKIP_BUILD: booleanSchema.default(false),
+  IGNORE_BUILD_ERRORS: booleanSchema,
+  INCLUDE_MOBILE: booleanSchema,
+  SKIP_WEBSERVER: booleanSchema,
+  SKIP_BUILD: booleanSchema,
 })
 
 const envSchema = envObjectSchema
@@ -145,23 +157,6 @@ const getEnvSource = () => {
 
 const parsedEnv = envSchema.safeParse(getEnvSource())
 
-// Robust fallback for client-side booleans to prevent "false" string being truthy
-const fallbackEnv = (
-  raw: Record<string, string | undefined>
-): z.infer<typeof envSchema> => {
-  return {
-    ...raw,
-    // Explicitly coerce critical booleans
-    NEXT_PUBLIC_TESTING: raw.NEXT_PUBLIC_TESTING === 'true',
-    NEXT_PUBLIC_USE_NATIVE_TABLE: raw.NEXT_PUBLIC_USE_NATIVE_TABLE === 'true',
-    // Ensure numbers are parsed if they exist as strings
-    NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS:
-      raw.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-        ? parseInt(raw.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS, 10)
-        : 8,
-  } as unknown as z.infer<typeof envSchema>
-}
-
 if (!parsedEnv.success) {
   if (isServer) {
     console.error('❌ Invalid environment variables:', parsedEnv.error.format())
@@ -176,10 +171,7 @@ if (!parsedEnv.success) {
 
 export const env: z.infer<typeof envSchema> = parsedEnv.success
   ? parsedEnv.data
-  : fallbackEnv(
-      (isServer ? process.env : getEnvSource()) as Record<
-        string,
-        string | undefined
-      >
-    )
+  : (() => {
+      throw new Error('Invalid Environment')
+    })()
 export { envSchema }
