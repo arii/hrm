@@ -182,18 +182,9 @@ describe('WebSocket Full Integration Test', () => {
     // 2. Wait for longer than the grace period (5s) + buffer (1s)
     await new Promise((resolve) => setTimeout(resolve, 6000))
 
-    // 3. Reconnect and check that the session is fresh
+    // 3. Reconnect and check that the session is gone
     const ws2 = new WebSocket(wsUrlWithId)
     await new Promise((resolve) => ws2.on('open', resolve))
-
-    // Send a new name to make the new session visible (filter-passable)
-    ws2.send(
-      JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 0, name: 'New Session' },
-      })
-    )
-
     const statePromise = waitForMessage<ServerMessage>(
       ws2,
       (msg) => msg.type === 'INITIAL_STATE'
@@ -207,8 +198,7 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    expect(clientData).toBeDefined()
-    expect(clientData?.name).toBe('New Session')
+    expect(clientData?.name).toBeUndefined()
     expect(clientData?.value).toBe(0)
 
     ws2.close()

@@ -114,7 +114,7 @@ describe('SpotifySelectionPage', () => {
     fireEvent.click(playButton)
 
     expect(executeMock).toHaveBeenCalledWith('PLAY', {
-      contextUri: 'spotify:playlist:mock1',
+      playlistUri: 'spotify:playlist:mock1',
     })
   })
 })

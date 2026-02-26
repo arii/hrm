@@ -1,32 +1,27 @@
-import {
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
-  Avatar,
-  Typography,
-  IconButton,
-  Box,
-} from '@mui/material'
-import { MusicNote, PlayArrow, Pause } from '@mui/icons-material'
+import MusicNote from '@mui/icons-material/MusicNote'
+import Avatar from '@mui/material/Avatar'
+import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
+import Typography from '@mui/material/Typography'
+import React from 'react'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { formatDuration } from '@/lib/utils'
 
 interface SpotifyTrackItemProps {
   track: Track
-  index: number
+  onClick: () => void
   isPlaying?: boolean
-  onTogglePlay: (track: Track, index: number) => void
-  showPlaybackControls?: boolean
+  secondaryAction?: React.ReactNode
   divider?: boolean
 }
 
-export const SpotifyTrackItem = ({
+export const SpotifyTrackItem: React.FC<SpotifyTrackItemProps> = ({
   track,
-  index,
+  onClick,
   isPlaying = false,
-  onTogglePlay,
-  showPlaybackControls = false,
+  secondaryAction,
   divider = true,
 }) => {
   const images = track.album?.images
@@ -36,15 +31,21 @@ export const SpotifyTrackItem = ({
     <ListItem
       divider={divider}
       disablePadding
-      secondaryAction={secondaryAction}
+      secondaryAction={
+        secondaryAction || (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {formatDuration(track.duration_ms, {
+              unit: 'milliseconds',
+              format: 'MM:SS',
+            })}
+          </Typography>
+        )
+      }
       sx={{
         backgroundColor: isPlaying ? 'action.selected' : 'inherit',
       }}
     >
-      <ListItemButton
-        onClick={() => onTogglePlay(track, index)}
-        sx={{ py: 0.5, px: 1 }}
-      >
+      <ListItemButton onClick={onClick} sx={{ py: 0.5, px: 1 }}>
         <ListItemAvatar sx={{ minWidth: 48 }}>
           <Avatar
             variant="rounded"

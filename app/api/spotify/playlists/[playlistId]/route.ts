@@ -8,7 +8,6 @@ import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 import { RouteContext } from '@/lib/types/index'
 import { Track } from '@spotify/web-api-ts-sdk'
-import { mapSpotifyTrack } from '@/lib/spotify'
 
 /**
  * GET handler for fetching single playlist details.
@@ -45,7 +44,20 @@ async function getPlaylistDetails(
     trackCount: playlist.tracks?.total ?? 0,
     tracks: playlist.tracks.items
       .filter((item) => item.track !== null && item.track.type === 'track')
-      .map((item) => mapSpotifyTrack(item.track as Track)),
+      .map((item) => {
+        const track = item.track as Track
+        return {
+          id: track.id,
+          name: track.name,
+          uri: track.uri,
+          duration_ms: track.duration_ms,
+          artists: track.artists.map((artist) => ({ name: artist.name })),
+          album: {
+            name: track.album.name,
+            images: track.album.images || [],
+          },
+        }
+      }),
   })
 }
 

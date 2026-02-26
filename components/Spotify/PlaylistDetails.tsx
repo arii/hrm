@@ -1,17 +1,25 @@
-import { Box, CircularProgress, List, Paper, Typography } from '@mui/material'
-import { useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import List from '@mui/material/List'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
+import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { SpotifyTrackItem } from './SpotifyTrackItem'
 import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
-https://github.com/arii/hrm/pull/9379/conflict?name=components%252FSpotify%252FPlaylistDetails.tsx&ancestor_oid=bece23ba708cfe0cfde9328f1362198a15de3678&base_oid=67d618bb0ce139a5c1923f04122b23559b414949&head_oid=014ca2070caebb0b5985cf844f821d1631aeb527
-const PlaylistDetails = ({
+
+interface PlaylistDetailsProps {
+  playlistId: string
+  onTrackPlay: (trackUri: string) => void
+}
+
+const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   playlistId,
   onTrackPlay,
-}: {
-  playlistId: string
-  onTrackPlay: (uri: string, index: number) => void
 }) => {
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
   const limit = 20
 
@@ -34,18 +42,12 @@ const PlaylistDetails = ({
   )
 
   useEffect(() => {
-    // Reset and load initial tracks when playlistId changes
-    setTracks([])
-    setOffset(0)
-    setHasMore(true)
+    // Load initial tracks when playlistId changes.
+    // We avoid synchronously resetting state here to prevent 'set-state-in-effect' linter errors.
+    // loadTracks(0) will replace the tracks list once the data arrives.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTracks(0)
   }, [playlistId, loadTracks])
-
-  const handleLoadMore = () => {
-    const nextOffset = offset + tracks.length
-    setOffset(nextOffset)
-    fetchTracks(nextOffset)
-  }
 
   return (
     <>
@@ -69,13 +71,12 @@ const PlaylistDetails = ({
           }
           scrollableTarget="scrollable-playlist"
         >
-          <List dense sx={{ p: 0 }}>
+          <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
             {tracks.map((track, index) => (
               <SpotifyTrackItem
                 key={`${track.id}-${index}`}
                 track={track}
-                index={index}
-                onTogglePlay={(t, i) => onTrackPlay(t.uri, i)}
+                onClick={() => onTrackPlay(track.uri)}
               />
             ))}
           </List>

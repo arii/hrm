@@ -21,26 +21,6 @@ export function getSpotifyBasicAuth() {
 /**
  * Shared fetch wrapper for refreshing tokens
  */
-import { SpotifyPlaylistItem } from '@/types/core'
-import { Track } from '@spotify/web-api-ts-sdk'
-
-/**
- * Maps a Spotify Web API track object to our internal SpotifyPlaylistItem type.
- */
-export function mapSpotifyTrack(track: Track): SpotifyPlaylistItem {
-  return {
-    id: track.id,
-    name: track.name,
-    uri: track.uri,
-    duration_ms: track.duration_ms,
-    artists: track.artists.map((artist) => ({ name: artist.name })),
-    album: {
-      name: track.album.name,
-      images: track.album.images || [],
-    },
-  }
-}
-
 export async function refreshSpotifyToken(refreshToken: string) {
   const response = await fetch(SPOTIFY_CONSTANTS.TOKEN_URL, {
     method: 'POST',

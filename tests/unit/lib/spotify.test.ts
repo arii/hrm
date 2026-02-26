@@ -1,13 +1,8 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  refreshSpotifyToken,
-  getSpotifyBasicAuth,
-  mapSpotifyTrack,
-} from '@/lib/spotify'
+import { refreshSpotifyToken, getSpotifyBasicAuth } from '@/lib/spotify'
 import { SPOTIFY_CONSTANTS } from '@/lib/spotify'
-import { Track } from '@spotify/web-api-ts-sdk'
 import logger from '@/utils/logger'
 import { env } from '@/lib/env'
 
@@ -41,50 +36,6 @@ describe('lib/spotify', () => {
           `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
         ).toString('base64')
       expect(getSpotifyBasicAuth()).toBe(expectedAuth)
-    })
-  })
-
-  describe('mapSpotifyTrack', () => {
-    it('should correctly map a Spotify SDK track object to SpotifyPlaylistItem', () => {
-      const mockSdkTrack = {
-        id: 'track-id',
-        name: 'Track Name',
-        uri: 'spotify:track:track-id',
-        duration_ms: 120000,
-        artists: [{ name: 'Artist Name' }],
-        album: {
-          name: 'Album Name',
-          images: [{ url: 'image-url', height: 300, width: 300 }],
-        },
-      } as unknown as Track
-
-      const expected = {
-        id: 'track-id',
-        name: 'Track Name',
-        uri: 'spotify:track:track-id',
-        duration_ms: 120000,
-        artists: [{ name: 'Artist Name' }],
-        album: {
-          name: 'Album Name',
-          images: [{ url: 'image-url', height: 300, width: 300 }],
-        },
-      }
-
-      expect(mapSpotifyTrack(mockSdkTrack)).toEqual(expected)
-    })
-
-    it('should handle missing album images', () => {
-      const mockSdkTrack = {
-        id: 'track-id',
-        artists: [],
-        album: {
-          name: 'Album Name',
-          // No images field
-        },
-      } as unknown as Track
-
-      const result = mapSpotifyTrack(mockSdkTrack)
-      expect(result.album.images).toEqual([])
     })
   })
 

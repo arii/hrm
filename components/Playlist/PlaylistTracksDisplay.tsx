@@ -15,8 +15,13 @@ import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { SpotifyPlaylistItem as Track } from '@/types/core'
 import { SpotifyTrackItem } from '../Spotify/SpotifyTrackItem'
+import { formatDuration } from '@/lib/utils'
 
-const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
+interface PlaylistTracksDisplayProps {
+  playlistId: string
+}
+
+const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [tracks, setTracks] = useState<Track[]>([])
@@ -44,13 +49,19 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
     }
   }, [fetchTracks, offset])
 
-  const handleToggle = (index: number, isPlaying: boolean) => {
-    if (isPlaying) executeSpotify('PAUSE')
-    else
+  const handleTogglePlay = (
+    _track: Track,
+    index: number,
+    isPlaying: boolean
+  ) => {
+    if (isPlaying) {
+      executeSpotify('PAUSE')
+    } else {
       executeSpotify('PLAY', {
         contextUri: `spotify:playlist:${playlistId}`,
         offset: { position: offset + index },
       })
+    }
   }
 
   if ((loading || isInitialLoad) && tracks.length === 0) {
@@ -59,7 +70,9 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
         <CircularProgress />
       </Box>
     )
-  if (error)
+  }
+
+  if (error) {
     return (
       <Alert severity="error" sx={{ mt: 4 }}>
         {error}
@@ -73,23 +86,43 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
         This playlist is empty.
       </Typography>
     )
+  }
 
   return (
     <Box>
       <Paper>
-        <List dense sx={{ p: 0 }}>
+        <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
           {tracks.map((track, index) => {
             const isPlaying =
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
+
             return (
               <SpotifyTrackItem
-                key={`${track.id}-${index}`}
+                key={track.id}
                 track={track}
-                index={index}
                 isPlaying={isPlaying}
-                onTogglePlay={(_, i) => handleToggle(i, isPlaying)}
-                showPlaybackControls
+                onClick={() => handleTogglePlay(track, index, isPlaying)}
+                secondaryAction={
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary', mr: 2 }}
+                    >
+                      {formatDuration(track.duration_ms, {
+                        unit: 'milliseconds',
+                        format: 'MM:SS',
+                      })}
+                    </Typography>
+                    <IconButton
+                      onClick={() => handleTogglePlay(track, index, isPlaying)}
+                      aria-label={isPlaying ? 'Pause' : 'Play'}
+                      edge="end"
+                    >
+                      {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                    </IconButton>
+                  </Box>
+                }
               />
             )
           })}

@@ -42,18 +42,8 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistId(playlistId || null)
   }
 
-  const handlePlaylistPlay = (uri: string, index?: number) => {
-    const isPlaylist = uri.includes(':playlist:')
-    const contextUri = isPlaylist
-      ? uri
-      : selectedPlaylistId
-        ? `spotify:playlist:${selectedPlaylistId}`
-        : undefined
-
-    executeSpotify('PLAY', {
-      ...(contextUri ? { contextUri } : { uri }),
-      ...(typeof index === 'number' && { offset: { position: index } }),
-    })
+  const handlePlaylistPlay = (uri: string) => {
+    executeSpotify('PLAY', { playlistUri: uri })
   }
 
   return (
