@@ -18,8 +18,8 @@ import {
   Paper,
   Button,
 } from '@mui/material'
-import { PlayArrow, Pause, MusicNote } from '@mui/icons-material'
 import { formatDuration } from '@/lib/utils'
+import { SpotifyTrackItem } from '../Spotify/SpotifyTrackItem'
 
 const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
   const { spotifyData } = useWebSocket()
@@ -73,65 +73,14 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
             return (
-              <ListItem
+              <SpotifyTrackItem
                 key={`${track.id}-${index}`}
-                divider
-                disablePadding
-                secondaryAction={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'text.secondary', mr: 2 }}
-                    >
-                      {formatDuration(track.duration_ms, {
-                        unit: 'milliseconds',
-                        format: 'MM:SS',
-                      })}
-                    </Typography>
-                    <IconButton
-                      onClick={() => handleToggle(index, isPlaying)}
-                      edge="end"
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                    >
-                      {isPlaying ? <Pause /> : <PlayArrow />}
-                    </IconButton>
-                  </Box>
-                }
-                sx={{
-                  backgroundColor: isPlaying ? 'action.selected' : 'inherit',
-                }}
-              >
-                <ListItemButton
-                  onClick={() => handleToggle(index, isPlaying)}
-                  sx={{ py: 0.5, px: 1 }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 48 }}>
-                    <Avatar
-                      variant="rounded"
-                      src={
-                        track.album?.images?.[2]?.url ||
-                        track.album?.images?.[0]?.url
-                      }
-                      sx={{ width: 32, height: 32 }}
-                    >
-                      <MusicNote fontSize="small" />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      noWrap: true,
-                      fontWeight: 'medium',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      noWrap: true,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
+                track={track}
+                index={index}
+                isPlaying={isPlaying}
+                onTogglePlay={() => handleToggle(index, isPlaying)}
+                showPlaybackControls
+              />
             )
           })}
         </List>

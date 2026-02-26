@@ -80,7 +80,7 @@ describe('PlaylistDetails', () => {
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))
-    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1')
+    expect(onTrackPlay).toHaveBeenCalledWith('spotify:track:1', 0)
   })
 
   it('displays an error message when the API call fails', async () => {

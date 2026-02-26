@@ -10,18 +10,17 @@ import {
   Paper,
   Typography,
 } from '@mui/material'
-import { MusicNote } from '@mui/icons-material'
 import { useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { formatDuration } from '@/lib/utils'
 import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
+import { SpotifyTrackItem } from './SpotifyTrackItem'
 
 const PlaylistDetails = ({
   playlistId,
   onTrackPlay,
 }: {
   playlistId: string
-  onTrackPlay: (uri: string) => void
+  onTrackPlay: (uri: string, index: number) => void
 }) => {
   const [offset, setOffset] = useState(0)
   const limit = 20
@@ -65,53 +64,12 @@ const PlaylistDetails = ({
         >
           <List dense sx={{ p: 0 }}>
             {tracks.map((track, index) => (
-              <ListItem
+              <SpotifyTrackItem
                 key={`${track.id}-${index}`}
-                divider
-                disablePadding
-                secondaryAction={
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {formatDuration(track.duration_ms, {
-                      unit: 'milliseconds',
-                      format: 'MM:SS',
-                    })}
-                  </Typography>
-                }
-              >
-                <ListItemButton
-                  onClick={() => onTrackPlay(track.uri)}
-                  sx={{ py: 0.5, px: 1 }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 48 }}>
-                    <Avatar
-                      variant="rounded"
-                      src={
-                        track.album?.images?.[2]?.url ||
-                        track.album?.images?.[0]?.url
-                      }
-                      sx={{ width: 32, height: 32 }}
-                    >
-                      <MusicNote fontSize="small" />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      noWrap: true,
-                      fontWeight: 'medium',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      noWrap: true,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
+                track={track}
+                index={index}
+                onTogglePlay={() => onTrackPlay(track.uri, index)}
+              />
             ))}
           </List>
         </InfiniteScroll>
