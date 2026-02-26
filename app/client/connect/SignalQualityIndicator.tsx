@@ -7,6 +7,10 @@ import { useMemo } from 'react'
 import {
   STABILITY_THRESHOLD_MS,
   CRITICAL_THRESHOLD_MS,
+  EXCELLENT_SIGNAL_THRESHOLD_MS,
+  GOOD_SIGNAL_THRESHOLD_MS,
+  SIGNAL_PULSE_DURATION_S,
+  SIGNAL_LABEL_MIN_WIDTH_PX,
 } from '@/constants/bluetooth'
 
 type SignalStatusKey =
@@ -104,8 +108,8 @@ export const SignalQualityIndicator = ({
     if (lastPeriodMs > CRITICAL_THRESHOLD_MS) return 'critical'
     if (lastPeriodMs > STABILITY_THRESHOLD_MS) return 'warning'
 
-    if (periodMs < 1200) return 'excellent'
-    if (periodMs < 2200) return 'good'
+    if (periodMs < EXCELLENT_SIGNAL_THRESHOLD_MS) return 'excellent'
+    if (periodMs < GOOD_SIGNAL_THRESHOLD_MS) return 'good'
     return 'poor'
   }, [isConnected, periodMs, lastPeriodMs])
 
@@ -138,7 +142,9 @@ export const SignalQualityIndicator = ({
           gap: 0.5,
           opacity: isConnected ? 1 : 0.5,
           color: config.color,
-          animation: config.isAnimated ? 'pulse-signal 1.5s infinite' : 'none',
+          animation: config.isAnimated
+            ? `pulse-signal ${SIGNAL_PULSE_DURATION_S}s infinite`
+            : 'none',
           // Keyframes are defined in global styles to avoid re-parsing on every render
         }}
       >
@@ -149,7 +155,9 @@ export const SignalQualityIndicator = ({
             sx={{
               color: config.isAnimated ? config.color : 'text.secondary',
               // Set a minWidth for ms labels to prevent jitter, but allow text labels to expand
-              minWidth: config.label?.endsWith('ms') ? 45 : 'auto',
+              minWidth: config.label?.endsWith('ms')
+                ? SIGNAL_LABEL_MIN_WIDTH_PX
+                : 'auto',
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >

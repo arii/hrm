@@ -27,3 +27,15 @@ export const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
  * How many packets to keep in the rolling average history.
  */
 export const ROLLING_AVG_HISTORY_LENGTH = 5
+
+/**
+ * Signal quality tier thresholds (ms)
+ */
+export const EXCELLENT_SIGNAL_THRESHOLD_MS = 1200
+export const GOOD_SIGNAL_THRESHOLD_MS = 2200
+
+/**
+ * UI Constants for Signal Indicator
+ */
+export const SIGNAL_PULSE_DURATION_S = 1.5
+export const SIGNAL_LABEL_MIN_WIDTH_PX = 45
