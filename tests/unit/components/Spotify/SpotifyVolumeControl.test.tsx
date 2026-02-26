@@ -12,7 +12,14 @@ jest.mock('@/components/shared/VolumeSlider', () => ({
     onVolumeChangeCommitted,
     onToggleMute,
     disabled,
-  }: any) => (
+  }: {
+    volume: number
+    muted: boolean
+    onVolumeChange: (volume: number) => void
+    onVolumeChangeCommitted: (volume: number) => void
+    onToggleMute: () => void
+    disabled?: boolean
+  }) => (
     <div data-testid="mock-volume-slider">
       <span data-testid="volume-value">{volume}</span>
       <span data-testid="muted-value">{muted.toString()}</span>

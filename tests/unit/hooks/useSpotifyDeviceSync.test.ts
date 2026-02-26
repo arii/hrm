@@ -41,8 +41,8 @@ describe('useSpotifyDeviceSync', () => {
 
   it('updates state when spotifyData changes (server sync)', () => {
     const { result, rerender } = renderHook(
-      ({ data }) =>
-        useSpotifyDeviceSync(data, mockExecuteSpotify, 'Connected'),
+      ({ data }) => useSpotifyDeviceSync(data, mockExecuteSpotify, 'Connected'),
+      ({ data }) => useSpotifyDeviceSync(data, mockExecuteSpotify, 'Connected'),
       { initialProps: { data: defaultSpotifyData } }
     )
 
