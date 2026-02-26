@@ -1,27 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
 
 interface SpotifyVolumeControlProps {
   playbackVolume?: number
-  targetDeviceId?: string
   isConnected: boolean
+  onVolumeChangeCommitted: (volume: number) => void
 }
 
 const SpotifyVolumeControl = ({
   playbackVolume,
-  targetDeviceId,
   isConnected,
+  onVolumeChangeCommitted,
 }: SpotifyVolumeControlProps) => {
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const { showWarning } = useAppSnackbar()
-  const { execute: executeSpotify } = useSpotifyCommand()
 
   const [isSliding, setIsSliding] = useState(false)
-  const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
@@ -30,17 +27,13 @@ const SpotifyVolumeControl = ({
     if (isSliding) return
 
     const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
 
-    if (shouldRespectGracePeriod) return
-
+    // Only sync if outside the grace period of a manual update
     if (
       hasPendingSendRef.current &&
-      timeSinceLastVolumeSend >= VOLUME_SYNC_GRACE_PERIOD_MS
+      timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
     ) {
-      hasPendingSendRef.current = false
+      return
     }
 
     if (typeof playbackVolume === 'number' && playbackVolume !== volume) {
@@ -55,7 +48,6 @@ const SpotifyVolumeControl = ({
       setVolume(val)
       if (!isConnected) {
         const now = Date.now()
-        // Throttle warning to avoid spam during active sliding
         if (now - lastWarningTimeRef.current > 3000) {
           showWarning('Changes not saved: Offline')
           lastWarningTimeRef.current = now
@@ -65,40 +57,17 @@ const SpotifyVolumeControl = ({
     [isConnected, showWarning, setVolume]
   )
 
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (!isConnected || !targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-
-      hasPendingSendRef.current = true
-      lastVolumeSyncTimeRef.current = Date.now()
-
-      executeSpotify('SET_VOLUME', {
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      })
-
-      lastSentVolumeRef.current = messageKey
-    },
-    [isConnected, targetDeviceId, executeSpotify]
-  )
-
   const handleVolumeChangeCommitted = useCallback(
     (val: number) => {
       setIsSliding(false)
-      sendVolumeCommand(val)
-    },
-    [sendVolumeCommand]
-  )
+      if (!isConnected) return
 
-  useEffect(() => {
-    if (!isConnected) {
-      lastSentVolumeRef.current = null
-    }
-  }, [isConnected])
+      hasPendingSendRef.current = true
+      lastVolumeSyncTimeRef.current = Date.now()
+      onVolumeChangeCommitted(val)
+    },
+    [isConnected, onVolumeChangeCommitted]
+  )
 
   return (
     <VolumeSlider

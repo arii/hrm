@@ -28,6 +28,25 @@ jest.mock('@/constants/spotify', () => ({
   HRM_WEB_PLAYER_NAME: 'HRM Web Player',
 }))
 
+// Mock sub-components that have complex side effects or hooks
+jest.mock(
+  '@/app/client/control/components/spotify/SpotifyVolumeControl',
+  () => ({
+    __esModule: true,
+    default: ({
+      onVolumeChangeCommitted,
+    }: {
+      onVolumeChangeCommitted: (v: number) => void
+    }) => (
+      <div data-testid="mock-volume-control">
+        <button onClick={() => onVolumeChangeCommitted(75)}>
+          Set Volume 75
+        </button>
+      </div>
+    ),
+  })
+)
+
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
 
@@ -86,6 +105,19 @@ describe('components/SpotifyControls', () => {
       expect.objectContaining({
         type: 'SPOTIFY_COMMAND',
         command: 'PAUSE',
+      })
+    )
+  })
+
+  it('handles volume change committed', () => {
+    render(<SpotifyControls />)
+    fireEvent.click(screen.getByText('Set Volume 75'))
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SPOTIFY_COMMAND',
+        command: 'SET_VOLUME',
+        volume: 75,
+        deviceId: '1',
       })
     )
   })

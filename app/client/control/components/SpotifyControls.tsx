@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -67,11 +66,16 @@ const SpotifyControls = () => {
 
   const sendSpotifyCommand = useCallback(
     (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
+      command:
+        | 'PLAY'
+        | 'PAUSE'
+        | 'NEXT'
+        | 'PREVIOUS'
+        | 'TRANSFER_PLAYBACK'
+        | 'SET_VOLUME',
+      params?: { deviceId?: string; volume?: number }
     ) => {
-      const deviceId =
-        overriddenDeviceId !== undefined ? overriddenDeviceId : selectedDeviceId
+      const deviceId = params?.deviceId || selectedDeviceId
 
       switch (command) {
         case 'PLAY':
@@ -91,23 +95,17 @@ const SpotifyControls = () => {
             executeSpotify('TRANSFER_PLAYBACK', { deviceId })
           }
           break
+        case 'SET_VOLUME':
+          if (deviceId && typeof params?.volume === 'number') {
+            executeSpotify('SET_VOLUME', {
+              volume: params.volume,
+              deviceId,
+            })
+          }
+          break
       }
     },
     [selectedDeviceId, executeSpotify]
-  )
-
-  const handlePlaybackCommand = useCallback(
-    (command: SpotifyCommand) => {
-      if (
-        command === 'PLAY' ||
-        command === 'PAUSE' ||
-        command === 'NEXT' ||
-        command === 'PREVIOUS'
-      ) {
-        sendSpotifyCommand(command)
-      }
-    },
-    [sendSpotifyCommand]
   )
 
   const activeDevice = devices.find((d) => d.is_active)
@@ -148,7 +146,11 @@ const SpotifyControls = () => {
 
             <PlaybackControls
               isPlaying={spotifyData.playback.is_playing}
-              onCommand={handlePlaybackCommand}
+              onCommand={(command) =>
+                sendSpotifyCommand(
+                  command as 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS'
+                )
+              }
               disabled={connectionStatus !== 'Connected'}
             />
 
@@ -156,8 +158,10 @@ const SpotifyControls = () => {
               playbackVolume={
                 activeDevice ? spotifyData.playback.volume_percent : undefined
               }
-              targetDeviceId={selectedDeviceId}
               isConnected={connectionStatus === 'Connected'}
+              onVolumeChangeCommitted={(volume) =>
+                sendSpotifyCommand('SET_VOLUME', { volume })
+              }
             />
 
             <SpotifyDeviceSelector
@@ -166,7 +170,7 @@ const SpotifyControls = () => {
               onDeviceChange={(deviceId) => {
                 setSelectedDeviceId(deviceId)
                 if (deviceId) {
-                  sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+                  sendSpotifyCommand('TRANSFER_PLAYBACK', { deviceId })
                 }
               }}
               disabled={connectionStatus !== 'Connected'}
