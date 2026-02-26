@@ -158,7 +158,7 @@ export class SpotifyPlayerManager {
     command: SpotifyCommand,
     params: SpotifyCommandParameters
   ) {
-    const { deviceId, volume, playlistUri, contextUri, uri } = params
+    const { deviceId, volume, playlistUri, contextUri, uri, offset } = params
     const effectiveContextUri = contextUri || playlistUri
     const sdk = this.sdk
 
@@ -167,7 +167,7 @@ export class SpotifyPlayerManager {
         await this.executeSdkCommand(
           command,
           () => {
-            if (uri) {
+            if (uri && !offset) {
               return sdk.player.startResumePlayback(
                 deviceId as string,
                 undefined,
@@ -177,7 +177,9 @@ export class SpotifyPlayerManager {
             if (effectiveContextUri) {
               return sdk.player.startResumePlayback(
                 deviceId as string,
-                effectiveContextUri
+                effectiveContextUri,
+                undefined,
+                offset
               )
             }
             return sdk.player.startResumePlayback(deviceId as string)
