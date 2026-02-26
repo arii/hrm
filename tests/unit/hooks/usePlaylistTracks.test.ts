@@ -135,7 +135,6 @@ describe('hooks/usePlaylistTracks', () => {
     })
 
     expect(result.current.hasMore).toBe(true)
-
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ tracks: [mockTracks[0]], total: 10 }),

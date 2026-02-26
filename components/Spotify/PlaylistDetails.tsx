@@ -1,15 +1,4 @@
-import {
-  Box,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
-  Avatar,
-  Paper,
-  Typography,
-} from '@mui/material'
+import { Box, CircularProgress, List, Paper, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { usePlaylistTracks } from '@/hooks/usePlaylistTracks'
@@ -68,7 +57,7 @@ const PlaylistDetails = ({
                 key={`${track.id}-${index}`}
                 track={track}
                 index={index}
-                onTogglePlay={() => onTrackPlay(track.uri, index)}
+                onTogglePlay={(t, i) => onTrackPlay(t.uri, i)}
               />
             ))}
           </List>

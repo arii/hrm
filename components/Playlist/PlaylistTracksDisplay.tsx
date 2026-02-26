@@ -8,17 +8,10 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  IconButton,
   List,
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
-  Avatar,
   Paper,
   Button,
 } from '@mui/material'
-import { formatDuration } from '@/lib/utils'
 import { SpotifyTrackItem } from '../Spotify/SpotifyTrackItem'
 
 const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
@@ -78,7 +71,7 @@ const PlaylistTracksDisplay = ({ playlistId }: { playlistId: string }) => {
                 track={track}
                 index={index}
                 isPlaying={isPlaying}
-                onTogglePlay={() => handleToggle(index, isPlaying)}
+                onTogglePlay={(_, i) => handleToggle(i, isPlaying)}
                 showPlaybackControls
               />
             )

@@ -72,7 +72,11 @@ export const SpotifyTrackItem = ({
         sx={{ py: 0.5, px: 1 }}
       >
         <ListItemAvatar sx={{ minWidth: 48 }}>
-          <Avatar variant="rounded" src={albumArtUrl} sx={{ width: 32, height: 32 }}>
+          <Avatar
+            variant="rounded"
+            src={albumArtUrl}
+            sx={{ width: 32, height: 32 }}
+          >
             <MusicNote fontSize="small" />
           </Avatar>
         </ListItemAvatar>

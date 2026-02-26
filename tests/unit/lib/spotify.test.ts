@@ -46,17 +46,17 @@ describe('lib/spotify', () => {
 
   describe('mapSpotifyTrack', () => {
     it('should correctly map a Spotify SDK track object to SpotifyPlaylistItem', () => {
-      const mockSdkTrack: Partial<Track> = {
+      const mockSdkTrack = {
         id: 'track-id',
         name: 'Track Name',
         uri: 'spotify:track:track-id',
         duration_ms: 120000,
-        artists: [{ name: 'Artist Name' } as any],
+        artists: [{ name: 'Artist Name' }],
         album: {
           name: 'Album Name',
           images: [{ url: 'image-url', height: 300, width: 300 }],
-        } as any,
-      }
+        },
+      } as unknown as Track
 
       const expected = {
         id: 'track-id',
@@ -70,20 +70,20 @@ describe('lib/spotify', () => {
         },
       }
 
-      expect(mapSpotifyTrack(mockSdkTrack as Track)).toEqual(expected)
-    } )
+      expect(mapSpotifyTrack(mockSdkTrack)).toEqual(expected)
+    })
 
     it('should handle missing album images', () => {
-      const mockSdkTrack: Partial<Track> = {
+      const mockSdkTrack = {
         id: 'track-id',
         artists: [],
         album: {
           name: 'Album Name',
           // No images field
-        } as any,
-      }
+        },
+      } as unknown as Track
 
-      const result = mapSpotifyTrack(mockSdkTrack as Track)
+      const result = mapSpotifyTrack(mockSdkTrack)
       expect(result.album.images).toEqual([])
     })
   })

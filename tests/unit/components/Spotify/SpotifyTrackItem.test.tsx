@@ -25,11 +25,7 @@ describe('SpotifyTrackItem', () => {
 
   it('renders track information correctly', () => {
     render(
-      <SpotifyTrackItem
-        track={mockTrack}
-        index={0}
-        onTogglePlay={jest.fn()}
-      />
+      <SpotifyTrackItem track={mockTrack} index={0} onTogglePlay={jest.fn()} />
     )
 
     expect(screen.getByText('Test Track')).toBeInTheDocument()
@@ -80,11 +76,7 @@ describe('SpotifyTrackItem', () => {
 
   it('uses small thumbnail if available', () => {
     render(
-      <SpotifyTrackItem
-        track={mockTrack}
-        index={0}
-        onTogglePlay={jest.fn()}
-      />
+      <SpotifyTrackItem track={mockTrack} index={0} onTogglePlay={jest.fn()} />
     )
 
     const avatar = screen.getByRole('img', { hidden: true })
