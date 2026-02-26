@@ -257,6 +257,8 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus])
 
+  const volumeSliderSx = useMemo(() => ({ mt: 3, mb: 1 }), [])
+
   return (
     <ControlCard
       data-testid="spotify-controls"
@@ -327,7 +329,7 @@ const SpotifyControls = () => {
               showValue
               sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"
-              sx={{ mt: 3, mb: 1 }}
+              sx={volumeSliderSx}
             />
 
             {devices.length > 0 && (
