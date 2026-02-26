@@ -32,6 +32,11 @@ export default function WorkoutTableHeader({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!docId) {
+      setLoading(false)
+      return
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true)
@@ -47,9 +52,7 @@ export default function WorkoutTableHeader({
       }
     }
 
-    if (docId) {
-      fetchData()
-    }
+    fetchData()
   }, [docId, refreshKey])
 
   const renderContent = () => {

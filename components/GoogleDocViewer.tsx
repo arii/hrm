@@ -11,7 +11,7 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { alpha } from '@mui/material/styles'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import RefreshIconButton from './RefreshIconButton'
 
 interface GoogleDocViewerProps {
@@ -36,17 +36,6 @@ const GoogleDocViewer = ({
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  const finalEmbedUrl = useMemo(() => {
-    if (!embedUrl) return ''
-    try {
-      const u = new URL(embedUrl)
-      u.searchParams.set('embedded', 'true')
-      return u.toString()
-    } catch {
-      return ''
-    }
-  }, [embedUrl])
-
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
@@ -61,7 +50,15 @@ const GoogleDocViewer = ({
     return () => clearTimeout(timeout)
   }, [refreshKey]) // Rerun on refresh
 
-  if (!finalEmbedUrl) {
+  if (!embedUrl) return null
+
+  let finalEmbedUrl = ''
+  try {
+    const u = new URL(embedUrl)
+    u.searchParams.set('embedded', 'true')
+    finalEmbedUrl = u.toString()
+  } catch {
+    console.error('Invalid URL:', embedUrl)
     return null
   }
 
