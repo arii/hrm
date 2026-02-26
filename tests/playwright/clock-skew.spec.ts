@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import type { ServerMessage } from '@/types/websocket'
 
 test('should handle clock skew correctly', async ({ page }) => {
   // Use a long timeout for the initial load and build
@@ -11,7 +12,7 @@ test('should handle clock skew correctly', async ({ page }) => {
       timeout: 10000,
     })
     await page.evaluate((msg) => {
-      window.__TEST_CONTROLS__!.dispatch!(msg as any)
+      window.__TEST_CONTROLS__!.dispatch!(msg as ServerMessage)
     }, message)
   }
 

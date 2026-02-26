@@ -33,9 +33,7 @@ export const useSpotifyDeviceSync = (
       if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
         return Boolean(activeId)
       }
-      const selectedStillExists = devices.some(
-        (d) => d.id === selectedDeviceId
-      )
+      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
       return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
     }
 

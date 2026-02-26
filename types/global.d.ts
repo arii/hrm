@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
 import { SpotifyService } from './interfaces'
 import { BluetoothConnectionStatus } from './bluetooth'
-import { ServerMessage } from './websocket'
+import { ServerMessage, SpotifyData } from './websocket'
 import TabataTimer from '../services/tabataTimer'
 
 // Define a comprehensive interface for the global test controls
@@ -19,7 +19,7 @@ export interface TestControls {
 
   // From Spotify components
   setSpotifyServiceInitialized?: (initialized: boolean) => void
-  injectSpotifyData?: (data: any) => void
+  injectSpotifyData?: (data: SpotifyData) => void
 }
 
 declare global {
