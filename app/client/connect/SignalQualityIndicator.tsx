@@ -1,4 +1,4 @@
-import { Box, Tooltip, Typography, useTheme } from '@mui/material'
+import { Box, Palette, Tooltip, Typography, useTheme } from '@mui/material'
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt'
 import SignalCellularAlt2BarIcon from '@mui/icons-material/SignalCellularAlt2Bar'
 import SignalCellularAlt1BarIcon from '@mui/icons-material/SignalCellularAlt1Bar'
@@ -8,6 +8,73 @@ import {
   STABILITY_THRESHOLD_MS,
   CRITICAL_THRESHOLD_MS,
 } from '@/constants/bluetooth'
+
+type SignalStatusKey =
+  | 'critical'
+  | 'warning'
+  | 'excellent'
+  | 'good'
+  | 'poor'
+  | 'none'
+
+interface StatusConfig {
+  color: string
+  icon: typeof SignalCellularAltIcon
+  isAnimated: boolean
+  label?: string
+}
+
+const getStatusConfig = (
+  key: SignalStatusKey,
+  palette: Palette,
+  periodMs: number,
+  isConnected: boolean
+): StatusConfig => {
+  switch (key) {
+    case 'critical':
+      return {
+        color: palette.error.main,
+        label: 'Signal Lost',
+        icon: SignalCellularConnectedNoInternet0BarIcon,
+        isAnimated: true,
+      }
+    case 'warning':
+      return {
+        color: palette.warning.main,
+        label: 'Weak Signal',
+        icon: SignalCellularAlt1BarIcon,
+        isAnimated: true,
+      }
+    case 'excellent':
+      return {
+        color: palette.success.main,
+        label: `${periodMs}ms`,
+        icon: SignalCellularAltIcon,
+        isAnimated: false,
+      }
+    case 'good':
+      return {
+        color: palette.warning.main,
+        label: `${periodMs}ms`,
+        icon: SignalCellularAlt2BarIcon,
+        isAnimated: false,
+      }
+    case 'poor':
+      return {
+        color: palette.error.main,
+        label: `${periodMs}ms`,
+        icon: SignalCellularAlt1BarIcon,
+        isAnimated: false,
+      }
+    default:
+      return {
+        color: palette.text.disabled,
+        label: isConnected ? 'Waiting...' : 'Disconnected',
+        icon: SignalCellularConnectedNoInternet0BarIcon,
+        isAnimated: false,
+      }
+  }
+}
 
 interface SignalQualityIndicatorProps {
   /**
@@ -31,66 +98,22 @@ export const SignalQualityIndicator = ({
   isConnected,
 }: SignalQualityIndicatorProps) => {
   const { palette } = useTheme()
-  const isCritical = isConnected && lastPeriodMs > CRITICAL_THRESHOLD_MS
-  const isWarning = isConnected && lastPeriodMs > STABILITY_THRESHOLD_MS
 
-  const quality = useMemo(() => {
+  const currentStatusKey = useMemo((): SignalStatusKey => {
     if (!isConnected || periodMs === 0) return 'none'
+    if (lastPeriodMs > CRITICAL_THRESHOLD_MS) return 'critical'
+    if (lastPeriodMs > STABILITY_THRESHOLD_MS) return 'warning'
+
     if (periodMs < 1200) return 'excellent'
     if (periodMs < 2200) return 'good'
     return 'poor'
-  }, [isConnected, periodMs])
+  }, [isConnected, periodMs, lastPeriodMs])
 
-  const STATUS_CONFIG = useMemo(
-    () =>
-      ({
-        critical: {
-          color: palette.error.main,
-          label: 'Signal Lost',
-          icon: SignalCellularConnectedNoInternet0BarIcon,
-          isAnimated: true,
-        },
-        warning: {
-          color: palette.warning.main,
-          label: 'Weak Signal',
-          icon: SignalCellularAlt1BarIcon,
-          isAnimated: true,
-        },
-        excellent: {
-          color: palette.success.main,
-          label: `${periodMs}ms`,
-          icon: SignalCellularAltIcon,
-          isAnimated: false,
-        },
-        good: {
-          color: palette.warning.main,
-          label: `${periodMs}ms`,
-          icon: SignalCellularAlt2BarIcon,
-          isAnimated: false,
-        },
-        poor: {
-          color: palette.error.main,
-          label: `${periodMs}ms`,
-          icon: SignalCellularAlt1BarIcon,
-          isAnimated: false,
-        },
-        none: {
-          color: palette.text.disabled,
-          label: isConnected ? 'Waiting...' : 'Disconnected',
-          icon: SignalCellularConnectedNoInternet0BarIcon,
-          isAnimated: false,
-        },
-      }) as const,
-    [palette, periodMs, isConnected]
+  const config = useMemo(
+    () => getStatusConfig(currentStatusKey, palette, periodMs, isConnected),
+    [currentStatusKey, palette, periodMs, isConnected]
   )
 
-  const currentStatusKey = isCritical
-    ? 'critical'
-    : isWarning
-      ? 'warning'
-      : quality
-
-  const config = STATUS_CONFIG[currentStatusKey]
   const Icon = config.icon
   const reliability =
     periodMs > 0 ? Math.min(100, Math.round(100000 / periodMs)) : 0
@@ -101,7 +124,9 @@ export const SignalQualityIndicator = ({
       title={
         isConnected
           ? `Signal Quality: ${periodMs}ms avg (~${reliability}% capture)${
-              isWarning ? ` | Latency: ${lastPeriodMs}ms` : ''
+              currentStatusKey === 'warning' || currentStatusKey === 'critical'
+                ? ` | Latency: ${lastPeriodMs}ms`
+                : ''
             }`
           : 'No Signal'
       }
@@ -124,7 +149,7 @@ export const SignalQualityIndicator = ({
             sx={{
               color: config.isAnimated ? config.color : 'text.secondary',
               // Set a minWidth for ms labels to prevent jitter, but allow text labels to expand
-              minWidth: config.label.endsWith('ms') ? 45 : 'auto',
+              minWidth: config.label?.endsWith('ms') ? 45 : 'auto',
               fontWeight: config.isAnimated ? 'bold' : 'normal',
             }}
           >
