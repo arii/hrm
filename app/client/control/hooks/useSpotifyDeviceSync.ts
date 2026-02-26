@@ -8,7 +8,11 @@ import {
   EMPTY_DEVICES,
 } from '@/constants/spotify'
 
-export const useSpotifyDeviceSync = (isSliding: boolean, volume: number, setVolume: (v: number) => void) => {
+export const useSpotifyDeviceSync = (
+  isSliding: boolean,
+  volume: number,
+  setVolume: (v: number) => void
+) => {
   const { spotifyData } = useWebSocket()
   const devices = spotifyData?.devices || EMPTY_DEVICES
   const playback = spotifyData?.playback

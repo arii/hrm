@@ -135,8 +135,7 @@ const SpotifyDisplay = () => {
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   const hasActiveDevice =
-    !!selectedDeviceId ||
-    devices.some((device) => device.is_active)
+    !!selectedDeviceId || devices.some((device) => device.is_active)
 
   // Track the last time volume command was sent to prevent sync race conditions
   const lastVolumeSendTimeRef = useRef<number>(0)
@@ -191,8 +190,7 @@ const SpotifyDisplay = () => {
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
-        selectedDeviceId ||
-        devices.find((device) => device.is_active)?.id
+        selectedDeviceId || devices.find((device) => device.is_active)?.id
 
       // Refinement: Only attempt to send the command if a target device is identified.
       // The VolumeSlider is already disabled in the UI if !hasActiveDevice.

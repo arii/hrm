@@ -30,7 +30,8 @@ import { useSpotifyDeviceSync } from '../hooks/useSpotifyDeviceSync'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  const { connectionStatus, sendData, spotifyServiceInitialized } = useWebSocket()
+  const { connectionStatus, sendData, spotifyServiceInitialized } =
+    useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
 
@@ -65,8 +66,7 @@ const SpotifyControls = () => {
   )
 
   const shouldShowControls =
-    spotifyServiceInitialized &&
-    (hasTrack || devices.some((d) => d.is_active))
+    spotifyServiceInitialized && (hasTrack || devices.some((d) => d.is_active))
 
   const refresh = useCallback(
     () =>
@@ -86,7 +86,7 @@ const SpotifyControls = () => {
     (command: SpotifyCommand) => {
       const deviceId = resolveTargetDeviceId()
       if (['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS'].includes(command)) {
-        executeSpotify(command as any, { deviceId })
+        executeSpotify(command, { deviceId })
       }
     },
     [resolveTargetDeviceId, executeSpotify]
@@ -108,7 +108,12 @@ const SpotifyControls = () => {
       })
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, executeSpotify, markVolumeCommandSent]
+    [
+      connectionStatus,
+      resolveTargetDeviceId,
+      executeSpotify,
+      markVolumeCommandSent,
+    ]
   )
 
   useEffect(() => {
