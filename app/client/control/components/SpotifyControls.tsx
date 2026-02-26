@@ -259,6 +259,8 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus])
 
+  const volumeSliderSx = useMemo(() => ({ mt: 3, mb: 1 }), [])
+
   return (
     <ControlCard
       data-testid="spotify-controls"

@@ -186,18 +186,26 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel and stabilize
+  // Navigate all pages to their respective routes in parallel
+  const baseUrl = getBaseURL()
   await Promise.all([
-    navigateAndWait(dashboardPage, HRM_ROUTES.DASHBOARD),
-    navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
-    navigateAndWait(mockPage, HRM_ROUTES.MOCK),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
+    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
   ])
 
-  // Wait for WebSocket connections to be established (longer timeout for CI stability)
+  // Wait for all pages to be fully loaded and idle
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
-    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
-    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
+    waitForPageReady(dashboardPage),
+    waitForPageReady(controlPage),
+    waitForPageReady(mockPage),
+  ])
+
+  // Wait for WebSocket connections to be established
+  await Promise.all([
+    waitForWebSocketConnection(dashboardPage),
+    waitForWebSocketConnection(controlPage),
+    waitForWebSocketConnection(mockPage),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
