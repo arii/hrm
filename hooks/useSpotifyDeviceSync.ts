@@ -1,6 +1,6 @@
 import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
 import { clampVolume } from '@/hooks/useVolumePreference'
-import { SpotifyCommand } from '@/types/core'
+import { SpotifyCommand, SpotifyCommandParameters } from '@/types/core'
 import { SpotifyData } from '@/types/websocket'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 
@@ -76,7 +76,10 @@ const spotifyDeviceSyncReducer = (
 
 export const useSpotifyDeviceSync = (
   spotifyData: SpotifyData,
-  executeSpotify: (command: SpotifyCommand, payload?: any) => void,
+  executeSpotify: (
+    command: SpotifyCommand,
+    payload?: SpotifyCommandParameters
+  ) => void,
   connectionStatus: string
 ) => {
   const [state, dispatch] = useReducer(spotifyDeviceSyncReducer, {

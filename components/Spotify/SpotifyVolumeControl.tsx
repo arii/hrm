@@ -21,7 +21,11 @@ const SpotifyVolumeControl = ({
 }: SpotifyVolumeControlProps) => {
   return (
     <Box
-      sx={{ minWidth: { xs: 150, md: 250 }, display: 'flex', alignItems: 'center' }}
+      sx={{
+        minWidth: { xs: 150, md: 250 },
+        display: 'flex',
+        alignItems: 'center',
+      }}
       data-testid="spotify-volume-control"
     >
       <VolumeSlider
