@@ -174,6 +174,11 @@ export default defineConfig({
           SPOTIFY_CLIENT_ID: 'test_client_id',
           SPOTIFY_CLIENT_SECRET: 'test_client_secret',
           ALLOW_DEBUG_RESET: 'true',
+          // Mock Google Doc URLs to prevent configuration errors in VRT
+          GOOGLE_DOC_WORKOUT_URL:
+            'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+          GOOGLE_DOC_IFRAME_URL:
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
           WEBSOCKET_WATCHDOG_INTERVAL: '5000',
         },
       },
