@@ -9,6 +9,8 @@ import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import {
   VOLUME_SYNC_GRACE_PERIOD_MS,
   SPOTIFY_AWAITING_LOGIN,
+  SPOTIFY_NO_ACTIVE_PLAYBACK,
+  EMPTY_DEVICES,
 } from '@/constants/spotify'
 import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -50,8 +52,6 @@ type SpotifyDisplayAction =
     }
 
 // 3. Reducer Logic
-const EMPTY_DEVICES: SpotifyDevice[] = []
-
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -303,7 +303,7 @@ const SpotifyDisplay = () => {
 
   if (isLoggedIn) {
     const isWaiting = track.name === SPOTIFY_AWAITING_LOGIN
-    const displayTrackName = isWaiting ? 'No Active Playback' : track.name
+    const displayTrackName = isWaiting ? SPOTIFY_NO_ACTIVE_PLAYBACK : track.name
     const displayArtist = isWaiting ? '' : `— ${track.artist}`
 
     return (

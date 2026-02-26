@@ -1,3 +1,5 @@
+import { SpotifyDevice } from '@/types/core'
+
 export const SPOTIFY_AUTH_LOOP_GUARD_KEY = 'spotify_auth_loop_guard'
 export const SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT = 15000
 export const HRM_WEB_PLAYER_NAME = 'HRM Web Player'
@@ -18,3 +20,6 @@ export const SPOTIFY_NO_TRACK_PLAYING = 'No Track Playing'
 export const SPOTIFY_CONNECT_CTA = 'Connect to HRM Web Player'
 export const SPOTIFY_SEARCHING_DEVICES = 'Searching for devices...'
 export const SPOTIFY_OFFLINE_WARNING = 'Changes not saved: Offline'
+export const SPOTIFY_NO_ACTIVE_PLAYBACK = 'No Active Playback'
+
+export const EMPTY_DEVICES: SpotifyDevice[] = []

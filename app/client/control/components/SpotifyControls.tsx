@@ -29,12 +29,11 @@ import {
   SPOTIFY_SEARCHING_DEVICES,
   SPOTIFY_OFFLINE_WARNING,
   SPOTIFY_HOVER_COLOR,
+  EMPTY_DEVICES,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-
-const EMPTY_DEVICES: SpotifyDevice[] = []
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -406,7 +405,11 @@ const SpotifyControls = () => {
             disabled={spotifyServiceInitialized && !devices.length}
             startIcon={
               spotifyServiceInitialized && !devices.length ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  aria-label="Loading Spotify status"
+                />
               ) : (
                 <LibraryMusic />
               )
