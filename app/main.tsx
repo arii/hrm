@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import Box from '@mui/material/Box'
 import CombinedFooter from '@/components/CombinedFooter'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -19,7 +18,6 @@ import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [footerHeight, setFooterHeight] = useState(56)
 
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
@@ -40,7 +38,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       data-testid="main-content-layout"
                       role="main"
                       sx={{
-                        pb: `${footerHeight}px`,
+                        pb: 'var(--footer-height, 56px)',
                         minHeight: '100vh',
                         display: 'flex',
                         flexDirection: 'column',
@@ -50,7 +48,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                       <Footer />
                     </Box>
                   </AnimatePresence>
-                  <CombinedFooter onHeightChange={setFooterHeight} />
+                  <CombinedFooter />
                 </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>

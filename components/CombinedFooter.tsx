@@ -1,46 +1,27 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import Paper from '@mui/material/Paper'
 import Divider from '@mui/material/Divider'
-import SpotifyDisplay from './SpotifyDisplay'
-import BottomNavBar from './BottomNavBar'
-import { useEffect, useMemo } from 'react'
+import { SpotifyContent } from './SpotifyDisplay'
+import { BottomNavContent } from './BottomNavBar'
+import { useGlobalPlayerVisibility } from '@/hooks/useGlobalPlayerVisibility'
+import { useEffect } from 'react'
 
-export default function CombinedFooter({
-  onHeightChange,
-}: {
-  onHeightChange?: (h: number) => void
-}) {
-  const pathname = usePathname()
-  const { spotifyData, timerData } = useWebSocket()
-  const { isLoggedIn } = useSpotifyAuth()
+export default function CombinedFooter() {
+  const isVisible = useGlobalPlayerVisibility()
+  const height = isVisible ? 104 : 56
 
-  const showSpotifyBar = useMemo(() => {
-    if (pathname === '/client/control') return false
-    return (
-      spotifyData.playback.is_playing ||
-      timerData.isRunning ||
-      timerData.currentPhase !== 'IDLE' ||
-      pathname === '/client/spotify-selection' ||
-      (!isLoggedIn && pathname === '/')
-    )
-  }, [
-    pathname,
-    spotifyData.playback.is_playing,
-    timerData.isRunning,
-    timerData.currentPhase,
-    isLoggedIn,
-  ])
-
-  const height = showSpotifyBar ? 104 : 56
-
-  useEffect(() => onHeightChange?.(height), [height, onHeightChange])
+  useEffect(() => {
+    document.documentElement.style.setProperty('--footer-height', `${height}px`)
+    return () => {
+      document.documentElement.style.removeProperty('--footer-height')
+    }
+  }, [height])
 
   return (
     <Paper
+      component="footer"
+      role="contentinfo"
       elevation={10}
       data-testid="combined-footer"
       sx={{
@@ -59,13 +40,13 @@ export default function CombinedFooter({
         borderColor: 'divider',
       }}
     >
-      {showSpotifyBar && (
+      {isVisible && (
         <>
-          <SpotifyDisplay isIntegrated />
+          <SpotifyContent />
           <Divider sx={{ opacity: 0.1 }} />
         </>
       )}
-      <BottomNavBar isIntegrated />
+      <BottomNavContent />
     </Paper>
   )
 }
