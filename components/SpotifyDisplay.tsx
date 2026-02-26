@@ -6,7 +6,10 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import {
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+  SPOTIFY_AWAITING_LOGIN,
+} from '@/constants/spotify'
 import { SpotifyDevice } from '@/types/core'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -16,7 +19,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
@@ -47,6 +50,8 @@ type SpotifyDisplayAction =
     }
 
 // 3. Reducer Logic
+const EMPTY_DEVICES: SpotifyDevice[] = []
+
 const spotifyDisplayReducer = (
   state: SpotifyDisplayState,
   action: SpotifyDisplayAction
@@ -113,11 +118,8 @@ const SpotifyDisplay = () => {
 
   // Use defensive variables to handle partial or empty data from the WebSocket.
   const playback = spotifyData?.playback
-  const devices = useMemo(
-    () => spotifyData?.devices || [],
-    [spotifyData?.devices]
-  )
-  const track = playback?.track || { name: 'Awaiting Login...', artist: '' }
+  const devices = spotifyData?.devices || EMPTY_DEVICES
+  const track = playback?.track || { name: SPOTIFY_AWAITING_LOGIN, artist: '' }
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
@@ -300,7 +302,7 @@ const SpotifyDisplay = () => {
   }
 
   if (isLoggedIn) {
-    const isWaiting = track.name === 'Awaiting Login...'
+    const isWaiting = track.name === SPOTIFY_AWAITING_LOGIN
     const displayTrackName = isWaiting ? 'No Active Playback' : track.name
     const displayArtist = isWaiting ? '' : `— ${track.artist}`
 

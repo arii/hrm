@@ -23,10 +23,18 @@ import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
   SPOTIFY_BRAND_COLOR,
+  SPOTIFY_AWAITING_LOGIN,
+  SPOTIFY_NO_TRACK_PLAYING,
+  SPOTIFY_CONNECT_CTA,
+  SPOTIFY_SEARCHING_DEVICES,
+  SPOTIFY_OFFLINE_WARNING,
+  SPOTIFY_HOVER_COLOR,
 } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
+
+const EMPTY_DEVICES: SpotifyDevice[] = []
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -34,11 +42,7 @@ const SpotifyControls = () => {
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
 
-  // Use defensive destructuring to handle partial or empty data from the WebSocket.
-  const devices = useMemo(
-    () => spotifyData?.devices || [],
-    [spotifyData?.devices]
-  )
+  const devices = spotifyData?.devices || EMPTY_DEVICES
   const playback = spotifyData?.playback
   const track = playback?.track || { name: '', artist: '' }
 
@@ -75,23 +79,26 @@ const SpotifyControls = () => {
 
   const hasTrack = !!(
     track.name &&
-    !['', 'Awaiting Login...', 'No Track Playing'].includes(track.name)
+    !['', SPOTIFY_AWAITING_LOGIN, SPOTIFY_NO_TRACK_PLAYING].includes(track.name)
   )
   const shouldShowControls =
     spotifyServiceInitialized &&
     (hasTrack || devices.some((d: SpotifyDevice) => d.is_active))
 
-  useEffect(() => {
-    const refresh = () =>
+  const refresh = useCallback(
+    () =>
       connectionStatus === 'Connected' &&
       spotifyServiceInitialized &&
-      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+      sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' }),
+    [connectionStatus, spotifyServiceInitialized, sendData]
+  )
+
+  useEffect(() => {
     refresh()
     window.addEventListener('focus', refresh)
     return () => window.removeEventListener('focus', refresh)
-  }, [connectionStatus, sendData, spotifyServiceInitialized])
+  }, [refresh])
 
-  // 4. Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d: SpotifyDevice) => d.is_active)
     const activeId = activeDevice?.id
@@ -226,7 +233,7 @@ const SpotifyControls = () => {
         const now = Date.now()
         // Throttle warning to once every 3 seconds to avoid spam during sliding
         if (now - lastWarningTimeRef.current > 3000) {
-          showWarning('Changes not saved: Offline')
+          showWarning(SPOTIFY_OFFLINE_WARNING)
           lastWarningTimeRef.current = now
         }
       }
@@ -408,7 +415,7 @@ const SpotifyControls = () => {
               textTransform: 'none',
               py: 1.5,
               bgcolor: SPOTIFY_BRAND_COLOR,
-              '&:hover': { bgcolor: '#1ed760' },
+              '&:hover': { bgcolor: SPOTIFY_HOVER_COLOR },
               '&.Mui-disabled': {
                 bgcolor: 'rgba(29, 185, 84, 0.3)',
                 color: 'rgba(255, 255, 255, 0.5)',
@@ -416,8 +423,8 @@ const SpotifyControls = () => {
             }}
           >
             {spotifyServiceInitialized && !devices.length
-              ? 'Searching for devices...'
-              : 'Connect to HRM Web Player'}
+              ? SPOTIFY_SEARCHING_DEVICES
+              : SPOTIFY_CONNECT_CTA}
           </Button>
         )}
       </CardContent>
