@@ -23,7 +23,7 @@ fi
 ensure_label_exists() {
   local name=$1
   local description=$2
-  local color=$3
+  local color=${3:-"ededed"} # Default to gray if no color is provided
 
   # Trim whitespace
   local clean_name=$(echo "$name" | xargs)
@@ -39,7 +39,7 @@ ensure_label_exists() {
     # providing a safety net if the existence check missed a label (e.g. due to race conditions).
     local cmd=("gh" "label" "create" "$clean_name")
     if [ -n "$description" ]; then cmd+=("--description" "$description"); fi
-    if [ -n "$color" ]; then cmd+=("--color" "$color"); fi
+    cmd+=("--color" "$color")
 
     set +e
     local error_msg
@@ -108,10 +108,22 @@ if [ -n "$NEW_LABELS" ]; then
   # Refresh existing labels to include any created in the first step.
   EXISTING_LABELS=$(gh label list --limit 1000 --json name --jq '.[].name' | tr -d '"\r')
   for label in "${LABELS[@]}"; do
+    # When creating a new label that was suggested by AI but not in managed list, we don't have a desc/color.
+    # The helper function defaults color to "ededed" if missing.
     ensure_label_exists "$label"
   done
   endgroup
 
   log "Adding labels: $NEW_LABELS"
-  gh pr edit $PR_NUMBER --add-label "$NEW_LABELS"
+  # Capture output and exit code to provide better error messages
+  set +e
+  ADD_LABEL_OUTPUT=$(gh pr edit $PR_NUMBER --add-label "$NEW_LABELS" 2>&1)
+  ADD_LABEL_EXIT_CODE=$?
+  set -e
+
+  if [ $ADD_LABEL_EXIT_CODE -ne 0 ]; then
+    error "Failed to add labels to PR #$PR_NUMBER: $ADD_LABEL_OUTPUT"
+  else
+    log "Successfully added labels."
+  fi
 fi
