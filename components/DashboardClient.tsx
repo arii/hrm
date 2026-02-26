@@ -4,38 +4,16 @@ import Container from '@mui/material/Container'
 import { SxProps } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
+import Alert from '@mui/material/Alert'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
 
-// Dynamically import SpotifyDisplay with SSR disabled.
-const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: 56,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        width: '100%',
-        minHeight: '64px',
-      }}
-    >
-      <DashboardSectionLoadingSkeleton height="64px" />
-    </Box>
-  ),
-})
-
 const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
   ssr: false,
 })
-
-const DOC_URL =
-  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const WorkoutTableHeader = dynamic(
   () => import('@/components/WorkoutTableHeader'),
@@ -50,9 +28,6 @@ const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
   loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
 
-const DOC_ID =
-  '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
-
 const mainGridStyles: SxProps = {
   display: 'grid',
   gridTemplateColumns: {
@@ -64,11 +39,15 @@ const mainGridStyles: SxProps = {
 
 interface DashboardClientProps {
   useNativeTable: boolean
+  docId?: string
+  iframeUrl?: string
   triggerError?: boolean
 }
 
 const DashboardClient = ({
   useNativeTable,
+  docId,
+  iframeUrl,
   triggerError,
 }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
@@ -87,6 +66,11 @@ const DashboardClient = ({
     }
   }
 
+  const hasValidConfig = useNativeTable ? !!docId : !!iframeUrl
+  const missingConfigMsg = useNativeTable
+    ? 'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
+    : 'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
+
   return (
     <Box sx={{ backgroundColor: 'background.default' }}>
       {triggerError && <TestErrorTrigger />}
@@ -100,22 +84,24 @@ const DashboardClient = ({
         }}
       >
         <Box sx={mainGridStyles}>
-          <Box sx={{ height: '100%' }}>
-            <TimerDisplay />
-          </Box>
+          <TimerDisplay />
           <HrmConnectionPanel />
         </Box>
         <Box sx={{ width: '100%', mt: 2 }}>
-          {useNativeTable ? (
+          {!hasValidConfig ? (
+            <Alert severity="warning" sx={{ width: '100%' }}>
+              {missingConfigMsg}
+            </Alert>
+          ) : useNativeTable ? (
             <WorkoutTableHeader
-              docId={DOC_ID}
+              docId={docId || ''}
               refreshKey={refreshKey}
               onRefresh={handleRefresh}
             />
           ) : (
             <GoogleDocViewer
               title="Today's Training Regimen"
-              embedUrl={DOC_URL}
+              embedUrl={iframeUrl || ''}
               height={500}
               isShrunk={docIsManuallyShrunk}
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
@@ -125,7 +111,6 @@ const DashboardClient = ({
           )}
         </Box>
       </Container>
-      <SpotifyDisplay />
     </Box>
   )
 }
