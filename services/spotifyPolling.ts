@@ -75,9 +75,9 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
-  private getCurrentlyPlaying = async () => {
+  private getCurrentlyPlaying = async (force: boolean = false) => {
     try {
-      if (Date.now() - this.lastCommandTime < 2000) {
+      if (!force && Date.now() - this.lastCommandTime < 2000) {
         logger.debug('Skipping poll due to recent command execution')
         return
       }
@@ -285,8 +285,11 @@ export class SpotifyPolling implements SpotifyService {
       // All other commands are player-related
       await this.playerManager!.executeSpotifyCommand(command, params)
 
-      // 2. Reduce delay for the authoritative poll (300ms)
+      // 2. Schedule authoritative polls
+      // A quick check that respects the window (likely skipped if < 2000ms)
       setTimeout(() => this.getCurrentlyPlaying(), 300)
+      // A forced check after the window expires to ensure consistency
+      setTimeout(() => this.getCurrentlyPlaying(true), 2100)
     } catch (error) {
       await logSpotifyCommandError(command, error)
       // 3. Revert state on failure
