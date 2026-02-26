@@ -43,10 +43,13 @@ const SpotifySelectionPage = () => {
   }
 
   const handlePlaylistPlay = (uri: string, index?: number) => {
-    if (selectedPlaylistId && typeof index === 'number') {
+    const isLocalContext =
+      uri.includes(':playlist:') && uri.endsWith(selectedPlaylistId || '')
+
+    if ((selectedPlaylistId && typeof index === 'number') || isLocalContext) {
       executeSpotify('PLAY', {
-        contextUri: `spotify:playlist:${selectedPlaylistId}`,
-        offset: { position: index },
+        contextUri: uri,
+        ...(typeof index === 'number' && { offset: { position: index } }),
       })
     } else {
       executeSpotify('PLAY', { playlistUri: uri })
