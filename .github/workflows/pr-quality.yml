@@ -453,7 +453,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -524,7 +524,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -593,7 +593,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -666,7 +666,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -750,7 +750,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -902,7 +902,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
         continue-on-error: true
