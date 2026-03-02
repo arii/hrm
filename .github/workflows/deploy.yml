@@ -47,7 +47,7 @@ jobs:
           ./scripts/package.sh
 
       - name: 📤 Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-artifact
           path: release.tar.gz
