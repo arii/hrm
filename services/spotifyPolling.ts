@@ -1,20 +1,17 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyCommandParameters, SpotifyCommand } from '../types/core'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.server.js'
+import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
+import logger from '../utils/logger.server'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
-import { SpotifyService } from '../types/interfaces.js'
-import { env } from '../lib/env.js'
-import { ServiceInitializationError } from '../lib/errors.js'
-import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
-import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
+} from './spotifyApiErrorHandling'
+import { SpotifyService } from '../types/interfaces'
+import { env } from '../lib/env'
+import { ServiceInitializationError } from '../lib/errors'
+import { SpotifyPlayerManager } from './spotifyPlayerManager'
+import { SpotifyDeviceManager } from './spotifyDeviceManager'
 
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
@@ -26,6 +23,9 @@ export class SpotifyPolling implements SpotifyService {
   private tokenRefreshInterval: NodeJS.Timeout | null = null
   private playerManager: SpotifyPlayerManager | null = null
   private deviceManager: SpotifyDeviceManager | null = null
+
+  private lastCommandTime = 0
+  private readonly IGNORE_POLLS_AFTER_COMMAND_MS = 1500
 
   private readonly broadcastUpdate: (message: ServerMessage) => void
 
@@ -74,10 +74,21 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
-  private getCurrentlyPlaying = async () => {
+  private getCurrentlyPlaying = async (force = false) => {
     try {
       if (!this.sdk || !this.playerManager) {
         logger.debug('Spotify SDK not initialized, skipping poll')
+        return
+      }
+
+      // Prevent "flickering" where a stale state from the Spotify API overwrites
+      // our optimistic local state before the API has fully settled.
+      const timeSinceCommand = Date.now() - this.lastCommandTime
+      if (!force && timeSinceCommand < this.IGNORE_POLLS_AFTER_COMMAND_MS) {
+        logger.debug(
+          { timeSinceCommand },
+          'Recent command detected, skipping authoritative poll to prevent flickering'
+        )
         return
       }
 
@@ -272,10 +283,14 @@ export class SpotifyPolling implements SpotifyService {
       }
 
       // All other commands are player-related
+      this.lastCommandTime = Date.now()
       await this.playerManager!.executeSpotifyCommand(command, params)
 
-      // 2. Reduce delay for the authoritative poll (300ms)
-      setTimeout(() => this.getCurrentlyPlaying(), 300)
+      // 2. Schedule an authoritative poll after the API has had time to settle
+      setTimeout(
+        () => this.getCurrentlyPlaying(true),
+        this.IGNORE_POLLS_AFTER_COMMAND_MS + 100
+      )
     } catch (error) {
       await logSpotifyCommandError(command, error)
       // 3. Revert state on failure

@@ -21,8 +21,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v6
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: pnpm install --frozen-lockfile
@@ -54,8 +55,13 @@ jobs:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
             const fs = require('fs');
+            const path = require('path');
             try {
-              const body = fs.readFileSync('report.md', 'utf8');
+              const reportPath = path.resolve(process.cwd(), 'report.md');
+              if (!fs.existsSync(reportPath)) {
+                throw new Error('Report file not found');
+              }
+              const body = fs.readFileSync(reportPath, 'utf8');
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -64,5 +70,5 @@ jobs:
               });
             } catch (e) {
               console.error('No report generated:', e);
-              core.setFailed('Failed to create triage report');
+              core.setFailed(`Failed to create triage report: ${e.message}`);
             }

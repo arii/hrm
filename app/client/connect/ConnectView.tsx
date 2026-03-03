@@ -35,7 +35,6 @@ interface ConnectViewProps {
   onForgetDevice: () => Promise<void>
   isSupported: boolean
   signalPeriodMs: number
-  lastPeriodMs: number
   currentHR: number
   hrZoneData: HrZoneData
   connectionStatus: string
@@ -61,7 +60,6 @@ export default function ConnectView({
   onForgetDevice,
   isSupported,
   signalPeriodMs,
-  lastPeriodMs,
   currentHR,
   hrZoneData,
   connectionStatus,
@@ -215,7 +213,6 @@ export default function ConnectView({
                 )}
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
-                  lastPeriodMs={lastPeriodMs}
                   isConnected={isConnected}
                 />
               </Box>
@@ -236,9 +233,17 @@ export default function ConnectView({
           )}
         </Box>
 
-        {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
+        {isConnected &&
+          bluetoothConnected &&
+          signalPeriodMs < 2200 && ( // CRITICAL_THRESHOLD_MS
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Connected! Heart rate data is being streamed.
+            </Alert>
+          )}
+
+        {isConnected && signalPeriodMs >= 2200 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Weak HRM Signal - Check placement
           </Alert>
         )}
 

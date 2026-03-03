@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
@@ -218,6 +218,9 @@ describe('components/SpotifyControls', () => {
     // Simulate WebSocket update (server volume is still 50, or changed to 40)
     mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
 
+    // Simulate WebSocket update (server volume is still 50, or changed to 40)
+    mockWebSocket.mockReturnValue(mockWithVolume(40))
+
     rerender(<SpotifyControls />)
 
     // setVolume should NOT have been called with the server value (40) because we are sliding
@@ -265,13 +268,22 @@ describe('components/SpotifyControls', () => {
 
     mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
 
+    // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    mockWebSocket.mockReturnValue(mockWithVolume(40))
+
     rerender(<SpotifyControls />)
 
     // setVolume should STILL NOT have been called with the server value (40) because of the 2s lock
     expect(setVolumeMock).not.toHaveBeenCalledWith(40)
 
     // 3. Advance past the lock duration (another 1.1s, total 2.1s)
-    jest.advanceTimersByTime(1100)
+    act(() => {
+      jest.advanceTimersByTime(1100)
+    })
 
     // Trigger another update to see if it now syncs
     mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
@@ -362,7 +374,9 @@ describe('components/SpotifyControls', () => {
     expect(showWarningMock).toHaveBeenCalledTimes(1)
 
     // Advance time past throttle (3000ms)
-    jest.advanceTimersByTime(3100)
+    act(() => {
+      jest.advanceTimersByTime(3100)
+    })
 
     // Change after throttle: warning shown again
     fireEvent.change(volumeSlider, { target: { value: 90 } })

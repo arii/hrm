@@ -7,7 +7,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
 
 // Mock logger
-jest.mock('../../utils/logger.server.js', () => ({
+jest.mock('../../utils/logger.server', () => ({
   __esModule: true,
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   default: require('./spotify-mocks').mockLogger,

@@ -1,16 +1,7 @@
 // components/shared/VolumeSlider.tsx
 'use client'
 import React, { memo, useCallback } from 'react'
-import {
-  IconButton,
-  Slider,
-  Stack,
-  Typography,
-  SxProps,
-  Theme,
-  alpha,
-} from '@mui/material'
-import { styled } from '@mui/material/styles'
+import { IconButton, Slider, Stack, Typography } from '@mui/material'
 import { VolumeUp, VolumeDown, VolumeOff } from '@mui/icons-material'
 
 interface VolumeSliderProps {
@@ -23,39 +14,7 @@ interface VolumeSliderProps {
   sliderColor?: string
   size?: 'small' | 'medium'
   disabled?: boolean
-  sx?: SxProps<Theme>
 }
-
-// Styled component to extract complex styles and ensure accessibility
-const StyledSlider = styled(Slider, {
-  shouldForwardProp: (prop) => prop !== 'sliderColor',
-})<{ sliderColor?: string }>(({ theme, sliderColor, size }) => ({
-  color: sliderColor || theme.palette.primary.main,
-  height: 6,
-  '& .MuiSlider-thumb': {
-    backgroundColor: 'white',
-    width: size === 'small' ? 18 : 22,
-    height: size === 'small' ? 18 : 22,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-    '&:hover, &.Mui-focusVisible': {
-      boxShadow: sliderColor
-        ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
-        : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
-    },
-    // Ensure 44px touch target (WCAG 2.1 compliance)
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      width: 44,
-      height: 44,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-    },
-  },
-  '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
-  '& .MuiSlider-rail': { opacity: 0.3 },
-}))
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
   volume,
@@ -64,10 +23,9 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   onVolumeChangeCommitted,
   onToggleMute,
   showValue = false,
-  sliderColor,
+  sliderColor = '#1DB954', // Default to Spotify green
   size = 'small',
   disabled = false,
-  sx,
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event | React.SyntheticEvent, value: number | number[]) => {
@@ -88,15 +46,9 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   return (
     <Stack
       direction="row"
-      spacing={2}
+      spacing={1}
       alignItems="center"
-      sx={{
-        flexGrow: 1,
-        width: '100%',
-        minWidth: { xs: 150, md: 250 },
-        px: 1,
-        ...sx,
-      }}
+      sx={{ flexGrow: 1, minWidth: 150 }}
       data-testid="volume-slider-container"
     >
       <IconButton
@@ -106,6 +58,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
+          padding: size === 'small' ? 1 : 1.5, // Standardized touch target for consistency
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
@@ -117,13 +70,31 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         )}
       </IconButton>
 
-      <StyledSlider
+      <Slider
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
+        min={0}
+        max={100}
         size={size}
         disabled={disabled}
-        sliderColor={sliderColor}
+        sx={{
+          color: sliderColor,
+          '& .MuiSlider-thumb': {
+            backgroundColor: 'white',
+            width: size === 'small' ? 18 : 26, // Refined gym-friendly touch targets
+            height: size === 'small' ? 18 : 26,
+            boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: `0px 0px 0px 8px ${sliderColor}33`,
+            },
+            '&.Mui-active': {
+              boxShadow: `0px 0px 0px 14px ${sliderColor}44`,
+            },
+          },
+          '& .MuiSlider-track': { height: 6 }, // Thicker track for better visibility
+          '& .MuiSlider-rail': { height: 6, opacity: 0.3 },
+        }}
         aria-label="Volume control"
         getAriaValueText={(value) => `${value}%`}
         data-testid="volume-slider-input"

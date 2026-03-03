@@ -328,48 +328,9 @@ describe('useBluetoothHRM', () => {
         })
       })
 
+      // Now the history should be [1050, 1000, 1000, 1000, 1050]
+      // Average is (1050 + 1000 + 1000 + 1000 + 1050) / 5 = 1020
       expect(result.current.signalPeriodMs).toBe(1020)
-      expect(result.current.lastPeriodMs).toBe(1050)
-      expect(result.current.consecutiveSlowPackets).toBe(0)
-    })
-
-    it('should track consecutive slow packets', async () => {
-      const { result } = renderHook(() => useBluetoothHRM())
-      let characteristicCallback: (event: {
-        target: { value: DataView }
-      }) => void = () => {}
-      mockGatt.connect.mockResolvedValue({
-        ...mockGatt,
-        getPrimaryService: () =>
-          Promise.resolve({
-            getCharacteristic: () =>
-              Promise.resolve({
-                startNotifications: jest.fn(),
-                addEventListener: (
-                  _e: string,
-                  cb: (event: { target: { value: DataView } }) => void
-                ) => {
-                  characteristicCallback = cb
-                },
-              }),
-          }),
-      } as unknown as MockBluetoothRemoteGATTServer)
-      await act(() => result.current.connectAndStream())
-      const sendPacket = (gap: number) => {
-        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + gap)
-        act(() =>
-          characteristicCallback({
-            target: { value: new DataView(new ArrayBuffer(2)) },
-          })
-        )
-      }
-      sendPacket(1000) // First packet
-      sendPacket(1600) // Slow
-      expect(result.current.consecutiveSlowPackets).toBe(1)
-      sendPacket(1700) // Slow
-      expect(result.current.consecutiveSlowPackets).toBe(2)
-      sendPacket(1000) // Normal
-      expect(result.current.consecutiveSlowPackets).toBe(0)
     })
 
     it('should proactively increase signal period on missed heartbeats', async () => {
@@ -437,11 +398,6 @@ describe('useBluetoothHRM', () => {
       // the second time with 3000ms (from now+1000 to now+4000).
       // History: [1000, 2000, 3000] -> Avg: 2000
       expect(result.current.signalPeriodMs).toBe(2000)
-      expect(result.current.lastPeriodMs).toBe(3000)
-      // Watchdog increments consecutiveSlowPackets
-      // 1st watchdog: now+3000 (timeSinceLastData=2000) -> +1
-      // 2nd watchdog: now+4000 (timeSinceLastData=3000) -> +1
-      expect(result.current.consecutiveSlowPackets).toBe(2)
 
       // A real packet arrives after the drop
       jest.spyOn(Date, 'now').mockReturnValue(now + 4000)

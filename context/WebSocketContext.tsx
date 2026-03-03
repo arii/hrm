@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { isTestEnvironment } from '@/lib/utils'
 
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
@@ -25,16 +26,6 @@ export interface WebSocketContextType extends WebSocketState {
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
-}
-
-// This encapsulates the logic to avoid running it on every render inside the component
-const isTestEnvironment = () => {
-  if (typeof window === 'undefined') return false
-  return (
-    process.env.NODE_ENV !== 'production' ||
-    process.env.NEXT_PUBLIC_TESTING === 'true' ||
-    window.location.search.includes('testing=true')
-  )
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
@@ -95,42 +86,22 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  const throttledDispatch = useRef(
-    throttle((message: ServerMessage) => {
-      dispatch(message)
-    }, 100)
-  ).current
+  // Separate throttled dispatches for different message types to ensure state integrity.
+  // In test environment, we use 0ms throttle to ensure deterministic state for VRT.
+  const THROTTLE_MS = process.env.NODE_ENV === 'test' ? 0 : 100
+
+  const throttledDispatch = useMemo(
+    () => throttle((msg: ServerMessage) => dispatch(msg), THROTTLE_MS),
+    [dispatch, THROTTLE_MS]
+  )
+
+  useEffect(() => () => throttledDispatch.cancel(), [throttledDispatch])
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
   // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
-      }
-
-      if (isTestEnvironment()) {
-        window.__TEST_CONTROLS__ = {
-          ...window.__TEST_CONTROLS__,
-          dispatch,
-          disconnect: () => {},
-          connect: () => {},
-        }
-      }
-    }
-    return () => {
-      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        if (window.__TEST_CONTROLS__.dispatch === dispatch) {
-          delete window.__TEST_CONTROLS__.dispatch
-        }
-      }
-    }
-  }, [dispatch])
 
   // Throttled warning for connection issues
   const throttledConnectionWarning = useMemo(
@@ -283,15 +254,14 @@ export const WebSocketProvider = ({
         if (message.type === 'PONG') {
           if (pongTimeoutRef.current) {
             clearTimeout(pongTimeoutRef.current)
+            pongTimeoutRef.current = null
           }
           return // Pong message is handled, no state dispatch needed
         }
 
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
           dispatch(message)
         }
       } catch (e) {
@@ -301,7 +271,7 @@ export const WebSocketProvider = ({
         })
       }
     }
-  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
+  }, [wsUrl, startHeartbeat, stopHeartbeat, throttledDispatch])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
@@ -318,28 +288,25 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedActions = localStorage.getItem('pendingActions')
+      if (savedActions) pendingActions.current = JSON.parse(savedActions)
+
+      // Expose test controls for E2E and unit testing
+      if (isTestEnvironment()) {
+        window.__TEST_CONTROLS__ = {
+          ...(window.__TEST_CONTROLS__ || {}),
+          dispatch: (msg: ServerMessage | { type: 'RESET_STATE' }) =>
+            dispatch(msg),
+          disconnect: () => disconnect(),
+          connect: () => connect(),
+        }
+      }
+    }
     connectRef.current = connect
     connect()
-
-    if (isTestEnvironment()) {
-      if (window.__TEST_CONTROLS__) {
-        window.__TEST_CONTROLS__.disconnect = disconnect
-        window.__TEST_CONTROLS__.connect = connect
-      }
-    }
-
-    return () => {
-      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        if (window.__TEST_CONTROLS__.disconnect === disconnect) {
-          delete window.__TEST_CONTROLS__.disconnect
-        }
-        if (window.__TEST_CONTROLS__.connect === connect) {
-          delete window.__TEST_CONTROLS__.connect
-        }
-      }
-      disconnect()
-    }
-  }, [connect, disconnect])
+    return () => disconnect()
+  }, [dispatch, connect, disconnect])
 
   const sendData = useCallback(
     (data: ClientCommandMessage) => {
