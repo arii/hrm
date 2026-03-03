@@ -13,9 +13,7 @@ set -e
 : "${PR_NUMBER:?}"
 : "${PR_QUALITY_RESULT:?}"
 
-# Optional variables (default to empty if not set or null)
-# We avoid using :? to prevent script failure when these are missing,
-# which is common in manual or comment-triggered events.
+# Optional variables
 BASE_SHA="${BASE_SHA:-}"
 HEAD_SHA="${HEAD_SHA:-}"
 COMMENT_BODY="${COMMENT_BODY:-}"
@@ -53,10 +51,27 @@ if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
   exit 0
 fi
 
+# Fetch PR data once to improve performance and avoid rate-limiting.
+# We capture errors and stderr to diagnose issues instead of silent suppression.
+echo "::info::Fetching PR #$PR_NUMBER metadata and comments..."
+PR_DATA_FILE=$(mktemp)
+set +e
+gh pr view "$PR_NUMBER" --json comments > "$PR_DATA_FILE" 2> gh_error.log
+GH_EXIT_CODE=$?
+set -e
+
+if [[ $GH_EXIT_CODE -ne 0 ]]; then
+  echo "::warning::GitHub CLI failed to fetch PR data (Exit Code: $GH_EXIT_CODE)."
+  cat gh_error.log >&2
+  # Fail-safe: proceed assuming no comments/throttling but log the risk
+  PR_DATA='{"comments":[]}'
+else
+  PR_DATA=$(cat "$PR_DATA_FILE")
+fi
+rm -f "$PR_DATA_FILE" gh_error.log
+
 # Check 2: Comment Count Limit
-# Prevents reviews on PRs that are excessively noisy.
-# We pipe to 2>/dev/null to handle cases where 'gh' might fail in non-PR contexts.
-COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq '.comments | length' 2>/dev/null || echo 0)
+COMMENT_COUNT=$(echo "$PR_DATA" | jq '.comments | length')
 if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
   echo "::warning::PR has $COMMENT_COUNT comments, exceeding the limit of $MAX_COMMENTS. Skipping review."
   echo "needs-review=false" >> "$GITHUB_OUTPUT"
@@ -65,8 +80,7 @@ if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
 fi
 
 # Check 3: Time-Based Throttling
-# Prevents multiple reviews within a short time frame.
-LAST_REVIEW_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""' 2>/dev/null || echo "")
+LAST_REVIEW_TIMESTAMP=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""')
 
 if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
   LAST_REVIEW_SECONDS=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
@@ -85,17 +99,16 @@ fi
 echo "::info::Passed initial checks (manual override, comment limit, throttling). Proceeding to analyze review necessity."
 
 # Check 4: Quality Check Failures
-# The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
-  # Use the dedicated QUALITY_GATE_BOT_USERNAMES to find the correct report.
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""' 2>/dev/null || echo "")
+  QUALITY_REPORT=$(echo "$PR_DATA" | jq -r \
+    --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" \
+    '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""'
+  )
   
   if [ -z "$QUALITY_REPORT" ]; then
     NEEDS_REVIEW="false"
     SKIP_REASON="quality failure with no detailed report (likely static analysis)"
   else
-    # Check for specific types of test failures that warrant an AI review.
-    # The `grep | head` combination ensures we only get a single number.
     HAS_INFRA_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Infra Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_UNIT_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Unit Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_PERF_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Perf Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
@@ -109,30 +122,23 @@ if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
       SKIP_REASON="static analysis failures only (knip/lint/build)"
     fi
   fi
-# Check 5: New Pull Request
-# Always review a PR when it is first opened.
 elif [[ "$TRIGGER_EVENT" == "pull_request" && "$ACTION_TYPE" == "opened" ]]; then
   NEEDS_REVIEW="true"
   SKIP_REASON=""
 else
-  # Check 6: Re-review based on new changes
-  # This handles subsequent pushes to an already-open PR.
   echo "::info::Analyzing for re-review..."
 
-  # If SHAs are missing, we cannot proceed with re-review analysis.
   if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
     echo "::warning::Missing commit context (BASE_SHA/HEAD_SHA). Triggering review to be safe."
     NEEDS_REVIEW="true"
     SKIP_REASON=""
   else
-    # Use the AI review bot's username to find the last review comment.
-    LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""' 2>/dev/null || echo "")
+    LAST_COMMENT_BODY=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
 
     if [ -z "$LAST_COMMENT_BODY" ]; then
       NEEDS_REVIEW="true"
       SKIP_REASON=""
     else
-      # Extract the commit SHA from the last review comment to see if it's outdated.
       LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
 
       if [ -z "$LAST_REVIEWED_SHA" ]; then
@@ -147,7 +153,6 @@ else
               SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
               NEEDS_REVIEW="false"
           else
-              # Check for substantial code changes since the last review.
               if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
                   CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
                   SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
@@ -160,7 +165,6 @@ else
                       SKIP_REASON=""
                   fi
               else
-                  # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
                   CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
                   SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
                   if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
@@ -178,7 +182,6 @@ else
 fi
 
 # --- Final Output ---
-# Log the final decision and write to the output file for GitHub Actions.
 echo "::info::Final Decision: needs-review=$NEEDS_REVIEW (Reason: $SKIP_REASON)"
 echo "needs-review=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
 echo "skip-reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"

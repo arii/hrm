@@ -3,22 +3,9 @@
 # Mock gh command
 gh() {
     local args=("$@")
-    local jq_filter=""
-
-    for i in "${!args[@]}"; do
-        if [[ "${args[$i]}" == "--jq" || "${args[$i]}" == "-q" ]]; then
-            jq_filter="${args[$i+1]}"
-            break
-        fi
-    done
-
-    local full_json="{\"comments\": ${MOCK_GH_COMMENTS_JSON:-[]}}"
-
-    if [[ -n "$jq_filter" ]]; then
-        echo "$full_json" | jq -r "$jq_filter"
-    else
-        echo "$full_json"
-    fi
+    # For the refactored script, we primarily handle: gh pr view ... --json comments
+    # The output is always JSON.
+    echo "{\"comments\": ${MOCK_GH_COMMENTS_JSON:-[]}}"
 }
 export -f gh
 
@@ -49,5 +36,5 @@ run_script() {
 
 # Teardown function to clean up
 teardown() {
-    rm -f "$GITHUB_OUTPUT"
+    rm -f "$GITHUB_OUTPUT" gh_error.log
 }
