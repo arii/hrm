@@ -6,7 +6,6 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -15,7 +14,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
@@ -129,10 +128,6 @@ const SpotifyDisplay = () => {
     !!selectedDeviceId ||
     spotifyData.devices?.some((device) => device.is_active)
 
-  // Track the last time volume command was sent to prevent sync race conditions
-  const lastVolumeSendTimeRef = useRef<number>(0)
-  const hasPendingSendRef = useRef<boolean>(false)
-
   const handleLogout = async () => {
     await signOut({ redirect: false })
     window.location.reload()
@@ -144,28 +139,10 @@ const SpotifyDisplay = () => {
   useDashboardRegistration(player)
 
   // Synchronize with WebSocket data whenever it changes.
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
+  // We rely on the server as the source of truth for volume.
   useEffect(() => {
-    const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-
-    // Only apply grace period if a send is pending and within the window.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
-
-    if (state.isSliding || shouldRespectGracePeriod) {
+    if (state.isSliding) {
       return
-    }
-
-    // Once grace period has elapsed, clear the pending send flag
-    if (
-      hasPendingSendRef.current &&
-      timeSinceLastSend >= VOLUME_SYNC_GRACE_PERIOD_MS
-    ) {
-      hasPendingSendRef.current = false
     }
 
     dispatch({
@@ -194,9 +171,6 @@ const SpotifyDisplay = () => {
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(volume)
-
-      lastVolumeSendTimeRef.current = Date.now()
-      hasPendingSendRef.current = true
 
       executeSpotify('SET_VOLUME', {
         volume: sanitized,

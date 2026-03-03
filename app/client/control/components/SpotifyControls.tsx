@@ -203,13 +203,22 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const throttledSendVolumeCommand = useCallback(
-    throttle((val: number) => {
-      sendVolumeCommand(val)
-    }, 200),
-    [sendVolumeCommand]
+  const sendVolumeCommandRef = useRef(sendVolumeCommand)
+  useEffect(() => {
+    sendVolumeCommandRef.current = sendVolumeCommand
+  })
+
+  // Create the throttled function exactly once
+  const throttledSendVolumeCommand = useMemo(
+    () => throttle((val: number) => sendVolumeCommandRef.current(val), 200),
+    []
   )
+
+  useEffect(() => {
+    return () => {
+      throttledSendVolumeCommand.cancel()
+    }
+  }, [throttledSendVolumeCommand])
 
   const handleVolumeChange = useCallback(
     (val: number) => {

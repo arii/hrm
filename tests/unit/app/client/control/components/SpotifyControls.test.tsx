@@ -111,6 +111,7 @@ describe('components/SpotifyControls', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
+    jest.useRealTimers()
   })
 
   it('renders Spotify controls with track info', () => {
@@ -280,8 +281,6 @@ describe('components/SpotifyControls', () => {
 
     // Now that lock is expired, it should sync with server value (40)
     expect(setVolumeMock).toHaveBeenCalledWith(40)
-
-    jest.useRealTimers()
   })
 
   it('selects HRM Web Player by default when no device is active', async () => {
@@ -367,8 +366,6 @@ describe('components/SpotifyControls', () => {
     // Change after throttle: warning shown again
     fireEvent.change(volumeSlider, { target: { value: 90 } })
     expect(showWarningMock).toHaveBeenCalledTimes(2)
-
-    jest.useRealTimers()
   })
 
   it('uses HRM Web Player as fallback if no device is active or selected', () => {
