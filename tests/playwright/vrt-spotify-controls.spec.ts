@@ -1,4 +1,4 @@
-import { type BrowserContext, type Page } from '@playwright/test'
+import { type BrowserContext, type Page, expect } from '@playwright/test'
 import { test } from './fixtures'
 import { setupVisualRegressionTest, mockLoggedInSession } from './lib'
 import { takeScreenshot } from './lib/visual'
@@ -42,6 +42,8 @@ test.describe('Visual Regression Tests', () => {
         payload: true,
       })
     })
+    // Wait for the service initialized state to reflect in UI
+    await expect(controlPage.getByTestId('spotify-initializing-spinner')).not.toBeVisible()
   })
 
   test.describe('SpotifyControls Component', () => {
@@ -62,6 +64,9 @@ test.describe('Visual Regression Tests', () => {
           },
         })
       })
+
+      // Ensure the "Select Music" button is visible, indicating state is applied
+      await expect(controlPage.getByTestId('spotify-select-music-button')).toHaveText(/Select Music/i)
 
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })

@@ -24,6 +24,7 @@ export const VRT_MASK_SELECTORS = {
   spotifyInitializingSpinner: '[data-testid="spotify-initializing-spinner"]',
   spotifyConnectingSpinner: '[data-testid="spotify-connecting-spinner"]',
   globalLoadingSpinner: '[data-testid="global-loading-spinner"]',
+  loadingIndicator: '[data-testid="loading-indicator"]',
 } as const
 
 /**
@@ -44,6 +45,7 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.spotifyInitializingSpinner),
     page.locator(VRT_MASK_SELECTORS.spotifyConnectingSpinner),
     page.locator(VRT_MASK_SELECTORS.globalLoadingSpinner),
+    page.locator(VRT_MASK_SELECTORS.loadingIndicator),
   ]
 }
 

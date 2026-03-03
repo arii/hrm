@@ -51,7 +51,8 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?native=false')
     await waitForPageReady(dashboardPage)
 
-    const toggleButton = dashboardPage.getByLabel('Collapse document')
+    const toggleButton = dashboardPage.getByLabel(/collapse document/i)
+    await expect(toggleButton).toBeVisible({ timeout: 15000 })
     await toggleButton.click()
     const viewer = dashboardPage
       .getByTestId('google-doc-viewer-iframe')
@@ -65,7 +66,7 @@ test.describe('Component-Specific VRT', () => {
     await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
-    await expect(tableHeader).toBeVisible()
+    await expect(tableHeader).toBeVisible({ timeout: 15000 })
     await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 
@@ -134,9 +135,11 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
+    // Navigation can be slow, increase timeout
     const refreshButton = dashboardPage
       .getByTestId('refresh-icon-button')
       .first()
+    await expect(refreshButton).toBeVisible({ timeout: 15000 })
     await takeScreenshot(refreshButton, 'refresh-icon-button.png')
     await refreshButton.hover()
     await takeScreenshot(refreshButton, 'refresh-icon-button-hover.png')
