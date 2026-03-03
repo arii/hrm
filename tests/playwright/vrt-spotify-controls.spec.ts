@@ -43,7 +43,9 @@ test.describe('Visual Regression Tests', () => {
       })
     })
     // Wait for the service initialized state to reflect in UI
-    await expect(controlPage.getByTestId('spotify-initializing-spinner')).not.toBeVisible()
+    await expect(
+      controlPage.getByTestId('spotify-initializing-spinner')
+    ).not.toBeVisible()
   })
 
   test.describe('SpotifyControls Component', () => {
@@ -66,7 +68,9 @@ test.describe('Visual Regression Tests', () => {
       })
 
       // Ensure the "Select Music" button is visible, indicating state is applied
-      await expect(controlPage.getByTestId('spotify-select-music-button')).toHaveText(/Select Music/i)
+      await expect(
+        controlPage.getByTestId('spotify-select-music-button')
+      ).toHaveText(/Select Music/i)
 
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })
