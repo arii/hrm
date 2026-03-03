@@ -19,6 +19,8 @@ describe('API Route: /api/spotify/access-token', () => {
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue(null)
 
     const response = await GET(
@@ -27,11 +29,15 @@ describe('API Route: /api/spotify/access-token', () => {
     const data = await response.json()
 
     expect(response.status).toBe(401)
+    errorSpy.mockRestore()
+    infoSpy.mockRestore()
     expect(data.error).toBe('Not authenticated or token is missing.')
     expect(getServerSession).toHaveBeenCalledWith(authOptions)
   })
 
   it('should return 401 Unauthorized if session has RefreshAccessTokenError', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue({
       accessToken: 'dummy-token', // Add a token to pass the first check
       error: 'RefreshAccessTokenError',
@@ -43,6 +49,8 @@ describe('API Route: /api/spotify/access-token', () => {
     const data = await response.json()
 
     expect(response.status).toBe(401)
+    errorSpy.mockRestore()
+    infoSpy.mockRestore()
     expect(data.error).toBe('Token refresh failed. Please re-authenticate.')
   })
 
@@ -62,6 +70,7 @@ describe('API Route: /api/spotify/access-token', () => {
   })
 
   it('should return 500 Internal Server Error if getServerSession fails', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     mockedGetServerSession.mockRejectedValue(new Error('Test error'))
 
     const response = await GET(
@@ -70,6 +79,7 @@ describe('API Route: /api/spotify/access-token', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
+    errorSpy.mockRestore()
     expect(data.error).toBe('Internal Server Error')
   })
 })

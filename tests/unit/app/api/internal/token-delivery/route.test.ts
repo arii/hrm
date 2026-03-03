@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 // Mock logger
-jest.mock('@/utils/logger.server', () => ({
+jest.mock('@/utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

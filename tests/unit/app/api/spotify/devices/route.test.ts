@@ -45,6 +45,8 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should return 401 if no user session and no system token is available', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue(null)
     tokenManagerInstance.getValidAccessToken.mockResolvedValue(null)
 
@@ -56,6 +58,8 @@ describe('API Route: /api/spotify/devices', () => {
     expect(data.error).toContain('No user session or valid system token')
     expect(getServerSession).toHaveBeenCalledWith(authOptions)
     expect(tokenManagerInstance.getValidAccessToken).toHaveBeenCalledTimes(1)
+    errorSpy.mockRestore()
+    infoSpy.mockRestore()
   })
 
   it('should return devices successfully with a user session', async () => {
@@ -105,6 +109,7 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should forward Spotify API errors', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue({
       accessToken: 'user-access-token',
     })
@@ -120,9 +125,11 @@ describe('API Route: /api/spotify/devices', () => {
 
     expect(response.status).toBe(403)
     expect(data.error).toBe('Failed to fetch devices from Spotify.')
+    errorSpy.mockRestore()
   })
 
   it('should return 500 on unexpected errors', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     mockedGetServerSession.mockRejectedValue(new Error('Unexpected DB error'))
 
     const req = new Request('http://localhost/api/spotify/devices')
@@ -131,5 +138,6 @@ describe('API Route: /api/spotify/devices', () => {
 
     expect(response.status).toBe(500)
     expect(data.error).toBe('Internal Server Error')
+    errorSpy.mockRestore()
   })
 })

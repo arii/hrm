@@ -115,6 +115,8 @@ describe('usePersistentStorage', () => {
   })
 
   it('should not fallback to cookies when localStorage is available but write fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
     // Mock localStorage: setItem works for the test key (so checkLocalStorage passes)
     // but fails for the data key.
     Object.defineProperty(window, 'localStorage', {
@@ -149,6 +151,11 @@ describe('usePersistentStorage', () => {
       JSON.stringify(UPDATED_VALUE)
     )
     expect(Cookies.set).not.toHaveBeenCalled()
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'LocalStorage write failed:',
+      expect.any(Error)
+    )
+    consoleSpy.mockRestore()
   })
 
   it('should load initial value from localStorage if present', () => {
