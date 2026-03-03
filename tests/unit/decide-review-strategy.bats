@@ -23,6 +23,19 @@ setup() {
   assert_output "skip-reason" ""
 }
 
+@test "should trigger review safely when SHAs are missing during synchronization" {
+  export TRIGGER_EVENT="pull_request"
+  export ACTION_TYPE="synchronize"
+  export BASE_SHA=""
+  export HEAD_SHA=""
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
 @test "should succeed on manual override even if SHAs are missing" {
   export TRIGGER_EVENT="comment"
   export COMMENT_BODY="@gemini-bot"

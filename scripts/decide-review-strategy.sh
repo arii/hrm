@@ -7,24 +7,25 @@ set -e
 #   skip-reason=<string>
 
 # --- Environment Variables ---
-# These are expected to be provided by the calling GitHub Actions workflow.
+# Required variables
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
 : "${PR_QUALITY_RESULT:?}"
-# These are optional for manual triggers
-: "${BASE_SHA:=}"
-: "${HEAD_SHA:=}"
+
+# Optional variables (default to empty if not set or null)
+# We avoid using :? to prevent script failure when these are missing,
+# which is common in manual or comment-triggered events.
+BASE_SHA="${BASE_SHA:-}"
+HEAD_SHA="${HEAD_SHA:-}"
+COMMENT_BODY="${COMMENT_BODY:-}"
+FORCE_REVIEW="${FORCE_REVIEW:-false}"
+
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
 : "${REVIEW_THROTTLE_MINUTES:=30}"
 : "${BOT_USERNAME:=gemini-bot}"
-# Can be a single username or a space-separated list of usernames.
-# Refer to docs/DEVELOPMENT.md for more details on this variable.
 : "${QUALITY_GATE_BOT_USERNAMES:=github-actions[bot]}"
-# This variable is optional and may not be present for all event types.
-: "${COMMENT_BODY:=}"
-
 
 # --- Initial State ---
 NEEDS_REVIEW="false"
@@ -37,7 +38,7 @@ SKIP_REASON="no criteria met"
 # always forces a review, bypassing all other checks including global enablement.
 if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]] || \
    [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || \
-   [[ "${FORCE_REVIEW:-false}" == "true" ]]; then
+   [[ "$FORCE_REVIEW" == "true" ]]; then
   echo "::info::Manual review triggered. Bypassing all checks."
   echo "needs-review=true" >> "$GITHUB_OUTPUT"
   echo "skip-reason=" >> "$GITHUB_OUTPUT"
@@ -54,7 +55,8 @@ fi
 
 # Check 2: Comment Count Limit
 # Prevents reviews on PRs that are excessively noisy.
-COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | length')
+# We pipe to 2>/dev/null to handle cases where 'gh' might fail in non-PR contexts.
+COMMENT_COUNT=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq '.comments | length' 2>/dev/null || echo 0)
 if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
   echo "::warning::PR has $COMMENT_COUNT comments, exceeding the limit of $MAX_COMMENTS. Skipping review."
   echo "needs-review=false" >> "$GITHUB_OUTPUT"
@@ -64,7 +66,7 @@ fi
 
 # Check 3: Time-Based Throttling
 # Prevents multiple reviews within a short time frame.
-LAST_REVIEW_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""')
+LAST_REVIEW_TIMESTAMP=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""' 2>/dev/null || echo "")
 
 if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
   LAST_REVIEW_SECONDS=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
@@ -86,17 +88,7 @@ echo "::info::Passed initial checks (manual override, comment limit, throttling)
 # The first priority is to review PRs that have failed CI checks.
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   # Use the dedicated QUALITY_GATE_BOT_USERNAMES to find the correct report.
-  # This query is broken down for readability:
-  #   1. `--arg bot_users "$QUALITY_GATE_BOT_USERNAMES"`: Pass the usernames as a variable.
-  #   2. `($bot_users | split(" ")) as $bot_list`: Split the string into an array of bot names.
-  #   3. `map(select(...))`: Filter the comments array.
-  #   4. `(.author.login? as $author | $bot_list | index($author))`: Check if the comment author is in our bot list.
-  #   5. `((.body // "") | contains("Quality Gate Results"))`: Check if the comment body contains the quality gate string.
-  #   6. `| .[-1].body // ""`: Get the body of the last matching comment, or an empty string if none matched.
-  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments | jq -r \
-    --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" \
-    '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""'
-  )
+  QUALITY_REPORT=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""' 2>/dev/null || echo "")
   
   if [ -z "$QUALITY_REPORT" ]; then
     NEEDS_REVIEW="false"
@@ -127,54 +119,60 @@ else
   # This handles subsequent pushes to an already-open PR.
   echo "::info::Analyzing for re-review..."
 
-  # Use the AI review bot's username to find the last review comment.
-  LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
-
-  if [ -z "$LAST_COMMENT_BODY" ]; then
+  # If SHAs are missing, we cannot proceed with re-review analysis.
+  if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+    echo "::warning::Missing commit context (BASE_SHA/HEAD_SHA). Triggering review to be safe."
     NEEDS_REVIEW="true"
     SKIP_REASON=""
   else
-    # Extract the commit SHA from the last review comment to see if it's outdated.
-    # Updated regex to handle "Reviewed commit: `sha`", "Reviewed at commit: `sha`", etc.
-    LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
-    
-    if [ -z "$LAST_REVIEWED_SHA" ]; then
-      LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oE '\b[a-f0-9]{7,40}\b' | head -n 1)
-    fi
+    # Use the AI review bot's username to find the last review comment.
+    LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments 2>/dev/null | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""' 2>/dev/null || echo "")
 
-    if [ -z "$LAST_REVIEWED_SHA" ]; then
-        NEEDS_REVIEW="true"
-        SKIP_REASON=""
+    if [ -z "$LAST_COMMENT_BODY" ]; then
+      NEEDS_REVIEW="true"
+      SKIP_REASON=""
     else
-        if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
-            SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
-            NEEDS_REVIEW="false"
-        else
-            # Check for substantial code changes since the last review.
-            if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-                CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+      # Extract the commit SHA from the last review comment to see if it's outdated.
+      LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
 
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
-            else
-                # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
-                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes from base"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
-            fi
-        fi
+      if [ -z "$LAST_REVIEWED_SHA" ]; then
+        LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oE '\b[a-f0-9]{7,40}\b' | head -n 1)
+      fi
+
+      if [ -z "$LAST_REVIEWED_SHA" ]; then
+          NEEDS_REVIEW="true"
+          SKIP_REASON=""
+      else
+          if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
+              SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
+              NEEDS_REVIEW="false"
+          else
+              # Check for substantial code changes since the last review.
+              if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
+                  CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
+                  SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+
+                  if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                      SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+                      NEEDS_REVIEW="false"
+                  else
+                      NEEDS_REVIEW="true"
+                      SKIP_REASON=""
+                  fi
+              else
+                  # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
+                  CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+                  SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                  if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                      SKIP_REASON="no significant code changes from base"
+                      NEEDS_REVIEW="false"
+                  else
+                      NEEDS_REVIEW="true"
+                      SKIP_REASON=""
+                  fi
+              fi
+          fi
+      fi
     fi
   fi
 fi
