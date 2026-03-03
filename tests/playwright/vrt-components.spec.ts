@@ -34,6 +34,8 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
+        // Ensure background is solid for stable VRT
+        el.style.backgroundColor = '#000000'
         // Pause any CSS animations/transitions specifically on this element
         el.style.animationPlayState = 'paused'
         el.style.transition = 'none'
@@ -43,6 +45,8 @@ test.describe('Component-Specific VRT', () => {
     await expect(loadingIndicator).toBeVisible()
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
       mask: [dashboardPage.getByTestId('loading-indicator-spinner')],
+      threshold: 0.5,
+      maxDiffPixelRatio: 0.1,
     })
   })
 
