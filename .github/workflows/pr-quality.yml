@@ -1117,10 +1117,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          # Create manual trigger footer
-          FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](https://github.com/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
-
-          COMMENT_BODY+="\n${SUMMARY_MSG}${FOOTER}\n\n---\n> Report generated for commit: \`${SHA}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md
