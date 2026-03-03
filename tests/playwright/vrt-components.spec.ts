@@ -59,7 +59,9 @@ test.describe('Component-Specific VRT', () => {
     const viewer = dashboardPage
       .getByTestId('google-doc-viewer-iframe')
       .locator('..')
-    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
+    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png', {
+      fullPage: false,
+    })
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {

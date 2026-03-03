@@ -28,6 +28,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('scanning state', async ({ connectPage }) => {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+
     await connectPage.evaluate((status) => {
       window.__TEST_CONTROLS__!.setHrmStatus!(status)
       window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
@@ -39,12 +42,15 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByTestId('connection-status-alert')
     ).toContainText('Checking saved devices...')
-    await takeScreenshot(connectPage, 'connect-page-scanning.png', {
+    await takeScreenshot(layoutContainer, 'connect-page-scanning.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
     })
   })
 
   test('connected state', async ({ connectPage }) => {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+
     await connectPage
       .getByRole('button', { name: 'Connect Bluetooth HRM' })
       .click()
@@ -55,13 +61,17 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByText('Connected! Heart rate data is being streamed')
     ).toBeVisible()
-    await takeScreenshot(connectPage, 'connect-page-connected.png', {
+
+    await takeScreenshot(layoutContainer, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
       maxDiffPixelRatio: 0.1,
     })
   })
 
   test('connection error state', async ({ connectPage }) => {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+
     await connectPage.evaluate((status) => {
       window.__TEST_CONTROLS__!.setHrmStatus!(status)
       window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
@@ -71,9 +81,8 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByText(/Connection Failed: GATT server not found/)
     ).toBeVisible()
-    await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
+    await takeScreenshot(layoutContainer, 'connect-page-connection-error.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
-      fullPage: false,
       maxDiffPixelRatio: 0.05,
       // Performance: Skip repeated a11y checks for error states as the core UI is already validated
       skipA11y: true,
@@ -81,6 +90,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('no devices found state', async ({ connectPage }) => {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+
     await connectPage.evaluate(
       (status) => window.__TEST_CONTROLS__!.setHrmStatus!(status),
       BluetoothConnectionStatus.DISCONNECTED
@@ -89,7 +101,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
     ).toBeVisible()
-    await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
+    await takeScreenshot(layoutContainer, 'connect-page-no-devices-found.png', {
       mask: [connectPage.getByTestId('user-settings-form')],
       // Performance: Skip redundant a11y checks for similar disconnected states
       skipA11y: true,
@@ -97,6 +109,9 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('auto-connect failed state', async ({ connectPage }) => {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+
     await connectPage.evaluate((status) => {
       window.__TEST_CONTROLS__!.setHrmStatus!(status)
       window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
@@ -104,18 +119,23 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       )
     }, BluetoothConnectionStatus.DISCONNECTED)
     await expect(connectPage.getByText(/Auto-connect failed/)).toBeVisible()
-    await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
-      mask: [connectPage.getByTestId('user-settings-form')],
-      fullPage: false,
-      maxDiffPixelRatio: 0.05,
-      // Performance: Skip a11y check for this specific error variant; primary state is covered
-      skipA11y: true,
-    })
+    await takeScreenshot(
+      layoutContainer,
+      'connect-page-auto-connect-failed.png',
+      {
+        mask: [connectPage.getByTestId('user-settings-form')],
+        maxDiffPixelRatio: 0.05,
+        // Performance: Skip a11y check for this specific error variant; primary state is covered
+        skipA11y: true,
+      }
+    )
   })
 
   test('mobile viewport', async ({ connectPage }) => {
     await connectPage.setViewportSize(MOBILE_VIEWPORT)
-    await takeScreenshot(connectPage, 'connect-page-mobile.png', {
+    // Capture the layout container instead of the whole page to ensure stable dimensions
+    const layoutContainer = connectPage.getByTestId('main-content-layout')
+    await takeScreenshot(layoutContainer, 'connect-page-mobile.png', {
       mask: [connectPage.getByTestId('hr-tile')],
     })
   })
