@@ -27,6 +27,7 @@ const HrmConnectionPanel = () => {
         display: 'flex',
         flexWrap: 'wrap',
         gap: 2,
+        height: '100%',
       }}
     >
       {isLoading || tileData.length === 0 ? (
@@ -38,7 +39,7 @@ const HrmConnectionPanel = () => {
               justifyContent: 'center',
               alignItems: 'center',
               width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              minHeight: 300,
+              height: '100%', // Ensure the container fills the grid cell
               gap: 2,
               p: 2,
               border: 1,

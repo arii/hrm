@@ -369,7 +369,7 @@ jobs:
 
       - name: Upload review result
         id: upload_artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: review-result
           path: review_result.json
@@ -426,7 +426,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download review result
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: review-result
           path: .

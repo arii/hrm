@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload Script Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: script-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload Knip Report
         if: failure() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: knip-report
           path: knip-output.txt
@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload Lint Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lint-report
           path: logs/lint-output.log
@@ -232,7 +232,7 @@ jobs:
 
       - name: Upload Slop Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: slop-report
           path: logs/slop-output.log
@@ -281,7 +281,7 @@ jobs:
 
       - name: Upload Type Check Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: type-check-report
           path: logs/type-check-output.log
@@ -345,7 +345,7 @@ jobs:
 
       - name: Upload Build Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-report
           path: logs/build-output.log
@@ -427,7 +427,7 @@ jobs:
 
       - name: Upload Build Artifacts
         if: always() && steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: release.tar.gz
@@ -453,7 +453,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -498,7 +498,7 @@ jobs:
 
       - name: Upload Infra Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: infra-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -524,7 +524,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -567,7 +567,7 @@ jobs:
 
       - name: Upload Unit Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -593,7 +593,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -636,7 +636,7 @@ jobs:
 
       - name: Upload Component Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: component-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -666,7 +666,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -709,7 +709,7 @@ jobs:
 
       - name: Upload Performance Metrics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: performance-metrics-${{ env.SESSION_ID }}
           path: test-results/performance-metrics.json
@@ -717,7 +717,7 @@ jobs:
 
       - name: Upload Perf Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -750,7 +750,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -808,7 +808,7 @@ jobs:
 
       - name: Upload Visual Test Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -902,7 +902,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
         continue-on-error: true
