@@ -13,7 +13,7 @@ export function startServer(
 ): Promise<ServerProcess> {
   return new Promise((resolve, reject) => {
     // Note: The server should be built by the test script `pnpm run build` before this is called.
-    const serverProcess = spawn('node', ['dist/server.js'], {
+    const serverProcess = spawn('node', ['dist/server'], {
       env: {
         ...process.env,
         PORT: `${port}`,

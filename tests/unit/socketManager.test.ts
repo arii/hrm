@@ -32,7 +32,7 @@ import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
-} from '../../utils/websocketUtils.js'
+} from '../../utils/websocketUtils'
 import logger from '@/utils/logger.server'
 import { createMockRequest } from '@/tests/test-utils'
 
@@ -46,7 +46,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock ConnectionMonitor and other utils
-jest.mock('../../utils/websocketUtils.js', () => ({
+jest.mock('../../utils/websocketUtils', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
   ConnectionMonitor: jest.fn().mockImplementation(() => ({
@@ -56,7 +56,7 @@ jest.mock('../../utils/websocketUtils.js', () => ({
 }))
 
 // Mock logger globally for the test file
-jest.mock('../../utils/logger.server.js', () => ({
+jest.mock('../../utils/logger.server', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),

@@ -26,7 +26,7 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
-    // Force visibility and pause animation for VRT
+    // Force visibility for VRT
     await dashboardPage.evaluate(() => {
       const el = document.querySelector(
         '[data-testid="loading-indicator"]'
@@ -34,9 +34,6 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
-        // Pause any CSS animations/transitions specifically on this element
-        el.style.animationPlayState = 'paused'
-        el.style.transition = 'none'
       }
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')

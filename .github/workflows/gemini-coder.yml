@@ -73,7 +73,7 @@ permissions:
 
 jobs:
   ai-developer:
-    if: vars.GEMINI_ENABLE_CODER != 'false' && ((github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code'))
+    if: (github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code')
     runs-on: self-hosted
 
     steps:
@@ -313,14 +313,14 @@ jobs:
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: pnpm/action-setup@v4
-
+        with:
+          version: 9.15.9
 
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
       - name: 'Gemini: Install Dependencies'
         if: env.AGENT_PROVIDER == 'gemini'
@@ -475,7 +475,7 @@ jobs:
 
       - name: Upload Failed Hunks as Artifact
         if: failure() && env.AGENT_PROVIDER == 'gemini'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: patch-artifacts-run-${{ github.run_id }}
           path: |
@@ -548,7 +548,7 @@ jobs:
 
       - name: Upload Debug Report
         if: failure() && env.AGENT_PROVIDER == 'gemini'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: patch-debug-report-run-${{ github.run_id }}
           path: patch-debug-report.md

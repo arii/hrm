@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
@@ -236,6 +236,90 @@ describe('components/SpotifyControls', () => {
     })
   })
 
+  it('prevents volume snap-back after slider drag within lock duration', async () => {
+    jest.useFakeTimers()
+    const setVolumeMock = jest.fn()
+    const mockUseVolumePreference = useVolumePreference as jest.Mock
+    const mockWebSocket = useWebSocket as jest.Mock
+
+    mockUseVolumePreference.mockReturnValue({
+      volume: 80,
+      muted: false,
+      setVolume: setVolumeMock,
+      toggleMute: jest.fn(),
+    })
+
+    const { rerender } = render(<SpotifyControls />)
+    setVolumeMock.mockClear()
+
+    const volumeSlider = screen.getByRole('slider')
+
+    // 1. User adjusts volume and releases (Stop sliding)
+    fireEvent.change(volumeSlider, { target: { value: '80' } })
+    fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
+
+    // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 40,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 40,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    rerender(<SpotifyControls />)
+
+    // setVolume should STILL NOT have been called with the server value (40) because of the 2s lock
+    expect(setVolumeMock).not.toHaveBeenCalledWith(40)
+
+    // 3. Advance past the lock duration (another 1.1s, total 2.1s)
+    act(() => {
+      jest.advanceTimersByTime(1100)
+    })
+
+    // Trigger another update to see if it now syncs
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 40,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 40,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    rerender(<SpotifyControls />)
+
+    // Now that lock is expired, it should sync with server value (40)
+    expect(setVolumeMock).toHaveBeenCalledWith(40)
+
+    jest.useRealTimers()
+  })
+
   it('selects HRM Web Player by default when no device is active', async () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
@@ -314,7 +398,9 @@ describe('components/SpotifyControls', () => {
     expect(showWarningMock).toHaveBeenCalledTimes(1)
 
     // Advance time past throttle (3000ms)
-    jest.advanceTimersByTime(3100)
+    act(() => {
+      jest.advanceTimersByTime(3100)
+    })
 
     // Change after throttle: warning shown again
     fireEvent.change(volumeSlider, { target: { value: 90 } })

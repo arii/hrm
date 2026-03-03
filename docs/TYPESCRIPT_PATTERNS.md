@@ -194,7 +194,7 @@ useEffect(() => {
     process.env.NEXT_PUBLIC_TESTING === 'true'
   ) {
     window.__TEST_CONTROLS__ = {
-      ...window.__TEST_CONTROLS__,
+      ...(window.__TEST_CONTROLS__ || {}),
       setMyHookState: setMyState,
     }
   }

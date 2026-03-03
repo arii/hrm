@@ -31,7 +31,7 @@ Return a JSON object:
 ```json
 {
   "reviewComment": "Markdown report focusing ONLY on the fix. Use code blocks.",
-  "labels": ["not approved", "needs-fixes", "ci-failure"],
+  "labels": ["needs-fixes", "ci-failure"],
   "verdict": "request_changes",
   "suggestedIssues": [
     {

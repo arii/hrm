@@ -90,10 +90,37 @@ export const formatDate = (
   return d.toLocaleDateString(locale, options)
 }
 
-export const extractGoogleDocId = (url?: string): string | undefined => {
-  if (!url) return undefined
-  // Standard Google Doc IDs are usually 44 chars, but we look for at least 25
-  // characters to avoid false positives with short strings while staying flexible.
-  const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})/)
-  return match ? match[1] : undefined
+/**
+ * Determines if the current environment is a test environment.
+ * Checks for NODE_ENV, NEXT_PUBLIC_TESTING, and the presence of 'testing=true' in the URL.
+ * Securely restricted to non-production environments unless NEXT_PUBLIC_TESTING is explicitly enabled.
+ */
+export const isTestEnvironment = (): boolean => {
+  // 1. Build-time designates test environment
+  const isTestingBuild =
+    process.env.NEXT_PUBLIC_TESTING === 'true' ||
+    process.env.TESTING === 'true' ||
+    process.env.NODE_ENV === 'test'
+
+  // 2. Production Guard: Never allow test mode in production unless explicitly enabled via build flags.
+  // This addresses a critical security vulnerability where test controls could be exposed via URL params.
+  if (process.env.NODE_ENV === 'production' && !isTestingBuild) {
+    return false
+  }
+
+  // 3. Client-side URL Toggle (now safe because of the production guard above)
+  if (typeof window !== 'undefined') {
+    const search = window.location.search
+    if (search.includes('testing=true') || search.includes('testing=1')) {
+      return true
+    }
+  }
+
+  // 4. Default to true in development mode for easy testing
+  if (process.env.NODE_ENV === 'development') {
+    return true
+  }
+
+  // 5. Final fallback to build-time flag
+  return isTestingBuild
 }

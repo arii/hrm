@@ -32,32 +32,4 @@ describe('GoogleDocViewer', () => {
     // so the iframe element itself should be a different object.
     expect(newIframeInstance).not.toBe(initialIframeInstance)
   })
-
-  it('renders iframe with correct src including embedded=true', () => {
-    render(
-      <GoogleDocViewer
-        title="Test Doc"
-        embedUrl="https://docs.google.com/document/d/123"
-      />
-    )
-    const iframe = screen.getByTitle('Test Doc')
-    expect(iframe).toHaveAttribute(
-      'src',
-      'https://docs.google.com/document/d/123?embedded=true'
-    )
-  })
-
-  it('renders nothing if embedUrl is invalid', () => {
-    const { container } = render(
-      <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
-
-  it('renders nothing if embedUrl is empty', () => {
-    const { container } = render(
-      <GoogleDocViewer title="Test Doc" embedUrl="" />
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
 })

@@ -25,13 +25,14 @@ jobs:
   triage:
     # This job runs for new issues.
     # It uses a Gemini agent to analyze the issue and provide a detailed triage.
-    if: vars.GEMINI_ENABLE_TRIAGE != 'false' && github.event_name == 'issues' && github.actor != 'ari-party-bot'
+    if: github.event_name == 'issues' && github.actor != 'ari-party-bot'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v6
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -93,6 +94,8 @@ jobs:
 
       - name: Apply Triage Actions
         uses: actions/github-script@v7
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
         with:
           github-token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           script: |
@@ -212,7 +215,7 @@ jobs:
               **Analysis:**
               ${result.analysis}
 
-              ${result.suggested_title && result.suggested_title !== context.payload.issue.title
+              ${result.suggested_title && result.suggested_title !== process.env.ISSUE_TITLE
                 ? `> **Suggestion:** Consider renaming this issue to: *"${result.suggested_title}"*`
                 : ''}
               `;
@@ -225,7 +228,7 @@ jobs:
               });
 
               if (result.suggested_title || result.suggested_body) {
-                const newTitle = result.suggested_title || context.payload.issue.title;
+                const newTitle = result.suggested_title || process.env.ISSUE_TITLE;
                 let newBody = context.payload.issue.body;
 
                 if (result.suggested_body) {
