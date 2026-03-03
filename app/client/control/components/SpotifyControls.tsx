@@ -26,7 +26,7 @@ import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
-const SYNC_LOCK_DURATION = 2000 // 2s lock to allow API propagation
+const SYNC_LOCK_DURATION = 2000
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -196,8 +196,6 @@ const SpotifyControls = () => {
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
-      lastUserInteractionRef.current = Date.now()
-
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
         deviceId: targetDeviceId,
@@ -208,7 +206,6 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  // Throttled volume command for live updates (200ms)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const throttledSendVolumeCommand = useCallback(
     throttle((val: number) => {

@@ -251,9 +251,12 @@ export class SpotifyPolling implements SpotifyService {
     }
 
     // 1. Immediate Optimistic Broadcast for Play/Pause
-    const previousIsPlaying = this.state.playback.is_playing
-    if (command === 'PLAY' || command === 'PAUSE') {
-      this.state.playback.is_playing = command === 'PLAY'
+    const playback = this.state?.playback
+    let previousIsPlaying = false
+
+    if ((command === 'PLAY' || command === 'PAUSE') && playback) {
+      previousIsPlaying = playback.is_playing
+      playback.is_playing = command === 'PLAY'
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
     }
 
@@ -276,7 +279,7 @@ export class SpotifyPolling implements SpotifyService {
     } catch (error) {
       await logSpotifyCommandError(command, error)
       // 3. Revert state on failure
-      if (command === 'PLAY' || command === 'PAUSE') {
+      if ((command === 'PLAY' || command === 'PAUSE') && this.state?.playback) {
         this.state.playback.is_playing = previousIsPlaying
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
