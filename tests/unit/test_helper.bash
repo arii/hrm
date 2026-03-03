@@ -2,6 +2,10 @@
 
 # Mock gh command
 gh() {
+    if [[ "${MOCK_GH_FAIL:-false}" == "true" ]]; then
+        echo "Mocked API failure" >&2
+        return 1
+    fi
     local args=("$@")
     # For the refactored script, we primarily handle: gh pr view ... --json comments
     # The output is always JSON.

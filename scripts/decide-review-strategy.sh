@@ -34,7 +34,8 @@ SKIP_REASON="no criteria met"
 # Check 1: Manual Override (PRIORITIZED)
 # A manual trigger (e.g., a specific comment, workflow_dispatch, or force_review input)
 # always forces a review, bypassing all other checks including global enablement.
-if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]] || \
+# Use case-insensitive matching for bot handles.
+if [[ "$TRIGGER_EVENT" == "comment" && ( $(echo "$COMMENT_BODY" | grep -qiE "@gemini-bot|@jules"; echo $?) -eq 0 ) ]] || \
    [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || \
    [[ "$FORCE_REVIEW" == "true" ]]; then
   echo "::info::Manual review triggered. Bypassing all checks."
@@ -63,8 +64,12 @@ set -e
 if [[ $GH_EXIT_CODE -ne 0 ]]; then
   echo "::warning::GitHub CLI failed to fetch PR data (Exit Code: $GH_EXIT_CODE)."
   cat gh_error.log >&2
-  # Fail-safe: proceed assuming no comments/throttling but log the risk
-  PR_DATA='{"comments":[]}'
+
+  # For automated reviews, we fail-closed if the API is down to avoid noise/errors.
+  # For manual reviews, this branch is unreachable due to Check 1.
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
+  exit 0
 else
   PR_DATA=$(cat "$PR_DATA_FILE")
 fi

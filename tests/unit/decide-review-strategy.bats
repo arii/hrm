@@ -23,6 +23,17 @@ setup() {
   assert_output "skip-reason" ""
 }
 
+@test "should be case-insensitive for manual override (comment)" {
+  export TRIGGER_EVENT="comment"
+  export COMMENT_BODY="@Gemini-bot"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
 @test "should trigger review safely when SHAs are missing during synchronization" {
   export TRIGGER_EVENT="pull_request"
   export ACTION_TYPE="synchronize"
@@ -173,6 +184,18 @@ setup() {
   [ "$status" -eq 0 ]
   assert_output "needs-review" "false"
   assert_output "skip-reason" "Gemini review is disabled"
+}
+
+@test "should fail-closed with reason if API fails for automated review" {
+  export MOCK_GH_FAIL="true"
+  export TRIGGER_EVENT="pull_request"
+  export ACTION_TYPE="opened"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "false"
+  assert_output "skip-reason" "GitHub API failure (Exit Code: 1)"
 }
 
 # Helper function to assert the output of the script
