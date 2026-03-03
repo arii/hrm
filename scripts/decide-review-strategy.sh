@@ -11,9 +11,10 @@ set -e
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
-: "${BASE_SHA:?}"
-: "${HEAD_SHA:?}"
 : "${PR_QUALITY_RESULT:?}"
+# These are optional for manual triggers
+: "${BASE_SHA:=}"
+: "${HEAD_SHA:=}"
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
 : "${REVIEW_THROTTLE_MINUTES:=30}"
