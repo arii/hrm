@@ -95,6 +95,9 @@ jobs:
     needs: [router]
     if: github.event.issue.pull_request && needs.router.outputs.is_review_issues == 'true'
     runs-on: ubuntu-latest
+    env:
+      REVIEW_WORKFLOW_FILE: 'pr-orchestrator.yml'
+      MANUAL_WORKFLOW_NAME: 'Bot Command Orchestrator'
     outputs:
       run_id: ${{ steps.find-run.outputs.run_id }}
     steps:
@@ -107,13 +110,13 @@ jobs:
           # Find the branch name of the PR
           BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
 
-          # Find the most recent successful run of 'Gemini Orchestrator' (pr-orchestrator.yml) for this branch.
+          # Find the most recent successful run of the main review workflow for this branch.
           # This workflow produces the 'review-result' artifact.
-          RUN_ID=$(gh run list --workflow pr-orchestrator.yml --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow "$REVIEW_WORKFLOW_FILE" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
 
-          # Fallback: check 'Bot Command Orchestrator' if manual review was triggered
+          # Fallback: check manual workflow if manual review was triggered
           if [ -z "$RUN_ID" ]; then
-            RUN_ID=$(gh run list --workflow "Bot Command Orchestrator" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+            RUN_ID=$(gh run list --workflow "$MANUAL_WORKFLOW_NAME" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
           fi
 
           if [ -z "$RUN_ID" ]; then
@@ -181,18 +184,21 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const body = '### 🤖 Gemini Manual Trigger Reference\n\n' +
-              'You can trigger the following Gemini AI workflows via comments:\n\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
-              'For more details and GitHub CLI examples, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
+            const body = `### 🤖 Gemini Manual Trigger Reference
+
+            You can trigger the following Gemini AI workflows via comments:
+
+            | Command | Action |
+            | :--- | :--- |
+            | \`@gemini-bot\` | Run AI Code Review (PR only) |
+            | \`@gemini-triage\` | Run Issue Triage |
+            | \`@gemini-coder <task>\` | Generate Code |
+            | \`@create-review-issues\` | Create issues from review (PR only) |
+            | \`@gemini-help\` | Show this help message |
+            | \`@pr-squash\` | Squash PR commits (PR only) |
+            | \`@conflict-resolve\` | Resolve merge conflicts (PR only) |
+
+            For more details and GitHub CLI examples, see the [Manual Trigger Guide](\${context.payload.repository.html_url}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).`;
 
             github.rest.issues.createComment({
               owner: context.repo.owner,
