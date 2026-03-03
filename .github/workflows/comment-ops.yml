@@ -88,7 +88,7 @@ jobs:
     uses: ./.github/workflows/gemini-coder.yml
     with:
       task_description: ${{ needs.prepare-coder.outputs.task }}
-      branch_name: "ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}"
+      branch_name: 'ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}'
     secrets: inherit
 
   prepare-review-issues-manual:
