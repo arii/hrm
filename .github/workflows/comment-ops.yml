@@ -35,13 +35,13 @@ jobs:
           # Use case-insensitive grep and ensure outputs are always set if matched.
           # We check for commands starting at the beginning of a line to avoid accidental triggers
           # from quotes or descriptive text mentioning the bots.
-          if echo "$BODY" | grep -qiE "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-triage"; then echo "is_triage=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@gemini-triage"; then echo "is_triage=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "(^|\r?\n)@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]

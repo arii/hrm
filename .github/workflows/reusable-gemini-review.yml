@@ -94,7 +94,7 @@ jobs:
       - name: Decide Review Strategy
         id: decision
         env:
-          TRIGGER_EVENT: ${{ inputs.trigger_event }}
+          TRIGGER_EVENT: ${{ inputs.trigger_event || github.event_name }}
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
@@ -106,6 +106,7 @@ jobs:
           REVIEW_THROTTLE_MINUTES: 30
           BOT_USERNAME: 'gemini-bot'
           GEMINI_ENABLE_PR_REVIEW: ${{ vars.GEMINI_ENABLE_PR_REVIEW }}
+          FORCE_REVIEW: ${{ inputs.force_review || 'false' }}
         run: |
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh

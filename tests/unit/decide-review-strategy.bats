@@ -10,11 +10,45 @@ setup() {
         QUALITY_GATE_BOT_USERNAMES MOCK_GH_COMMENTS_JSON
 }
 
-@test "should trigger review on manual override" {
+@test "should trigger review on manual override (comment)" {
   export TRIGGER_EVENT="comment"
   export ACTION_TYPE="created"
   export COMMENT_BODY="@gemini-bot review"
   export MAX_COMMENTS=0 # Prove that this check is bypassed
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
+@test "should trigger review on manual override (workflow_dispatch)" {
+  export TRIGGER_EVENT="workflow_dispatch"
+  export MAX_COMMENTS=0
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
+@test "should trigger review on manual override (force_review)" {
+  export FORCE_REVIEW="true"
+  export MAX_COMMENTS=0
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
+@test "should bypass GEMINI_ENABLE_PR_REVIEW on manual override" {
+  export TRIGGER_EVENT="comment"
+  export COMMENT_BODY="@gemini-bot"
+  export GEMINI_ENABLE_PR_REVIEW="false"
 
   run_script
 
