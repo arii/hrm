@@ -1,0 +1,74 @@
+import React from 'react'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell, { tableCellClasses } from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import Paper from '@mui/material/Paper'
+import { styled } from '@mui/material/styles'
+import { WorkoutTableDto } from '@/types/workout'
+
+/**
+ * Higher-level styled cell to enforce the Google Doc 'grid' look.
+ * 1. Border: 1px solid using theme palette for consistent contrast.
+ * 2. Font Size: Increased to 1.25rem (20px) for maximum readability in HR workflows.
+ */
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.grey[100],
+    color: theme.palette.common.black,
+    fontWeight: 'bold',
+    fontSize: '1.4rem', // Large header font
+    border: `1px solid ${theme.palette.divider}`,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: '1.25rem', // Large body font (approx 20px)
+    border: `1px solid ${theme.palette.divider}`,
+    lineHeight: 1.6,
+  },
+}))
+
+interface WorkoutTableViewerProps {
+  data: WorkoutTableDto
+}
+
+const WorkoutTableViewer: React.FC<WorkoutTableViewerProps> = ({ data }) => {
+  return (
+    <TableContainer
+      component={Paper}
+      elevation={3}
+      sx={{ borderRadius: 2 }}
+      data-testid="workout-table-viewer"
+    >
+      <Table
+        sx={{ minWidth: 650, borderCollapse: 'collapse' }}
+        aria-label="workout details"
+      >
+        <TableHead>
+          <TableRow>
+            {data.headers.map((header, index) => (
+              <StyledTableCell key={index} scope="col">
+                {header}
+              </StyledTableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.rows.map((row, rowIndex) => (
+            <TableRow
+              key={rowIndex}
+              sx={{ '&:nth-of-type(odd)': { backgroundColor: '#fafafa' } }}
+            >
+              {row.map((cell, cellIndex) => (
+                <StyledTableCell key={cellIndex}>{cell}</StyledTableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+}
+
+export default WorkoutTableViewer

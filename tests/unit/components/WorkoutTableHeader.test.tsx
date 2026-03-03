@@ -12,7 +12,10 @@ describe('WorkoutTableHeader', () => {
   it('re-fetches data when refreshKey changes', async () => {
     ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ headers: ['Initial Header'] }),
+      json: async () => ({
+        headers: ['Initial Header'],
+        rows: [['Initial Body']],
+      }),
     })
 
     const { rerender } = render(
@@ -21,18 +24,23 @@ describe('WorkoutTableHeader', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Initial Header')).toBeInTheDocument()
+      expect(screen.getByText('Initial Body')).toBeInTheDocument()
     })
 
     expect(fetch).toHaveBeenCalledTimes(1)
     ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ headers: ['Refreshed Header'] }),
+      json: async () => ({
+        headers: ['Refreshed Header'],
+        rows: [['Refreshed Body']],
+      }),
     })
 
     rerender(<WorkoutTableHeader docId="test-doc-id" refreshKey={1} />)
 
     await waitFor(() => {
       expect(screen.getByText('Refreshed Header')).toBeInTheDocument()
+      expect(screen.getByText('Refreshed Body')).toBeInTheDocument()
     })
 
     expect(fetch).toHaveBeenCalledTimes(2)

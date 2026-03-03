@@ -59,11 +59,13 @@ test.describe('Component-Specific VRT', () => {
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
     // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
+    // Use a dummy docId in the URL to satisfy hasValidConfig check if needed,
+    // though the mock should handle the API call.
+    await dashboardPage.goto('/?native=true&testing=true')
     await waitForPageReady(dashboardPage)
 
-    const tableHeader = dashboardPage.getByTestId('workout-table-header')
-    await expect(tableHeader).toBeVisible()
+    const tableHeader = dashboardPage.getByTestId('workout-table-viewer')
+    await expect(tableHeader).toBeVisible({ timeout: VRT_TIMEOUTS.STANDARD })
     await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 

@@ -1,20 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  Table,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TableCell,
-  Paper,
-  CircularProgress,
-  Alert,
-  Box,
-  alpha,
-} from '@mui/material'
+import { CircularProgress, Alert, Box, alpha } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
+import WorkoutTableViewer from './WorkoutTableViewer'
 
 interface WorkoutTableHeaderProps {
   docId: string
@@ -74,25 +64,7 @@ export default function WorkoutTableHeader({
       )
     }
 
-    return (
-      <TableContainer
-        component={Paper}
-        elevation={2}
-        data-testid="workout-table-header"
-      >
-        <Table aria-label="workout table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: 'action.hover' }}>
-              {data.headers.map((header, index) => (
-                <TableCell key={index} sx={{ fontWeight: 'bold' }} scope="col">
-                  {header}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-        </Table>
-      </TableContainer>
-    )
+    return <WorkoutTableViewer data={data} />
   }
 
   return (
