@@ -65,6 +65,12 @@ on:
       review_performed:
         description: 'Indicates if a review artifact was successfully generated and uploaded.'
         value: ${{ jobs.gemini-review.outputs.review_performed }}
+      base-sha:
+        description: 'The base SHA used for the review'
+        value: ${{ jobs.analyze-changes.outputs.base-sha }}
+      head-sha:
+        description: 'The head SHA used for the review'
+        value: ${{ jobs.analyze-changes.outputs.head-sha }}
 
 permissions:
   contents: read
@@ -80,6 +86,8 @@ jobs:
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       skip-reason: ${{ steps.decision.outputs.skip-reason }}
+      base-sha: ${{ steps.decision.outputs.base-sha }}
+      head-sha: ${{ steps.decision.outputs.head-sha }}
     steps:
       - name: Install jq
         run: |
@@ -87,10 +95,32 @@ jobs:
             sudo apt-get update && sudo apt-get install -y jq
           fi
 
+      - name: Resolve Checkout Ref
+        id: resolve_ref
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
+        run: |
+          # If head_sha is provided, use it.
+          if [ -n "$HEAD_SHA_INPUT" ]; then
+            echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
+          # Otherwise, if we have a PR number, fetch the head OID from the API.
+          elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            REF=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || echo "")
+            if [ -n "$REF" ]; then
+              echo "ref=$REF" >> $GITHUB_OUTPUT
+            else
+              echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.ref }}
+          ref: ${{ steps.resolve_ref.outputs.ref }}
 
       - name: Decide Review Strategy
         id: decision
@@ -99,8 +129,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ inputs.base_sha }}
+          HEAD_SHA: ${{ inputs.head_sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
