@@ -12,8 +12,8 @@ import {
   DEFAULT_REST_DURATION,
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL,
-} from '../utils/constants'
-import { ConfigurationError } from '../types/errors'
+} from '../utils/constants.js'
+import { ConfigurationError } from '../types/errors.js'
 
 class TabataTimer {
   private mode: TimerMode = 'TABATA'

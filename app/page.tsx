@@ -1,5 +1,6 @@
 import DashboardClient from '@/components/DashboardClient'
 import { env } from '@/lib/env'
+import { extractGoogleDocId } from '@/lib/utils'
 
 interface DashboardProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -28,9 +29,13 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     env.TESTING === 'true' ||
     false
 
+  const docId = extractGoogleDocId(env.GOOGLE_DOC_WORKOUT_URL)
+
   return (
     <DashboardClient
       useNativeTable={useNativeTable}
+      docId={docId}
+      iframeUrl={env.GOOGLE_DOC_IFRAME_URL}
       triggerError={isTestableEnv && testErrorValue === 'true'}
     />
   )

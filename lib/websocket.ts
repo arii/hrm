@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws'
 import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
-import { ServerMessage } from '../types/websocket'
+import { ServerMessage } from '../types/websocket.js'
 
 export class WebSocketManager {
   public wss: WebSocketServer

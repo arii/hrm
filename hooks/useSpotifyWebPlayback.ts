@@ -209,7 +209,7 @@ const useSpotifyWebPlayback = () => {
         isScriptLoading = true
         console.log('[Spotify Web Playback] Loading Spotify SDK script...')
         const script = document.createElement('script')
-        script.src = 'https://sdk.scdn.co/spotify-player'
+        script.src = 'https://sdk.scdn.co/spotify-player.js'
         script.async = true
         document.body.appendChild(script)
       }

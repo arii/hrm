@@ -15,15 +15,17 @@ export async function POST() {
   const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
 
   try {
-    // Clear WebSocket manager state and live sessions
-    resetSocketManager()
-
     if (fs.existsSync(tokenFile)) {
       fs.unlinkSync(tokenFile)
       logger.info('Spotify token file deleted.')
     } else {
       logger.info('Spotify token file not found, nothing to delete.')
     }
+
+    // Reset WebSocket and session state
+    resetSocketManager()
+    logger.info('Socket manager state reset.')
+
     return NextResponse.json({ message: 'Server reset successful' })
   } catch (error) {
     logger.error('Error resetting server:', error)

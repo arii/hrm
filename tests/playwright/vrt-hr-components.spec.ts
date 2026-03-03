@@ -6,7 +6,6 @@ import {
   setupVisualRegressionTest,
   mockMultipleHrDevices,
   resetServerState,
-  prepareVrtEnvironment,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -55,9 +54,6 @@ test.describe('Visual Regression Tests', () => {
       () => document.body.dataset.connectionStatus === 'connected',
       { timeout: 5000 }
     )
-
-    // Standardize the VRT environment across all pages
-    await prepareVrtEnvironment(dashboardPage, mockPage)
   })
 
   test.afterEach(async () => {

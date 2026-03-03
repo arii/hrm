@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload Script Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: script-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload Knip Report
         if: failure() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: knip-report
           path: knip-output.txt
@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload Lint Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lint-report
           path: logs/lint-output.log
@@ -217,6 +217,7 @@ jobs:
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_ENABLE_SLOP_CHECK: ${{ vars.GEMINI_ENABLE_SLOP_CHECK }}
         run: |
           chmod +x ./scripts/ci-check-slop.sh
           ./scripts/ci-check-slop.sh
@@ -231,7 +232,7 @@ jobs:
 
       - name: Upload Slop Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: slop-report
           path: logs/slop-output.log
@@ -280,7 +281,7 @@ jobs:
 
       - name: Upload Type Check Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: type-check-report
           path: logs/type-check-output.log
@@ -344,7 +345,7 @@ jobs:
 
       - name: Upload Build Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-report
           path: logs/build-output.log
@@ -426,7 +427,7 @@ jobs:
 
       - name: Upload Build Artifacts
         if: always() && steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: release.tar.gz
@@ -452,7 +453,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -497,7 +498,7 @@ jobs:
 
       - name: Upload Infra Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: infra-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -523,7 +524,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -566,7 +567,7 @@ jobs:
 
       - name: Upload Unit Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -592,7 +593,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -635,7 +636,7 @@ jobs:
 
       - name: Upload Component Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: component-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -665,7 +666,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -708,7 +709,7 @@ jobs:
 
       - name: Upload Performance Metrics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: performance-metrics-${{ env.SESSION_ID }}
           path: test-results/performance-metrics.json
@@ -716,7 +717,7 @@ jobs:
 
       - name: Upload Perf Test Logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -749,7 +750,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
           path: ./
@@ -807,7 +808,7 @@ jobs:
 
       - name: Upload Visual Test Artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-test-logs-${{ env.SESSION_ID }}
           path: |
@@ -886,6 +887,8 @@ jobs:
         integration-tests,
       ]
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
@@ -899,7 +902,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
         continue-on-error: true
@@ -1028,7 +1031,6 @@ jobs:
           PR_NUMBER: ${{ needs.prepare-env.outputs.pr_number }}
           SHA: ${{ needs.prepare-env.outputs.sha }}
           ENABLE_PR_COMMENT: ${{ inputs.enable_pr_comment }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set +e
 
@@ -1115,7 +1117,10 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${SHA}\`"
+          # Create manual trigger footer
+          FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](https://github.com/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+
+          COMMENT_BODY+="\n${SUMMARY_MSG}${FOOTER}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md

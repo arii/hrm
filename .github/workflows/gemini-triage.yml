@@ -11,6 +11,17 @@ name: Gemini Smart Triage
 
 on:
   workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage'
+        required: true
+        type: number
+  workflow_call:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage'
+        required: true
+        type: number
   schedule:
     - cron: '0 2 * * *' # Daily at 2 AM UTC
   issues:
@@ -23,21 +34,38 @@ permissions:
 
 jobs:
   triage:
-    # This job runs for new issues.
+    # This job runs for new issues or manual triage.
     # It uses a Gemini agent to analyze the issue and provide a detailed triage.
-    if: github.event_name == 'issues' && github.actor != 'ari-party-bot'
+    if: |
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') ||
+      (vars.GEMINI_ENABLE_TRIAGE != 'false' && github.event_name == 'issues' && github.actor != 'ari-party-bot')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-      - uses: actions/setup-node@v4
+
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Fetch Issue Details
+        id: issue_details
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ inputs.issue_number || github.event.inputs.issue_number || github.event.issue.number }}
+        run: |
+          # If triggered via workflow_dispatch, we need to fetch the issue details.
+          # If triggered via 'issues' event, they are already in the context, but fetching ensures consistency.
+          JSON=$(gh issue view "$ISSUE_NUMBER" --json title,body)
+          echo "title=$(echo "$JSON" | jq -r .title)" >> $GITHUB_OUTPUT
+          # Use a multi-line output for the body
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$JSON" | jq -r .body >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Build Triage Context
         id: context
@@ -50,8 +78,8 @@ jobs:
 
       - name: Construct Analysis Prompt
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ steps.issue_details.outputs.title }}
+          ISSUE_BODY: ${{ steps.issue_details.outputs.body }}
         run: |
           # Create a structured prompt demanding JSON output
           cat <<EOF > task_input.txt
@@ -95,12 +123,25 @@ jobs:
       - name: Apply Triage Actions
         uses: actions/github-script@v7
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ steps.issue_details.outputs.number }}
+          ORIGINAL_TITLE: ${{ steps.issue_details.outputs.title }}
+          ORIGINAL_BODY: ${{ steps.issue_details.outputs.body }}
         with:
           github-token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const path = require('path');
+            const issue_number = parseInt(process.env.ISSUE_NUMBER);
+
+            const footer = '\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n' +
+              '| Command | Action |\n' +
+              '| :--- | :--- |\n' +
+              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
+              '| `@gemini-triage` | Run Issue Triage |\n' +
+              '| `@gemini-coder <task>` | Generate Code |\n' +
+              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+              '| `@gemini-help` | Show this help message |\n\n' +
+              '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
 
             try {
               const filePath = path.resolve(process.cwd(), 'triage_result.json');
@@ -156,11 +197,13 @@ jobs:
                 \`\`\`
 
                 </details>
+
+                ${footer}
                 `;
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: issue_number,
                   body: validationComment.trim(),
                 });
                 core.setFailed('The AI response failed schema validation.');
@@ -183,11 +226,13 @@ jobs:
                 \`\`\`
 
                 </details>
+
+                ${footer}
                 `;
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: issue_number,
                   body: errorComment.trim(),
                 });
                 core.setFailed(`Triage failed: ${result.error.message}`);
@@ -201,10 +246,11 @@ jobs:
                 await github.rest.issues.addLabels({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: issue_number,
                   labels: result.labels,
                 });
               }
+
 
               const commentBody = `
               ### 🤖 Gemini Smart Triage
@@ -215,24 +261,26 @@ jobs:
               **Analysis:**
               ${result.analysis}
 
-              ${result.suggested_title && result.suggested_title !== process.env.ISSUE_TITLE
+              ${result.suggested_title && result.suggested_title !== process.env.ORIGINAL_TITLE
                 ? `> **Suggestion:** Consider renaming this issue to: *"${result.suggested_title}"*`
                 : ''}
+
+              ${footer}
               `;
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: issue_number,
                 body: commentBody.trim(),
               });
 
               if (result.suggested_title || result.suggested_body) {
-                const newTitle = result.suggested_title || process.env.ISSUE_TITLE;
-                let newBody = context.payload.issue.body;
+                const newTitle = result.suggested_title || process.env.ORIGINAL_TITLE;
+                let newBody = process.env.ORIGINAL_BODY;
 
                 if (result.suggested_body) {
-                  const originalBody = context.payload.issue.body;
+                  const originalBody = process.env.ORIGINAL_BODY;
                   let suggestedBody = result.suggested_body;
                   if (suggestedBody.length > 60000) {
                     suggestedBody = suggestedBody.substring(0, 60000) + '\n... (truncated)';
@@ -243,7 +291,7 @@ jobs:
                 await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: issue_number,
                   title: newTitle,
                   body: newBody,
                 });
@@ -262,12 +310,14 @@ jobs:
               \`\`\`
 
               </details>
+
+              ${footer}
               `;
               try {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: context.issue.number,
+                  issue_number: issue_number,
                   body: fatalErrorComment.trim(),
                 });
               } catch (commentError) {
@@ -275,6 +325,43 @@ jobs:
               }
               core.setFailed('Failed to apply triage actions due to a fatal error: ' + error.message);
             }
+  disabled-guidance:
+    if: |
+      vars.GEMINI_ENABLE_TRIAGE == 'false' &&
+      github.event_name == 'issues' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Guidance Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '### ℹ️ Gemini Triage Disabled\n\n' +
+              'Automatic triage is currently disabled via `GEMINI_ENABLE_TRIAGE`. To run triage manually:\n\n' +
+              '**Via Comment:**\n```\n@gemini-triage\n```\n\n' +
+              '**Via GitHub Actions:**\n' +
+              '1. Go to [Actions → Gemini Smart Triage](' + context.payload.repository.html_url + '/actions/workflows/gemini-triage.yml)\n' +
+              '2. Click "Run workflow"\n' +
+              '3. Enter issue number: `' + context.issue.number + '`\n\n' +
+              '**Via GitHub CLI:**\n```bash\ngh workflow run gemini-triage.yml -f issue_number=' + context.issue.number + '\n```\n\n' +
+              '#### 🤖 Manual Trigger Quick Reference\n' +
+              '| Command | Action |\n' +
+              '| :--- | :--- |\n' +
+              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
+              '| `@gemini-triage` | Run Issue Triage |\n' +
+              '| `@gemini-coder <task>` | Generate Code |\n' +
+              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+              '| `@gemini-help` | Show this help message |\n\n' +
+              'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
+              '**To re-enable:** Set repository variable `GEMINI_ENABLE_TRIAGE=true`';
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
   maintenance:
     # This job runs on a schedule or manual trigger.
     # It performs rule-based maintenance tasks like finding stale issues and duplicates.

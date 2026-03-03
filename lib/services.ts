@@ -1,7 +1,7 @@
-import { ServerMessage } from '../types/websocket'
-import { SpotifyPolling } from '../services/spotifyPolling'
-import TabataTimer from '../services/tabataTimer'
-import { SpotifyService } from '../types/interfaces'
+import { ServerMessage } from '../types/websocket.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TabataTimer from '../services/tabataTimer.js'
+import { SpotifyService } from '../types/interfaces.js'
 
 export interface AppServices {
   spotifyService: SpotifyService

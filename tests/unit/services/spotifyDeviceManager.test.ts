@@ -4,7 +4,7 @@ import { mockPlayer } from '../spotify-test-utils'
 import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to prevent logs from appearing in test output
-jest.mock('../../../utils/logger.server', () => ({
+jest.mock('../../../utils/logger.server.js', () => ({
   __esModule: true,
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   default: require('../spotify-mocks').mockLogger,

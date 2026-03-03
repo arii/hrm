@@ -194,7 +194,7 @@ useEffect(() => {
     process.env.NEXT_PUBLIC_TESTING === 'true'
   ) {
     window.__TEST_CONTROLS__ = {
-      ...(window.__TEST_CONTROLS__ || {}),
+      ...window.__TEST_CONTROLS__,
       setMyHookState: setMyState,
     }
   }
@@ -226,7 +226,7 @@ In Next.js development mode, modules are frequently re-executed due to hot-reloa
 
 ### The "Double-Singleton" Problem
 
-If you have a service that starts a polling loop or maintains a persistent connection, hot-reloading will create a new instance of that service *without* stopping the old one. Over time, this leads to resource leaks and "ghost" processes.
+If you have a service that starts a polling loop or maintains a persistent connection, hot-reloading will create a new instance of that service _without_ stopping the old one. Over time, this leads to resource leaks and "ghost" processes.
 
 ### Implementation Pattern
 
@@ -253,9 +253,9 @@ export async function createServices(broadcast) {
   // 2. Create new instances if none exist
   // ... initialization logic ...
   const services = {
-     spotifyService: await SpotifyPolling.create(broadcast),
-     tabataService: new TabataTimer(broadcast),
-     isSpotifyInitialized: true,
+    spotifyService: await SpotifyPolling.create(broadcast),
+    tabataService: new TabataTimer(broadcast),
+    isSpotifyInitialized: true,
   }
 
   // 3. Persist to global for future reloads and global access

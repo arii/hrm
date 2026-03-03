@@ -34,10 +34,6 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
-    // Force main content layout to be visible to avoid flaky blank screenshots due to Framer Motion
-    await controlPage.addStyleTag({
-      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
-    })
   })
 
   test.describe('SpotifyControls Component', () => {

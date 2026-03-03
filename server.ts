@@ -1,17 +1,17 @@
 // server.ts (Refactored)
-import './lib/env' // Triggers validation immediately
+import './lib/env.js' // Triggers validation immediately
 import express, { type RequestHandler } from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { env } from './lib/env' // New import
-import { httpLogger } from './utils/logger.server'
-import logger from './utils/logger.server'
-import { AppServices, createServices } from './lib/services' // New import
-import { WebSocketManager } from './lib/websocket' // New import
-import { initSocketManager, resetSocketManager } from './utils/socketManager'
-import { StateSnapshot } from './types/websocket'
+import { env } from './lib/env.js' // New import
+import { httpLogger } from './utils/logger.server.js'
+import logger from './utils/logger.server.js'
+import { AppServices, createServices } from './lib/services.js' // New import
+import { WebSocketManager } from './lib/websocket.js' // New import
+import { initSocketManager, resetSocketManager } from './utils/socketManager.js'
+import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 

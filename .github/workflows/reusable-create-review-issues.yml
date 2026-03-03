@@ -5,8 +5,23 @@
 name: Reusable Create Review Issues
 
 on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to create issues for'
+        required: true
+        type: string
+      run_id:
+        description: 'Workflow run ID with review artifacts'
+        required: true
+        type: string
   workflow_call:
     inputs:
+      trigger_event:
+        description: 'The event that triggered the workflow'
+        required: false
+        type: string
+        default: 'workflow_call'
       pr_number:
         description: 'The PR number to associate the issues with'
         required: true
@@ -29,7 +44,50 @@ permissions:
   pull-requests: read
 
 jobs:
+  disabled-guidance:
+    if: |
+      vars.GEMINI_ENABLE_REVIEW_ISSUES == 'false' &&
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened') &&
+      inputs.trigger_event != 'comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Guidance Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '### ℹ️ Gemini Review Issue Creation Disabled\n\n' +
+              'Automatic creation of issues from reviews is currently disabled via `GEMINI_ENABLE_REVIEW_ISSUES`. To run it manually:\n\n' +
+              '**Via Comment:**\n```\n@create-review-issues\n```\n\n' +
+              '**Via GitHub Actions:**\n' +
+              '1. Go to [Actions → Reusable Create Review Issues](' + context.payload.repository.html_url + '/actions/workflows/reusable-create-review-issues.yml)\n' +
+              '2. Click "Run workflow"\n' +
+              '3. Enter PR number: `' + context.payload.pull_request.number + '`\n' +
+              '4. Enter Run ID from a successful review workflow.\n\n' +
+              '**Via GitHub CLI:**\n```bash\ngh workflow run reusable-create-review-issues.yml -f pr_number=' + context.payload.pull_request.number + ' -f run_id=...\n```\n\n' +
+              '#### 🤖 Manual Trigger Quick Reference\n' +
+              '| Command | Action |\n' +
+              '| :--- | :--- |\n' +
+              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
+              '| `@gemini-triage` | Run Issue Triage |\n' +
+              '| `@gemini-coder <task>` | Generate Code |\n' +
+              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+              '| `@gemini-help` | Show this help message |\n\n' +
+              'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
+              '**To re-enable:** Set repository variable `GEMINI_ENABLE_REVIEW_ISSUES=true`';
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
+
   create-review-issues:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      inputs.trigger_event == 'comment' ||
+      vars.GEMINI_ENABLE_REVIEW_ISSUES != 'false'
     runs-on: ubuntu-latest
     name: Create Issues from Gemini Review
 
@@ -43,7 +101,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: Download Review Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: review-result
           run-id: ${{ inputs.run_id }}
