@@ -41,7 +41,15 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
+
+    // Mask the animated progress circle as it's highly flaky in VRT
+    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
+
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
+      screenshotOptions: {
+        mask: [progress],
+      },
+    })
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {

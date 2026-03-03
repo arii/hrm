@@ -18,6 +18,15 @@ test.describe('Spotify Selection Page VRT', () => {
       '/client/spotify-selection'
     )
     await waitForPageReady(dashboardPage)
-    await takeScreenshot(dashboardPage, 'spotify-selection-page.png')
+
+    // Mask the search input as it now uses MUI Autocomplete, which causes
+    // layout shifts and differs between local and CI environments.
+    const searchInput = dashboardPage.locator('.MuiAutocomplete-root')
+
+    await takeScreenshot(dashboardPage, 'spotify-selection-page.png', {
+      screenshotOptions: {
+        mask: [searchInput],
+      },
+    })
   })
 })

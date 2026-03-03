@@ -41,7 +41,16 @@ test.describe('Visual Regression Tests', () => {
       const spotifyControls = controlPage.getByTestId('spotify-controls')
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })
-      await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png')
+
+      // Mask the search input as it now uses MUI Autocomplete, which causes
+      // layout shifts and differs between local and CI environments.
+      const searchInput = spotifyControls.locator('.MuiAutocomplete-root')
+
+      await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png', {
+        screenshotOptions: {
+          mask: [searchInput],
+        },
+      })
     })
 
     test('select music button hover state', async () => {

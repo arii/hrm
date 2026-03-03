@@ -28,7 +28,7 @@ const LoadingIndicator = () => {
         visibility: isLoading ? 'visible' : 'hidden',
       }}
     >
-      <CircularProgress />
+      <CircularProgress data-testid="loading-indicator-progress" />
     </Box>
   )
 }
