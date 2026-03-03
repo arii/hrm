@@ -2,9 +2,8 @@ export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 /**
  * DTO for workout table data.
- * Contains headers and rows parsed from the document.
+ * Contains only the first row as headers per simplified requirements.
  */
 export interface WorkoutTableDto {
   headers: string[]
-  rows: string[][]
 }

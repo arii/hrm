@@ -191,10 +191,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
       contentType: 'application/json',
       body: JSON.stringify({
         headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-        rows: [
-          ['Warmup', 'Low', '10 min', 'Dynamic stretching'],
-          ['Main', 'High', '30 min', 'Compound lifts'],
-        ],
       }),
     })
   })
@@ -250,10 +246,6 @@ export async function setupMinimalVisualRegressionTest(
       contentType: 'application/json',
       body: JSON.stringify({
         headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-        rows: [
-          ['Warmup', 'Low', '10 min', 'Dynamic stretching'],
-          ['Main', 'High', '30 min', 'Compound lifts'],
-        ],
       }),
     })
   })

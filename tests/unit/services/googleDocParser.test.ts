@@ -27,27 +27,10 @@ describe('parseGoogleDocTable', () => {
 
     const expectedDto: WorkoutTableDto = {
       headers: ['Exercise', 'Sets', 'Reps', 'Notes'],
-      rows: [['Squats', '3', '10', 'Form check']],
     }
 
     const result = parseGoogleDocTable(html)
     expect(result).toEqual(expectedDto)
-  })
-
-  it('should parse multiple rows correctly', () => {
-    const html = `
-      <table>
-        <tr><td>H1</td><td>H2</td></tr>
-        <tr><td>R1C1</td><td>R1C2</td></tr>
-        <tr><td>R2C1</td><td>R2C2</td></tr>
-      </table>
-    `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual(['H1', 'H2'])
-    expect(result.rows).toEqual([
-      ['R1C1', 'R1C2'],
-      ['R2C1', 'R2C2'],
-    ])
   })
 
   it('should clean whitespace from cell contents', () => {
