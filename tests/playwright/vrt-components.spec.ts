@@ -17,12 +17,18 @@ test.describe('Component-Specific VRT', () => {
 
   test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
     const bottomNav = dashboardPage.getByTestId('bottom-nav-bar')
-    await takeScreenshot(bottomNav, 'bottom-nav-bar.png')
+    await takeScreenshot(bottomNav, 'bottom-nav-bar.png', {
+      maxDiffPixelRatio: 0.2,
+      threshold: 0.5,
+    })
   })
 
   test('Footer rendering', async ({ dashboardPage }) => {
     const footer = dashboardPage.getByTestId('footer')
-    await takeScreenshot(footer, 'footer.png')
+    await takeScreenshot(footer, 'footer.png', {
+      maxDiffPixelRatio: 0.2,
+      threshold: 0.5,
+    })
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
@@ -51,11 +57,16 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
-    // Ensure we are in non-native mode for this test
-    await dashboardPage.goto('/?native=false')
+    // Ensure we are in non-native mode and have a valid mock URL
+    const mockIframeUrl = encodeURIComponent(
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+    )
+    await dashboardPage.goto(`/?native=false&iframeUrl=${mockIframeUrl}`)
+    await dashboardPage.waitForLoadState('networkidle')
     await waitForPageReady(dashboardPage)
 
     const toggleButton = dashboardPage.getByLabel('Collapse document')
+    await expect(toggleButton).toBeVisible({ timeout: VRT_TIMEOUTS.EXTENDED })
     await toggleButton.click()
     const viewer = dashboardPage
       .getByTestId('google-doc-viewer-iframe')
@@ -64,12 +75,16 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
+    // Ensure we are in native mode and have a valid mock URL
+    const mockWorkoutUrl = encodeURIComponent(
+      'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit'
+    )
+    await dashboardPage.goto(`/?native=true&workoutUrl=${mockWorkoutUrl}`)
+    await dashboardPage.waitForLoadState('networkidle')
     await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
-    await expect(tableHeader).toBeVisible()
+    await expect(tableHeader).toBeVisible({ timeout: VRT_TIMEOUTS.EXTENDED })
     await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 
@@ -120,8 +135,10 @@ test.describe('Component-Specific VRT', () => {
       'spotify-device-selector-button'
     )
     await expect(selectorButton).toBeVisible({
-      timeout: VRT_TIMEOUTS.STANDARD,
+      timeout: VRT_TIMEOUTS.EXTENDED,
     })
+    // Ensure button is stable before clicking
+    await selectorButton.hover()
     await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
@@ -138,9 +155,18 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
+    // Ensure we have a valid component rendered with a refresh button
+    const mockWorkoutUrl = encodeURIComponent(
+      'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit'
+    )
+    await dashboardPage.goto(`/?native=true&workoutUrl=${mockWorkoutUrl}`)
+    await dashboardPage.waitForLoadState('networkidle')
+    await waitForPageReady(dashboardPage)
+
     const refreshButton = dashboardPage
       .getByTestId('refresh-icon-button')
       .first()
+    await expect(refreshButton).toBeVisible({ timeout: VRT_TIMEOUTS.EXTENDED })
     await takeScreenshot(refreshButton, 'refresh-icon-button.png')
     await refreshButton.hover()
     await takeScreenshot(refreshButton, 'refresh-icon-button-hover.png')

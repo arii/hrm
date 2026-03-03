@@ -11,6 +11,14 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
   const nativeParam = params.native
   const nativeValue = Array.isArray(nativeParam) ? nativeParam[0] : nativeParam
 
+  // Check for URL overrides (useful for testing/VRT)
+  const iframeUrlOverride = Array.isArray(params.iframeUrl)
+    ? params.iframeUrl[0]
+    : params.iframeUrl
+  const workoutUrlOverride = Array.isArray(params.workoutUrl)
+    ? params.workoutUrl[0]
+    : params.workoutUrl
+
   const useNativeTable =
     nativeValue === 'true' ||
     (env.NEXT_PUBLIC_USE_NATIVE_TABLE && nativeValue !== 'false')
@@ -29,13 +37,28 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
     env.TESTING === 'true' ||
     false
 
-  const docId = extractGoogleDocId(env.GOOGLE_DOC_WORKOUT_URL)
+  // Fallback to mock URLs in test environments if not configured
+  const DEFAULT_MOCK_WORKOUT_URL =
+    'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit'
+  const DEFAULT_MOCK_IFRAME_URL =
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+
+  const iframeUrl =
+    iframeUrlOverride ||
+    env.GOOGLE_DOC_IFRAME_URL ||
+    (isTestableEnv ? DEFAULT_MOCK_IFRAME_URL : undefined)
+  const workoutUrl =
+    workoutUrlOverride ||
+    env.GOOGLE_DOC_WORKOUT_URL ||
+    (isTestableEnv ? DEFAULT_MOCK_WORKOUT_URL : undefined)
+
+  const docId = extractGoogleDocId(workoutUrl)
 
   return (
     <DashboardClient
       useNativeTable={useNativeTable}
       docId={docId}
-      iframeUrl={env.GOOGLE_DOC_IFRAME_URL}
+      iframeUrl={iframeUrl}
       triggerError={isTestableEnv && testErrorValue === 'true'}
     />
   )

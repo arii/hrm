@@ -58,6 +58,9 @@ export default function BottomNavBar() {
       showLabels
       sx={{
         width: '100%',
+        height: 56,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
         position: 'fixed',
         bottom: 0,
         left: 0,

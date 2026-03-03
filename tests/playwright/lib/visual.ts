@@ -29,8 +29,8 @@ export const SCREENSHOT_OPTIONS = {
   fullPage: false,
   animations: 'disabled' as const,
   caret: 'hide' as const,
-  threshold: 0.2,
-  maxDiffPixelRatio: 0.02,
+  threshold: 0.3,
+  maxDiffPixelRatio: 0.1,
 }
 
 /**

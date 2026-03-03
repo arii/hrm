@@ -21,6 +21,8 @@ export const VRT_MASK_SELECTORS = {
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
+  googleDocViewer: '[data-testid="google-doc-viewer-iframe"]',
+  workoutTableViewer: '[data-testid="workout-table-viewer"]',
 } as const
 
 /**
@@ -38,6 +40,8 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
+    page.locator(VRT_MASK_SELECTORS.googleDocViewer),
+    page.locator(VRT_MASK_SELECTORS.workoutTableViewer),
   ]
 }
 

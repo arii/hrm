@@ -156,6 +156,8 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
+        // Enforce a stable height for mobile screenshots to avoid content-length flakiness
+        clip: { x: 0, y: 0, width: 375, height: 1000 },
       })
     })
 

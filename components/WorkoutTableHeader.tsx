@@ -101,6 +101,7 @@ export default function WorkoutTableHeader({
         <RefreshIconButton
           onClick={onRefresh}
           aria-label="refresh workout table"
+          data-testid="refresh-icon-button"
           sx={(theme) => ({
             position: 'absolute',
             top: 8,

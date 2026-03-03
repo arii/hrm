@@ -250,8 +250,8 @@ export async function setupMinimalVisualRegressionTest(
     })
   })
 
-  // Mock the iframe for the root path before navigation
-  if (path === '' || path === '/') {
+  // Mock the iframe for any path that might render the dashboard
+  if (path === '' || path.startsWith('/') || path.startsWith('/?')) {
     await mockGoogleDocIframe(page)
   }
   await navigateAndWait(page, path)

@@ -19,24 +19,76 @@ const MOCK_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
 
 const STABLE_WORKOUT_HTML = `
-  <!DOCTYPE html>
-  <html><head><style>
-  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: white; }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }
-  h3 { margin: 0 0 10px 0; color: #333; }
-  p { margin: 5px 0; font-size: 14px; }
-  </style></head><body>
-  <p><strong>Sample Workout Plan</strong></p>
-  <table><tr>
-  <td><h3>30/10 x 3</h3><p>3 way crunch</p><p>Dead bug</p><p>Plank variations</p></td>
-  <td><h3>Tabata</h3><p>Band h. Bridge</p><p>Band p. Squat</p><p>Band hydrants</p></td>
-  <td><h3>Complex 5x5</h3><p>RDL</p><p>High pull</p><p>1 ½ squat</p></td>
-  <td><h3>3x10</h3><p>Alt box ch press</p><p>Single Hip thrust</p></td>
-  <td><h3>3 x 12</h3><p>Kb curl</p><p>Tricep planks</p><p>Butterfly bridge</p></td>
-  </tr></table>
-  <p><a href="#">Previous workouts</a></p>
-  </body></html>
+  <!doctype html>
+  <html>
+    <head>
+      <style>
+        body {
+          margin: 0;
+          padding: 20px;
+          font-family: Arial, sans-serif;
+          background: white;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        td {
+          padding: 10px; border: 1px solid #ddd; vertical-align: top;
+        }
+        h3 {
+          margin: 0 0 10px 0; color: #333;
+        }
+        p {
+          margin: 5px 0; font-size: 14px;
+        }
+      </style>
+    </head>
+    <body>
+      <p><strong>Sample Workout Plan</strong></p>
+      <table>
+        <tr>
+          <td>
+            <h3>30/10 x 3</h3>
+            <p>3 way crunch</p>
+            <p>Dead bug</p>
+            <p>Plank variations</p>
+            <p>Mountain climbers</p>
+          </td>
+          <td>
+            <h3>Tabata</h3>
+            <p>Band h. Bridge</p>
+            <p>Band p. Squat</p>
+            <p>Band hydrants</p>
+            <p>Band p. squat</p>
+          </td>
+          <td>
+            <h3>Complex 5x5</h3>
+            <p>RDL</p>
+            <p>High pull</p>
+            <p>1 ½ squat</p>
+            <p>Hang clean</p>
+          </td>
+          <td>
+            <h3>3x10</h3>
+            <p>Alt box ch press</p>
+            <p>Single Hip thrust</p>
+            <p>Lateral raises</p>
+            <p>Push-ups</p>
+          </td>
+          <td>
+            <h3>3 x 12</h3>
+            <p>Kb curl</p>
+            <p>Tricep planks</p>
+            <p>Butterfly bridge</p>
+            <p>Cool down stretch</p>
+          </td>
+        </tr>
+      </table>
+      <p><a href="#">Previous workouts</a></p>
+      <p><a href="#">Training schedule</a></p>
+    </body>
+  </html>
 `
 
 /**
@@ -49,9 +101,8 @@ const STABLE_WORKOUT_HTML = `
 export async function mockGoogleDocIframe(
   pageOrContext: Page | BrowserContext
 ): Promise<void> {
-  await pageOrContext.route(
-    '**/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
-    (route) => {
+  // Use a more permissive regex or glob to catch Google Doc embed requests
+  await pageOrContext.route(/.*google\.com\/.*\/pub\?embedded=true/, (route) => {
       route.fulfill({
         status: 200,
         contentType: 'text/html; charset=utf-8',
