@@ -31,30 +31,8 @@ SKIP_REASON="no criteria met"
 
 # --- Main Logic ---
 
-# Check 1: Manual Override (PRIORITIZED)
-# Bypasses all other checks including global enablement.
-# Matches @bot-handle at start of string or after space, case-insensitively.
-if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
-  echo "::info::Manual review triggered via comment. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  exit 0
-elif [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
-  echo "::info::Manual review triggered via UI/force. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  exit 0
-fi
-
-# Check 0: Gemini Review Enablement
-if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
-  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
-  echo "needs-review=false" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
-  exit 0
-fi
-
 # Fetch PR metadata once (comments + Ref OIDs) to reduce API calls and latency.
+# This is done early to ensure SHAs are available for all paths, including manual overrides.
 echo "::info::Fetching PR #$PR_NUMBER metadata..."
 PR_DATA_FILE=$(mktemp)
 set +e
@@ -79,8 +57,35 @@ fi
 rm -f "$PR_DATA_FILE" gh_error.log
 
 # Self-heal missing SHAs if they are absent from environment
-if [ -z "$BASE_SHA" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
-if [ -z "$HEAD_SHA" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
+if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
+if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
+
+# Check 1: Manual Override (PRIORITIZED)
+# Bypasses all other checks including global enablement.
+# Matches @bot-handle at start of string or after space, case-insensitively.
+if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
+  echo "::info::Manual review triggered via comment. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+  exit 0
+elif [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
+  echo "::info::Manual review triggered via UI/force. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
+# Check 0: Gemini Review Enablement
+if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
+  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
 
 # Check 2: Comment Count Limit
 COMMENT_COUNT=$(echo "$PR_DATA" | jq '.comments | length')

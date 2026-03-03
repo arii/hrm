@@ -238,9 +238,22 @@ export const resetSocketManager = () => {
 
   // Disconnect all clients to force them to re-register and re-initialize their sessions
   if (wsServerInstance) {
+    logger.info(
+      { clientCount: wsServerInstance.clients.size },
+      'Resetting socket manager: Disconnecting all clients.'
+    )
     wsServerInstance.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.close(1001, 'Server Reset')
+      // Use terminate() for a more forceful disconnection during reset to ensure
+      // resources are freed immediately and we don't hang on closure handshakes.
+      try {
+        if (
+          client.readyState === WebSocket.OPEN ||
+          client.readyState === WebSocket.CONNECTING
+        ) {
+          client.terminate()
+        }
+      } catch (err) {
+        logger.error({ err }, 'Error terminating client during reset')
       }
     })
   }
