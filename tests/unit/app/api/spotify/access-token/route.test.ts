@@ -21,6 +21,7 @@ describe('API Route: /api/spotify/access-token', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {

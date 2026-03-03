@@ -63,6 +63,7 @@ describe('useSpotifyWebPlayback', () => {
 
   afterEach(() => {
     jest.restoreAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should initialize the SDK and connect the player on mount', async () => {

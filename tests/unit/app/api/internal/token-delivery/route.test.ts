@@ -36,8 +36,16 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   beforeEach(() => {
+    jest.spyOn(console, 'info').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
     jest.clearAllMocks()
     global.spotifyService = mockSpotifyService
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   it('should return 401 if secret header is missing or invalid', async () => {
