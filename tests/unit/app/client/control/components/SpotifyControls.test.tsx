@@ -202,7 +202,11 @@ describe('components/SpotifyControls', () => {
       spotifyData: createMockSpotifyData({
         playback: { ...createMockSpotifyData().playback, volume_percent: v },
         devices: [
-          createMockSpotifyDevice({ id: '1', is_active: true, volume_percent: v }),
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: v,
+          }),
         ],
       }),
       sendData: mockSendData,
@@ -260,7 +264,11 @@ describe('components/SpotifyControls', () => {
       spotifyData: createMockSpotifyData({
         playback: { ...createMockSpotifyData().playback, volume_percent: v },
         devices: [
-          createMockSpotifyDevice({ id: '1', is_active: true, volume_percent: v }),
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: v,
+          }),
         ],
       }),
       sendData: mockSendData,
