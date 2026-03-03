@@ -32,10 +32,9 @@ SKIP_REASON="no criteria met"
 # --- Main Logic ---
 
 # Check 1: Manual Override (PRIORITIZED)
-# A manual trigger (e.g., a specific comment, workflow_dispatch, or force_review input)
-# always forces a review, bypassing all other checks including global enablement.
-# Use case-insensitive matching for bot handles.
-if [[ "$TRIGGER_EVENT" == "comment" && ( $(echo "$COMMENT_BODY" | grep -qiE "@gemini-bot|@jules"; echo $?) -eq 0 ) ]] || \
+# We check this first to bypass all other criteria including global enablement.
+# Use bash lowercasing for case-insensitive handle comparison.
+if [[ "$TRIGGER_EVENT" == "comment" && ( "${COMMENT_BODY,,}" == *@gemini-bot* || "${COMMENT_BODY,,}" == *@jules* ) ]] || \
    [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || \
    [[ "$FORCE_REVIEW" == "true" ]]; then
   echo "::info::Manual review triggered. Bypassing all checks."
@@ -65,17 +64,19 @@ if [[ $GH_EXIT_CODE -ne 0 ]]; then
   cat gh_error.log >&2
 
   # For automated reviews, we fail-closed if the API is down to avoid noise/errors.
-  # For manual reviews, this branch is unreachable due to Check 1.
-  echo "needs-review=false" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
-  exit 0
+  if [[ "$TRIGGER_EVENT" == "pull_request" ]]; then
+    echo "needs-review=false" >> "$GITHUB_OUTPUT"
+    echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
+  PR_DATA='{"comments":[]}'
 else
   PR_DATA=$(cat "$PR_DATA_FILE")
 fi
 rm -f "$PR_DATA_FILE" gh_error.log
 
 # Check 2: Comment Count Limit
-COMMENT_COUNT=$(echo "$PR_DATA" | jq '.comments | length')
+COMMENT_COUNT=$(echo "$PR_DATA" | jq '.comments | length' 2>/dev/null || echo 0)
 if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
   echo "::warning::PR has $COMMENT_COUNT comments, exceeding the limit of $MAX_COMMENTS. Skipping review."
   echo "needs-review=false" >> "$GITHUB_OUTPUT"
@@ -84,7 +85,7 @@ if [[ "$COMMENT_COUNT" -gt "$MAX_COMMENTS" ]]; then
 fi
 
 # Check 3: Time-Based Throttling
-LAST_REVIEW_TIMESTAMP=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""')
+LAST_REVIEW_TIMESTAMP=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user)) | .[-1].createdAt // ""' 2>/dev/null || echo "")
 
 if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
   LAST_REVIEW_SECONDS=$(date -d "$LAST_REVIEW_TIMESTAMP" +%s)
@@ -99,20 +100,14 @@ if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
   fi
 fi
 
-# If we've passed the initial gatekeeping checks, proceed to the core review decision logic.
-echo "::info::Passed initial checks (manual override, comment limit, throttling). Proceeding to analyze review necessity."
-
 # Check 4: Quality Check Failures
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
   QUALITY_REPORT=$(echo "$PR_DATA" | jq -r \
     --arg bot_users "$QUALITY_GATE_BOT_USERNAMES" \
-    '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""'
+    '($bot_users | split(" ")) as $bot_list | .comments | map(select(.author.login? as $author | ($bot_list | index($author)) and ((.body // "") | contains("Quality Gate Results")))) | .[-1].body // ""' 2>/dev/null || echo ""
   )
   
-  if [ -z "$QUALITY_REPORT" ]; then
-    NEEDS_REVIEW="false"
-    SKIP_REASON="quality failure with no detailed report (likely static analysis)"
-  else
+  if [ -n "$QUALITY_REPORT" ]; then
     HAS_INFRA_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Infra Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_UNIT_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Unit Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
     HAS_PERF_FAILURE=$( (echo "$QUALITY_REPORT" | grep -c "Perf Tests.*❌" 2>/dev/null || echo 0) | head -n 1)
@@ -125,19 +120,22 @@ if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
       NEEDS_REVIEW="false"
       SKIP_REASON="static analysis failures only (knip/lint/build)"
     fi
+  else
+    NEEDS_REVIEW="false"
+    SKIP_REASON="quality failure with no detailed report (likely static analysis)"
   fi
+# Check 5: New Pull Request
 elif [[ "$TRIGGER_EVENT" == "pull_request" && "$ACTION_TYPE" == "opened" ]]; then
   NEEDS_REVIEW="true"
   SKIP_REASON=""
 else
-  echo "::info::Analyzing for re-review..."
-
+  # Check 6: Re-review based on new changes
   if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
     echo "::warning::Missing commit context (BASE_SHA/HEAD_SHA). Triggering review to be safe."
     NEEDS_REVIEW="true"
     SKIP_REASON=""
   else
-    LAST_COMMENT_BODY=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
+    LAST_COMMENT_BODY=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""' 2>/dev/null || echo "")
 
     if [ -z "$LAST_COMMENT_BODY" ]; then
       NEEDS_REVIEW="true"
@@ -149,43 +147,25 @@ else
         LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oE '\b[a-f0-9]{7,40}\b' | head -n 1)
       fi
 
-      if [ -z "$LAST_REVIEWED_SHA" ]; then
+      if [ -z "$LAST_REVIEWED_SHA" ] || [[ "$LAST_REVIEWED_SHA" != "$HEAD_SHA" ]]; then
           NEEDS_REVIEW="true"
           SKIP_REASON=""
-      else
-          if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
-              SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
-              NEEDS_REVIEW="false"
-          else
-              if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-                  CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                  SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-
-                  if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                      SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
-                      NEEDS_REVIEW="false"
-                  else
-                      NEEDS_REVIEW="true"
-                      SKIP_REASON=""
-                  fi
-              else
-                  CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                  SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-                  if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                      SKIP_REASON="no significant code changes from base"
-                      NEEDS_REVIEW="false"
-                  else
-                      NEEDS_REVIEW="true"
-                      SKIP_REASON=""
-                  fi
+          if [ -n "$LAST_REVIEWED_SHA" ] && git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
+              CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
+              SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+              if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                  SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+                  NEEDS_REVIEW="false"
               fi
           fi
+      else
+          SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
+          NEEDS_REVIEW="false"
       fi
     fi
   fi
 fi
 
 # --- Final Output ---
-echo "::info::Final Decision: needs-review=$NEEDS_REVIEW (Reason: $SKIP_REASON)"
 echo "needs-review=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
 echo "skip-reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"

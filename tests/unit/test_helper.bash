@@ -6,9 +6,7 @@ gh() {
         echo "Mocked API failure" >&2
         return 1
     fi
-    local args=("$@")
     # For the refactored script, we primarily handle: gh pr view ... --json comments
-    # The output is always JSON.
     echo "{\"comments\": ${MOCK_GH_COMMENTS_JSON:-[]}}"
 }
 export -f gh
