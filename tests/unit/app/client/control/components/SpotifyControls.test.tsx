@@ -323,6 +323,94 @@ describe('components/SpotifyControls', () => {
     jest.useRealTimers()
   })
 
+  it('shows loading state when spotify service is not initialized', () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData(),
+      sendData: mockSendData,
+      spotifyServiceInitialized: false,
+    })
+
+    render(<SpotifyControls />)
+    expect(screen.getByText(/Awaiting Spotify.../i)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+  })
+
+  it('shows "Connect to HRM Web Player" when initialized but no device active', () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            name: 'Awaiting Login...',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: 'hrm-player',
+            name: HRM_WEB_PLAYER_NAME,
+            is_active: false,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+    const connectBtn = screen.getByText(/Connect to HRM Web Player/i)
+    expect(connectBtn).toBeInTheDocument()
+
+    fireEvent.click(connectBtn)
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SPOTIFY_COMMAND',
+        command: 'TRANSFER_PLAYBACK',
+        deviceId: 'hrm-player',
+      })
+    )
+  })
+
+  it('shows playback controls when an active device exists even without track data', () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            name: 'Awaiting Login...',
+            artist: '',
+            albumName: '',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            name: 'Device 1',
+            is_active: true,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+    // Should show playback controls (e.g., Play button because is_playing is false)
+    expect(screen.getByLabelText(/^Play$/i)).toBeInTheDocument()
+    // Should NOT show "Connect to HRM Web Player" or "Select Music"
+    expect(
+      screen.queryByText(/Connect to HRM Web Player/i)
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Select Music/i)).not.toBeInTheDocument()
+  })
+
   it('uses HRM Web Player as fallback if no device is active or selected', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
