@@ -750,9 +750,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               { savedDeviceId },
               'Aborting silent connect: No saved device ID.'
             )
-            // Reset status before throwing to avoid UI stuck in connecting
-            setStatus(BluetoothConnectionStatus.DISCONNECTED)
-            setCustomStatusMessage(null)
             throw new Error('No saved device ID for silent connection.')
           }
 
@@ -853,15 +850,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     try {
+      isConnecting.current = true
       setConnectionAttempted(true)
       setStatus(BluetoothConnectionStatus.CONNECTING)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
 
+      // We don't want connectAndStream to fail because we're already holding the lock
+      isConnecting.current = false
       const deviceFoundAndAttempted = await connectAndStream(
         undefined,
         undefined,
         { silent: true }
       )
+      isConnecting.current = true
 
       if (!deviceFoundAndAttempted) {
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -876,6 +877,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } else {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
+    } finally {
+      isConnecting.current = false
     }
   }, [connectAndStream])
 

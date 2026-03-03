@@ -16,7 +16,6 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import Cookies from 'js-cookie'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -152,13 +151,11 @@ export default function ConnectPage() {
   ])
 
   useEffect(() => {
-    const savedDeviceId = Cookies.get('hrm_device_id')
     if (
       !isConnected &&
       isSupported &&
       connectionStatus === 'Connected' &&
-      !connectionAttempted &&
-      savedDeviceId
+      !connectionAttempted
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
