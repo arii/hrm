@@ -1,18 +1,8 @@
 [
   {
     "name": "approved",
-    "description": "The PR meets the defined quality standards and best practices.",
+    "description": "The PR has been approved by a human reviewer.",
     "color": "28a745"
-  },
-  {
-    "name": "not approved",
-    "description": "The review identified significant issues or deviations from standards.",
-    "color": "d73a4a"
-  },
-  {
-    "name": "not reviewed",
-    "description": "The review could not be performed or completed successfully.",
-    "color": "cfd3d7"
   },
   {
     "name": "changes-requested",

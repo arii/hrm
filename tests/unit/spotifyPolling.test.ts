@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { act } from '@testing-library/react'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { ServiceInitializationError } from '../../lib/errors'
@@ -8,7 +9,7 @@ import logger from '../../utils/logger.server'
 import { ServerMessage } from '../../types/websocket'
 
 // Mock the logger
-jest.mock('../../lib/env.js', () => ({
+jest.mock('../../lib/env', () => ({
   env: {
     SPOTIFY_CLIENT_ID: 'test_client_id',
     SPOTIFY_CLIENT_SECRET: 'test_client_secret',
@@ -24,7 +25,7 @@ jest.mock('../../lib/env.js', () => ({
   },
 }))
 
-jest.mock('../../utils/logger.server.js', () => ({
+jest.mock('../../utils/logger.server', () => ({
   __esModule: true,
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   default: require('./spotify-mocks').mockLogger,
@@ -164,7 +165,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should throw ServiceInitializationError if Spotify credentials are missing', async () => {
-      const { env } = await import('../../lib/env.js')
+      const { env } = await import('../../lib/env')
 
       const idSpy = jest.replaceProperty(env, 'SPOTIFY_CLIENT_ID', undefined)
       const secretSpy = jest.replaceProperty(
@@ -640,6 +641,36 @@ describe('SpotifyPolling Service', () => {
         }),
         'Error executing Spotify command'
       )
+    })
+
+    it('should ignore polls within the settle window after a command', async () => {
+      // 1. Send a command
+      await spotifyService.handleCommand('PLAY', { deviceId: 'test' })
+
+      // 2. Advance time by less than the window
+      act(() => {
+        jest.advanceTimersByTime(500)
+      })
+
+      // 3. Attempt a poll
+      const playerManager = (
+        spotifyService as unknown as {
+          playerManager: { refreshPlaybackState: () => Promise<void> }
+        }
+      ).playerManager
+      const refreshSpy = jest.spyOn(playerManager, 'refreshPlaybackState')
+
+      await spotifyService.forcePollAndBroadcast()
+
+      expect(refreshSpy).not.toHaveReturned()
+
+      // 4. Advance past the window
+      act(() => {
+        jest.advanceTimersByTime(1100) // Total 1600ms
+      })
+
+      await spotifyService.forcePollAndBroadcast()
+      expect(refreshSpy).toHaveBeenCalled()
     })
   })
 })

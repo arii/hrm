@@ -19,21 +19,22 @@ import {
 } from './waits'
 
 /**
- * Common routes used in HRM testing
+ * Common routes used in HRM testing.
+ * Appends ?testing=true to ensure test controls are initialized.
  */
 export const HRM_ROUTES = {
   /** Main dashboard/viewer page */
-  DASHBOARD: '/',
+  DASHBOARD: '/?testing=true',
   /** Experimental analytics page */
-  EXPERIMENTAL: '/client/experimental',
+  EXPERIMENTAL: '/client/experimental?testing=true',
   /** Control panel for timer and music */
-  CONTROL: '/client/control',
+  CONTROL: '/client/control?testing=true',
   /** Mock HRM client for testing */
-  MOCK: '/client/mock',
+  MOCK: '/client/mock?testing=true',
   /** Connect page for device pairing */
-  CONNECT: '/client/connect',
+  CONNECT: '/client/connect?testing=true',
   /** Debug page for Spotify */
-  DEBUG_SPOTIFY: '/debug/spotify',
+  DEBUG_SPOTIFY: '/debug/spotify?testing=true',
 } as const
 
 /**
@@ -127,20 +128,11 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
-  // Stabilize VRT by disabling animations, transitions, and backdrop filters
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      [data-testid="main-content-layout"] {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-    `,
+  // Force disconnect to remove HrmConnectionPanel skeleton
+  await page.evaluate(() => {
+    if (window.__TEST_CONTROLS__?.disconnect) {
+      window.__TEST_CONTROLS__.disconnect()
+    }
   })
 
   await waitForPageReady(page)
@@ -202,18 +194,26 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel and stabilize
+  // Navigate all pages to their respective routes in parallel
+  const baseUrl = getBaseURL()
   await Promise.all([
-    navigateAndWait(dashboardPage, HRM_ROUTES.DASHBOARD),
-    navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
-    navigateAndWait(mockPage, HRM_ROUTES.MOCK),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
+    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
   ])
 
-  // Wait for WebSocket connections to be established (longer timeout for CI stability)
+  // Wait for all pages to be fully loaded and idle
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
-    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
-    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
+    waitForPageReady(dashboardPage),
+    waitForPageReady(controlPage),
+    waitForPageReady(mockPage),
+  ])
+
+  // Wait for WebSocket connections to be established
+  await Promise.all([
+    waitForWebSocketConnection(dashboardPage),
+    waitForWebSocketConnection(controlPage),
+    waitForWebSocketConnection(mockPage),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
@@ -227,6 +227,54 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
   await stopTimer(controlPage, dashboardPage)
 
   return { context, dashboardPage, controlPage, mockPage }
+}
+
+/**
+ * Prepares the environment for a visual regression test by standardizing the viewport,
+ * neutralizing animations, and ensuring the WebSocket connection is stable.
+ *
+ * @param pages - The Playwright Page objects to prepare.
+ */
+export async function prepareVrtEnvironment(...pages: Page[]): Promise<void> {
+  const { DESKTOP_VIEWPORT } = await import('./viewports')
+
+  await Promise.all(
+    pages.map(async (page) => {
+      // 1. Enforce standard desktop viewport for consistency across environments
+      await page.setViewportSize(DESKTOP_VIEWPORT)
+
+      // 2. Neutralize animations and transitions to prevent flaky screenshots
+      // We target data-testid containers and common layout elements
+      await page.addStyleTag({
+        content: `
+          *, *::before, *::after {
+            transition-property: none !important;
+            transform: none !important;
+            animation: none !important;
+          }
+          [data-testid="main-content-layout"],
+          [data-testid="dashboard"],
+          [data-testid="timer-controls"] {
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        `,
+      })
+
+      // 3. Ensure fonts are loaded
+      await waitForFontsLoaded(page)
+
+      // 4. Verify connection status if applicable
+      await page
+        .waitForFunction(
+          () => document.body.dataset.connectionStatus === 'connected',
+          { timeout: 5000 }
+        )
+        .catch(() =>
+          console.warn(`VRT warning: Page ${page.url()} not connected.`)
+        )
+    })
+  )
 }
 
 /**

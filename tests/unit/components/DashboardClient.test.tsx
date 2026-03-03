@@ -55,20 +55,14 @@ jest.mock('@/hooks/useAudio', () => ({
 }))
 
 describe('DashboardClient', () => {
-  const mockProps = {
-    docId: 'mock-doc-id',
-    iframeUrl:
-      'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
-  }
-
   it('renders GoogleDocViewer when useNativeTable is false', async () => {
-    render(<DashboardClient useNativeTable={false} {...mockProps} />)
+    render(<DashboardClient useNativeTable={false} />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
     expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
   })
 
   it('renders WorkoutTableHeader when useNativeTable is true', async () => {
-    render(<DashboardClient useNativeTable={true} {...mockProps} />)
+    render(<DashboardClient useNativeTable={true} />)
     expect(
       await screen.findByTestId('workout-table-header')
     ).toBeInTheDocument()
@@ -76,7 +70,7 @@ describe('DashboardClient', () => {
   })
 
   it('passes a new refreshKey to child components when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={true} {...mockProps} />)
+    render(<DashboardClient useNativeTable={true} />)
 
     const workoutTableHeader = await screen.findByTestId('workout-table-header')
     const initialRefreshKey =
@@ -100,7 +94,7 @@ describe('DashboardClient', () => {
   })
 
   it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={false} {...mockProps} />)
+    render(<DashboardClient useNativeTable={false} />)
 
     const googleDocViewer = await screen.findByTestId('google-doc-viewer')
     const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')
@@ -119,30 +113,5 @@ describe('DashboardClient', () => {
     expect(parseInt(updatedRefreshKey as string)).toBe(
       parseInt(initialRefreshKey as string) + 1
     )
-  })
-
-  it('renders an Alert when configuration is missing (useNativeTable=false, missing iframeUrl)', async () => {
-    render(<DashboardClient useNativeTable={false} docId="mock-doc-id" />)
-    const alert = await screen.findByRole('alert')
-    expect(alert).toBeInTheDocument()
-    expect(alert).toHaveTextContent(
-      'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
-    )
-    expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
-  })
-
-  it('renders an Alert when configuration is missing (useNativeTable=true, missing docId)', async () => {
-    render(
-      <DashboardClient
-        useNativeTable={true}
-        iframeUrl="https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true"
-      />
-    )
-    const alert = await screen.findByRole('alert')
-    expect(alert).toBeInTheDocument()
-    expect(alert).toHaveTextContent(
-      'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
-    )
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
   })
 })

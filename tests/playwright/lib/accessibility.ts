@@ -29,32 +29,14 @@ export async function checkAccessibility(target: Page | Locator) {
     .disableRules(['color-contrast'])
 
   if (selector) {
-    // Ensure the element is still attached to the DOM before running the scan.
-    // If it's not, we should gracefully skip the scan or fail with a clearer message.
-    const isAttached = await (target as Locator).count().then((c) => c > 0)
-    if (isAttached) {
-      axeBuilder.include(selector)
-    } else {
-      console.warn(
-        'Accessibility target detached before scan could start. Skipping check.'
-      )
-      return
-    }
+    axeBuilder.include(selector)
   }
 
   const accessibilityScanResults = await axeBuilder.analyze()
 
   // Clean up the temporary attribute after the scan.
-  // Use try-catch to avoid failing if the element was removed during/after the scan.
   if (selector) {
-    try {
-      await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
-    } catch (error) {
-      console.warn(
-        'Failed to clean up accessibility uniqueId attribute:',
-        error
-      )
-    }
+    await target.evaluate((node, id) => node.removeAttribute(id), uniqueId)
   }
 
   if (accessibilityScanResults.violations.length > 0) {

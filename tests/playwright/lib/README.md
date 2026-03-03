@@ -202,7 +202,7 @@ await prepareForVisualRegression(dashboardPage, controlPage, mockPage)
 
 For complex scenarios requiring direct interaction with the application's internal state (e.g., simulating WebSocket messages, triggering state changes), this project uses a `__TEST_CONTROLS__` pattern.
 
-**Concept**: In non-production environments, the application exposes a global `window.__TEST_CONTROLS__` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
+**Concept**: In non-production environments (guarded by `isTestEnvironment()`), the application exposes a global `window.__TEST_CONTROLS__` object. This object contains functions that allow E2E tests to directly manipulate the application's state, bypassing the UI for more precise and reliable testing.
 
 **Implementation**:
 
@@ -211,7 +211,7 @@ For complex scenarios requiring direct interaction with the application's intern
     ```tsx
     // Example in a React component
     useEffect(() => {
-      if (process.env.NODE_ENV !== 'production') {
+      if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
           ...window.__TEST_CONTROLS__,
           simulateWebSocketMessage: (message) => {
@@ -244,21 +244,17 @@ For complex scenarios requiring direct interaction with the application's intern
 
 **Best Practices**:
 
-- **Production Only**: Always wrap the `window.__TEST_CONTROLS__` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
-- **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a global declaration file (e.g., `types/global.d.ts`):
+- **Production Guard**: Always use `isTestEnvironment()` to ensure these controls are not exposed in the production build.
+- **TypeScript Definitions**: To ensure type safety, the `Window` interface is extended in `types/global.d.ts`:
   ```typescript
-  export interface TestControls {
-    dispatch?: (message: ServerMessage) => void
-    // Add other control functions here
-  }
-
-  declare global {
-    interface Window {
-      __TEST_CONTROLS__?: TestControls
+  interface Window {
+    __TEST_CONTROLS__: {
+      simulateWebSocketMessage: (message: WebSocketMessage) => void
+      // Add other control functions here
     }
   }
   ```
-- **Centralize**: Keep the `__TEST_CONTROLS__` logic in a single, well-defined place within the application to make it easy to manage and discover.
+- **Centralize**: Keep the `TEST_CONTROLS` logic in a single, well-defined place within the application to make it easy to manage and discover.
 
 ## Backward Compatibility
 

@@ -21,29 +21,22 @@ const envSchema = z
         return val === true
       }, z.boolean())
       .default(false),
+    NEXT_PUBLIC_TESTING: z
+      .preprocess((val) => {
+        if (typeof val === 'string') return val.toLowerCase() === 'true'
+        return val === true
+      }, z.boolean())
+      .default(false),
     CI: z.string().optional(),
-    GOOGLE_DOC_WORKOUT_URL: z.preprocess(
-      (str) => (str === '' ? undefined : str),
-      z.string().url().optional()
-    ),
-    GOOGLE_DOC_IFRAME_URL: z.preprocess(
-      (str) => (str === '' ? undefined : str),
-      z.string().url().optional()
-    ),
+    GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
     NEXT_PUBLIC_USE_NATIVE_TABLE: z
       .preprocess((val) => {
         if (typeof val === 'string') return val.toLowerCase() === 'true'
         return val === true
       }, z.boolean())
       .default(false),
-    NEXT_PUBLIC_API_URL: z.preprocess(
-      (str) => (str === '' ? undefined : str),
-      z.string().url().optional()
-    ),
-    NEXT_PUBLIC_WS_URL: z.preprocess(
-      (str) => (str === '' ? undefined : str),
-      z.string().url().optional()
-    ),
+    NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
+    NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
@@ -57,12 +50,6 @@ const envSchema = z
     WEBSOCKET_WATCHDOG_INTERVAL: z.coerce.number().default(30000),
     NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS: z.coerce.number().default(8),
     GEMINI_MODEL_FALLBACKS: z.string().optional(),
-    GEMINI_ENABLE_TRIAGE: z.string().default('true'),
-    GEMINI_ENABLE_CODER: z.string().default('true'),
-    GEMINI_ENABLE_PR_REVIEW: z.string().default('true'),
-    GEMINI_ENABLE_REVIEW_ISSUES: z.string().default('true'),
-    GEMINI_ENABLE_SLOP_CHECK: z.string().default('true'),
-    GEMINI_RATE_LIMIT_PER_DAY: z.coerce.number().optional(),
     ANALYZE: z.string().optional(),
     TESTING: z.string().optional(),
     IS_DEPLOYMENT: z.string().optional(),

@@ -43,6 +43,9 @@ const config: KnipConfig = {
     'bats',
   ],
   ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
+  ignoreIssues: {
+    'types/websocket.ts': ['exports', 'types'],
+  },
 }
 
 export default config

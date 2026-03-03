@@ -3,7 +3,7 @@ import {
   HrmSessionStats,
   RawHrmStreamData,
   HrmStreamData,
-} from '../types/core.js'
+} from '../types/core'
 
 /**
  * Service for calculating heart rate statistics incrementally.

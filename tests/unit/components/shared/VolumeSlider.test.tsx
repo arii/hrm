@@ -88,7 +88,7 @@ describe('components/shared/VolumeSlider', () => {
     expect(screen.getByTestId('volume-slider-value')).toHaveTextContent('75')
   })
 
-  it('should call onVolumeChangeCommitted on keyup (keyboard accessibility)', () => {
+  it('should call onVolumeChangeCommitted on keyup (keyboard accessibility)', async () => {
     const onVolumeChangeCommitted = jest.fn()
     const onVolumeChange = jest.fn()
     render(
@@ -101,7 +101,7 @@ describe('components/shared/VolumeSlider', () => {
       />
     )
     const slider = screen.getByRole('slider')
-    act(() => {
+    await act(async () => {
       slider.focus()
     })
     // Simulate arrow right press

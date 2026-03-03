@@ -11,6 +11,7 @@ import type {
   SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
   TimerMode,
   SpotifyCommand,
+  SpotifyDevice,
 } from './core'
 
 // --- WebSocket Connection & Augmentation ---
@@ -28,7 +29,7 @@ export interface ExtWebSocket extends WebSocket {
 
 // --- Server Broadcast State Interfaces ---
 
-export type { HrmData, TimerData, SpotifyData, SpotifyCommand }
+export type { HrmData, TimerData, SpotifyData, SpotifyCommand, SpotifyDevice }
 
 /**
  * Represents HRM data stored in the client application state (e.g., Redux/Context).

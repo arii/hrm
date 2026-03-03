@@ -65,20 +65,6 @@ on:
       branch_name:
         description: 'Optional custom branch name.'
         required: false
-  workflow_call:
-    inputs:
-      task_description:
-        description: 'The detailed description of the coding task.'
-        required: true
-        type: string
-      target_files:
-        description: 'Comma-separated list of files for the AI to consider.'
-        required: false
-        type: string
-      branch_name:
-        description: 'Optional custom branch name.'
-        required: false
-        type: string
 
 permissions:
   contents: write
@@ -87,9 +73,7 @@ permissions:
 
 jobs:
   ai-developer:
-    if: |
-      (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') ||
-      (vars.GEMINI_ENABLE_CODER != 'false' && github.event.label.name == 'auto-code')
+    if: (github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code')
     runs-on: self-hosted
 
     steps:
@@ -130,9 +114,9 @@ jobs:
           TASK_DESC_PARSED: ${{ steps.parse_issue.outputs.task_description }}
           TARGET_FILES_PARSED: ${{ steps.parse_issue.outputs.target_files }}
           BRANCH_NAME_PARSED: ${{ steps.parse_issue.outputs.branch_name }}
-          TASK_DESC_INPUT: ${{ inputs.task_description || github.event.inputs.task_description }}
-          TARGET_FILES_INPUT: ${{ inputs.target_files || github.event.inputs.target_files }}
-          BRANCH_NAME_INPUT: ${{ inputs.branch_name || github.event.inputs.branch_name }}
+          TASK_DESC_INPUT: ${{ github.event.inputs.task_description }}
+          TARGET_FILES_INPUT: ${{ github.event.inputs.target_files }}
+          BRANCH_NAME_INPUT: ${{ github.event.inputs.branch_name }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           RUN_ID: ${{ github.run_id }}
@@ -329,14 +313,14 @@ jobs:
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: pnpm/action-setup@v4
-
+        with:
+          version: 9.15.9
 
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
       - name: 'Gemini: Install Dependencies'
         if: env.AGENT_PROVIDER == 'gemini'
@@ -491,7 +475,7 @@ jobs:
 
       - name: Upload Failed Hunks as Artifact
         if: failure() && env.AGENT_PROVIDER == 'gemini'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: patch-artifacts-run-${{ github.run_id }}
           path: |
@@ -564,7 +548,7 @@ jobs:
 
       - name: Upload Debug Report
         if: failure() && env.AGENT_PROVIDER == 'gemini'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: patch-debug-report-run-${{ github.run_id }}
           path: patch-debug-report.md
@@ -658,56 +642,6 @@ jobs:
 
             **Files Modified:**
             ${{ env.FILES }}
-
-            ---
-            #### 🤖 Gemini Manual Trigger Quick Reference
-            | Command | Action |
-            | :--- | :--- |
-            | \`@gemini-bot\` | Run AI Code Review (PR only) |
-            | \`@gemini-triage\` | Run Issue Triage |
-            | \`@gemini-coder <task>\` | Generate Code |
-            | \`@create-review-issues\` | Create issues from review (PR only) |
-            | \`@gemini-help\` | Show this help message |
-
-            [Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
           branch: ${{ env.BRANCH }}
           base: leader
           delete-branch: true
-
-  disabled-guidance:
-    if: |
-      vars.GEMINI_ENABLE_CODER == 'false' &&
-      github.event_name == 'issues' &&
-      github.event.action == 'labeled' &&
-      github.event.label.name == 'auto-code'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post Guidance Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = '### ℹ️ Gemini Coder Disabled\n\n' +
-              'Automatic code generation is currently disabled via `GEMINI_ENABLE_CODER`. To run it manually:\n\n' +
-              '**Via Comment:**\n```\n@gemini-coder <task description>\n```\n\n' +
-              '**Via GitHub Actions:**\n' +
-              '1. Go to [Actions → Gemini Coder](' + context.payload.repository.html_url + '/actions/workflows/gemini-coder.yml)\n' +
-              '2. Click "Run workflow"\n' +
-              '3. Enter task description and other details.\n\n' +
-              '**Via GitHub CLI:**\n```bash\ngh workflow run gemini-coder.yml -f task_description="..."\n```\n\n' +
-              '#### 🤖 Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n\n' +
-              'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
-              '**To re-enable:** Set repository variable `GEMINI_ENABLE_CODER=true`';
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });

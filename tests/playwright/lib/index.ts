@@ -106,6 +106,7 @@ export {
   navigateAndWait,
   // Full setup functions
   setupVisualRegressionTest,
+  prepareVrtEnvironment,
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
@@ -196,25 +196,21 @@ describe('components/SpotifyControls', () => {
     // Start sliding (updates local state to 80)
     fireEvent.change(volumeSlider, { target: { value: '80' } })
 
-    // Simulate WebSocket update (server volume is still 50, or changed to 40)
-    mockWebSocket.mockReturnValue({
+    // Helper for mocking data with specific volume
+    const mockWithVolume = (v: number) => ({
       connectionStatus: 'Connected',
       spotifyData: createMockSpotifyData({
-        playback: {
-          ...createMockSpotifyData().playback,
-          volume_percent: 40,
-        },
+        playback: { ...createMockSpotifyData().playback, volume_percent: v },
         devices: [
-          createMockSpotifyDevice({
-            id: '1',
-            is_active: true,
-            volume_percent: 40,
-          }),
+          createMockSpotifyDevice({ id: '1', is_active: true, volume_percent: v }),
         ],
       }),
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
+
+    // Simulate WebSocket update (server volume is still 50, or changed to 40)
+    mockWebSocket.mockReturnValue(mockWithVolume(40))
 
     rerender(<SpotifyControls />)
 
@@ -258,27 +254,25 @@ describe('components/SpotifyControls', () => {
     fireEvent.change(volumeSlider, { target: { value: '80' } })
     fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
 
-    // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
-    jest.advanceTimersByTime(1000)
-
-    mockWebSocket.mockReturnValue({
+    // Helper for mocking data with specific volume
+    const mockWithVolume = (v: number) => ({
       connectionStatus: 'Connected',
       spotifyData: createMockSpotifyData({
-        playback: {
-          ...createMockSpotifyData().playback,
-          volume_percent: 40,
-        },
+        playback: { ...createMockSpotifyData().playback, volume_percent: v },
         devices: [
-          createMockSpotifyDevice({
-            id: '1',
-            is_active: true,
-            volume_percent: 40,
-          }),
+          createMockSpotifyDevice({ id: '1', is_active: true, volume_percent: v }),
         ],
       }),
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
+
+    // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+
+    mockWebSocket.mockReturnValue(mockWithVolume(40))
 
     rerender(<SpotifyControls />)
 
@@ -286,27 +280,12 @@ describe('components/SpotifyControls', () => {
     expect(setVolumeMock).not.toHaveBeenCalledWith(40)
 
     // 3. Advance past the lock duration (another 1.1s, total 2.1s)
-    jest.advanceTimersByTime(1100)
+    act(() => {
+      jest.advanceTimersByTime(1100)
+    })
 
     // Trigger another update to see if it now syncs
-    mockWebSocket.mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
-        playback: {
-          ...createMockSpotifyData().playback,
-          volume_percent: 40,
-        },
-        devices: [
-          createMockSpotifyDevice({
-            id: '1',
-            is_active: true,
-            volume_percent: 40,
-          }),
-        ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+    mockWebSocket.mockReturnValue(mockWithVolume(40))
 
     rerender(<SpotifyControls />)
 
@@ -394,7 +373,9 @@ describe('components/SpotifyControls', () => {
     expect(showWarningMock).toHaveBeenCalledTimes(1)
 
     // Advance time past throttle (3000ms)
-    jest.advanceTimersByTime(3100)
+    act(() => {
+      jest.advanceTimersByTime(3100)
+    })
 
     // Change after throttle: warning shown again
     fireEvent.change(volumeSlider, { target: { value: 90 } })
