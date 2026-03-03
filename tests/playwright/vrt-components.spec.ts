@@ -41,7 +41,9 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
+      mask: [dashboardPage.getByTestId('loading-indicator-spinner')],
+    })
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {

@@ -12,6 +12,7 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
+        height: 56,
         py: 2,
         px: 2,
         textAlign: 'center',
