@@ -52,13 +52,16 @@ jest.mock('@spotify/web-api-ts-sdk', () => {
 const mockedGetServerSession = getServerSession as jest.Mock
 
 describe('API Route: /api/spotify/playlists', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
   afterEach(() => {
-    jest.clearAllMocks()
+    jest.restoreAllMocks()
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue(null)
 
     const req = new NextRequest('http://localhost/api/spotify/playlists')
@@ -66,8 +69,6 @@ describe('API Route: /api/spotify/playlists', () => {
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    errorSpy.mockRestore()
-    warnSpy.mockRestore()
     expect(data.error).toBe('Not authenticated or token is missing.')
     expect(getServerSession).toHaveBeenCalledWith(authOptions)
   })
@@ -96,7 +97,6 @@ describe('API Route: /api/spotify/playlists', () => {
   })
 
   it('should return 500 Internal Server Error if the Spotify API fails', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     mockedGetServerSession.mockResolvedValue({
       accessToken: 'fake-access-token',
     })
@@ -120,6 +120,5 @@ describe('API Route: /api/spotify/playlists', () => {
 
     expect(response.status).toBe(500)
     expect(data.error).toBe('Internal Server Error')
-    errorSpy.mockRestore()
   })
 })
