@@ -14,7 +14,12 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
+import {
+  getHrMasks,
+  getTimerMasks,
+  getSpotifyMasks,
+  waitForFontsLoaded,
+} from '.'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
@@ -144,6 +149,7 @@ export async function takeDashboardScreenshot(
     mask: [
       ...getTimerMasks(page),
       ...getHrMasks(page),
+      ...getSpotifyMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
       page.getByTestId('workout-table-viewer'),

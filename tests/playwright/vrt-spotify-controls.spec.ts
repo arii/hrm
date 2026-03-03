@@ -34,11 +34,35 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
+
+    // Ensure Spotify service is initialized to prevent transient loading states in VRT
+    await controlPage.evaluate(() => {
+      window.__TEST_CONTROLS__?.dispatch({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: true,
+      })
+    })
   })
 
   test.describe('SpotifyControls Component', () => {
     test('initial, logged-out state', async () => {
       const spotifyControls = controlPage.getByTestId('spotify-controls')
+
+      // Ensure no active devices and neutral track state for stable VRT
+      await controlPage.evaluate(() => {
+        window.__TEST_CONTROLS__?.dispatch({
+          type: 'SPOTIFY_UPDATE',
+          payload: {
+            devices: [],
+            playback: {
+              track: { name: 'Awaiting Login...', artist: '' },
+              is_playing: false,
+              volume_percent: 50,
+            },
+          },
+        })
+      })
+
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })
       await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png')

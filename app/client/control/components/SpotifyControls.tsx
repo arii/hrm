@@ -325,7 +325,11 @@ const SpotifyControls = () => {
               py: 4,
             }}
           >
-            <CircularProgress size={32} sx={{ mb: 2, color: '#1DB954' }} />
+            <CircularProgress
+              data-testid="spotify-initializing-spinner"
+              size={32}
+              sx={{ mb: 2, color: '#1DB954' }}
+            />
             <Typography variant="body2" sx={{ color: 'grey.400' }}>
               Awaiting Spotify...
             </Typography>
@@ -453,7 +457,11 @@ const SpotifyControls = () => {
             data-testid="spotify-select-music-button"
             startIcon={
               isConnecting ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  data-testid="spotify-connecting-spinner"
+                  size={20}
+                  color="inherit"
+                />
               ) : null
             }
           >

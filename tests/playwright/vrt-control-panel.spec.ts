@@ -31,11 +31,35 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
+
+    // Ensure Spotify service is initialized to prevent transient loading states in VRT
+    await controlPage.evaluate(() => {
+      window.__TEST_CONTROLS__?.dispatch({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: true,
+      })
+    })
   })
 
   test.describe('ControlPanel Component', () => {
     test('initial state', async () => {
       const controlPanel = controlPage.getByTestId('control-panel')
+
+      // Ensure no active devices and neutral track state for stable VRT
+      await controlPage.evaluate(() => {
+        window.__TEST_CONTROLS__?.dispatch({
+          type: 'SPOTIFY_UPDATE',
+          payload: {
+            devices: [],
+            playback: {
+              track: { name: 'Awaiting Login...', artist: '' },
+              is_playing: false,
+              volume_percent: 50,
+            },
+          },
+        })
+      })
+
       await takeScreenshot(controlPanel, 'control-panel.png')
     })
   })

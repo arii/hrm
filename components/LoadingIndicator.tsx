@@ -28,7 +28,7 @@ const LoadingIndicator = () => {
         visibility: isLoading ? 'visible' : 'hidden',
       }}
     >
-      <CircularProgress />
+      <CircularProgress data-testid="global-loading-spinner" />
     </Box>
   )
 }

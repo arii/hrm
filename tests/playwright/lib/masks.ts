@@ -21,6 +21,9 @@ export const VRT_MASK_SELECTORS = {
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
+  spotifyInitializingSpinner: '[data-testid="spotify-initializing-spinner"]',
+  spotifyConnectingSpinner: '[data-testid="spotify-connecting-spinner"]',
+  globalLoadingSpinner: '[data-testid="global-loading-spinner"]',
 } as const
 
 /**
@@ -38,6 +41,9 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
+    page.locator(VRT_MASK_SELECTORS.spotifyInitializingSpinner),
+    page.locator(VRT_MASK_SELECTORS.spotifyConnectingSpinner),
+    page.locator(VRT_MASK_SELECTORS.globalLoadingSpinner),
   ]
 }
 
@@ -65,5 +71,18 @@ export function getTimerMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+  ]
+}
+
+/**
+ * Returns an array of locators specifically for Spotify-related elements.
+ *
+ * @param page - The Playwright Page object.
+ * @returns An array of Locators for Spotify elements to be masked.
+ */
+export function getSpotifyMasks(page: Page): Locator[] {
+  return [
+    page.locator(VRT_MASK_SELECTORS.spotifyInitializingSpinner),
+    page.locator(VRT_MASK_SELECTORS.spotifyConnectingSpinner),
   ]
 }

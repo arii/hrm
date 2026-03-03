@@ -18,6 +18,9 @@ export default function Footer() {
         borderTop: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'background.paper',
+        height: 54,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       <Typography variant="body2" color="text.secondary">
