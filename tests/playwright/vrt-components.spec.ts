@@ -19,7 +19,7 @@ test.describe('Component-Specific VRT', () => {
     const bottomNav = dashboardPage.getByTestId('bottom-nav-bar')
     await takeScreenshot(bottomNav, 'bottom-nav-bar.png', {
       maxDiffPixelRatio: 0.2,
-      threshold: 0.5,
+      threshold: 0.3,
     })
   })
 
@@ -27,7 +27,7 @@ test.describe('Component-Specific VRT', () => {
     const footer = dashboardPage.getByTestId('footer')
     await takeScreenshot(footer, 'footer.png', {
       maxDiffPixelRatio: 0.2,
-      threshold: 0.5,
+      threshold: 0.3,
     })
   })
 
@@ -51,7 +51,7 @@ test.describe('Component-Specific VRT', () => {
     await expect(loadingIndicator).toBeVisible()
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
       mask: [dashboardPage.getByTestId('loading-indicator-spinner')],
-      threshold: 0.5,
+      threshold: 0.3,
       maxDiffPixelRatio: 0.1,
     })
   })

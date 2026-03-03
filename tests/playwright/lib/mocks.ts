@@ -102,7 +102,9 @@ export async function mockGoogleDocIframe(
   pageOrContext: Page | BrowserContext
 ): Promise<void> {
   // Use a more permissive regex or glob to catch Google Doc embed requests
-  await pageOrContext.route(/.*google\.com\/.*\/pub\?embedded=true/, (route) => {
+  await pageOrContext.route(
+    /.*google\.com\/.*\/pub\?embedded=true/,
+    (route) => {
       route.fulfill({
         status: 200,
         contentType: 'text/html; charset=utf-8',

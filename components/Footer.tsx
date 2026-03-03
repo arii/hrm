@@ -13,7 +13,6 @@ export default function Footer() {
       sx={{
         mt: 'auto',
         height: 56,
-        maxHeight: 56,
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
