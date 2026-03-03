@@ -7,6 +7,7 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
+import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
@@ -18,15 +19,16 @@ import {
 } from '../../../types/websocket'
 import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+import { Gender } from '@/types/core'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
   const [hrValue, setHrValue] = useState(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
-  const [weight, setWeight] = useState(70) // Add weight state
-  const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('female') // Add gender state
+  const [weightKg, setWeightKg] = useState(70)
+  const [heightCm, setHeightCm] = useState(175)
+  const [gender, setGender] = useState<Gender>('FEMALE')
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
@@ -60,13 +62,13 @@ export default function MockPage() {
         maxHr: maxHr,
         name: name,
         age: age,
-        weight: weight,
-        height: height,
+        weightKg: weightKg,
+        heightCm: heightCm,
         gender: gender,
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr, weight, height, gender])
+  }, [sendData, name, age, maxHr, weightKg, heightCm, gender])
 
   useEffect(() => {
     sendMetadataPacket()
@@ -166,8 +168,8 @@ export default function MockPage() {
                 label="Weight (kg)"
                 placeholder="e.g., 70"
                 type="number"
-                value={weight}
-                onChange={(e) => setWeight(parseInt(e.target.value, 10))}
+                value={weightKg}
+                onChange={(e) => setWeightKg(parseInt(e.target.value, 10))}
                 fullWidth
               />
             </Grid>
@@ -176,19 +178,23 @@ export default function MockPage() {
                 label="Height (cm)"
                 placeholder="e.g., 175"
                 type="number"
-                value={height}
-                onChange={(e) => setHeight(parseInt(e.target.value, 10))}
+                value={heightCm}
+                onChange={(e) => setHeightCm(parseInt(e.target.value, 10))}
                 fullWidth
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
               <TextField
+                select
                 label="Gender"
-                placeholder="e.g., male"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                onChange={(e) => setGender(e.target.value as Gender)}
                 fullWidth
-              />
+              >
+                <MenuItem value="MALE">MALE</MenuItem>
+                <MenuItem value="FEMALE">FEMALE</MenuItem>
+                <MenuItem value="NEUTRAL">NEUTRAL</MenuItem>
+              </TextField>
             </Grid>
           </Grid>
 

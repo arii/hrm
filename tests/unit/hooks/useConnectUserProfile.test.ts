@@ -18,8 +18,8 @@ describe('useConnectUserProfile', () => {
   const mockUserSettings = {
     userName: 'Test User',
     userAge: 30,
-    userWeight: 70, // kg
-    userHeight: 175, // cm
+    userWeightKg: 70, // kg
+    userHeightCm: 175, // cm
     gender: 'FEMALE',
     unitSystem: 'METRIC',
   }
@@ -50,9 +50,9 @@ describe('useConnectUserProfile', () => {
     expect(result.current.data.userName).toBe('Test User')
     expect(result.current.data.userAge).toBe('30')
     expect(result.current.data.userAgeNum).toBe(30)
-    expect(result.current.data.userWeight).toBe('70')
+    expect(result.current.data.userWeightInput).toBe('70')
     expect(result.current.data.userWeightKg).toBe(70)
-    expect(result.current.data.userHeight).toEqual(mockHeightState)
+    expect(result.current.data.userHeightInput).toEqual(mockHeightState)
     expect(result.current.data.userHeightCm).toBe(175)
     expect(result.current.data.gender).toBe('FEMALE')
     expect(result.current.data.unitSystem).toBe('METRIC')
@@ -97,7 +97,7 @@ describe('useConnectUserProfile', () => {
 
     // local state update doesn't trigger context update yet
     expect(mockSetUserSettings).not.toHaveBeenCalled()
-    expect(result.current.data.userWeight).toBe('75')
+    expect(result.current.data.userWeightInput).toBe('75')
 
     act(() => {
       result.current.handlers.onWeightBlur()
@@ -107,7 +107,7 @@ describe('useConnectUserProfile', () => {
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
     expect(updater(mockUserSettings)).toEqual(
-      expect.objectContaining({ userWeight: 75 })
+      expect.objectContaining({ userWeightKg: 75 })
     )
   })
 
@@ -167,7 +167,7 @@ describe('useConnectUserProfile', () => {
     expect(mockSetUserSettings).toHaveBeenCalledWith(expect.any(Function))
     const updater = mockSetUserSettings.mock.calls[0][0]
     expect(updater(mockUserSettings)).toEqual(
-      expect.objectContaining({ userWeight: 80 })
+      expect.objectContaining({ userWeightKg: 80 })
     )
   })
 })

@@ -29,11 +29,11 @@ export const validateAgeValue = (age: string) => {
 }
 
 export const validateWeightValue = (
-  weight: string,
+  weightInput: string,
   unit: MeasurementSystem
 ) => {
-  if (!weight || weight.trim() === '') return null
-  const num = Number(weight)
+  if (!weightInput || weightInput.trim() === '') return null
+  const num = Number(weightInput)
   const range = WEIGHT_VALIDATION[unit]
   if (isNaN(num) || num < range.min || num > range.max) {
     return `Please enter a valid weight (${range.min}-${range.max})`

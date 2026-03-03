@@ -26,7 +26,7 @@ export const createValidUserPhysicalProfile = (
 ): UserPhysicalProfile => ({
   userId: uuidv4(),
   age: 30,
-  weight: 75, // 75kg
+  weightKg: 75, // 75kg
   gender: 'MALE',
   unitSystem: 'METRIC',
   ...overrides,

@@ -11,7 +11,8 @@ import { UserProfileState } from '@/types/connect'
 
 export const useConnectUserProfile = (): UserProfileState => {
   const [userSettings, setUserSettings] = useUserSettings()
-  const { userName, userAge, userWeight, gender, unitSystem } = userSettings
+  const { userName, userAge, userWeightKg, gender, unitSystem, userHeightCm } =
+    userSettings
 
   const [localDisplayWeight, setLocalDisplayWeight] = useState<string | null>(
     null
@@ -24,19 +25,19 @@ export const useConnectUserProfile = (): UserProfileState => {
     updateHeight: handleHeightChange,
     commitHeight: handleHeightBlur,
     error: heightError,
-  } = useHeightInput(String(userSettings.userHeight || 175), unitSystem, (cm) =>
-    setUserSettings((prev) => ({ ...prev, userHeight: cm }))
+  } = useHeightInput(String(userHeightCm || 175), unitSystem, (cm) =>
+    setUserSettings((prev) => ({ ...prev, userHeightCm: cm }))
   )
 
   const displayWeight = useMemo(() => {
     if (localDisplayWeight !== null) {
       return localDisplayWeight
     }
-    if (userWeight) {
-      return toDisplay(userWeight, unitSystem).toString()
+    if (userWeightKg) {
+      return toDisplay(userWeightKg, unitSystem).toString()
     }
     return ''
-  }, [localDisplayWeight, userWeight, unitSystem])
+  }, [localDisplayWeight, userWeightKg, unitSystem])
 
   const handleAgeBlur = useCallback(() => {
     const error = validateAgeValue(String(userAge || ''))
@@ -56,8 +57,8 @@ export const useConnectUserProfile = (): UserProfileState => {
       const numericValue = parseFloat(valueToValidate)
       if (!isNaN(numericValue) && numericValue > 0) {
         const newKgValue = toKg(numericValue, unitSystem)
-        if (newKgValue !== userWeight) {
-          setUserSettings((prev) => ({ ...prev, userWeight: newKgValue }))
+        if (newKgValue !== userWeightKg) {
+          setUserSettings((prev) => ({ ...prev, userWeightKg: newKgValue }))
         }
       }
       setLocalDisplayWeight(null)
@@ -67,7 +68,7 @@ export const useConnectUserProfile = (): UserProfileState => {
     displayWeight,
     unitSystem,
     setUserSettings,
-    userWeight,
+    userWeightKg,
   ])
 
   const handleUnitChange = useCallback(
@@ -116,10 +117,10 @@ export const useConnectUserProfile = (): UserProfileState => {
       userName,
       userAge: String(userAge || ''),
       userAgeNum: userAge || 0,
-      userHeight: displayHeight,
-      userHeightCm: Number(userSettings.userHeight) || 175,
-      userWeight: displayWeight || '',
-      userWeightKg: userWeight || 0,
+      userHeightInput: displayHeight,
+      userHeightCm: Number(userHeightCm) || 175,
+      userWeightInput: displayWeight || '',
+      userWeightKg: userWeightKg || 0,
       gender,
       unitSystem,
     },

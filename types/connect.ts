@@ -5,9 +5,9 @@ export interface UserProfileData {
   userName: string
   userAge: string
   userAgeNum: number
-  userHeight: { cm: string; feet: string; inches: string }
+  userHeightInput: { cm: string; feet: string; inches: string }
   userHeightCm: number
-  userWeight: string
+  userWeightInput: string
   userWeightKg: number
   gender: Gender
   unitSystem: MeasurementSystem

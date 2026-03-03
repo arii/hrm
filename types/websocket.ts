@@ -127,11 +127,7 @@ export interface HrmInputMessage {
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
   'clientId' | 'value' | 'calories'
-> & {
-  weight?: number
-  height?: number
-  gender?: string
-}
+>
 
 export interface HrmMetadataUpdateMessage {
   type: 'HRM_METADATA_UPDATE'
@@ -195,6 +191,7 @@ export type ClientCommandMessage =
   | PingMessage
 
 import { z } from 'zod'
+import { GenderSchema } from '@/lib/validation/schemas'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -208,14 +205,25 @@ const IncomingHrmDataSchema = z.object({
   zone: z.string().optional(),
 })
 
-const HrmMetadataUpdateDataSchema = z.object({
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
-  weight: z.number().optional(),
-  height: z.number().optional(),
-  gender: z.string().optional(),
-})
+const HrmMetadataUpdateDataSchema = z
+  .object({
+    maxHr: z.number().optional(),
+    name: z.string().optional(),
+    age: z.number().optional(),
+    weight: z.number().optional(), // Legacy support
+    weightKg: z.number().optional(),
+    height: z.number().optional(), // Legacy support
+    heightCm: z.number().optional(),
+    gender: GenderSchema.optional(),
+  })
+  .transform((data) => {
+    const { weight: _weight, height: _height, ...rest } = data
+    return {
+      ...rest,
+      weightKg: data.weightKg ?? data.weight,
+      heightCm: data.heightCm ?? data.height,
+    }
+  })
 
 const HrmMetadataUpdateMessageSchema = z.object({
   type: z.literal('HRM_METADATA_UPDATE'),

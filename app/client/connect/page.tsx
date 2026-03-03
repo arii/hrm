@@ -16,13 +16,14 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+import { SIGNAL_STRIKE_THRESHOLD } from '@/constants/bluetooth'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
   const {
     userName,
     userAgeNum: userAge,
-    userWeightKg: userWeight,
+    userWeightKg,
     gender,
   } = userProfile.data
 
@@ -78,11 +79,18 @@ export default function ConnectPage() {
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle') {
-      startWorkout(userAge || 30, userWeight || 70, { gender })
+      startWorkout(userAge || 30, userWeightKg || 70, { gender })
     } else if (workoutStatus === 'paused') {
       resumeWorkout()
     }
-  }, [startWorkout, resumeWorkout, workoutStatus, userAge, userWeight, gender])
+  }, [
+    startWorkout,
+    resumeWorkout,
+    workoutStatus,
+    userAge,
+    userWeightKg,
+    gender,
+  ])
 
   const handleEndWorkout = useCallback(() => {
     endWorkout()
@@ -107,8 +115,6 @@ export default function ConnectPage() {
     [workoutStatus, setCurrentHR, addHrData]
   )
 
-  const { showWarning } = useAppSnackbar()
-
   const {
     connectAndStream,
     autoConnect,
@@ -120,8 +126,7 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
-    lastPeriodMs,
-    consecutiveSlowPackets,
+    poorSignalStrikeCount,
     connectionAttempted,
   } = useBluetoothHRM({
     userName,
@@ -130,11 +135,19 @@ export default function ConnectPage() {
     onConnect: handleStartWorkout,
   })
 
+  const { showWarning } = useAppSnackbar()
+
+  useEffect(() => {
+    if (poorSignalStrikeCount === SIGNAL_STRIKE_THRESHOLD) {
+      showWarning('Weak HRM signal detected. Check device placement.')
+    }
+  }, [poorSignalStrikeCount, showWarning])
+
   // Automatically start workout or resume when connected to maintain previous behavior
   useEffect(() => {
     if (isInitialized && isConnected) {
       if (workoutStatus === 'idle') {
-        startWorkout(userAge || 30, userWeight || 70, { gender })
+        startWorkout(userAge || 30, userWeightKg || 70, { gender })
       } else if (workoutStatus === 'paused') {
         resumeWorkout()
       }
@@ -146,7 +159,7 @@ export default function ConnectPage() {
     startWorkout,
     resumeWorkout,
     userAge,
-    userWeight,
+    userWeightKg,
     gender,
   ])
 
@@ -192,11 +205,6 @@ export default function ConnectPage() {
     })
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
-  useEffect(() => {
-    if (consecutiveSlowPackets === 3)
-      showWarning('HRM Signal Weak: Check device placement')
-  }, [consecutiveSlowPackets, showWarning])
-
   const handleConnect = () => {
     connectAndStream(userName, userAge || 0)
   }
@@ -218,7 +226,7 @@ export default function ConnectPage() {
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
-      lastPeriodMs={lastPeriodMs}
+      poorSignalStrikeCount={poorSignalStrikeCount}
       currentHR={currentHR}
       hrZoneData={{
         percentage,

@@ -135,10 +135,10 @@ const ExperimentalAnalyticsPage = () => {
   // Handlers
   const handleStartWorkout = useCallback(() => {
     const age = userSettings.userAge || 30
-    const weight = userSettings.userWeight || 70
+    const weightKg = userSettings.userWeightKg || 70
     const maxHr = calculateMaxHr(age)
 
-    startWorkout(age, weight, { maxHr })
+    startWorkout(age, weightKg, { maxHr })
     setView('active')
   }, [startWorkout, userSettings])
 

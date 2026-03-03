@@ -265,7 +265,7 @@ describe('useWorkoutSessionManager', () => {
         totalPaused: 0,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { age: 30, weight: 80, maxHr: 190 },
+        userSettings: { age: 30, weightKg: 80, maxHr: 190 },
         lastSyncTime: 900000,
         syncStatus: 'pending',
         endTime: null,
@@ -296,7 +296,7 @@ describe('useWorkoutSessionManager', () => {
         startTime: 1000000,
         status: 'paused',
         totalCaloriesBurned: 0,
-        userSettings: { age: 30, weight: 80, maxHr: 190 },
+        userSettings: { age: 30, weightKg: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Mock as the same day
@@ -322,7 +322,7 @@ describe('useWorkoutSessionManager', () => {
         sessionId: 'active-session-id',
         startTime: 1000000,
         status: 'running',
-        userSettings: { age: 30, weight: 80, maxHr: 190 },
+        userSettings: { age: 30, weightKg: 80, maxHr: 190 },
       }
       mockGetIncompleteSession.mockResolvedValue(todaySession)
       mockIsSameDay.mockReturnValue(true) // Initially, it's the same day

@@ -35,7 +35,7 @@ describe('generateFitFile', () => {
       maxHr: 120,
       calorieHistory: [],
       totalCaloriesBurned: 100,
-      userSettings: { age: 30, weight: 70, maxHr: 190 },
+      userSettings: { age: 30, weightKg: 70, maxHr: 190 },
       lastSyncTime: 0,
       syncStatus: 'synced',
     }
@@ -101,7 +101,7 @@ describe('generateFitFile', () => {
       maxHr: 0,
       calorieHistory: [],
       totalCaloriesBurned: 0,
-      userSettings: { age: 30, weight: 70, maxHr: 190 },
+      userSettings: { age: 30, weightKg: 70, maxHr: 190 },
       lastSyncTime: 0,
       syncStatus: 'synced',
     }

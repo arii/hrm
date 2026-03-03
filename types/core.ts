@@ -4,13 +4,13 @@
  * @see /docs/decisions/0001-centralized-data-models.md
  */
 import { HeartRateZone } from '@/lib/shared/hr-zones'
+import { Gender, MeasurementSystem } from '@/lib/validation/schemas'
 
 // =================================================================================================
 // User and Profile
 // =================================================================================================
 
-export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE' | 'NEUTRAL'
+export type { MeasurementSystem, Gender }
 
 /**
  * Represents a user's identity and authentication profile.
@@ -39,7 +39,7 @@ export interface UserProfile {
 export interface UserPhysicalProfile {
   userId: string
   age: number
-  weight: number // Stored normalized in KG
+  weightKg: number // Stored normalized in KG
   gender: Gender
   unitSystem: MeasurementSystem
   maxHr?: number // Optional override, otherwise calculated
@@ -130,6 +130,8 @@ export interface RawHrmStreamData {
   percentage?: number
   zone?: HeartRateZone
   weightKg?: number
+  heightCm?: number
+  gender?: Gender
   updatedAt?: number
 }
 

@@ -70,7 +70,7 @@ const mockUserSettings: UserPreferences = {
   favoritePlaylist: '',
   userName: 'Test User',
   userAge: 30,
-  userWeight: 70, // in kg
+  userWeightKg: 70, // in kg
   autoConnect: false,
   gender: 'MALE',
   unitSystem: 'METRIC',
@@ -124,7 +124,7 @@ describe('ConnectPage', () => {
     renderWithProviders(<ConnectPage />, { providerProps })
     const weightInput = screen.getByLabelText(/Your Weight/)
     expect(weightInput).toHaveValue(
-      toDisplay(mockUserSettings.userWeight!, mockUserSettings.unitSystem)
+      toDisplay(mockUserSettings.userWeightKg!, mockUserSettings.unitSystem)
     )
   })
 
@@ -139,7 +139,7 @@ describe('ConnectPage', () => {
 
     const updater = setUserSettings.mock.calls[0][0]
     const newSettings = updater(mockUserSettings)
-    expect(newSettings.userWeight).toBe(75)
+    expect(newSettings.userWeightKg).toBe(75)
   })
 
   it('converts and displays the weight correctly when the unit system changes', () => {
@@ -175,7 +175,7 @@ describe('ConnectPage', () => {
     )
 
     weightInput = screen.getByLabelText(/Your Weight/)
-    const weightInLbs = toDisplay(mockUserSettings.userWeight!, 'IMPERIAL')
+    const weightInLbs = toDisplay(mockUserSettings.userWeightKg!, 'IMPERIAL')
     expect(weightInput).toHaveValue(weightInLbs)
   })
 

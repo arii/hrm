@@ -32,6 +32,7 @@ describe('Zod Schema Validation', () => {
     it('should accept valid genders', () => {
       expect(GenderSchema.safeParse('MALE').success).toBe(true)
       expect(GenderSchema.safeParse('FEMALE').success).toBe(true)
+      expect(GenderSchema.safeParse('NEUTRAL').success).toBe(true)
     })
 
     it('should reject invalid genders', () => {
@@ -44,7 +45,7 @@ describe('Zod Schema Validation', () => {
     const validProfile = {
       userId: uuidv4(),
       age: 30,
-      weight: 75,
+      weightKg: 75,
       gender: 'MALE',
       unitSystem: 'METRIC',
     }
@@ -77,7 +78,7 @@ describe('Zod Schema Validation', () => {
     })
 
     it('should reject a profile with an invalid weight', () => {
-      const invalidProfile = { ...validProfile, weight: -10 }
+      const invalidProfile = { ...validProfile, weightKg: -10 }
       expect(UserPhysicalProfileSchema.safeParse(invalidProfile).success).toBe(
         false
       )

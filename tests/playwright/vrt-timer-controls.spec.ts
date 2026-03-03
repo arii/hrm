@@ -29,6 +29,7 @@ test.describe('Visual Regression Tests', () => {
 
   // Add a beforeEach hook to wait for the page to be ready before each test
   test.beforeEach(async () => {
+    // Enforce viewport size to prevent height mismatches
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
   })

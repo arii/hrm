@@ -14,8 +14,8 @@ export interface CalorieEstimationParams {
  * used for its accuracy by incorporating heart rate.
  *
  * The formula differs based on gender to provide more accurate estimations:
- * - Male: (-55.0969 + 0.6309 × HR + 0.1988 × weight + 0.2017 × age) / 4.184
- * - Female: (-20.4022 + 0.4472 × HR - 0.1263 × weight + 0.074 × age) / 4.184
+ * - Male: (-55.0969 + 0.6309 × HR + 0.1988 × weightKg + 0.2017 × age) / 4.184
+ * - Female: (-20.4022 + 0.4472 × HR - 0.1263 × weightKg + 0.074 × age) / 4.184
  *
  * A 'neutral' option is provided, which defaults to the female formula as a
  * conservative estimate when gender is not specified.

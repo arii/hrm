@@ -1,7 +1,9 @@
 'use client'
 import React, { createContext, useContext, useEffect } from 'react'
+import { z } from 'zod'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
+import { GenderSchema, MeasurementSystemSchema } from '@/lib/validation/schemas'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {
@@ -34,26 +36,48 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   unitSystem: 'IMPERIAL',
 }
 
+const PreferencesMigrationSchema = z
+  .object({
+    theme: z.enum(['dark', 'light']).catch(DEFAULT_PREFERENCES.theme),
+    volumeLevel: z.number().catch(DEFAULT_PREFERENCES.volumeLevel),
+    defaultWorkDuration: z
+      .number()
+      .catch(DEFAULT_PREFERENCES.defaultWorkDuration),
+    defaultRestDuration: z
+      .number()
+      .catch(DEFAULT_PREFERENCES.defaultRestDuration),
+    favoritePlaylist: z.string().catch(DEFAULT_PREFERENCES.favoritePlaylist),
+    userName: z.string().catch(DEFAULT_PREFERENCES.userName),
+    userAge: z.number().nullable().catch(DEFAULT_PREFERENCES.userAge),
+    userWeight: z.number().nullable().optional(), // Legacy
+    userWeightKg: z.number().nullable().optional(),
+    userHeight: z.number().nullable().optional(), // Legacy
+    userHeightCm: z.number().nullable().optional(),
+    autoConnect: z.boolean().catch(DEFAULT_PREFERENCES.autoConnect),
+    gender: GenderSchema.catch(DEFAULT_PREFERENCES.gender),
+    unitSystem: MeasurementSystemSchema.catch(DEFAULT_PREFERENCES.unitSystem),
+  })
+  .transform((data) => ({
+    ...data,
+    userWeightKg: data.userWeightKg ?? data.userWeight ?? null,
+    userHeightCm: data.userHeightCm ?? data.userHeight ?? null,
+  }))
+  .transform((data) => {
+    // Remove legacy fields from final object
+    const {
+      userWeight: _userWeight,
+      userHeight: _userHeight,
+      ...rest
+    } = data as Record<string, unknown>
+    return rest as unknown as UserPreferences
+  })
+
 export const migratePreferences = (stored: unknown): UserPreferences => {
-  if (typeof stored !== 'object' || stored === null) return DEFAULT_PREFERENCES
-  const rec = stored as Record<string, unknown>
-  const clean = Object.keys(DEFAULT_PREFERENCES).reduce((acc, key) => {
-    const k = key as keyof UserPreferences
-    let val = rec[k]
-    if (k === 'userWeightKg') val ??= rec.userWeight
-    if (k === 'userHeightCm') val ??= rec.userHeight
-
-    const isMatch = typeof val === typeof DEFAULT_PREFERENCES[k]
-    const isNullable =
-      DEFAULT_PREFERENCES[k] === null &&
-      (typeof val === 'number' || typeof val === 'string')
-
-    if (val != null && (isMatch || isNullable)) {
-      ;(acc as Record<string, unknown>)[k] = val
-    }
-    return acc
-  }, {} as Partial<UserPreferences>)
-  return { ...DEFAULT_PREFERENCES, ...clean }
+  const result = PreferencesMigrationSchema.safeParse(stored)
+  if (!result.success) {
+    return DEFAULT_PREFERENCES
+  }
+  return result.data
 }
 
 type UserSettingsContextType = readonly [

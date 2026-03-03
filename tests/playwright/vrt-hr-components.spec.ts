@@ -35,6 +35,8 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
+    // Enforce viewport size to prevent height mismatches (e.g. 1080px vs 1151px)
+
     // 1. Reset server-side state
     await resetServerState(request)
 
@@ -85,9 +87,8 @@ test.describe('Visual Regression Tests', () => {
         minHeight: HR_TILE_MIN_HEIGHT,
       })
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-with-hr-data.png', {
+        fullPage: false,
         maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
@@ -131,8 +132,8 @@ test.describe('Visual Regression Tests', () => {
         })
       }
 
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-with-2-hr-devices.png', {
+        fullPage: false,
         maxDiffPixelRatio: 0.3,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
@@ -153,8 +154,8 @@ test.describe('Visual Regression Tests', () => {
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
 
-        const dashboard = dashboardPage.getByTestId('dashboard')
-        await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
+        await takeScreenshot(dashboardPage, `dashboard-hr-zone-${zone}.png`, {
+          fullPage: false,
           maxDiffPixelRatio: 0.1,
           mask: [
             ...getDynamicContentMasks(dashboardPage),
@@ -167,8 +168,8 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Disconnected state
     test('dashboard with disconnected HR device', async () => {
       await mockMultipleHrDevices(dashboardPage, [])
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
+      await takeScreenshot(dashboardPage, 'dashboard-hr-disconnected.png', {
+        fullPage: false,
         maxDiffPixelRatio: 0.1,
         mask: [
           ...getDynamicContentMasks(dashboardPage),

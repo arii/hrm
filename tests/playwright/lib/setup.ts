@@ -17,6 +17,7 @@ import {
   waitForPageReady,
   waitForWebSocketConnection,
 } from './waits'
+import { DESKTOP_VIEWPORT } from './viewports'
 
 /**
  * Common routes used in HRM testing
@@ -127,20 +128,13 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
-  // Stabilize VRT by disabling animations, transitions, and backdrop filters
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      [data-testid="main-content-layout"] {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-    `,
+  // Force disconnect to remove HrmConnectionPanel skeleton
+  await page.evaluate(() => {
+    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+    if (window.__TEST_CONTROLS__) {
+      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
+      window.__TEST_CONTROLS__.disconnect()
+    }
   })
 
   await waitForPageReady(page)
@@ -202,18 +196,33 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel and stabilize
+  // Enforce consistent viewport size for visual regression tests
   await Promise.all([
-    navigateAndWait(dashboardPage, HRM_ROUTES.DASHBOARD),
-    navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
-    navigateAndWait(mockPage, HRM_ROUTES.MOCK),
+    dashboardPage.setViewportSize(DESKTOP_VIEWPORT),
+    controlPage.setViewportSize(DESKTOP_VIEWPORT),
+    mockPage.setViewportSize(DESKTOP_VIEWPORT),
   ])
 
-  // Wait for WebSocket connections to be established (longer timeout for CI stability)
+  // Navigate all pages to their respective routes in parallel
+  const baseUrl = getBaseURL()
   await Promise.all([
-    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
-    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
-    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
+    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
+  ])
+
+  // Wait for all pages to be fully loaded and idle
+  await Promise.all([
+    waitForPageReady(dashboardPage),
+    waitForPageReady(controlPage),
+    waitForPageReady(mockPage),
+  ])
+
+  // Wait for WebSocket connections to be established
+  await Promise.all([
+    waitForWebSocketConnection(dashboardPage),
+    waitForWebSocketConnection(controlPage),
+    waitForWebSocketConnection(mockPage),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
@@ -254,6 +263,10 @@ export async function setupMinimalVisualRegressionTest(
   if (path === '' || path === '/') {
     await mockGoogleDocIframe(page)
   }
+
+  // Enforce consistent viewport size
+  await page.setViewportSize(DESKTOP_VIEWPORT)
+
   await navigateAndWait(page, path)
 }
 

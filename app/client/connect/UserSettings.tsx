@@ -88,7 +88,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
-          value={data.userHeight.cm}
+          value={data.userHeightInput.cm}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value)) {
               handlers.setUserHeight({ cm: e.target.value })
@@ -106,7 +106,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
               label="Feet"
               placeholder="e.g., 5"
               type="number"
-              value={data.userHeight.feet}
+              value={data.userHeightInput.feet}
               onChange={(e) => {
                 if (/^\d*$/.test(e.target.value)) {
                   handlers.setUserHeight({ feet: e.target.value })
@@ -120,7 +120,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
               label="Inches"
               placeholder="e.g., 9"
               type="number"
-              value={data.userHeight.inches}
+              value={data.userHeightInput.inches}
               onChange={(e) => {
                 if (/^\d*$/.test(e.target.value)) {
                   handlers.setUserHeight({ inches: e.target.value })
@@ -142,7 +142,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         label={`Your Weight (${data.unitSystem === 'METRIC' ? 'kg' : 'lbs'})`}
         placeholder={data.unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
-        value={data.userWeight}
+        value={data.userWeightInput}
         onChange={(e) => {
           if (/^\d*\.?\d*$/.test(e.target.value)) {
             handlers.setUserWeight(e.target.value)
@@ -163,6 +163,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         >
           <FormControlLabel value="MALE" control={<Radio />} label="Male" />
           <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
+          <FormControlLabel
+            value="NEUTRAL"
+            control={<Radio />}
+            label="Neutral"
+          />
         </RadioGroup>
       </FormControl>
     </Stack>

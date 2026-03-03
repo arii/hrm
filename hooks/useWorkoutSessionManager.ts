@@ -46,7 +46,7 @@ type SessionManagerAction =
       type: 'START'
       payload: {
         age: number
-        weight: number
+        weightKg: number
         maxHr?: number
         gender?: Gender
       }
@@ -88,7 +88,7 @@ function sessionManagerReducer(
     }
     case 'START': {
       if (state.status !== 'idle') return state
-      const { age, weight, maxHr: providedMaxHr, gender } = action.payload
+      const { age, weightKg, maxHr: providedMaxHr, gender } = action.payload
       const maxHr = providedMaxHr || calculateMaxHr(age)
       const initialTimeInZones = Object.fromEntries(
         HR_ZONE_ORDER.map((zone) => [zone, 0])
@@ -107,7 +107,7 @@ function sessionManagerReducer(
         pauseTime: null,
         calorieHistory: [],
         totalCaloriesBurned: 0,
-        userSettings: { age, weight, maxHr, gender },
+        userSettings: { age, weightKg, maxHr, gender },
         lastSyncTime: Date.now(),
         syncStatus: 'pending',
       }
@@ -244,7 +244,7 @@ export const useWorkoutSessionManager = () => {
   const hrHistoryRef = useRef<number[]>([])
   const lastTimestampRef = useRef<number | null>(null)
   const ageRef = useRef<number>(30)
-  const weightRef = useRef<number>(70)
+  const weightKgRef = useRef<number>(70)
   const genderRef = useRef<Gender | undefined>(undefined)
   const smoothingWindow = 5 // Configurable if needed
 
@@ -285,7 +285,7 @@ export const useWorkoutSessionManager = () => {
   useEffect(() => {
     if (state.session) {
       ageRef.current = state.session.userSettings.age
-      weightRef.current = state.session.userSettings.weight
+      weightKgRef.current = state.session.userSettings.weightKg
       genderRef.current = state.session.userSettings.gender
     }
   }, [state.session])
@@ -341,12 +341,12 @@ export const useWorkoutSessionManager = () => {
   const startWorkout = useCallback(
     (
       age: number,
-      weight: number,
+      weightKg: number,
       options: { maxHr?: number; gender?: Gender } = {}
     ) => {
       // Initialize refs
       ageRef.current = age
-      weightRef.current = weight
+      weightKgRef.current = weightKg
       genderRef.current = options.gender
       hrHistoryRef.current = []
       lastTimestampRef.current = null
@@ -355,7 +355,7 @@ export const useWorkoutSessionManager = () => {
         type: 'START',
         payload: {
           age,
-          weight,
+          weightKg,
           maxHr: options.maxHr,
           gender: options.gender,
         },
@@ -408,7 +408,7 @@ export const useWorkoutSessionManager = () => {
         const totalCaloriesForInterval = estimateCaloriesBurned({
           heartRate: smoothedHr,
           age: ageRef.current,
-          weightKg: weightRef.current,
+          weightKg: weightKgRef.current,
           gender: genderRef.current,
           durationMinutes: dtMinutes,
         })

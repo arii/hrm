@@ -26,6 +26,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async () => {
+    // Enforce viewport size to prevent height mismatches
     await waitForPageReady(mockPage)
   })
 
@@ -33,7 +34,12 @@ test.describe('Visual Regression Tests', () => {
     test('form inputs', async () => {
       await mockPage.getByLabel('Weight (kg)').fill('75')
       await mockPage.getByLabel('Height (cm)').fill('180')
-      await mockPage.getByLabel('Gender').fill('female')
+
+      // Handle MUI Select for Gender
+      const genderSelect = mockPage.getByLabel('Gender')
+      await genderSelect.click()
+      await mockPage.getByRole('option', { name: 'FEMALE' }).click()
+
       const mockClientForm = mockPage.getByTestId('mock-client-form')
       await takeScreenshot(mockClientForm, 'mock-hrm-client-form.png')
     })

@@ -38,12 +38,15 @@ export const HeartRateDataPointSchema = z.object({
 })
 
 export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
-export const GenderSchema = z.enum(['MALE', 'FEMALE'])
+export type MeasurementSystem = z.infer<typeof MeasurementSystemSchema>
+
+export const GenderSchema = z.enum(['MALE', 'FEMALE', 'NEUTRAL'])
+export type Gender = z.infer<typeof GenderSchema>
 
 export const UserPhysicalProfileSchema = z.object({
   userId: z.string().uuid(),
   age: z.number().min(1).max(120),
-  weight: z.number().positive(),
+  weightKg: z.number().positive(),
   gender: GenderSchema,
   unitSystem: MeasurementSystemSchema,
   maxHr: z.number().optional(),

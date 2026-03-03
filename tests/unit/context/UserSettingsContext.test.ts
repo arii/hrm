@@ -26,11 +26,11 @@ describe('migratePreferences', () => {
     )
   })
 
-  it('should fix the critical bug: preserve numeric values for nullable fields (userAge, userWeight)', () => {
+  it('should fix the critical bug: preserve numeric values for nullable fields (userAge, userWeightKg)', () => {
     const stored = {
       userAge: 30,
-      userWeight: 75,
-      userHeight: 180,
+      userWeightKg: 75,
+      userHeightCm: 180,
     }
     // Verify defaults are null
     expect(DEFAULT_PREFERENCES.userAge).toBeNull()
@@ -38,8 +38,18 @@ describe('migratePreferences', () => {
     const result = migratePreferences(stored)
 
     expect(result.userAge).toBe(30)
-    expect(result.userWeight).toBe(75)
-    expect(result.userHeight).toBe(180)
+    expect(result.userWeightKg).toBe(75)
+    expect(result.userHeightCm).toBe(180)
+  })
+
+  it('should migrate legacy weight and height fields', () => {
+    const stored = {
+      userWeight: 75,
+      userHeight: 180,
+    }
+    const result = migratePreferences(stored)
+    expect(result.userWeightKg).toBe(75)
+    expect(result.userHeightCm).toBe(180)
   })
 
   it('should ignore values with mismatched types', () => {

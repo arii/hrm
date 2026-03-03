@@ -33,7 +33,7 @@ export interface WorkoutSessionData {
   totalCaloriesBurned: number
   userSettings: {
     age: number
-    weight: number
+    weightKg: number
     maxHr: number
     gender?: Gender
   }
