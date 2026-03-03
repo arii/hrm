@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import Cookies from 'js-cookie'
 
