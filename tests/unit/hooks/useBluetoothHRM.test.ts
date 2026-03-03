@@ -138,9 +138,9 @@ describe('useBluetoothHRM', () => {
     // autoConnect is async and may not call getDevices synchronously
     await waitFor(() => {
       expect(mockBluetooth.getDevices).toHaveBeenCalled()
+      expect(mockGatt.connect).toHaveBeenCalled()
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
     })
-    expect(mockGatt.connect).toHaveBeenCalled()
-    expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
 
   it('should handle silent connection failure gracefully', async () => {

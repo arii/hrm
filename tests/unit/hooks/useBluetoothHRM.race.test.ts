@@ -145,9 +145,8 @@ describe('useBluetoothHRM Race Conditions', () => {
 
     await act(async () => {
       await expect(firstPromise).resolves.toBe(true)
-      // The second promise resolves to true because it either runs sequentially after the first one finishes (seeing CONNECTED)
-      // or it's just how the mock environment behaves. The critical check is that gatt.connect is called only once.
-      await expect(secondPromise).resolves.toBe(true)
+      // The second promise resolves to false because it is skipped due to the lock
+      await expect(secondPromise).resolves.toBe(false)
     })
 
     expect(mockGattConnect).toHaveBeenCalledTimes(1)
@@ -193,12 +192,16 @@ describe('useBluetoothHRM Race Conditions', () => {
 
     const { result } = renderHook(() => useBluetoothHRM())
 
-    await act(async () => {
-      const autoConnectPromises = [
+    let autoConnectPromises: Promise<void>[] = []
+    act(() => {
+      autoConnectPromises = [
         result.current.autoConnect(),
         result.current.autoConnect(),
         result.current.autoConnect(),
       ]
+    })
+
+    await act(async () => {
       await Promise.allSettled(autoConnectPromises)
     })
 
