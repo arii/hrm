@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 // tests/unit/components/shared/VolumeSlider.test.tsx
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import VolumeSlider from '@/components/shared/VolumeSlider'
 import '@testing-library/jest-dom'
 
@@ -100,9 +100,7 @@ describe('components/shared/VolumeSlider', () => {
       />
     )
     const slider = screen.getByRole('slider')
-    act(() => {
-      slider.focus()
-    })
+    slider.focus()
     // Simulate arrow right press
     fireEvent.keyDown(slider, { key: 'ArrowRight', code: 'ArrowRight' })
 

@@ -68,16 +68,6 @@ a {
   }
 }
 
-@keyframes pulse-signal {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) {
   @keyframes subtle-pulse {
     0% {

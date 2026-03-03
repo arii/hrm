@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import logger from '@/utils/logger'
-import { resetSocketManager } from '@/utils/socketManager'
 
 export async function POST() {
   if (process.env.NODE_ENV !== 'development') {
@@ -21,11 +20,6 @@ export async function POST() {
     } else {
       logger.info('Spotify token file not found, nothing to delete.')
     }
-
-    // Reset WebSocket and session state
-    resetSocketManager()
-    logger.info('Socket manager state reset.')
-
     return NextResponse.json({ message: 'Server reset successful' })
   } catch (error) {
     logger.error('Error resetting server:', error)
