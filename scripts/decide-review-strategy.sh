@@ -53,7 +53,6 @@ if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
 fi
 
 # Fetch PR data once to improve performance and avoid rate-limiting.
-# We capture errors and stderr to diagnose issues instead of silent suppression.
 echo "::info::Fetching PR #$PR_NUMBER metadata and comments..."
 PR_DATA_FILE=$(mktemp)
 set +e
