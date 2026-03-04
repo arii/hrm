@@ -165,8 +165,13 @@ describe('SpotifyDisplay', () => {
     })
     expect(loginButton).toBeInTheDocument()
 
-    // Simulate user click
-    await userEvent.click(loginButton)
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      // Simulate user click
+      await userEvent.click(loginButton)
+    } finally {
+      logSpy.mockRestore()
+    }
 
     // Assert that signIn was called correctly
     expect(mockedSignIn).toHaveBeenCalledTimes(1)

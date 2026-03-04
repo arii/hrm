@@ -30,6 +30,19 @@ jest.mock('js-cookie', () => ({
 }))
 
 describe('useBluetoothHRM Race Conditions', () => {
+  let infoSpy: jest.SpyInstance
+  let warnSpy: jest.SpyInstance
+
+  beforeAll(() => {
+    infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    infoSpy.mockRestore()
+    warnSpy.mockRestore()
+  })
+
   const originalNavigator = global.navigator
   let mockRequestDevice: jest.Mock
   let mockGattConnect: jest.Mock

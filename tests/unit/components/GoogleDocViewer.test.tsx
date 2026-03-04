@@ -48,10 +48,16 @@ describe('GoogleDocViewer', () => {
   })
 
   it('renders nothing if embedUrl is invalid', () => {
-    const { container } = render(
-      <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
-    )
-    expect(container).toBeEmptyDOMElement()
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const { container } = render(
+        <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
+      )
+      expect(container).toBeEmptyDOMElement()
+      expect(errorSpy).toHaveBeenCalledWith('Invalid URL:', 'invalid-url')
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 
   it('renders nothing if embedUrl is empty', () => {
