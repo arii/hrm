@@ -52,10 +52,18 @@ describe('useSpotifyWebPlayback', () => {
   let mockAddError: jest.Mock
 
   beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
     jest.clearAllMocks()
     mockAddError = jest.fn()
     mockUseError.mockReturnValue({ addError: mockAddError })
     mockUseSpotifyAuth.mockReturnValue({ status: 'authenticated' })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should initialize the SDK and connect the player on mount', async () => {
