@@ -8,7 +8,7 @@ import {
   CircularProgress,
   InputAdornment,
   ListItemText,
-  TextField,
+  TextField, Typography,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { useEffect, useState } from 'react'
@@ -186,6 +186,20 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           )
         }}
       />
+      {/*
+        Restore the initial message below the input to maintain consistent height
+        and avoid VRT failures due to layout shifts.
+      */}
+      {!hasSearched && !query && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
+          Start typing to search Spotify...
+        </Typography>
+      )}
     </Box>
   )
 }

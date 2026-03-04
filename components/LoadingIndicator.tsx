@@ -21,7 +21,7 @@ const LoadingIndicator = () => {
         alignItems: 'center',
         backgroundColor: theme.palette.background.overlay,
         zIndex: theme.zIndex.loadingIndicator,
-        transition: theme.transitions.create('opacity', {
+        transition: process.env.NEXT_PUBLIC_TESTING === "true" ? "none" : theme.transitions.create('opacity', {
           duration: theme.transitions.duration.short,
         }),
         opacity: isLoading ? 1 : 0,
