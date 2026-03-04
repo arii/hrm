@@ -8,7 +8,8 @@ import {
   CircularProgress,
   InputAdornment,
   ListItemText,
-  TextField, Typography,
+  TextField,
+  Typography,
 } from '@mui/material'
 import { useSnackbar } from 'notistack'
 import { useEffect, useState } from 'react'
@@ -98,6 +99,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         filterSelectedOptions
         value={null}
         inputValue={query}
+        forcePopupIcon={false} // Hide dropdown icon for cleaner look matching original
         noOptionsText={
           isLoading
             ? 'Searching...'
@@ -190,16 +192,18 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         Restore the initial message below the input to maintain consistent height
         and avoid VRT failures due to layout shifts.
       */}
-      {!hasSearched && !query && (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-          Start typing to search Spotify...
-        </Typography>
-      )}
+      <Box sx={{ mt: 1 }}>
+        {!hasSearched && !query && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            align="center"
+            sx={{ mt: 2 }}
+          >
+            Start typing to search Spotify...
+          </Typography>
+        )}
+      </Box>
     </Box>
   )
 }

@@ -133,7 +133,6 @@ test.describe('Component-Specific VRT', () => {
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.15,
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })

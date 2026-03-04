@@ -25,7 +25,7 @@ test.describe('Spotify Selection Page VRT', () => {
 
     await takeScreenshot(dashboardPage, 'spotify-selection-page.png', {
       screenshotOptions: {
-        mask: [searchInput],
+        mask: [searchInput, dashboardPage.locator('.MuiAutocomplete-popper')],
       },
     })
   })

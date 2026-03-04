@@ -167,7 +167,13 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         value={selectedPlaylist}
         onChange={(_, newValue) => handlePlaylistSelect(newValue)}
         inputValue={searchQuery}
-        onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
+        onInputChange={(_, newInputValue, reason) => {
+          if (reason === 'input') {
+            setSearchQuery(newInputValue)
+          } else if (reason === 'clear') {
+            setSearchQuery('')
+          }
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
