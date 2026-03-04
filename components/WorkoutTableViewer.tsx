@@ -8,11 +8,6 @@ import Paper from '@mui/material/Paper'
 import { styled } from '@mui/material/styles'
 import { WorkoutTableDto } from '@/types/workout'
 
-/**
- * Higher-level styled cell to enforce the Google Doc 'grid' look.
- * 1. Border: 1px solid using theme palette for consistent contrast.
- * 2. Font Size: Increased to 1.4rem (Large header font) for maximum readability in HR workflows.
- */
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.grey[100],
@@ -35,10 +30,7 @@ const WorkoutTableViewer: React.FC<WorkoutTableViewerProps> = ({ data }) => {
       sx={{ borderRadius: 2 }}
       data-testid="workout-table-viewer"
     >
-      <Table
-        sx={{ minWidth: 650, borderCollapse: 'collapse' }}
-        aria-label="workout details"
-      >
+      <Table sx={{ borderCollapse: 'collapse' }} aria-label="workout details">
         <TableHead>
           <TableRow>
             {data.headers.map((header, index) => (
