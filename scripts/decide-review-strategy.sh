@@ -31,14 +31,6 @@ SKIP_REASON="no criteria met"
 
 # --- Main Logic ---
 
-# Check 0: Gemini Review Enablement
-if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
-  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
-  echo "needs-review=false" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
-  exit 0
-fi
-
 # Check 1: Manual Override
 # A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
 if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then

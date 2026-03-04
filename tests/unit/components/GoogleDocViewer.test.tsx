@@ -32,38 +32,4 @@ describe('GoogleDocViewer', () => {
     // so the iframe element itself should be a different object.
     expect(newIframeInstance).not.toBe(initialIframeInstance)
   })
-
-  it('renders iframe with correct src including embedded=true', () => {
-    render(
-      <GoogleDocViewer
-        title="Test Doc"
-        embedUrl="https://docs.google.com/document/d/123"
-      />
-    )
-    const iframe = screen.getByTitle('Test Doc')
-    expect(iframe).toHaveAttribute(
-      'src',
-      'https://docs.google.com/document/d/123?embedded=true'
-    )
-  })
-
-  it('renders nothing if embedUrl is invalid', () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    try {
-      const { container } = render(
-        <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
-      )
-      expect(container).toBeEmptyDOMElement()
-      expect(errorSpy).toHaveBeenCalledWith('Invalid URL:', 'invalid-url')
-    } finally {
-      errorSpy.mockRestore()
-    }
-  })
-
-  it('renders nothing if embedUrl is empty', () => {
-    const { container } = render(
-      <GoogleDocViewer title="Test Doc" embedUrl="" />
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
 })

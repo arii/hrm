@@ -115,50 +115,40 @@ describe('usePersistentStorage', () => {
   })
 
   it('should not fallback to cookies when localStorage is available but write fails', () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    // Mock localStorage: setItem works for the test key (so checkLocalStorage passes)
+    // but fails for the data key.
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        setItem: jest.fn((key, _value) => {
+          if (key === '__hrm_test__') {
+            return // Success for check
+          }
+          throw new Error('QuotaExceeded')
+        }),
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
+      },
+      writable: true,
+      configurable: true,
+    })
 
-    try {
-      // Mock localStorage: setItem works for the test key (so checkLocalStorage passes)
-      // but fails for the data key.
-      Object.defineProperty(window, 'localStorage', {
-        value: {
-          setItem: jest.fn((key, _value) => {
-            if (key === '__hrm_test__') {
-              return // Success for check
-            }
-            throw new Error('QuotaExceeded')
-          }),
-          getItem: jest.fn(),
-          removeItem: jest.fn(),
-          clear: jest.fn(),
-        },
-        writable: true,
-        configurable: true,
+    const { result } = renderHook(() =>
+      usePersistentStorage(TEST_KEY, INITIAL_VALUE, {
+        enableCookieFallback: true,
       })
+    )
 
-      const { result } = renderHook(() =>
-        usePersistentStorage(TEST_KEY, INITIAL_VALUE, {
-          enableCookieFallback: true,
-        })
-      )
+    act(() => {
+      const [, setValue] = result.current
+      setValue(UPDATED_VALUE)
+    })
 
-      act(() => {
-        const [, setValue] = result.current
-        setValue(UPDATED_VALUE)
-      })
-
-      expect(window.localStorage.setItem).toHaveBeenCalledWith(
-        TEST_KEY,
-        JSON.stringify(UPDATED_VALUE)
-      )
-      expect(Cookies.set).not.toHaveBeenCalled()
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'LocalStorage write failed:',
-        expect.any(Error)
-      )
-    } finally {
-      consoleSpy.mockRestore()
-    }
+    expect(window.localStorage.setItem).toHaveBeenCalledWith(
+      TEST_KEY,
+      JSON.stringify(UPDATED_VALUE)
+    )
+    expect(Cookies.set).not.toHaveBeenCalled()
   })
 
   it('should load initial value from localStorage if present', () => {

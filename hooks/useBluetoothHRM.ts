@@ -16,17 +16,16 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
-import {
-  STABILITY_THRESHOLD_MS,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  ROLLING_AVG_HISTORY_LENGTH,
-} from '@/constants/bluetooth'
+import { NoSavedDeviceError } from '@/lib/errors'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+
+const ROLLING_AVG_HISTORY_LENGTH = 5
+const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
+const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
@@ -78,8 +77,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isDataStale, setIsDataStale] = useState(false)
-  const [signalPeriodMs, setSignalPeriodMs] = useState(0)
-  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
+  const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
@@ -89,7 +87,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const statusRef = useRef(status)
   const lastDataTime = useRef<number>(0)
-  const lastWatchdogMark = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const periodHistory = useRef<number[]>([])
   const avgPeriodMs = useRef<number>(0)
@@ -192,25 +189,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
-
-          // Only increment slow count if we've crossed a new stability window
-          // and haven't already marked this window.
-          const currentStabilityWindows = Math.floor(
-            timeSinceLastData / STABILITY_THRESHOLD_MS
-          )
-          const lastMarkedWindows = Math.floor(
-            lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-          )
-
-          if (currentStabilityWindows > lastMarkedWindows) {
-            setSignalStatus((s) => ({
-              last: timeSinceLastData,
-              slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
-            }))
-            lastWatchdogMark.current = timeSinceLastData
-          } else {
-            setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
-          }
         }
       }
 
@@ -249,12 +227,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
+
+    // 1. Abort any pending GATT operations
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-    if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
+    // 2. Clear any pending reconnection timers
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+
+    // 3. Close the GATT connection if it exists
+    if (deviceRef.current?.gatt?.connected) {
+      deviceRef.current.gatt.disconnect()
+    }
+
+    // 4. Update state
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
     setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -266,7 +256,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     periodHistory.current = []
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
-    setSignalStatus({ last: 0, slow: 0 })
+
+    // 5. Reset connection guard
+    isConnecting.current = false
   }, [])
 
   const forgetDevice = useCallback(async () => {
@@ -350,19 +342,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       setCustomStatusMessage(statusMessage)
 
-      reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectTimeoutRef.current = setTimeout(async () => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isConnecting.current &&
           !isManualDisconnect.current
         ) {
-          connectToGattRef.current?.(device, true).catch((error: unknown) => {
+          isConnecting.current = true
+          try {
+            await connectToGattRef.current?.(device, true)
+          } catch (error: unknown) {
             logger.warn({ error }, 'Reconnect attempt failed')
             reconnect(
               device,
               error instanceof Error ? error.message : String(error)
             )
-          })
+          } finally {
+            isConnecting.current = false
+          }
         }
       }, delay)
     },
@@ -415,11 +412,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ...window.__TEST_CONTROLS__,
         setHrmStatus: setStatus,
         setCustomHrmStatusMessage: setCustomStatusMessage,
-        setSignalStatus,
       }
     }
 
     return () => {
+      // 1. Abort any pending connection attempts to prevent "ghost" connections
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      // 2. Clean up the disconnected listener to prevent leaks across remounts
       if (deviceRef.current && activeDisconnectListenerRef.current) {
         deviceRef.current.removeEventListener(
           'gattserverdisconnected',
@@ -427,23 +429,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         activeDisconnectListenerRef.current = null
       }
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+
+      // 3. Clear any pending reconnection timers
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+
       if (
         typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true' &&
-        window.__TEST_CONTROLS__
+        process.env.NEXT_PUBLIC_TESTING === 'true'
       ) {
-        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
+        if (window.__TEST_CONTROLS__) {
           delete window.__TEST_CONTROLS__.setHrmStatus
-        }
-        if (
-          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
-          setCustomStatusMessage
-        ) {
           delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-        }
-        if (window.__TEST_CONTROLS__.setSignalStatus === setSignalStatus) {
-          delete window.__TEST_CONTROLS__.setSignalStatus
         }
       }
     }
@@ -452,7 +450,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
       // Ensure any previous connection attempt is aborted
-      if (abortControllerRef.current) {
+      if (abortControllerRef.current && isConnecting.current) {
         logger.warn(
           { device: device.name },
           'Aborting previous pending connection attempt'
@@ -460,7 +458,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
-      isConnecting.current = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -565,32 +562,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           'characteristicvaluechanged',
           (event: unknown) => {
             const now = Date.now()
+
+            // Calculate Delta (Period) for Signal Quality
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
-
-              const isSlow = delta > STABILITY_THRESHOLD_MS
-              const watchdogWindows = Math.floor(
-                lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-              )
-
-              setSignalStatus((s) => {
-                // If the packet arrived and was slow, but the watchdog already counted it,
-                // we don't increment again. If it's fast, we reset the slow counter.
-                let nextSlow = isSlow ? s.slow : 0
-                if (isSlow && watchdogWindows === 0) {
-                  nextSlow = s.slow + 1
-                }
-
-                return {
-                  last: delta,
-                  slow: nextSlow,
-                }
-              })
-
-              // Synchronize watchdog mark with arrival to prevent double-counting
-              // when the watchdog timer next fires.
-              lastWatchdogMark.current = delta
             }
 
             const e = event as Event
@@ -604,7 +580,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
-            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
             logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'
@@ -650,29 +625,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (errorMsg.includes('timeout')) {
           logger.error(
             { device: device.name },
-            'Connection timeout detected. Resetting device and permissions.'
+            'Connection timeout detected. Stopping reconnection.'
           )
           setStatus(BluetoothConnectionStatus.ERROR)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
-          reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-          deviceRef.current = null
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeout)
 
-          if (reconnectTimeoutRef.current)
-            clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = setTimeout(() => {
-            isManualDisconnect.current = true
-            isTimeoutDisconnect.current = false
-            if (abortControllerRef.current) {
-              abortControllerRef.current.abort()
-            }
-            Cookies.remove('hrm_device_id')
-            setStatus(BluetoothConnectionStatus.DISCONNECTED)
-            setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-            setSavedDevice(null)
-            setBatteryLevel(null)
-            deviceRef.current = null
-            reconnectAttempts.current = 0
-          }, 2000)
+          // Stop further reconnection attempts on true timeout to prevent loops
+          reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+
+          // Note: We no longer clear cookies or abort controllers via a delayed timeout here.
+          // This avoids race conditions where a subsequent manual connection attempt
+          // is aborted by a stale timeout from a previous failed attempt.
         } else if (isGattDisconnected) {
           logger.warn(
             { device: device.name },
@@ -685,9 +648,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         throw error
       } finally {
-        // This is reset at the end of the function, but if an abort happens,
-        // we need to ensure it's also reset.
-        isConnecting.current = false
+        // We do NOT reset isConnecting.current here as it's managed by the caller
+        // (connectAndStream or reconnect) to ensure the whole sequence is guarded.
+        abortControllerRef.current = null
       }
     },
     [onDisconnected, updateSignalPeriod]
@@ -708,7 +671,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     async (
       userNameFromArgs?: string,
       userAgeFromArgs?: number,
-      options: { silent?: boolean } = {}
+      options: { silent?: boolean; deviceId?: string } = {}
     ): Promise<boolean> => {
       if (isConnecting.current) {
         logger.warn(
@@ -717,7 +680,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return false
       }
 
-      const { silent = false } = options
+      const { silent = false, deviceId: forceDeviceId } = options
 
       userDetailsRef.current = {
         name: userNameFromArgs || userName || '',
@@ -742,15 +705,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device) {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
-          const savedDeviceId = Cookies.get('hrm_device_id')
+          const savedDeviceId = forceDeviceId || Cookies.get('hrm_device_id')
 
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
-            logger.warn(
-              { savedDeviceId },
-              'Aborting silent connect: No saved device ID.'
-            )
-            throw new Error('No saved device ID for silent connection.')
+            // Error will be handled in catch block which also resets status for silent connections
+            throw new NoSavedDeviceError()
           }
 
           logger.info(
@@ -808,14 +768,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false // Silent mode: no device available
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error)
         if (error instanceof DOMException && error.name === 'AbortError') {
           throw error
         }
         if (!silent) {
           handleConnectionError(error)
         } else {
-          logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+          if (!(error instanceof NoSavedDeviceError)) {
+            const errorMsg =
+              error instanceof Error ? error.message : String(error)
+            logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+          }
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
@@ -840,45 +803,34 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) return
+    // 1. Guard against overlapping or redundant attempts
+    if (
+      statusRef.current === BluetoothConnectionStatus.CONNECTED ||
+      isConnecting.current
+    ) {
+      return
+    }
 
+    // 2. Check for saved device before proceeding
     const savedDeviceId = Cookies.get('hrm_device_id')
     if (!savedDeviceId) {
-      logger.info('No saved device ID found for auto-connect. Skipping.')
+      logger.debug('No saved device ID for auto-connect. Skipping.')
       setConnectionAttempted(true)
       return
     }
 
+    // 3. Initiate silent connection
+    setConnectionAttempted(true)
     try {
-      isConnecting.current = true
-      setConnectionAttempted(true)
-      setStatus(BluetoothConnectionStatus.CONNECTING)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.connectingToSavedDevice)
-
-      // We don't want connectAndStream to fail because we're already holding the lock
-      isConnecting.current = false
-      const deviceFoundAndAttempted = await connectAndStream(
-        undefined,
-        undefined,
-        { silent: true }
-      )
-      isConnecting.current = true
-
-      if (!deviceFoundAndAttempted) {
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
-        setCustomStatusMessage(null)
-      }
+      await connectAndStream(undefined, undefined, {
+        silent: true,
+        deviceId: savedDeviceId,
+      })
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      logger.error({ error }, 'Auto-connect failed')
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      if (errorMsg.includes('No saved device ID')) {
-        setCustomStatusMessage(null)
-      } else {
+      if (!(error instanceof NoSavedDeviceError)) {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
-    } finally {
-      isConnecting.current = false
+      // Status is already reset in connectAndStream's catch block for silent connections
     }
   }, [connectAndStream])
 
@@ -893,8 +845,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
-    lastPeriodMs: signalStatus.last,
-    consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
   }
 }

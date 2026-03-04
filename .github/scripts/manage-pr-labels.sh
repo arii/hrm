@@ -70,35 +70,11 @@ endgroup
 # =================================================================
 
 # Extract new labels from the review result JSON
-NEW_LABELS=""
 if [ -f "review_result.json" ] && [ "$(jq 'has("labels")' review_result.json)" == "true" ]; then
   NEW_LABELS=$(jq -r '.labels | .[]' review_result.json | tr '\n' ',' | sed 's/,$//')
-fi
-
-# Determine if a status label (approved/not approved/not reviewed) is present
-HAS_STATUS_LABEL=false
-if echo "$NEW_LABELS" | grep -qE "approved|not approved|not reviewed"; then
-  HAS_STATUS_LABEL=true
-fi
-
-# If no status label is present, and we are forced to have one, we need to decide.
-# If review_result.json is missing or review was skipped, use 'not reviewed'.
-if [ "$HAS_STATUS_LABEL" = false ]; then
-  if [ ! -f "review_result.json" ] || [ "$NEEDS_REVIEW" = "false" ]; then
-    if [ -n "$NEW_LABELS" ]; then
-      NEW_LABELS="$NEW_LABELS,not reviewed"
-    else
-      NEW_LABELS="not reviewed"
-    fi
-  else
-    # This shouldn't happen with the updated gemini-client.ts, but as a fallback:
-    warn "No status label found in review result. Defaulting to 'not reviewed'."
-    if [ -n "$NEW_LABELS" ]; then
-      NEW_LABELS="$NEW_LABELS,not reviewed"
-    else
-      NEW_LABELS="not reviewed"
-    fi
-  fi
+else
+  warn "review_result.json not found or is missing the 'labels' key. Skipping label management."
+  exit 0
 fi
 
 # Get the list of managed labels from the pr-labels.json file

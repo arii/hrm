@@ -17,7 +17,7 @@ import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import logger from '@/utils/logger'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
@@ -33,9 +33,9 @@ interface ConnectViewProps {
   onConnect: () => void
   onDisconnect: () => void
   onForgetDevice: () => Promise<void>
+  isResetting: boolean
   isSupported: boolean
   signalPeriodMs: number
-  lastPeriodMs: number
   currentHR: number
   hrZoneData: HrZoneData
   connectionStatus: string
@@ -59,21 +59,19 @@ export default function ConnectView({
   onConnect,
   onDisconnect,
   onForgetDevice,
+  isResetting,
   isSupported,
   signalPeriodMs,
-  lastPeriodMs,
   currentHR,
   hrZoneData,
   connectionStatus,
   bluetoothConnected,
   hasStarted,
-  onReset,
   workoutStatus,
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
   const { data } = userProfile
 
   useEffect(() => {
@@ -92,18 +90,6 @@ export default function ConnectView({
     return <BatteryAlertIcon color="error" />
   }
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
-
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -117,7 +103,7 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <ResetSection onReset={onForgetDevice} isResetting={isResetting} />
         <BottomNavBar />
       </Container>
     )
@@ -133,7 +119,11 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings profile={userProfile} />
+          <UserSettings
+            profile={userProfile}
+            onForgetDevice={onForgetDevice}
+            isResetting={isResetting}
+          />
         ) : (
           <Box
             sx={{
@@ -157,19 +147,38 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-              role="status"
-              aria-live="polite"
+        <Box
+          sx={{ mb: 2, minHeight: 48 }}
+          role="status"
+          aria-live="polite"
+          data-testid="connection-status-container"
+        >
+          {deviceStatus &&
+            !isConnected &&
+            !deviceStatus.includes('Disconnected') && (
+              <Alert
+                data-testid="connection-status-alert"
+                severity={
+                  deviceStatus.includes('Failed') ||
+                  deviceStatus.includes('Error')
+                    ? 'error'
+                    : 'info'
+                }
+              >
+                {deviceStatus}
+              </Alert>
+            )}
+          {deviceStatus.includes('Disconnected') && !isConnected && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{ py: 1 }}
             >
-              {deviceStatus}
-            </Alert>
+              Ready to connect. Please ensure your heart rate monitor is active.
+            </Typography>
           )}
+        </Box>
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -180,14 +189,22 @@ export default function ConnectView({
               disabled={
                 !data.userName.trim() ||
                 !data.userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                deviceStatus.includes('Connecting') ||
+                deviceStatus.includes('Scanning') ||
+                deviceStatus.includes('Checking')
               }
-              aria-busy={deviceStatus.includes('Connecting')}
+              aria-busy={
+                deviceStatus.includes('Connecting') ||
+                deviceStatus.includes('Scanning') ||
+                deviceStatus.includes('Checking')
+              }
             >
-              {deviceStatus.includes('Connecting') ? (
+              {deviceStatus.includes('Connecting') ||
+              deviceStatus.includes('Scanning') ||
+              deviceStatus.includes('Checking') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
-                  <span>Connecting...</span>
+                  <span>{deviceStatus.includes('Scanning') ? 'Scanning...' : 'Connecting...'}</span>
                 </Stack>
               ) : (
                 'Connect Bluetooth HRM'
@@ -218,7 +235,6 @@ export default function ConnectView({
                 )}
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
-                  lastPeriodMs={lastPeriodMs}
                   isConnected={isConnected}
                 />
               </Box>
@@ -230,7 +246,7 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {deviceStatus !== 'Connected' && (
+              {!deviceStatus.includes('Connected') && (
                 <Typography variant="caption" color="text.secondary">
                   Status: {deviceStatus}
                 </Typography>
@@ -286,7 +302,7 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
+        <ResetSection onReset={onForgetDevice} isResetting={isResetting} />
       </Container>
       <BottomNavBar />
     </>

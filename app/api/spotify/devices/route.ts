@@ -73,7 +73,7 @@ export async function GET(_req: Request) {
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error({ error: message }, 'Internal Server Error')
+    logger.error({ err: error }, `Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

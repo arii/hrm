@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
+jest.mock('@/utils/logger.server', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
@@ -36,16 +36,8 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   beforeEach(() => {
-    jest.spyOn(console, 'info').mockImplementation(() => {})
-    jest.spyOn(console, 'warn').mockImplementation(() => {})
-    jest.spyOn(console, 'error').mockImplementation(() => {})
-
     jest.clearAllMocks()
     global.spotifyService = mockSpotifyService
-  })
-
-  afterEach(() => {
-    jest.restoreAllMocks()
   })
 
   it('should return 401 if secret header is missing or invalid', async () => {

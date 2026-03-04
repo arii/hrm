@@ -8,8 +8,9 @@ import {
   resetServerState,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
+import { waitForPageReady, WAIT_TIMEOUTS } from './lib/waits'
 import { HR_TILE_MIN_HEIGHT } from '../../constants/layout'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -35,6 +36,10 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
+    // 0. Enforce desktop viewport to prevent height mismatches in screenshots
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
+    await mockPage.setViewportSize(DESKTOP_VIEWPORT)
+
     // 1. Reset server-side state
     await resetServerState(request)
 
@@ -48,11 +53,11 @@ test.describe('Visual Regression Tests', () => {
 
     await dashboardPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
+      { timeout: WAIT_TIMEOUTS.WEBSOCKET }
     )
     await mockPage.waitForFunction(
       () => document.body.dataset.connectionStatus === 'connected',
-      { timeout: 5000 }
+      { timeout: WAIT_TIMEOUTS.WEBSOCKET }
     )
   })
 
@@ -72,10 +77,16 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
-      // Wait for HR tile to appear
+      // Wait for HR tile and data to appear
       await expect(
         dashboardPage.getByTestId('hr-tile-card').first()
       ).toBeVisible()
+      await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
+        /155/,
+        {
+          timeout: 5000,
+        }
+      )
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
@@ -86,9 +97,9 @@ test.describe('Visual Regression Tests', () => {
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
-
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.3,
+        clip: { x: 0, y: 0, width: 1920, height: 1080 },
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -134,6 +145,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
         maxDiffPixelRatio: 0.3,
+        clip: { x: 0, y: 0, width: 1920, height: 1080 },
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -142,20 +154,27 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: HR device in representative zones (Idle, Middle, Max)
-    const zones = [0, 3, 6]
-    for (const zone of zones) {
+    const zoneData = [
+      { zone: 0, bpm: '65' },
+      { zone: 3, bpm: '135' },
+      { zone: 6, bpm: '195' },
+    ]
+    for (const { zone, bpm } of zoneData) {
       test(`dashboard with HR in Zone ${zone}`, async () => {
-        await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
-        // Wait for HR tile to appear
+        // Wait for HR tile to appear and update
         await expect(
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
+        await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
+          new RegExp(bpm)
+        )
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,
+          clip: { x: 0, y: 0, width: 1920, height: 1080 },
           mask: [
             ...getDynamicContentMasks(dashboardPage),
             ...getHrMasks(dashboardPage),
@@ -170,6 +189,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
         maxDiffPixelRatio: 0.1,
+        clip: { x: 0, y: 0, width: 1920, height: 1080 },
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),

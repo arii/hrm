@@ -14,13 +14,7 @@ jest.mock('next-auth/next', () => ({
 const mockedGetServerSession = getServerSession as jest.Mock
 
 describe('API Route: /api/spotify/access-token', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {})
-    jest.spyOn(console, 'info').mockImplementation(() => {})
-  })
-
   afterEach(() => {
-    jest.restoreAllMocks()
     jest.clearAllMocks()
   })
 

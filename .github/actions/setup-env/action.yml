@@ -32,22 +32,11 @@ runs:
     - name: 'Setup pnpm'
       uses: pnpm/action-setup@v4
 
-
     - name: 'Setup Node.js'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-
-    - name: 'Enable Corepack'
-      shell: bash
-      run: corepack enable
-
-    - name: 'Setup pnpm'
-      shell: bash
-      run: |
-        corepack prepare pnpm@9.15.9 --activate
-        pnpm config set fetch-retries 5
-        pnpm config set fetch-retry-maxtimeout 60000
+        cache: 'pnpm'
 
     - name: Cache Build Artifacts
       if: inputs.use-build-cache == 'true'
@@ -63,7 +52,8 @@ runs:
 
     - name: 'Install Dependencies'
       shell: bash
-      run: pnpm install --frozen-lockfile
+      run: |
+        pnpm install --frozen-lockfile
 
     - name: Cache Playwright
       uses: actions/cache@v4

@@ -38,7 +38,7 @@ export async function POST(_req: Request) {
         { status: error.statusCode }
       )
     }
-    logger.error('[API /clear-token] Error clearing token file:', error)
+    logger.error({ error }, '[API /clear-token] Error clearing token file')
     return NextResponse.json(
       {
         success: false,

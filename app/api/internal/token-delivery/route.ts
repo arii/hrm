@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     if (err instanceof ApiError) {
-      logger.warn(`API Error in token-delivery: ${err.message}`)
+      logger.warn({ err }, `API Error in token-delivery: ${err.message}`)
       return NextResponse.json(
         { error: err.message },
         { status: err.statusCode }

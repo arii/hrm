@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import { ServiceInitializationError } from '../../lib/errors'
+import { ServiceInitializationError } from '@/lib/errors'
 import { SpotifyData } from '../../types/websocket'
 import { setupSpotifyPollingService, mockPlayer } from './spotify-test-utils'
 import logger from '../../utils/logger.server'

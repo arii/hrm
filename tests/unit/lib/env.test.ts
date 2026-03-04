@@ -46,17 +46,12 @@ describe('Environment Variables', () => {
   })
 
   it('should throw an error for invalid environment variables', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    try {
-      process.env.NODE_ENV = 'test'
-      process.env.NEXTAUTH_URL = 'invalid-url'
-      process.env.NEXTAUTH_SECRET = 'secret'
-      process.env.SPOTIFY_CLIENT_ID = 'id'
-      process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-      await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
-    } finally {
-      errorSpy.mockRestore()
-    }
+    process.env.NODE_ENV = 'test'
+    process.env.NEXTAUTH_URL = 'invalid-url'
+    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.SPOTIFY_CLIENT_ID = 'id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'secret'
+    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
   })
 
   it('should derive SPOTIFY_CALLBACK_URL from NEXTAUTH_URL if not provided', async () => {
@@ -72,16 +67,11 @@ describe('Environment Variables', () => {
   })
 
   it('should throw an error if Spotify credentials are provided but callback URL cannot be determined', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    try {
-      process.env.NODE_ENV = 'test'
-      process.env.NEXTAUTH_SECRET = 'secret'
-      process.env.SPOTIFY_CLIENT_ID = 'id'
-      process.env.SPOTIFY_CLIENT_SECRET = 'secret'
-      delete process.env.NEXTAUTH_URL
-      await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
-    } finally {
-      errorSpy.mockRestore()
-    }
+    process.env.NODE_ENV = 'test'
+    process.env.NEXTAUTH_SECRET = 'secret'
+    process.env.SPOTIFY_CLIENT_ID = 'id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'secret'
+    delete process.env.NEXTAUTH_URL
+    await expect(import('../../../lib/env')).rejects.toThrow(z.ZodError)
   })
 })
