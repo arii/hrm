@@ -16,7 +16,6 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
-import { NoSavedDeviceError } from '@/lib/errors'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -710,7 +709,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
             // Error will be handled in catch block which also resets status for silent connections
-            throw new NoSavedDeviceError()
+            throw new Error('NO_SAVED_DEVICE')
           }
 
           logger.info(
@@ -774,11 +773,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!silent) {
           handleConnectionError(error)
         } else {
-          if (!(error instanceof NoSavedDeviceError)) {
+          const isNoSavedDevice =
+            error instanceof Error && error.message === 'NO_SAVED_DEVICE'
+
+          if (!isNoSavedDevice) {
             const errorMsg =
               error instanceof Error ? error.message : String(error)
             logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
           }
+
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
@@ -821,16 +824,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
     // 3. Initiate silent connection
     setConnectionAttempted(true)
+    isConnecting.current = true
     try {
       await connectAndStream(undefined, undefined, {
         silent: true,
         deviceId: savedDeviceId,
       })
     } catch (error) {
-      if (!(error instanceof NoSavedDeviceError)) {
+      const isNoSavedDevice =
+        error instanceof Error && error.message === 'NO_SAVED_DEVICE'
+      if (!isNoSavedDevice) {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
       // Status is already reset in connectAndStream's catch block for silent connections
+    } finally {
+      isConnecting.current = false
     }
   }, [connectAndStream])
 

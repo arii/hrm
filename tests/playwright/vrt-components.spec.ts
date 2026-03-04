@@ -121,9 +121,6 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
 
-    // Ensure menu is stable and animations are finished before VRT/A11y
-    await dashboardPage.waitForTimeout(500)
-
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 

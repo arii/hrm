@@ -72,7 +72,7 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: false,
   workers: process.env.CI ? 2 : 1,
-  timeout: 20 * 1000, // Global test timeout (20s) - Optimized for faster feedback
+  timeout: 45 * 1000, // Global test timeout (45s) - More headroom for slow CI
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,

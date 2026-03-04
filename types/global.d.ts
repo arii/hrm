@@ -25,8 +25,6 @@ declare global {
 
   interface Window {
     __TEST_READY__?: boolean
-    /** @deprecated Use __TEST_CONTROLS__ instead */
-    TEST_CONTROLS?: TestControls
     __TEST_CONTROLS__?: TestControls
   }
 }
