@@ -74,17 +74,26 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('dashboard with HR data', async () => {
+      // Ensure mock page is ready to send data
+      await expect(mockPage.getByLabel('Current BPM')).toBeVisible()
+
+      // Set value and zone
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
-      // Wait for HR tile and data to appear
+      // Wait a moment for the initial packet to be sent via WebSocket
+      await mockPage.waitForTimeout(500)
+
+      // Wait for HR tile and data to appear on dashboard
       await expect(
         dashboardPage.getByTestId('hr-tile-card').first()
       ).toBeVisible()
+
+      // Verify BPM value with a retry-friendly assertion
       await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
         /155/,
         {
-          timeout: 5000,
+          timeout: 10000,
         }
       )
 

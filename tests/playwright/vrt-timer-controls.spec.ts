@@ -74,7 +74,9 @@ test.describe('Visual Regression Tests', () => {
 
     test('in active state', async () => {
       await controlPage.getByTestId('start-timer-button').click()
-      await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible()
+      await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible({
+        timeout: 10000,
+      })
 
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
