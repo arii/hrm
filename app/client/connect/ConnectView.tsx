@@ -204,7 +204,11 @@ export default function ConnectView({
               deviceStatus.includes('Checking') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
-                  <span>{deviceStatus.includes('Scanning') ? 'Scanning...' : 'Connecting...'}</span>
+                  <span>
+                    {deviceStatus.includes('Scanning')
+                      ? 'Scanning...'
+                      : 'Connecting...'}
+                  </span>
                 </Stack>
               ) : (
                 'Connect Bluetooth HRM'
