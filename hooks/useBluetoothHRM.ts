@@ -824,7 +824,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
     // 3. Initiate silent connection
     setConnectionAttempted(true)
-    isConnecting.current = true
     try {
       await connectAndStream(undefined, undefined, {
         silent: true,
@@ -837,8 +836,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
       // Status is already reset in connectAndStream's catch block for silent connections
-    } finally {
-      isConnecting.current = false
     }
   }, [connectAndStream])
 
