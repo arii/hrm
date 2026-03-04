@@ -137,6 +137,34 @@ if (spotifyService._test_) {
 const interval = (spotifyService as any).pollInterval // NO!
 ```
 
+#### Testing Hooks & Components
+
+```typescript
+// Good: window.__TEST_CONTROLS__ pattern (Double Underscore)
+useEffect(() => {
+  if (
+    typeof window !== 'undefined' &&
+    process.env.NEXT_PUBLIC_TESTING === 'true'
+  ) {
+    window.__TEST_CONTROLS__ = {
+      ...window.__TEST_CONTROLS__,
+      myControl: setMyState,
+    }
+  }
+  return () => {
+    if (
+      typeof window !== 'undefined' &&
+      window.__TEST_CONTROLS__?.myControl === setMyState
+    ) {
+      delete window.__TEST_CONTROLS__.myControl
+    }
+  }
+}, [setMyState])
+
+// Bad: Using window.TEST_CONTROLS (Single Underscore or No Underscore)
+window.TEST_CONTROLS = { ... } // NO!
+```
+
 ### 3. Linting: Assume Pre-commit Hooks Handle It
 
 - **Rule**: Do not suggest adding manual linting steps to developer workflows or CI scripts.
