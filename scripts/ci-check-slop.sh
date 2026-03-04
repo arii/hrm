@@ -45,26 +45,56 @@ if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
 fi
 echo "$LOC_STATS"
 
-echo "Requesting Gemini feedback..."
+if [ "${GEMINI_ENABLE_SLOP_CHECK:-true}" == "false" ]; then
+  echo "⚠️ Gemini slop check disabled via GEMINI_ENABLE_SLOP_CHECK" >&2
+  # We still want to generate the report based on the regex detector if it ran,
+  # but we skip the Gemini API call.
+  {
+    echo "Gemini feedback skipped (disabled via environment variable)."
+    echo ""
+    echo "#### ℹ️ How to run manually"
+    echo "Automatic slop check is currently disabled. To run it manually:"
+    echo "1. Go to **Actions → PR Quality Gate**"
+    echo "2. Click **Run workflow**"
+    echo "3. The slop check will run as part of the quality gate."
+    echo ""
+    echo "Alternatively, use the GitHub CLI:"
+    echo "\`\`\`bash"
+    echo "gh workflow run pr-quality.yml"
+    echo "\`\`\`"
+    echo ""
+    echo "#### 🤖 Manual Trigger Quick Reference"
+    echo "| Command | Action |"
+    echo "| :--- | :--- |"
+    echo "| \`@gemini-bot\` | Run AI Code Review (PR only) |"
+    echo "| \`@gemini-triage\` | Run Issue Triage |"
+    echo "| \`@gemini-coder <task>\` | Generate Code |"
+    echo "| \`@create-review-issues\` | Create issues from review (PR only) |"
+    echo "| \`@gemini-help\` | Show this help message |"
+    echo ""
+    echo "Full reference: [Manual Trigger Guide](${GITHUB_SERVER_URL:-"https://github.com"}/${GITHUB_REPOSITORY}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+  } > "$GEMINI_SLOP_LOG"
+else
+  echo "Requesting Gemini feedback..."
 
-# Generate Diff (limit size to 100KB to be safe)
-if [ -z "$DIFF_ERROR" ]; then
+  # Generate Diff (limit size to 100KB to be safe)
+  if [ -z "$DIFF_ERROR" ]; then
     # Capture diff to file, respecting size limit
     if ! git diff "$DIFF_TARGET" | head -c "$DIFF_MAX_SIZE" > "$DIFF_FILE"; then
-         echo "Diff generation failed." > "$DIFF_FILE"
+      echo "Diff generation failed." > "$DIFF_FILE"
     else
-         # Check if we hit the limit
-         ACTUAL_SIZE=$(wc -c < "$DIFF_FILE")
-         if [ "$ACTUAL_SIZE" -ge "$DIFF_MAX_SIZE" ]; then
-             echo "⚠️  Warning: Diff truncated to ${DIFF_MAX_SIZE} bytes." >&2
-             echo "... (Diff truncated at ${DIFF_MAX_SIZE} bytes) ..." >> "$DIFF_FILE"
-         fi
+      # Check if we hit the limit
+      ACTUAL_SIZE=$(wc -c < "$DIFF_FILE")
+      if [ "$ACTUAL_SIZE" -ge "$DIFF_MAX_SIZE" ]; then
+        echo "⚠️  Warning: Diff truncated to ${DIFF_MAX_SIZE} bytes." >&2
+        echo "... (Diff truncated at ${DIFF_MAX_SIZE} bytes) ..." >> "$DIFF_FILE"
+      fi
     fi
-else
+  else
     echo "Diff generation skipped due to previous error: $DIFF_ERROR" > "$DIFF_FILE"
-fi
+  fi
 
-cat > "$TASK_FILE" <<EOF
+  cat > "$TASK_FILE" <<EOF
 Review the following code changes for "slop" (low-quality, repetitive, or filler content).
 We have already run a regex-based detector.
 
@@ -86,20 +116,21 @@ Please provide a concise assessment of the changes.
 Keep your response short and focused on quality/slop.
 EOF
 
-if [ -z "$GEMINI_API_KEY" ]; then
-  echo "⚠️ GEMINI_API_KEY not set. Skipping Gemini feedback." >&2
-  echo "Gemini feedback skipped (missing API key)." > "$GEMINI_SLOP_LOG"
-else
-  echo "Invoking Gemini client..."
-  GEMINI_EXIT_CODE=0
-  pnpm tsx scripts/gemini-client.ts \
-    --task-file "$TASK_FILE" \
-    --context "$DIFF_FILE" \
-    --output "$GEMINI_SLOP_LOG" || GEMINI_EXIT_CODE=$?
+  if [ -z "$GEMINI_API_KEY" ]; then
+    echo "⚠️ GEMINI_API_KEY not set. Skipping Gemini feedback." >&2
+    echo "Gemini feedback skipped (missing API key)." > "$GEMINI_SLOP_LOG"
+  else
+    echo "Invoking Gemini client..."
+    GEMINI_EXIT_CODE=0
+    pnpm tsx scripts/gemini-client.ts \
+      --task-file "$TASK_FILE" \
+      --context "$DIFF_FILE" \
+      --output "$GEMINI_SLOP_LOG" || GEMINI_EXIT_CODE=$?
 
-  if [ $GEMINI_EXIT_CODE -ne 0 ]; then
-    echo "⚠️ Gemini client failed. Continuing with available reports." >&2
-    echo "Gemini feedback unavailable (client failed)." > "$GEMINI_SLOP_LOG"
+    if [ $GEMINI_EXIT_CODE -ne 0 ]; then
+      echo "⚠️ Gemini client failed. Continuing with available reports." >&2
+      echo "Gemini feedback unavailable (client failed)." > "$GEMINI_SLOP_LOG"
+    fi
   fi
 fi
 

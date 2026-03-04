@@ -142,20 +142,14 @@ const interval = (spotifyService as any).pollInterval // NO!
 ```typescript
 // Good: window.__TEST_CONTROLS__ pattern (Double Underscore)
 useEffect(() => {
-  if (
-    typeof window !== 'undefined' &&
-    process.env.NEXT_PUBLIC_TESTING === 'true'
-  ) {
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_TESTING === 'true') {
     window.__TEST_CONTROLS__ = {
       ...window.__TEST_CONTROLS__,
-      myControl: setMyState,
+      myControl: setMyState
     }
   }
   return () => {
-    if (
-      typeof window !== 'undefined' &&
-      window.__TEST_CONTROLS__?.myControl === setMyState
-    ) {
+    if (typeof window !== 'undefined' && window.__TEST_CONTROLS__?.myControl === setMyState) {
       delete window.__TEST_CONTROLS__.myControl
     }
   }

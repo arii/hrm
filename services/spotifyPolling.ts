@@ -12,7 +12,7 @@ import {
 } from './spotifyApiErrorHandling.js'
 import { SpotifyService } from '../types/interfaces.js'
 import { env } from '../lib/env.js'
-import { ServiceInitializationError } from '@/lib/errors'
+import { ServiceInitializationError } from '../lib/errors.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 

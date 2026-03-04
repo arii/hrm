@@ -1,7 +1,6 @@
 // File: tests/playwright/bluetooth-flow.spec.ts
 import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
-import { WAIT_TIMEOUTS } from './lib/waits'
 
 test.describe('Bluetooth HRM Connection', () => {
   test.beforeEach(async ({ connectPage }) => {
@@ -81,7 +80,7 @@ test.describe('Bluetooth HRM Connection', () => {
     // The UI should eventually show "Connected" to the NEW device.
     await expect(
       connectPage.getByText('Connected! Heart rate data is being streamed')
-    ).toBeVisible({ timeout: WAIT_TIMEOUTS.WEBSOCKET })
+    ).toBeVisible({ timeout: 10000 })
     await expect(connectPage.getByText('Connected to: Mock HRM')).toBeVisible() // Note: Connects to the default working mock
   })
 
