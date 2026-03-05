@@ -16,15 +16,16 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
 } from '@/constants/bluetooth-reconnection'
+import {
+  MISSED_PACKET_THRESHOLD_BUFFER_MS,
+  MIN_MISSED_PACKET_THRESHOLD_MS,
+  ROLLING_AVG_HISTORY_LENGTH,
+} from '@/constants/bluetooth'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-const ROLLING_AVG_HISTORY_LENGTH = 5
-const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
-const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
