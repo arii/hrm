@@ -65,6 +65,20 @@ on:
       branch_name:
         description: 'Optional custom branch name.'
         required: false
+  workflow_call:
+    inputs:
+      task_description:
+        description: 'The detailed description of the coding task.'
+        required: true
+        type: string
+      target_files:
+        description: 'Comma-separated list of files for the AI to consider.'
+        required: false
+        type: string
+      branch_name:
+        description: 'Optional custom branch name.'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -73,7 +87,9 @@ permissions:
 
 jobs:
   ai-developer:
-    if: vars.GEMINI_ENABLE_CODER != 'false' && ((github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code'))
+    if: |
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') ||
+      (vars.GEMINI_ENABLE_CODER != 'false' && github.event.label.name == 'auto-code')
     runs-on: self-hosted
 
     steps:
@@ -114,9 +130,9 @@ jobs:
           TASK_DESC_PARSED: ${{ steps.parse_issue.outputs.task_description }}
           TARGET_FILES_PARSED: ${{ steps.parse_issue.outputs.target_files }}
           BRANCH_NAME_PARSED: ${{ steps.parse_issue.outputs.branch_name }}
-          TASK_DESC_INPUT: ${{ github.event.inputs.task_description }}
-          TARGET_FILES_INPUT: ${{ github.event.inputs.target_files }}
-          BRANCH_NAME_INPUT: ${{ github.event.inputs.branch_name }}
+          TASK_DESC_INPUT: ${{ inputs.task_description || github.event.inputs.task_description }}
+          TARGET_FILES_INPUT: ${{ inputs.target_files || github.event.inputs.target_files }}
+          BRANCH_NAME_INPUT: ${{ inputs.branch_name || github.event.inputs.branch_name }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           RUN_ID: ${{ github.run_id }}
