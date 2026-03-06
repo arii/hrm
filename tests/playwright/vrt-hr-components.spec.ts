@@ -66,7 +66,9 @@ test.describe('Visual Regression Tests', () => {
     test.afterEach(async ({ request }) => {
       await resetServerState(request)
       await mockMultipleHrDevices(dashboardPage, [])
-      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, { timeout: 10000 })
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
+        timeout: 10000,
+      })
     })
 
     test('dashboard with HR data', async () => {
