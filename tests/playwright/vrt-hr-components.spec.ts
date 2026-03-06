@@ -63,9 +63,10 @@ test.describe('Visual Regression Tests', () => {
 
   test.describe('HR-Related Components', () => {
     // Reset devices after each test to prevent state pollution
-    test.afterEach(async () => {
+    test.afterEach(async ({ request }) => {
+      await resetServerState(request)
       await mockMultipleHrDevices(dashboardPage, [])
-      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0)
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, { timeout: 10000 })
     })
 
     test('dashboard with HR data', async () => {
