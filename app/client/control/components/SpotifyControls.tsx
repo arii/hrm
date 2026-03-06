@@ -66,20 +66,28 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData = useMemo(() => {
-    const trackName = spotifyData.playback.track.name
-    return (
-      trackName !== 'Awaiting Login...' &&
-      trackName !== '' &&
-      trackName !== 'No Track Playing'
-    )
-  }, [spotifyData.playback.track.name])
+  const trackName = spotifyData.playback.track.name
+  const hasSpotifyData =
+    trackName !== 'Awaiting Login...' &&
+    trackName !== '' &&
+    trackName !== 'No Track Playing'
 
   const shouldShowControls =
     spotifyServiceInitialized &&
     (hasSpotifyData || devices.some((d) => d.is_active))
 
-  // 3. Request devices on mount or connection
+  useEffect(() => {
+    let timeout: NodeJS.Timeout
+    if (isConnecting) {
+      timeout = setTimeout(() => {
+        setIsConnecting(false)
+        showWarning('Connection timeout. Please try again.')
+      }, 5000)
+    }
+    return () => clearTimeout(timeout)
+  }, [isConnecting, showWarning])
+
+  // Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -104,7 +112,7 @@ const SpotifyControls = () => {
     return () => window.removeEventListener('focus', handleFocus)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Sync selected device and volume with active device
+  // Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
 

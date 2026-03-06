@@ -12,25 +12,14 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
+        py: 3,
         textAlign: 'center',
         borderTop: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'background.paper',
-        height: 56,
-        boxSizing: 'border-box',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 0,
-        m: 0,
       }}
     >
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        sx={{ lineHeight: 1, m: 0, p: 0 }}
-      >
+      <Typography variant="body2" color="text.secondary">
         © {currentYear} HRM Dashboard. All rights reserved.
       </Typography>
     </Box>
