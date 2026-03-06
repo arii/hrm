@@ -11,19 +11,17 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import throttle from 'lodash.throttle'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { HRM_WEB_PLAYER_NAME, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-
-const SYNC_LOCK_DURATION = 2000
+import { useThrottledCallback } from '@/hooks/useThrottledCallback'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -203,16 +201,7 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  const sendVolumeCommandRef = useRef(sendVolumeCommand)
-  useEffect(() => {
-    sendVolumeCommandRef.current = sendVolumeCommand
-  })
-
-  // Create the throttled function exactly once
-  const throttledSendVolumeCommand = useMemo(
-    () => throttle((val: number) => sendVolumeCommandRef.current(val), 200),
-    []
-  )
+  const throttledSendVolumeCommand = useThrottledCallback(sendVolumeCommand, 200)
 
   useEffect(() => {
     return () => {

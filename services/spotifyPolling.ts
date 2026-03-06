@@ -251,10 +251,8 @@ export class SpotifyPolling implements SpotifyService {
     }
 
     const playback = this.state?.playback
-    let previousIsPlaying = false
 
     if ((command === 'PLAY' || command === 'PAUSE') && playback) {
-      previousIsPlaying = playback.is_playing
       playback.is_playing = command === 'PLAY'
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
     }
@@ -276,13 +274,6 @@ export class SpotifyPolling implements SpotifyService {
       setTimeout(() => this.getCurrentlyPlaying(), 300)
     } catch (error) {
       await logSpotifyCommandError(command, error)
-      if ((command === 'PLAY' || command === 'PAUSE') && this.state?.playback) {
-        this.state.playback.is_playing = previousIsPlaying
-        this.broadcastUpdate({
-          type: 'SPOTIFY_UPDATE',
-          payload: this.getState(),
-        })
-      }
       await this.getCurrentlyPlaying()
     }
   }
