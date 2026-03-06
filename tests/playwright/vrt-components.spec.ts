@@ -41,12 +41,7 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-
-    // Mask the circular progress to avoid flakes from small animation differences
-    // or rendering variations of the spinner itself.
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      mask: [loadingIndicator.locator('.MuiCircularProgress-root')],
-    })
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
@@ -59,9 +54,7 @@ test.describe('Component-Specific VRT', () => {
     const viewer = dashboardPage
       .getByTestId('google-doc-viewer-iframe')
       .locator('..')
-    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png', {
-      fullPage: false,
-    })
+    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
