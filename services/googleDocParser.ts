@@ -41,13 +41,18 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     throw new Error('No table found in the Google Doc')
   }
 
-  const firstRow = table.querySelector('tr')
-  if (!firstRow) {
-    return { headers: [] }
+  const rowsHtml = table.querySelectorAll('tr')
+  if (!rowsHtml || rowsHtml.length === 0) {
+    return { headers: [], rows: [] }
   }
 
-  const cells = firstRow.querySelectorAll('td, th')
-  const headers = cells.map(extractCellText)
+  const headerCells = rowsHtml[0]?.querySelectorAll('td, th') || []
+  const headers = headerCells.map(extractCellText)
 
-  return { headers }
+  const rows = rowsHtml.slice(1).map((row) => {
+    const cells = row.querySelectorAll('td, th').map(extractCellText)
+    return { cells }
+  })
+
+  return { headers, rows }
 }

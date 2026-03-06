@@ -27,6 +27,9 @@ describe('parseGoogleDocTable', () => {
 
     const expectedDto: WorkoutTableDto = {
       headers: ['Exercise', 'Sets', 'Reps', 'Notes'],
+      rows: [
+        { cells: ['Squats', '3', '10', 'Form check'] }
+      ]
     }
 
     const result = parseGoogleDocTable(html)
@@ -77,10 +80,19 @@ describe('parseGoogleDocTable', () => {
           <td>Reps</td>
           <td>Notes</td>
         </tr>
+        <tr>
+          <td>Squats</td>
+          <td></td>
+          <td>10</td>
+          <td></td>
+        </tr>
       </table>
     `
     const result = parseGoogleDocTable(html)
     expect(result.headers).toEqual(['Exercise', '', 'Reps', 'Notes'])
+    expect(result.rows).toEqual([
+      { cells: ['Squats', '', '10', ''] }
+    ])
   })
 
   it('should handle tables with 4+ columns', () => {

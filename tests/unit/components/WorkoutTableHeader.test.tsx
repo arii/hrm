@@ -14,6 +14,7 @@ describe('WorkoutTableHeader', () => {
       ok: true,
       json: async () => ({
         headers: ['Initial Header'],
+        rows: [{ cells: ['Initial Row Data'] }],
       }),
     })
 
@@ -23,6 +24,7 @@ describe('WorkoutTableHeader', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Initial Header')).toBeInTheDocument()
+      expect(screen.getByText('Initial Row Data')).toBeInTheDocument()
     })
 
     expect(fetch).toHaveBeenCalledTimes(1)
@@ -30,6 +32,7 @@ describe('WorkoutTableHeader', () => {
       ok: true,
       json: async () => ({
         headers: ['Refreshed Header'],
+        rows: [{ cells: ['Refreshed Row Data'] }],
       }),
     })
 
@@ -37,6 +40,7 @@ describe('WorkoutTableHeader', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Refreshed Header')).toBeInTheDocument()
+      expect(screen.getByText('Refreshed Row Data')).toBeInTheDocument()
     })
 
     expect(fetch).toHaveBeenCalledTimes(2)

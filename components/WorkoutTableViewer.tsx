@@ -1,6 +1,7 @@
 import React from 'react'
 import Table from '@mui/material/Table'
 import TableCell, { tableCellClasses } from '@mui/material/TableCell'
+import TableBody from '@mui/material/TableBody'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
@@ -13,7 +14,11 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: theme.palette.grey[100],
     color: theme.palette.common.black,
     fontWeight: 'bold',
-    fontSize: '1.4rem', // Large header font
+    fontSize: '1.4rem',
+    border: `1px solid ${theme.palette.divider}`,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: '1.25rem',
     border: `1px solid ${theme.palette.divider}`,
   },
 }))
@@ -31,6 +36,7 @@ const WorkoutTableViewer: React.FC<WorkoutTableViewerProps> = ({ data }) => {
       data-testid="workout-table-viewer"
     >
       <Table sx={{ borderCollapse: 'collapse' }} aria-label="workout details">
+        <caption>Workout Table Details</caption>
         <TableHead>
           <TableRow>
             {data.headers.map((header, index) => (
@@ -40,6 +46,15 @@ const WorkoutTableViewer: React.FC<WorkoutTableViewerProps> = ({ data }) => {
             ))}
           </TableRow>
         </TableHead>
+        <TableBody>
+          {data.rows?.map((row, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {row.cells.map((cell, cellIndex) => (
+                <StyledTableCell key={cellIndex}>{cell}</StyledTableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
       </Table>
     </TableContainer>
   )

@@ -6,4 +6,5 @@ export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
  */
 export interface WorkoutTableDto {
   headers: string[]
+  rows: { cells: string[] }[]
 }
