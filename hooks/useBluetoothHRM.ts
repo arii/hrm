@@ -20,6 +20,7 @@ import {
   MISSED_PACKET_THRESHOLD_BUFFER_MS,
   MIN_MISSED_PACKET_THRESHOLD_MS,
   ROLLING_AVG_HISTORY_LENGTH,
+  STABILITY_THRESHOLD_MS,
 } from '@/constants/bluetooth'
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -47,6 +48,8 @@ const parseHeartRate = (value: DataView): number => {
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
+
+const ERR_NO_SAVED_DEVICE = 'NO_SAVED_DEVICE'
 
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
@@ -79,6 +82,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
+  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
+  const lastWatchdogMark = useRef(0)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -189,6 +194,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
+
+          // Only increment slow count if we've crossed a new stability window
+          // and haven't already marked this window.
+          const currentStabilityWindows = Math.floor(
+            timeSinceLastData / STABILITY_THRESHOLD_MS
+          )
+          const lastMarkedWindows = Math.floor(
+            lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+          )
+
+          if (currentStabilityWindows > lastMarkedWindows) {
+            setSignalStatus((s) => ({
+              last: timeSinceLastData,
+              slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
+            }))
+            lastWatchdogMark.current = timeSinceLastData
+          } else {
+            setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
+          }
         }
       }
 
@@ -567,6 +591,29 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
+
+              const isSlow = delta > STABILITY_THRESHOLD_MS
+              const watchdogWindows = Math.floor(
+                lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+              )
+
+              setSignalStatus((s) => {
+                // If the packet arrived and was slow, but the watchdog already counted it,
+                // we don't increment again. If it's fast, we reset the slow counter.
+                let nextSlow = isSlow ? s.slow : 0
+                if (isSlow && watchdogWindows === 0) {
+                  nextSlow = s.slow + 1
+                }
+
+                return {
+                  last: delta,
+                  slow: nextSlow,
+                }
+              })
+
+              // Synchronize watchdog mark with arrival to prevent double-counting
+              // when the watchdog timer next fires.
+              lastWatchdogMark.current = delta
             }
 
             const e = event as Event
@@ -580,6 +627,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             const heartRate = parseHeartRate(value)
             lastDataTime.current = now // Update timestamp for next delta
+            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
             logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'
@@ -710,7 +758,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
             // Error will be handled in catch block which also resets status for silent connections
-            throw new Error('NO_SAVED_DEVICE')
+            throw new Error(ERR_NO_SAVED_DEVICE)
           }
 
           logger.info(
@@ -775,7 +823,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           handleConnectionError(error)
         } else {
           const isNoSavedDevice =
-            error instanceof Error && error.message === 'NO_SAVED_DEVICE'
+            error instanceof Error && error.message === ERR_NO_SAVED_DEVICE
 
           if (!isNoSavedDevice) {
             const errorMsg =
@@ -832,7 +880,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       })
     } catch (error) {
       const isNoSavedDevice =
-        error instanceof Error && error.message === 'NO_SAVED_DEVICE'
+        error instanceof Error && error.message === ERR_NO_SAVED_DEVICE
       if (!isNoSavedDevice) {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
@@ -851,6 +899,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    lastPeriodMs: signalStatus.last,
+    consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
   }
 }
