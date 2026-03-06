@@ -37,16 +37,7 @@ test.describe('Visual Regression Tests', () => {
     test('initial state', async () => {
       const controlPanel = controlPage.getByTestId('control-panel')
 
-      // Mask the search input and its popper as it now uses MUI Autocomplete,
-      // which causes layout shifts and differs between local and CI environments.
-      const searchRoot = controlPanel.locator('.MuiAutocomplete-root')
-      const searchResults = controlPanel.locator('.MuiAutocomplete-popper')
-
-      await takeScreenshot(controlPanel, 'control-panel.png', {
-        screenshotOptions: {
-          mask: [searchRoot, searchResults],
-        },
-      })
+      await takeScreenshot(controlPanel, 'control-panel.png')
     })
   })
 })
