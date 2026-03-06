@@ -146,7 +146,8 @@ const SpotifyDisplay = () => {
       return
     }
 
-    const isLocked = Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
+    const isLocked =
+      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
     if (isLocked) {
       return
     }

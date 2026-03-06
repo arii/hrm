@@ -201,7 +201,10 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  const throttledSendVolumeCommand = useThrottledCallback(sendVolumeCommand, 200)
+  const throttledSendVolumeCommand = useThrottledCallback(
+    sendVolumeCommand,
+    200
+  )
 
   useEffect(() => {
     return () => {
