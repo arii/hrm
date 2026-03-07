@@ -14,11 +14,12 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
+import { SPOTIFY_BRAND_COLOR, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
 // 1. State Shape
@@ -134,14 +135,20 @@ const SpotifyDisplay = () => {
   }
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
+  const lastUserInteractionRef = useRef<number>(0)
 
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
-  // Synchronize with WebSocket data whenever it changes.
   // We rely on the server as the source of truth for volume.
   useEffect(() => {
     if (state.isSliding) {
+      return
+    }
+
+    const isLocked =
+      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
+    if (isLocked) {
       return
     }
 
@@ -182,11 +189,13 @@ const SpotifyDisplay = () => {
 
   // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
+    lastUserInteractionRef.current = Date.now()
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
   }
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
+    lastUserInteractionRef.current = Date.now()
     sendVolumeCommand(newVolume)
     dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
   }
@@ -420,6 +429,7 @@ const SpotifyDisplay = () => {
             onToggleMute={handleToggleMute}
             showValue={true}
             disabled={!hasActiveDevice}
+            sliderColor={SPOTIFY_BRAND_COLOR}
           />
           <SpotifyDeviceSelector
             availableDevices={spotifyData.devices || []}
