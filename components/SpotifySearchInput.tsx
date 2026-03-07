@@ -37,23 +37,20 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const [hasSearched, setHasSearched] = useState(false)
   const { enqueueSnackbar } = useSnackbar()
 
-  // Debounce the search query by 500ms
   const debouncedQuery = useDebounce(query, 500)
 
-  // Handle Clear
   const handleClear = () => {
     setQuery('')
     setResults([])
     setHasSearched(false)
   }
 
-  // Effect to trigger search when debounced query changes
   useEffect(() => {
     const searchSpotify = async () => {
       if (!debouncedQuery.trim()) return
 
       setIsLoading(true)
-      setHasSearched(true) // Mark that a search has been attempted
+      setHasSearched(true)
 
       try {
         const res = await fetch(
@@ -93,24 +90,18 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         getOptionLabel={(option) =>
           typeof option === 'string' ? option : option.name
         }
-        filterOptions={(x) => x} // Disable built-in filtering, we use API
+        filterOptions={(x) => x}
         autoComplete
         includeInputInList
         filterSelectedOptions
         value={null}
         inputValue={query}
-        forcePopupIcon={false} // Hide dropdown icon for cleaner look matching original
-        noOptionsText={
-          isLoading
-            ? 'Searching...'
-            : hasSearched
-              ? 'No songs found'
-              : 'Start typing to search Spotify...'
-        }
+        forcePopupIcon={false}
+        noOptionsText={isLoading ? 'Searching...' : 'No songs found'}
         onChange={(_event, newValue: SpotifyTrack | null) => {
           if (newValue && onTrackSelect) {
             onTrackSelect(newValue.uri)
-            handleClear() // Clear search on select as suggested
+            handleClear()
           }
         }}
         onInputChange={(_event, newInputValue, reason) => {
@@ -123,7 +114,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           } else if (reason === 'clear') {
             handleClear()
           }
-          // Ignore 'reset' reason (selection or blur) to avoid redundant searches
         }}
         renderInput={(params) => (
           <TextField
@@ -188,10 +178,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           )
         }}
       />
-      {/*
-        Restore the initial message below the input to maintain consistent height
-        and avoid VRT failures due to layout shifts.
-      */}
       <Box sx={{ mt: 1 }}>
         {!hasSearched && !query && (
           <Typography

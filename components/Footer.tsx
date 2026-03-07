@@ -12,9 +12,8 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
-        height: 54, // Baseline height in VRT
-        minHeight: 54,
-        maxHeight: 54,
+        height: 54,
+        flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -23,7 +22,6 @@ export default function Footer() {
         backgroundColor: 'background.paper',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        flexShrink: 0,
       }}
     >
       <Typography
