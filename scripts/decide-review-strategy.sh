@@ -60,6 +60,16 @@ rm -f "$PR_DATA_FILE" gh_error.log
 if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
 if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
 
+# Address edge case: If API failed and inputs were empty, ensure SHAs are not empty
+if [ -z "$BASE_SHA" ]; then
+  echo "::warning::BASE_SHA is empty, falling back to HEAD^"
+  BASE_SHA="HEAD^"
+fi
+if [ -z "$HEAD_SHA" ]; then
+  echo "::warning::HEAD_SHA is empty, falling back to HEAD"
+  HEAD_SHA="HEAD"
+fi
+
 # Check 1: Manual Override (PRIORITIZED)
 # Bypasses all other checks including global enablement.
 # Matches @bot-handle at start of string or after space, case-insensitively.
