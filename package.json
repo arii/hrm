@@ -120,7 +120,7 @@
     "@types/jest": "^30.0.0",
     "@types/js-cookie": "^3.0.6",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^25.0.10",
+    "@types/node": "^25.3.5",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^9.0.8",
