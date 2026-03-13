@@ -20,19 +20,13 @@ import {
   MISSED_PACKET_THRESHOLD_BUFFER_MS,
   MIN_MISSED_PACKET_THRESHOLD_MS,
   ROLLING_AVG_HISTORY_LENGTH,
+  STABILITY_THRESHOLD_MS,
 } from '@/constants/bluetooth'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-export class NoSavedDeviceError extends Error {
-  constructor() {
-    super('No saved device')
-    this.name = 'NoSavedDeviceError'
-  }
-}
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
@@ -55,12 +49,7 @@ const parseHeartRate = (value: DataView): number => {
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
-export class NoSavedDeviceError extends Error {
-  constructor() {
-    super('NO_SAVED_DEVICE')
-    this.name = 'NoSavedDeviceError'
-  }
-}
+import { NoSavedDeviceError } from '@/types/errors'
 
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
@@ -93,6 +82,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState<number>(0)
   const [connectionAttempted, setConnectionAttempted] = useState(false)
+  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
+  const lastWatchdogMark = useRef(0)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -203,6 +194,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (timeSinceLastData > threshold) {
           updateSignalPeriod(timeSinceLastData)
+
+          // Only increment slow count if we've crossed a new stability window
+          // and haven't already marked this window.
+          const currentStabilityWindows = Math.floor(
+            timeSinceLastData / STABILITY_THRESHOLD_MS
+          )
+          const lastMarkedWindows = Math.floor(
+            lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+          )
+
+          if (currentStabilityWindows > lastMarkedWindows) {
+            setSignalStatus((s) => ({
+              last: timeSinceLastData,
+              slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
+            }))
+            lastWatchdogMark.current = timeSinceLastData
+          } else {
+            setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
+          }
         }
       }
 
@@ -242,19 +252,23 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
 
+    // 1. Abort any pending GATT operations
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
 
+    // 2. Clear any pending reconnection timers
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
     }
 
+    // 3. Close the GATT connection if it exists
     if (deviceRef.current?.gatt?.connected) {
       deviceRef.current.gatt.disconnect()
     }
 
+    // 4. Update state
     sendDataRef.current({ type: 'HRM_INPUT', data: { value: null } })
 
     setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -267,6 +281,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
 
+    // 5. Reset connection guard
     isConnecting.current = false
   }, [])
 
@@ -425,10 +440,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     return () => {
+      // 1. Abort any pending connection attempts to prevent "ghost" connections
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
 
+      // 2. Clean up the disconnected listener to prevent leaks across remounts
       if (deviceRef.current && activeDisconnectListenerRef.current) {
         deviceRef.current.removeEventListener(
           'gattserverdisconnected',
@@ -437,6 +454,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         activeDisconnectListenerRef.current = null
       }
 
+      // 3. Clear any pending reconnection timers
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
       }
@@ -573,6 +591,29 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
+
+              const isSlow = delta > STABILITY_THRESHOLD_MS
+              const watchdogWindows = Math.floor(
+                lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+              )
+
+              setSignalStatus((s) => {
+                // If the packet arrived and was slow, but the watchdog already counted it,
+                // we don't increment again. If it's fast, we reset the slow counter.
+                let nextSlow = isSlow ? s.slow : 0
+                if (isSlow && watchdogWindows === 0) {
+                  nextSlow = s.slow + 1
+                }
+
+                return {
+                  last: delta,
+                  slow: nextSlow,
+                }
+              })
+
+              // Synchronize watchdog mark with arrival to prevent double-counting
+              // when the watchdog timer next fires.
+              lastWatchdogMark.current = delta
             }
 
             const e = event as Event
@@ -714,6 +755,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
           const savedDeviceId = forceDeviceId || Cookies.get('hrm_device_id')
 
+          // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
             // Error will be handled in catch block which also resets status for silent connections
             throw new NoSavedDeviceError()
@@ -855,6 +897,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
+    lastPeriodMs: signalStatus.last,
+    consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
   }
 }
