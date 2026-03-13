@@ -16,6 +16,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+import { WEAK_SIGNAL_WARNING_THRESHOLD } from '@/constants/bluetooth'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -205,7 +206,7 @@ export default function ConnectPage() {
   }, [currentHR, caloriesBurned, percentage, heartRateZone, throttledSend])
 
   useEffect(() => {
-    if (consecutiveSlowPackets === 3)
+    if (consecutiveSlowPackets === WEAK_SIGNAL_WARNING_THRESHOLD)
       showWarning('HRM Signal Weak: Check device placement')
   }, [consecutiveSlowPackets, showWarning])
 

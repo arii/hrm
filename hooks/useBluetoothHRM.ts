@@ -49,7 +49,12 @@ const parseHeartRate = (value: DataView): number => {
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
-const ERR_NO_SAVED_DEVICE = 'NO_SAVED_DEVICE'
+export class NoSavedDeviceError extends Error {
+  constructor() {
+    super('NO_SAVED_DEVICE')
+    this.name = 'NoSavedDeviceError'
+  }
+}
 
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
@@ -626,8 +631,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               return
             }
             const heartRate = parseHeartRate(value)
-            lastDataTime.current = now // Update timestamp for next delta
-            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
+            lastDataTime.current = now
+            lastWatchdogMark.current = 0
             logger.debug(
               { heartRate },
               'Heart rate data received from Bluetooth'
@@ -758,7 +763,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
             // Error will be handled in catch block which also resets status for silent connections
-            throw new Error(ERR_NO_SAVED_DEVICE)
+            throw new NoSavedDeviceError()
           }
 
           logger.info(
@@ -822,8 +827,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!silent) {
           handleConnectionError(error)
         } else {
-          const isNoSavedDevice =
-            error instanceof Error && error.message === ERR_NO_SAVED_DEVICE
+          const isNoSavedDevice = error instanceof NoSavedDeviceError
 
           if (!isNoSavedDevice) {
             const errorMsg =
@@ -879,8 +883,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceId: savedDeviceId,
       })
     } catch (error) {
-      const isNoSavedDevice =
-        error instanceof Error && error.message === ERR_NO_SAVED_DEVICE
+      const isNoSavedDevice = error instanceof NoSavedDeviceError
       if (!isNoSavedDevice) {
         setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
       }
