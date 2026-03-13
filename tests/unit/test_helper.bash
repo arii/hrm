@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Mock gh command
 gh() {
     if [[ "${MOCK_GH_FAIL:-false}" == "true" ]]; then
         echo "Mocked API failure" >&2
         return 1
     fi
-    # For the refactored script, we primarily handle: gh pr view ... --json comments
     echo "{\"comments\": ${MOCK_GH_COMMENTS_JSON:-[]}, \"baseRefOid\": \"${MOCK_GH_BASE_REF:-}\", \"headRefOid\": \"${MOCK_GH_HEAD_REF:-}\"}"
 }
 export -f gh
 
-# Function to run the script under test
 run_script() {
     # Set sensible defaults
     export GITHUB_OUTPUT=$(mktemp)
@@ -49,7 +46,6 @@ run_script() {
     run bash "$script_to_test"
 }
 
-# Teardown function to clean up
 teardown() {
     rm -f "$GITHUB_OUTPUT" gh_error.log
 }

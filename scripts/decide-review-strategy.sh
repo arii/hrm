@@ -56,11 +56,9 @@ else
 fi
 rm -f "$PR_DATA_FILE" gh_error.log
 
-# Self-heal missing SHAs if they are absent from environment
 if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
 if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
 
-# Address edge case: If API failed and inputs were empty, ensure SHAs are not empty
 if [ -z "$BASE_SHA" ]; then
   echo "::warning::BASE_SHA is empty, falling back to HEAD^"
   BASE_SHA="HEAD^"
@@ -72,7 +70,6 @@ fi
 
 # Check 1: Manual Override (PRIORITIZED)
 # Bypasses all other checks including global enablement.
-# Matches @bot-handle at start of string or after space, case-insensitively.
 if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
   echo "::info::Manual review triggered via comment. Bypassing all checks."
   echo "needs-review=true" >> "$GITHUB_OUTPUT"
@@ -156,14 +153,12 @@ else
     NEEDS_REVIEW="true"
     SKIP_REASON=""
   else
-    # Find the last review comment from our bot
     LAST_BOT_BODY=$(echo "$PR_DATA" | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
 
     if [ -z "$LAST_BOT_BODY" ]; then
       NEEDS_REVIEW="true"
       SKIP_REASON=""
     else
-      # Extract commit SHA from previous review
       LAST_REVIEWED_SHA=$(echo "$LAST_BOT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
       if [ -z "$LAST_REVIEWED_SHA" ]; then
         LAST_REVIEWED_SHA=$(echo "$LAST_BOT_BODY" | grep -oE '\b[a-f0-9]{7,40}\b' | head -n 1)
@@ -173,7 +168,6 @@ else
           SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
           NEEDS_REVIEW="false"
       else
-          # Determine which commit to compare against for change analysis
           COMPARE_SHA="$LAST_REVIEWED_SHA"
           if [ -z "$COMPARE_SHA" ] || ! git cat-file -e "$COMPARE_SHA" 2>/dev/null; then
              COMPARE_SHA="$BASE_SHA"

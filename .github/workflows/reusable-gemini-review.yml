@@ -102,17 +102,11 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
-          # If head_sha is provided, use it.
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
-          # Otherwise, if we have a PR number, fetch the head OID from the API.
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             REF=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || echo "")
-            if [ -n "$REF" ]; then
-              echo "ref=$REF" >> $GITHUB_OUTPUT
-            else
-              echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
-            fi
+            echo "ref=${REF:-${{ github.ref }}}" >> $GITHUB_OUTPUT
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
           fi
@@ -426,24 +420,17 @@ jobs:
           HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
           if [ -f "review_result.json" ]; then
-            # Extract the original comment
             REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
 
-            # Check if there's a comment to post
             if [ -n "$REVIEW_COMMENT" ]; then
-              # Create the commit hash line
               COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
 
-              # Create manual trigger footer
-              FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+              FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@pr-squash\` | Squash PR commits (PR only) |\n| \`@conflict-resolve\` | Resolve merge conflicts (PR only) |\n\n[Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
 
-              # Combine the header and the original comment
               FINAL_COMMENT="${COMMIT_HASH_MSG}\n\n${REVIEW_COMMENT}${FOOTER}"
 
-              # Write to a file to be used by the gh cli command
               echo -e "$FINAL_COMMENT" > review_comment.txt
 
-              # Post the combined comment
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             fi
           fi
@@ -510,10 +497,8 @@ jobs:
               '| Command | Action |\n' +
               '| :--- | :--- |\n' +
               '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n\n' +
+              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
+              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
               'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
               '**To re-enable:** Set repository variable `GEMINI_ENABLE_PR_REVIEW=true`';
 
@@ -558,8 +543,6 @@ jobs:
             const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
             const triggerEvent = '${{ inputs.trigger_event }}';
 
-            // Only post skip comment if it was a manual trigger or a significant reason
-            // We want to avoid noise for every single automatic PR synchronize event with no changes
             const ignoreList = ['already reviewed', 'no significant code changes'];
             const shouldIgnore = ignoreList.some(reason => skipReason.toLowerCase().includes(reason));
 
@@ -569,10 +552,8 @@ jobs:
                 '| Command | Action |\n' +
                 '| :--- | :--- |\n' +
                 '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-                '| `@gemini-triage` | Run Issue Triage |\n' +
-                '| `@gemini-coder <task>` | Generate Code |\n' +
-                '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-                '| `@gemini-help` | Show this help message |\n\n' +
+                '| `@pr-squash` | Squash PR commits (PR only) |\n' +
+                '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
                 '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
 
               github.rest.issues.createComment({
