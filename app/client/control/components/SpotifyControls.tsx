@@ -77,7 +77,7 @@ const SpotifyControls = () => {
     (hasSpotifyData || devices.some((d) => d.is_active))
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout
+    let timeout: ReturnType<typeof setTimeout>
     if (isConnecting) {
       timeout = setTimeout(() => {
         setIsConnecting(false)
@@ -87,7 +87,6 @@ const SpotifyControls = () => {
     return () => clearTimeout(timeout)
   }, [isConnecting, showWarning])
 
-  // Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -112,7 +111,6 @@ const SpotifyControls = () => {
     return () => window.removeEventListener('focus', handleFocus)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
 
