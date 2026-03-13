@@ -109,6 +109,7 @@ jobs:
         run: |
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
+          # Otherwise, if we have a PR number, fetch the head and base OIDs from the API.
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid 2>/dev/null || echo "{}")
             REF=$(echo "$PR_JSON" | jq -r '.headRefOid // ""')
