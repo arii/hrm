@@ -97,6 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run_id: ${{ steps.find-run.outputs.run_id }}
+      base_sha: ${{ steps.find-run.outputs.base_sha }}
     steps:
       - name: Find Latest Review Run
         id: find-run
@@ -104,14 +105,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          # Find the branch name of the PR
-          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefName,baseRefOid)
+          BRANCH=$(echo "$PR_JSON" | jq -r .headRefName)
+          BASE_SHA=$(echo "$PR_JSON" | jq -r .baseRefOid)
 
-          # Find the most recent successful run of 'Gemini Orchestrator' (pr-orchestrator.yml) for this branch.
-          # This workflow produces the 'review-result' artifact.
           RUN_ID=$(gh run list --workflow pr-orchestrator.yml --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
 
-          # Fallback: check 'Bot Command Orchestrator' if manual review was triggered
           if [ -z "$RUN_ID" ]; then
             RUN_ID=$(gh run list --workflow "Bot Command Orchestrator" --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
           fi
@@ -121,6 +120,7 @@ jobs:
             exit 1
           fi
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
 
   execute-create-review-issues:
     needs: [router, prepare-review-issues-manual]
@@ -130,6 +130,7 @@ jobs:
       trigger_event: 'comment'
       pr_number: ${{ format('{0}', github.event.issue.number) }}
       run_id: ${{ needs.prepare-review-issues-manual.outputs.run_id }}
+      base_sha: ${{ needs.prepare-review-issues-manual.outputs.base_sha }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -142,7 +143,7 @@ jobs:
       needs.execute-review.outputs.review_performed == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       base_sha: ${{ needs.execute-review.outputs.base-sha }}
       run_id: ${{ github.run_id }}
     secrets:
