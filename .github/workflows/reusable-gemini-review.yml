@@ -50,6 +50,11 @@ on:
         description: 'Head SHA (override for workflow_dispatch)'
         required: false
         type: string
+      force_review:
+        description: 'Force review even if already reviewed'
+        required: false
+        type: boolean
+        default: false
     secrets:
       GEMINI_API_KEY:
         required: true
@@ -123,8 +128,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha }}
-          HEAD_SHA: ${{ inputs.head_sha || steps.resolve_ref.outputs.ref }}
+          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || steps.resolve_ref.outputs.base_ref || 'HEAD^' }}
+          HEAD_SHA: ${{ inputs.head_sha || steps.resolve_ref.outputs.ref || 'HEAD' }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
