@@ -552,7 +552,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Gemini Code Review',
-              head_sha: '${{ needs.analyze-changes.outputs.head-sha }}',
+              head_sha: '${{ needs.analyze-changes.outputs.head-sha || github.event.pull_request.head.sha }}',
               status: 'completed',
               conclusion: 'skipped',
               output: {
