@@ -159,16 +159,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The PR's base commit SHA, for an accurate diff at the time of branching.
-          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
-          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
+          BASE_SHA=${{ inputs.base_sha || needs.analyze-changes.outputs.base-sha || github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha || github.event.pull_request.head.sha }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
-
-          # Create a diff between the head and the true merge base.
-          # This ensures that the diff only contains changes from the PR,
-          # avoiding the inclusion of recent changes from the base branch (e.g., 'leader').
           git diff ${BASE_SHA}...${HEAD_SHA} > pr.diff
 
           echo "✅ Diff generated and saved to pr.diff"
@@ -179,13 +173,9 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
         run: |
-          # Fetch the LIVE body to ensure we see the results of pr-enrichment
           LATEST_BODY=$(gh pr view "$PR_NUMBER" --json body -q '.body')
 
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-          # If pr_number is input, we might need to fetch title/author via API if github context is missing
-          # But for now assuming context or defaults.
-          # Actually, if we have PR_NUMBER, we can fetch details.
           PR_JSON=$(gh pr view "$PR_NUMBER" --json title,author,headRefName)
           PR_TITLE=$(echo "$PR_JSON" | jq -r .title)
           PR_AUTHOR=$(echo "$PR_JSON" | jq -r .author.login)
@@ -193,15 +183,12 @@ jobs:
 
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
           echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "COMMIT_HASH=${{ needs.analyze-changes.outputs.head-sha || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
-          # Define SHAs for Gemini Client (Metric Calculation moved to TS)
-          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "BASE_SHA=${{ inputs.base_sha || needs.analyze-changes.outputs.base-sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
 
-          # Get REVIEW_COUNT using gh cli
-          # If this fails (e.g. no PR context), default to 0
           REVIEW_COUNT=$(gh pr view "$PR_NUMBER" --json reviews --jq '.reviews | length' 2>/dev/null || echo 0)
           echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
 
@@ -223,8 +210,8 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+            BASE_SHA=${{ inputs.base_sha || needs.analyze-changes.outputs.base-sha || github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha || github.event.pull_request.head.sha }}
 
             # Create temp files
             FILE_LIST=$(mktemp)
@@ -425,7 +412,7 @@ jobs:
             if [ -n "$REVIEW_COMMENT" ]; then
               COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
 
-              FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@pr-squash\` | Squash PR commits (PR only) |\n| \`@conflict-resolve\` | Resolve merge conflicts (PR only) |\n\n[Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+              FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
 
               FINAL_COMMENT="${COMMIT_HASH_MSG}\n\n${REVIEW_COMMENT}${FOOTER}"
 
@@ -497,8 +484,10 @@ jobs:
               '| Command | Action |\n' +
               '| :--- | :--- |\n' +
               '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
+              '| `@gemini-triage` | Run Issue Triage |\n' +
+              '| `@gemini-coder <task>` | Generate Code |\n' +
+              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+              '| `@gemini-help` | Show this help message |\n\n' +
               'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
               '**To re-enable:** Set repository variable `GEMINI_ENABLE_PR_REVIEW=true`';
 
@@ -552,8 +541,10 @@ jobs:
                 '| Command | Action |\n' +
                 '| :--- | :--- |\n' +
                 '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-                '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-                '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
+                '| `@gemini-triage` | Run Issue Triage |\n' +
+                '| `@gemini-coder <task>` | Generate Code |\n' +
+                '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+                '| `@gemini-help` | Show this help message |\n\n' +
                 '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
 
               github.rest.issues.createComment({
