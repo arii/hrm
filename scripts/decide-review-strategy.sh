@@ -34,9 +34,8 @@ SKIP_REASON="no criteria met"
 # Fetch PR metadata once (comments + Ref OIDs) to reduce API calls and latency.
 # This is done early to ensure SHAs are available for all paths, including manual overrides.
 echo "::info::Fetching PR #$PR_NUMBER metadata..."
-PR_DATA_FILE=$(mktemp)
 set +e
-gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid > "$PR_DATA_FILE" 2> gh_error.log
+PR_DATA=$(gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid 2> gh_error.log)
 GH_EXIT_CODE=$?
 set -e
 
@@ -51,10 +50,8 @@ if [[ $GH_EXIT_CODE -ne 0 ]]; then
     exit 0
   fi
   PR_DATA='{"comments":[],"baseRefOid":"","headRefOid":""}'
-else
-  PR_DATA=$(cat "$PR_DATA_FILE")
 fi
-rm -f "$PR_DATA_FILE" gh_error.log
+rm -f gh_error.log
 
 # Self-heal missing SHAs if they are absent from environment
 if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
