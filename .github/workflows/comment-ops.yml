@@ -32,6 +32,9 @@ jobs:
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
+          # Use case-insensitive grep and ensure outputs are always set if matched.
+          # We check for commands starting at the beginning of a line to avoid accidental triggers
+          # from quotes or descriptive text mentioning the bots.
           if echo "$BODY" | grep -qiE "(^|\r?\n)@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
@@ -71,6 +74,7 @@ jobs:
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
+          # Remove '@gemini-coder' and any leading/trailing whitespace
           TASK=$(echo "$BODY" | sed 's/^@gemini-coder//I' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
           if [ -z "$TASK" ]; then
             echo "::error::No task description provided for @gemini-coder"
@@ -139,7 +143,7 @@ jobs:
       needs.execute-review.outputs.review_performed == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       base_sha: ${{ needs.execute-review.outputs.base-sha }}
       run_id: ${{ github.run_id }}
     secrets:
