@@ -17,7 +17,7 @@ import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import logger from '@/utils/logger'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
@@ -36,7 +36,6 @@ interface ConnectViewProps {
   isResetting: boolean
   isSupported: boolean
   signalPeriodMs: number
-  lastPeriodMs?: number
   currentHR: number
   hrZoneData: HrZoneData
   connectionStatus: string
@@ -63,7 +62,6 @@ export default function ConnectView({
   isResetting,
   isSupported,
   signalPeriodMs,
-  lastPeriodMs,
   currentHR,
   hrZoneData,
   connectionStatus,
@@ -75,14 +73,6 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const { data } = userProfile
-
-  const isBusy = useMemo(
-    () =>
-      ['Connecting', 'Scanning', 'Checking'].some((status) =>
-        deviceStatus.includes(status)
-      ),
-    [deviceStatus]
-  )
 
   useEffect(() => {
     if (isConnected) {
@@ -196,10 +186,22 @@ export default function ConnectView({
               variant="contained"
               size="large"
               onClick={onConnect}
-              disabled={!data.userName.trim() || !data.userAge.trim() || isBusy}
-              aria-busy={isBusy}
+              disabled={
+                !data.userName.trim() ||
+                !data.userAge.trim() ||
+                deviceStatus.includes('Connecting') ||
+                deviceStatus.includes('Scanning') ||
+                deviceStatus.includes('Checking')
+              }
+              aria-busy={
+                deviceStatus.includes('Connecting') ||
+                deviceStatus.includes('Scanning') ||
+                deviceStatus.includes('Checking')
+              }
             >
-              {isBusy ? (
+              {deviceStatus.includes('Connecting') ||
+              deviceStatus.includes('Scanning') ||
+              deviceStatus.includes('Checking') ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>
@@ -237,7 +239,6 @@ export default function ConnectView({
                 )}
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
-                  lastPeriodMs={lastPeriodMs}
                   isConnected={isConnected}
                 />
               </Box>

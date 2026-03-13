@@ -39,5 +39,3 @@ export const GOOD_SIGNAL_THRESHOLD_MS = 2200
  */
 export const SIGNAL_PULSE_DURATION_S = 1.5
 export const SIGNAL_LABEL_MIN_WIDTH_PX = 45
-
-export const WEAK_SIGNAL_WARNING_THRESHOLD = 3

@@ -15,10 +15,3 @@ export class ConfigurationError extends Error {
     this.name = 'ConfigurationError'
   }
 }
-
-export class NoSavedDeviceError extends Error {
-  constructor() {
-    super('NO_SAVED_DEVICE')
-    this.name = 'NoSavedDeviceError'
-  }
-}
