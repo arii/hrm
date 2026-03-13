@@ -50,6 +50,11 @@ on:
         description: 'Head SHA (override for workflow_dispatch)'
         required: false
         type: string
+      force_review:
+        description: 'Force review even if already reviewed'
+        required: false
+        type: boolean
+        default: false
     secrets:
       GEMINI_API_KEY:
         required: true
@@ -102,16 +107,19 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
-          # If head_sha is provided, use it.
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
-          # Otherwise, if we have a PR number, fetch the head OID from the API.
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            REF=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || echo "")
+            PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid 2>/dev/null || echo "{}")
+            REF=$(echo "$PR_JSON" | jq -r '.headRefOid // ""')
+            BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefOid // ""')
             if [ -n "$REF" ]; then
               echo "ref=$REF" >> $GITHUB_OUTPUT
             else
               echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+            fi
+            if [ -n "$BASE_REF" ]; then
+              echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
             fi
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
@@ -129,8 +137,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha }}
-          HEAD_SHA: ${{ inputs.head_sha }}
+          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || steps.resolve_ref.outputs.base_ref || 'HEAD^' }}
+          HEAD_SHA: ${{ inputs.head_sha || steps.resolve_ref.outputs.ref || 'HEAD' }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60

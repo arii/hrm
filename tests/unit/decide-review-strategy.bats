@@ -52,12 +52,16 @@ setup() {
   export COMMENT_BODY="@gemini-bot"
   export BASE_SHA=""
   export HEAD_SHA=""
+  export MOCK_GH_BASE_REF=""
+  export MOCK_GH_HEAD_REF=""
 
   run_script
 
   [ "$status" -eq 0 ]
   assert_output "needs-review" "true"
   assert_output "skip-reason" ""
+  assert_output "base-sha" "HEAD^"
+  assert_output "head-sha" "HEAD"
 }
 
 @test "should trigger review on manual override (workflow_dispatch)" {

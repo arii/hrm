@@ -93,7 +93,6 @@ test.describe('Visual Regression Tests', () => {
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
         ],
-        fullPage: false,
       })
     })
 
@@ -139,7 +138,6 @@ test.describe('Visual Regression Tests', () => {
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
         ],
-        fullPage: false,
       })
     })
 
@@ -162,9 +160,6 @@ test.describe('Visual Regression Tests', () => {
             ...getDynamicContentMasks(dashboardPage),
             ...getHrMasks(dashboardPage),
           ],
-          // Ensure we don't capture full page if the content exceeds viewport,
-          // which can cause dimension mismatches in CI.
-          fullPage: false,
         })
       })
     }
@@ -179,7 +174,6 @@ test.describe('Visual Regression Tests', () => {
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
         ],
-        fullPage: false,
       })
     })
   })

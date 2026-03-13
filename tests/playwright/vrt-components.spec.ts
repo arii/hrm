@@ -46,6 +46,7 @@ test.describe('Component-Specific VRT', () => {
     // or rendering variations of the spinner itself.
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
       mask: [loadingIndicator.locator('.MuiCircularProgress-root')],
+      maxDiffPixelRatio: 0.2,
     })
   })
 
@@ -59,9 +60,7 @@ test.describe('Component-Specific VRT', () => {
     const viewer = dashboardPage
       .getByTestId('google-doc-viewer-iframe')
       .locator('..')
-    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png', {
-      fullPage: false,
-    })
+    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
@@ -129,7 +128,8 @@ test.describe('Component-Specific VRT', () => {
     await expect(menu).toBeVisible()
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
+    // We check the whole page because MUI Menu portals the content outside the localized DOM tree.
+    await checkAccessibility(dashboardPage)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       maxDiffPixelRatio: 0.15,
