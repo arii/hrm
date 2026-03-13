@@ -108,8 +108,6 @@ export default function ConnectPage() {
     [workoutStatus, setCurrentHR, addHrData]
   )
 
-  const { showWarning } = useAppSnackbar()
-
   const [isResetting, setIsResetting] = useState(false)
 
   const {
@@ -123,8 +121,6 @@ export default function ConnectPage() {
     isDataStale,
     isSupported,
     signalPeriodMs,
-    lastPeriodMs,
-    consecutiveSlowPackets,
     connectionAttempted,
   } = useBluetoothHRM({
     userName,
@@ -232,7 +228,6 @@ export default function ConnectPage() {
       isResetting={isResetting}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
-      lastPeriodMs={lastPeriodMs}
       currentHR={currentHR}
       hrZoneData={{
         percentage,
