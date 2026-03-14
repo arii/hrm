@@ -45,13 +45,7 @@ const SpotifyControls = () => {
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    }
-  }, [])
+  const lastFetchTimeRef = useRef<number>(0)
 
   const hrmDevice = useMemo(
     () =>
@@ -86,10 +80,14 @@ const SpotifyControls = () => {
   useEffect(() => {
     const fetchDevices = () => {
       if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-        sendData({
-          type: 'SPOTIFY_COMMAND',
-          command: 'GET_DEVICES',
-        })
+        const now = Date.now()
+        if (now - lastFetchTimeRef.current > 2000) {
+          sendData({
+            type: 'SPOTIFY_COMMAND',
+            command: 'GET_DEVICES',
+          })
+          lastFetchTimeRef.current = now
+        }
       }
     }
 
@@ -207,15 +205,11 @@ const SpotifyControls = () => {
         case 'TRANSFER_PLAYBACK':
           if (deviceId) {
             executeSpotify('TRANSFER_PLAYBACK', { deviceId })
-            if (timeoutRef.current) clearTimeout(timeoutRef.current)
-            timeoutRef.current = setTimeout(() => {
-              setIsConnecting(false)
-            }, 3000)
           }
           break
       }
     },
-    [resolveTargetDeviceId, executeSpotify, setIsConnecting]
+    [resolveTargetDeviceId, executeSpotify]
   )
 
   const handlePlaybackCommand = useCallback(
