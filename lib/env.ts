@@ -22,16 +22,28 @@ const envSchema = z
       }, z.boolean())
       .default(false),
     CI: z.string().optional(),
-    GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
-    GOOGLE_DOC_IFRAME_URL: z.string().url().optional(),
+    GOOGLE_DOC_WORKOUT_URL: z.preprocess(
+      (str) => (str === '' ? undefined : str),
+      z.string().url().optional()
+    ),
+    GOOGLE_DOC_IFRAME_URL: z.preprocess(
+      (str) => (str === '' ? undefined : str),
+      z.string().url().optional()
+    ),
     NEXT_PUBLIC_USE_NATIVE_TABLE: z
       .preprocess((val) => {
         if (typeof val === 'string') return val.toLowerCase() === 'true'
         return val === true
       }, z.boolean())
       .default(false),
-    NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
-    NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
+    NEXT_PUBLIC_API_URL: z.preprocess(
+      (str) => (str === '' ? undefined : str),
+      z.string().url().optional()
+    ),
+    NEXT_PUBLIC_WS_URL: z.preprocess(
+      (str) => (str === '' ? undefined : str),
+      z.string().url().optional()
+    ),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),

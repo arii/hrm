@@ -229,10 +229,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     waitForFontsLoaded(mockPage),
   ])
 
-  // Inject CSS to stabilize visual tests by disabling animations and forcing layout states.
-  // We use addInitScript to ensure stabilization persists across page reloads.
-  // We only target specific elements that are known to be flaky, such as progress bars,
-  // skeletons, and layout transitions, to maintain as much test fidelity as possible.
   await Promise.all([
     dashboardPage.addInitScript(initStabilization, STABILIZATION_CSS),
     controlPage.addInitScript(initStabilization, STABILIZATION_CSS),

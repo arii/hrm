@@ -36,6 +36,8 @@ interface ConnectViewProps {
   isResetting: boolean
   isSupported: boolean
   signalPeriodMs: number
+  lastPeriodMs?: number
+  consecutiveSlowPackets?: number
   currentHR: number
   hrZoneData: HrZoneData
   connectionStatus: string
@@ -62,6 +64,8 @@ export default function ConnectView({
   isResetting,
   isSupported,
   signalPeriodMs,
+  lastPeriodMs,
+  consecutiveSlowPackets: _consecutiveSlowPackets,
   currentHR,
   hrZoneData,
   connectionStatus,
@@ -239,6 +243,7 @@ export default function ConnectView({
                 )}
                 <SignalQualityIndicator
                   periodMs={signalPeriodMs}
+                  lastPeriodMs={lastPeriodMs}
                   isConnected={isConnected}
                 />
               </Box>

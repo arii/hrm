@@ -15,12 +15,6 @@ import {
 import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define a type for the test controls to avoid using 'any'
-interface TestControls {
-  dispatch: (message: ServerMessage) => void
-  disconnect: () => void
-  connect: () => void
-}
 import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
@@ -120,17 +114,12 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (isTestEnvironment()) {
-        const testEnvironmentWindow = window as Window & {
-          __TEST_CONTROLS__?: TestControls
-        }
-        testEnvironmentWindow.__TEST_CONTROLS__ = {
-          ...testEnvironmentWindow.__TEST_CONTROLS__,
+      if (isTestEnvironment() && window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__ = {
+          ...window.__TEST_CONTROLS__,
           dispatch,
-          disconnect:
-            testEnvironmentWindow.__TEST_CONTROLS__?.disconnect || (() => {}),
-          connect:
-            testEnvironmentWindow.__TEST_CONTROLS__?.connect || (() => {}),
+          disconnect: window.__TEST_CONTROLS__.disconnect || (() => {}),
+          connect: window.__TEST_CONTROLS__.connect || (() => {}),
         }
       }
     }
@@ -325,14 +314,9 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-    if (isTestEnvironment()) {
-      const testControls = (
-        window as Window & { __TEST_CONTROLS__?: TestControls }
-      ).__TEST_CONTROLS__
-      if (testControls) {
-        testControls.disconnect = disconnect
-        testControls.connect = connect
-      }
+    if (isTestEnvironment() && window.__TEST_CONTROLS__) {
+      window.__TEST_CONTROLS__.disconnect = disconnect
+      window.__TEST_CONTROLS__.connect = connect
     }
 
     return () => {
