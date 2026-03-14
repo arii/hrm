@@ -63,7 +63,7 @@ jobs:
           echo "title=$(echo "$JSON" | jq -r .title)" >> $GITHUB_OUTPUT
 
           # Use a multi-line output for the body
-          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          EOF_MARKER="EOF-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           echo "body<<$EOF_MARKER" >> $GITHUB_OUTPUT
           echo "$JSON" | jq -r .body >> $GITHUB_OUTPUT
           echo "$EOF_MARKER" >> $GITHUB_OUTPUT
