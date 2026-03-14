@@ -64,9 +64,6 @@ export default function BottomNavBar() {
         right: 0,
         zIndex: 1000,
         boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
-        height: 56,
-        boxSizing: 'border-box',
-        overflow: 'hidden',
       }}
     >
       {NAV_ITEMS.map((item, index) => (

@@ -66,32 +66,18 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData = useMemo(() => {
-    const trackName = spotifyData.playback.track.name
-    return (
-      trackName !== 'Awaiting Login...' &&
-      trackName !== '' &&
-      trackName !== 'No Track Playing'
-    )
-  }, [spotifyData.playback.track.name])
+  const trackName = spotifyData.playback.track.name
+  const hasSpotifyData =
+    trackName !== 'Awaiting Login...' &&
+    trackName !== '' &&
+    trackName !== 'No Track Playing'
 
   const shouldShowControls =
     spotifyServiceInitialized &&
     (hasSpotifyData || devices.some((d) => d.is_active))
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
-    if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
-      })
-    }
-  }, [connectionStatus, sendData, spotifyServiceInitialized])
-
-  // Request devices on window focus to ensure list is fresh
-  useEffect(() => {
-    const handleFocus = () => {
+    const fetchDevices = () => {
       if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
         sendData({
           type: 'SPOTIFY_COMMAND',
@@ -100,8 +86,9 @@ const SpotifyControls = () => {
       }
     }
 
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
+    fetchDevices()
+    window.addEventListener('focus', fetchDevices)
+    return () => window.removeEventListener('focus', fetchDevices)
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Sync selected device and volume with active device
@@ -213,11 +200,15 @@ const SpotifyControls = () => {
         case 'TRANSFER_PLAYBACK':
           if (deviceId) {
             executeSpotify('TRANSFER_PLAYBACK', { deviceId })
+            // Ensure loading state resets on timeout if the command fails/is ignored.
+            setTimeout(() => {
+              setIsConnecting(false)
+            }, 3000)
           }
           break
       }
     },
-    [resolveTargetDeviceId, executeSpotify]
+    [resolveTargetDeviceId, executeSpotify, setIsConnecting]
   )
 
   const handlePlaybackCommand = useCallback(
