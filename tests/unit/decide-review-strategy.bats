@@ -112,7 +112,20 @@ setup() {
 
   [ "$status" -eq 0 ]
   assert_output "needs-review" "false"
-  assert_output "skip-reason" "Gemini review is disabled"
+  assert_output "skip-reason" "Gemini review is globally disabled"
+}
+
+@test "should trigger review on manual override even if GEMINI_ENABLE_PR_REVIEW is false" {
+  export GEMINI_ENABLE_PR_REVIEW="false"
+  export TRIGGER_EVENT="comment"
+  export ACTION_TYPE="created"
+  export COMMENT_BODY="@gemini-bot review"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
 }
 
 # Helper function to assert the output of the script

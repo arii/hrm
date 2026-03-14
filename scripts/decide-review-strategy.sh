@@ -23,6 +23,7 @@ set -e
 : "${QUALITY_GATE_BOT_USERNAMES:=github-actions[bot]}"
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
+: "${GEMINI_ENABLE_PR_REVIEW:=true}"
 
 
 # --- Initial State ---
@@ -31,20 +32,20 @@ SKIP_REASON="no criteria met"
 
 # --- Main Logic ---
 
-# Check 0: Gemini Review Enablement
-if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
-  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
-  echo "needs-review=false" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
+# Check 1: Manual Override (Highest Priority)
+# A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
+if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
+  echo "::info::Manual review triggered by comment. Bypassing all checks and global toggles."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
-# Check 1: Manual Override
-# A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
-if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
-  echo "::info::Manual review triggered by comment. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+# Check 1b: Global Toggle
+if [[ "$GEMINI_ENABLE_PR_REVIEW" == "false" ]]; then
+  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=Gemini review is globally disabled" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
