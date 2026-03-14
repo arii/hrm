@@ -146,7 +146,7 @@ export async function takeDashboardScreenshot(
       ...getHrMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
-      page.getByTestId('workout-table-viewer'),
+      page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
     ],
     maxDiffPixelRatio: 0.08, // Higher tolerance for font rendering in CI
