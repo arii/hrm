@@ -11,14 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useMemo,
-} from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -28,8 +21,8 @@ import { HRM_WEB_PLAYER_NAME, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import throttle from 'lodash.throttle'
 import { useSyncLock } from '@/hooks/useSyncLock'
+import { useThrottledCallback } from '@/hooks/useThrottledCallback'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
@@ -208,21 +201,10 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  const sendCommandRef = useRef(sendVolumeCommand)
-  useLayoutEffect(() => {
-    sendCommandRef.current = sendVolumeCommand
-  }, [sendVolumeCommand])
-
-  const throttledSendVolumeCommand = useMemo(
-    () => throttle((val: number) => sendCommandRef.current(val), 200),
-    []
+  const throttledSendVolumeCommand = useThrottledCallback(
+    sendVolumeCommand,
+    200
   )
-
-  useEffect(() => {
-    return () => {
-      throttledSendVolumeCommand.cancel()
-    }
-  }, [throttledSendVolumeCommand])
 
   const handleVolumeChange = useCallback(
     (val: number) => {
