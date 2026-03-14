@@ -813,6 +813,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             error instanceof Error ? error.message : String(error)
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
 
+          // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
           throw error
@@ -856,7 +857,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         silent: true,
         deviceId: savedDeviceId,
       })
-    } catch (error) {
+    } catch {
       setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
     }
   }, [connectAndStream])
