@@ -5,7 +5,7 @@ on:
     types: [created]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ format('{0}', github.event.issue.number) }}
+  group: ${{ format('{0}-{1}', github.workflow, github.event.issue.number) }}
   cancel-in-progress: false
 
 permissions:
@@ -80,14 +80,16 @@ jobs:
             echo "::error::No task description provided for @gemini-coder"
             exit 1
           fi
-          echo "task=$TASK" >> $GITHUB_OUTPUT
+          echo "task<<EOF" >> $GITHUB_OUTPUT
+          echo "$TASK" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   execute-coder:
     needs: [router, prepare-coder]
     if: needs.router.outputs.is_coder == 'true'
     uses: ./.github/workflows/gemini-coder.yml
     with:
-      task_description: ${{ needs.prepare-coder.outputs.task }}
+      task_description: ${{ needs.prepare-coder.outputs.task || 'pending' }}
       branch_name: ${{ format('ai/comment-task-{0}-{1}', github.event.issue.number, github.run_id) }}
     secrets: inherit
 
@@ -129,7 +131,7 @@ jobs:
     with:
       trigger_event: 'comment'
       pr_number: ${{ format('{0}', github.event.issue.number) }}
-      run_id: ${{ needs.prepare-review-issues-manual.outputs.run_id }}
+      run_id: ${{ format('{0}', needs.prepare-review-issues-manual.outputs.run_id || '0') }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -249,7 +251,7 @@ jobs:
     if: github.event.issue.pull_request && needs.router.outputs.is_resolve == 'true'
     uses: ./.github/workflows/conflict-resolver.yml
     with:
-      target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
-      source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
+      target_branch: ${{ needs.prepare-resolve.outputs.target_branch || 'leader' }}
+      source_branch: ${{ needs.prepare-resolve.outputs.source_branch || 'unknown' }}
       pr_number: ${{ format('{0}', github.event.issue.number) }}
     secrets: inherit
