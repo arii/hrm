@@ -21,18 +21,14 @@ const LoadingIndicator = () => {
         alignItems: 'center',
         backgroundColor: theme.palette.background.overlay,
         zIndex: theme.zIndex.loadingIndicator,
-        // Completely disable transitions in testing environment to prevent flakiness
-        transition:
-          process.env.NEXT_PUBLIC_TESTING === 'true'
-            ? 'none'
-            : theme.transitions.create('opacity', {
-                duration: theme.transitions.duration.short,
-              }),
+        transition: theme.transitions.create('opacity', {
+          duration: theme.transitions.duration.short,
+        }),
         opacity: isLoading ? 1 : 0,
         visibility: isLoading ? 'visible' : 'hidden',
       }}
     >
-      <CircularProgress data-testid="loading-indicator-progress" />
+      <CircularProgress />
     </Box>
   )
 }
