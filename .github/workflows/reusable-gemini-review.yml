@@ -197,8 +197,8 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+            BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
 
             # Create temp files
             FILE_LIST=$(mktemp)
