@@ -5,7 +5,7 @@ on:
     types: [created]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  group: ${{ github.workflow }}-${{ format('{0}', github.event.issue.number) }}
   cancel-in-progress: false
 
 permissions:
@@ -88,7 +88,7 @@ jobs:
     uses: ./.github/workflows/gemini-coder.yml
     with:
       task_description: ${{ needs.prepare-coder.outputs.task }}
-      branch_name: "ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}"
+      branch_name: ${{ format('ai/comment-task-{0}-{1}', github.event.issue.number, github.run_id) }}
     secrets: inherit
 
   prepare-review-issues-manual:

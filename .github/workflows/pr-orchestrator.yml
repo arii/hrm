@@ -23,7 +23,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  group: ${{ github.workflow }}-${{ format('{0}', github.event.pull_request.number || inputs.pr_number || github.ref) }}
   cancel-in-progress: true
 
 permissions:
