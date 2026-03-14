@@ -116,8 +116,17 @@ export const WebSocketProvider = ({
 
       if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
-          ...(window.__TEST_CONTROLS__ || {}),
+          ...window.__TEST_CONTROLS__,
           dispatch,
+          disconnect: () => {},
+          connect: () => {},
+        }
+      }
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
+        if (window.__TEST_CONTROLS__.dispatch === dispatch) {
+          delete window.__TEST_CONTROLS__.dispatch
         }
       }
     }
@@ -312,9 +321,11 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-    if (isTestEnvironment() && window.__TEST_CONTROLS__) {
-      window.__TEST_CONTROLS__.disconnect = disconnect
-      window.__TEST_CONTROLS__.connect = connect
+    if (isTestEnvironment()) {
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.disconnect = disconnect
+        window.__TEST_CONTROLS__.connect = connect
+      }
     }
 
     return () => {
