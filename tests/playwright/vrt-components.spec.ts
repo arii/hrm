@@ -138,7 +138,9 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.locator('[data-testid="spotify-device-selector-menu-paper"]').last()
+    const menu = dashboardPage
+      .locator('[data-testid="spotify-device-selector-menu-paper"]')
+      .last()
     await expect(menu).toBeVisible()
 
     // Give it a moment to ensure it is fully rendered
