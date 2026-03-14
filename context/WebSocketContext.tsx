@@ -114,12 +114,10 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (isTestEnvironment() && window.__TEST_CONTROLS__) {
+      if (isTestEnvironment()) {
         window.__TEST_CONTROLS__ = {
-          ...window.__TEST_CONTROLS__,
+          ...(window.__TEST_CONTROLS__ || {}),
           dispatch,
-          disconnect: window.__TEST_CONTROLS__.disconnect || (() => {}),
-          connect: window.__TEST_CONTROLS__.connect || (() => {}),
         }
       }
     }
