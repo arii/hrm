@@ -33,41 +33,42 @@ SKIP_REASON="no criteria met"
 
 # Fetch PR metadata once (comments + Ref OIDs) to reduce API calls and latency.
 # This is done early to ensure SHAs are available for all paths, including manual overrides.
-echo "::info::Fetching PR #$PR_NUMBER metadata..."
-PR_DATA_FILE=$(mktemp)
-set +e
-gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid > "$PR_DATA_FILE" 2> gh_error.log
-GH_EXIT_CODE=$?
-set -e
-
-if [[ $GH_EXIT_CODE -ne 0 ]]; then
-  echo "::warning::GitHub CLI failed to fetch PR data (Exit Code: $GH_EXIT_CODE)."
-  cat gh_error.log >&2
-
-  # For automated reviews, we fail-closed if the API is unreachable.
-  if [[ "$TRIGGER_EVENT" == "pull_request" ]]; then
-    echo "needs-review=false" >> "$GITHUB_OUTPUT"
-    echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
-    exit 0
-  fi
-  PR_DATA='{"comments":[],"baseRefOid":"","headRefOid":""}'
+if [ -n "$PR_JSON" ] && [ "$PR_JSON" != "{}" ]; then
+  echo "::info::Using pre-fetched PR_JSON payload..."
+  PR_DATA="$PR_JSON"
 else
-  PR_DATA=$(cat "$PR_DATA_FILE")
+  echo "::info::Fetching PR #$PR_NUMBER metadata..."
+  PR_DATA_FILE=$(mktemp)
+  set +e
+  gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid > "$PR_DATA_FILE" 2> gh_error.log
+  GH_EXIT_CODE=$?
+  set -e
+
+  if [[ $GH_EXIT_CODE -ne 0 ]]; then
+    echo "::warning::GitHub CLI failed to fetch PR data (Exit Code: $GH_EXIT_CODE)."
+    cat gh_error.log >&2
+
+    # For automated reviews, we fail-closed if the API is unreachable.
+    if [[ "$TRIGGER_EVENT" == "pull_request" ]]; then
+      echo "needs-review=false" >> "$GITHUB_OUTPUT"
+      echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
+      exit 0
+    fi
+    PR_DATA='{"comments":[],"baseRefOid":"","headRefOid":""}'
+  else
+    PR_DATA=$(cat "$PR_DATA_FILE")
+  fi
+  rm -f "$PR_DATA_FILE" gh_error.log
 fi
-rm -f "$PR_DATA_FILE" gh_error.log
 
 # Self-heal missing SHAs if they are absent from environment
 if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
 if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
 
-# Address edge case: If API failed and inputs were empty, ensure SHAs are not empty
-if [ -z "$BASE_SHA" ]; then
-  echo "::warning::BASE_SHA is empty, falling back to HEAD^"
-  BASE_SHA="HEAD^"
-fi
-if [ -z "$HEAD_SHA" ]; then
-  echo "::warning::HEAD_SHA is empty, falling back to HEAD"
-  HEAD_SHA="HEAD"
+# If variables are still empty, fail fast rather than propagating empty SHAs
+if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+  echo "::error::BASE_SHA or HEAD_SHA could not be resolved. Aborting."
+  exit 1
 fi
 
 # Check 1: Manual Override (PRIORITIZED)
