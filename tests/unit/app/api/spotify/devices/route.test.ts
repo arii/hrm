@@ -33,6 +33,9 @@ describe('API Route: /api/spotify/devices', () => {
   let tokenManagerInstance: { getValidAccessToken: jest.Mock }
 
   beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'info').mockImplementation(() => {})
+
     jest.clearAllMocks()
     // Set up a new mock instance for each test
     MockedSpotifyTokenManager.mockClear()
@@ -42,6 +45,11 @@ describe('API Route: /api/spotify/devices', () => {
         'client-secret'
       )
     MockedSpotifyTokenManager.mockImplementation(() => tokenManagerInstance)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should return 401 if no user session and no system token is available', async () => {

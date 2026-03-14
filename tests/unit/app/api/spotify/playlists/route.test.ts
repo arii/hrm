@@ -52,7 +52,13 @@ jest.mock('@spotify/web-api-ts-sdk', () => {
 const mockedGetServerSession = getServerSession as jest.Mock
 
 describe('API Route: /api/spotify/playlists', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
   afterEach(() => {
+    jest.restoreAllMocks()
     jest.clearAllMocks()
   })
 

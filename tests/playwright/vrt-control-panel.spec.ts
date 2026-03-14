@@ -36,6 +36,7 @@ test.describe('Visual Regression Tests', () => {
   test.describe('ControlPanel Component', () => {
     test('initial state', async () => {
       const controlPanel = controlPage.getByTestId('control-panel')
+
       await takeScreenshot(controlPanel, 'control-panel.png')
     })
   })
