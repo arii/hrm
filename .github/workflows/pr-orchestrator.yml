@@ -34,36 +34,6 @@ permissions:
   actions: read
 
 jobs:
-  welcome:
-    name: 👋 PR Welcome & Reminder
-    if: github.event_name == 'pull_request' && github.event.action == 'opened'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post Welcome Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = '## 👋 Welcome to HRM!\n\n' +
-              'Thanks for your contribution. This repository uses Gemini AI for automated triage, code review, and generation.\n\n' +
-              '#### 🤖 Gemini Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
-              'For more details and GitHub CLI examples, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: body
-            });
-
   filter:
     name: 🔍 Path Filter
     runs-on: ubuntu-latest

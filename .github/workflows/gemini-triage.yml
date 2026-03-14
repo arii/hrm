@@ -10,12 +10,6 @@
 name: Gemini Smart Triage
 
 on:
-  workflow_dispatch:
-    inputs:
-      issue_number:
-        description: 'Issue number to triage'
-        required: true
-        type: number
   workflow_call:
     inputs:
       issue_number:
@@ -37,7 +31,7 @@ jobs:
     # This job runs for new issues or manual triage.
     # It uses a Gemini agent to analyze the issue and provide a detailed triage.
     if: |
-      (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') ||
+      ( github.event_name == 'workflow_call') ||
       (vars.GEMINI_ENABLE_TRIAGE != 'false' && github.event_name == 'issues' && github.actor != 'ari-party-bot')
     runs-on: self-hosted
     steps:
@@ -55,10 +49,10 @@ jobs:
         id: issue_details
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ inputs.issue_number || github.event.inputs.issue_number || github.event.issue.number }}
+          ISSUE_NUMBER: ${{ inputs.issue_number  || github.event.issue.number }}
         run: |
-          # If triggered via workflow_dispatch, we need to fetch the issue details.
-          # If triggered via 'issues' event, they are already in the context, but fetching ensures consistency.
+
+
           JSON=$(gh issue view "$ISSUE_NUMBER" --json title,body)
           echo "title=$(echo "$JSON" | jq -r .title)" >> $GITHUB_OUTPUT
           # Use a multi-line output for the body
@@ -133,15 +127,7 @@ jobs:
             const path = require('path');
             const issue_number = parseInt(process.env.ISSUE_NUMBER);
 
-            const footer = '\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n\n' +
-              '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+            const footer = ')';
 
             try {
               const filePath = path.resolve(process.cwd(), 'triage_result.json');
@@ -325,47 +311,10 @@ jobs:
               }
               core.setFailed('Failed to apply triage actions due to a fatal error: ' + error.message);
             }
-  disabled-guidance:
-    if: |
-      vars.GEMINI_ENABLE_TRIAGE == 'false' &&
-      github.event_name == 'issues' &&
-      (github.event.action == 'opened' || github.event.action == 'reopened')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post Guidance Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = '### ℹ️ Gemini Triage Disabled\n\n' +
-              'Automatic triage is currently disabled via `GEMINI_ENABLE_TRIAGE`. To run triage manually:\n\n' +
-              '**Via Comment:**\n```\n@gemini-triage\n```\n\n' +
-              '**Via GitHub Actions:**\n' +
-              '1. Go to [Actions → Gemini Smart Triage](' + context.payload.repository.html_url + '/actions/workflows/gemini-triage.yml)\n' +
-              '2. Click "Run workflow"\n' +
-              '3. Enter issue number: `' + context.issue.number + '`\n\n' +
-              '**Via GitHub CLI:**\n```bash\ngh workflow run gemini-triage.yml -f issue_number=' + context.issue.number + '\n```\n\n' +
-              '#### 🤖 Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n\n' +
-              'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
-              '**To re-enable:** Set repository variable `GEMINI_ENABLE_TRIAGE=true`';
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
-
   maintenance:
     # This job runs on a schedule or manual trigger.
     # It performs rule-based maintenance tasks like finding stale issues and duplicates.
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Install jq

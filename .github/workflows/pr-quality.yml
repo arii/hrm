@@ -1059,66 +1059,7 @@ jobs:
           # Prepare the main comment body
           COMMENT_BODY="## 📋 Quality Gate Results\n\n"
           COMMENT_BODY+="| Check | Status |\n"
-          COMMENT_BODY+="|-------|--------|\n"
-          COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
-          COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
-          COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
-          COMMENT_BODY+="| Type Check | $([ "${{ needs.type-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.type-check.result }}) |\n"
-          COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
-          COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Component Tests | $([ "$COMPONENT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$COMPONENT_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |\n"
-
-          # Append log details for failed checks
-          LOG_DETAILS=""
-          if [ "$KNIP_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Knip Failure Details" "artifacts/knip-report/knip-output.txt" 50)
-          fi
-          if [ "$LINT_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Lint Failure Details" "artifacts/lint-report/lint-output.log" 50)
-          fi
-          if [ "${{ needs.slop-check.result }}" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Slop Failure Details" "artifacts/slop-report/slop-output.log" 50)
-          fi
-          if [ "${{ needs.type-check.result }}" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Type Check Failure Details" "artifacts/type-check-report/type-check-output.log" 50)
-          fi
-          if [ "$BUILD_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
-          fi
-          if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" 50)
-          fi
-          if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" 50)
-          fi
-          if [ "$COMPONENT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Component Test Failure Details" "artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/component-output.log" 50)
-          fi
-          if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" 50)
-            LOG_DETAILS+="\n> 💡 **Tip:** Download the \`visual-test-logs-${{ needs.prepare-env.outputs.session_id }}\` artifact to view the full interactive Playwright report.\n"
-          fi
-          if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" 50)
-          fi
-
-          # Combine main body and log details
-          if [ -n "$LOG_DETAILS" ]; then
-            COMMENT_BODY+="\n${LOG_DETAILS}"
-          fi
-
-          # Determine summary message
-          if [ "$FINAL_RESULT" = "success" ]; then
-            SUMMARY_MSG="✅ **All quality checks passed!**"
-          else
-            SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-          fi
-
-          # Create manual trigger footer
-          FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](https://github.com/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+          COMMENT_BODY+="|)"
 
           COMMENT_BODY+="\n${SUMMARY_MSG}${FOOTER}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
