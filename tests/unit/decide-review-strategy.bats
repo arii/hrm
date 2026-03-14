@@ -60,8 +60,8 @@ setup() {
   [ "$status" -eq 0 ]
   assert_output "needs-review" "true"
   assert_output "skip-reason" ""
-  assert_output "base-sha" "HEAD^"
-  assert_output "head-sha" "HEAD"
+  assert_output "base-sha" ""
+  assert_output "head-sha" ""
 }
 
 @test "should trigger review on manual override (workflow_dispatch)" {
