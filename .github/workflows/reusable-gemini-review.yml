@@ -106,14 +106,9 @@ jobs:
               echo "::error::PR_NUMBER is required to fetch SHAs but was not provided."
               exit 1
             fi
-            FETCHED_BASE=$(gh pr view "$PR_NUMBER" --json baseRefOid --jq '.baseRefOid' 2>/dev/null || true)
-            FETCHED_HEAD=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid' 2>/dev/null || true)
-            if [ -z "$BASE_SHA" ] && [ -n "$FETCHED_BASE" ] && [ "$FETCHED_BASE" != "null" ]; then
-              BASE_SHA="$FETCHED_BASE"
-            fi
-            if [ -z "$HEAD_SHA" ] && [ -n "$FETCHED_HEAD" ] && [ "$FETCHED_HEAD" != "null" ]; then
-              HEAD_SHA="$FETCHED_HEAD"
-            fi
+            PR_DATA=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid 2>/dev/null || true)
+            [ -z "$BASE_SHA" ] && BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // empty')
+            [ -z "$HEAD_SHA" ] && HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // empty')
             if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
               echo "::warning::Could not resolve SHAs for PR #$PR_NUMBER; SHAs will be empty"
             fi
