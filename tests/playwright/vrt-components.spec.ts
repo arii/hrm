@@ -138,8 +138,11 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.getByTestId('spotify-device-selector-menu-paper')
+    const menu = dashboardPage.locator('[data-testid="spotify-device-selector-menu-paper"]').last()
     await expect(menu).toBeVisible()
+
+    // Give it a moment to ensure it is fully rendered
+    await dashboardPage.waitForTimeout(500)
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
