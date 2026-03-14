@@ -21,7 +21,7 @@ import { HRM_WEB_PLAYER_NAME, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import { useThrottledCallback } from '@/hooks/useThrottledCallback'
+import throttle from 'lodash.throttle'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -201,9 +201,9 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
-  const throttledSendVolumeCommand = useThrottledCallback(
-    sendVolumeCommand,
-    200
+  const throttledSendVolumeCommand = useMemo(
+    () => throttle(sendVolumeCommand, 200),
+    [sendVolumeCommand]
   )
 
   useEffect(() => {
@@ -235,7 +235,7 @@ const SpotifyControls = () => {
     (val: number) => {
       setIsSliding(false)
       lastUserInteractionRef.current = Date.now()
-      sendVolumeCommand(val) // Final authoritative update
+      sendVolumeCommand(val)
     },
     [sendVolumeCommand]
   )
