@@ -33,15 +33,15 @@ jobs:
           BODY: ${{ github.event.comment.body }}
         run: |
           # Use case-insensitive grep and ensure outputs are always set if matched.
-          # We check for commands starting at the beginning of a line to avoid accidental triggers
-          # from quotes or descriptive text mentioning the bots.
-          if echo "$BODY" | grep -qiE "^@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "(^|\r?\n)@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "(^|\r?\n)@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-triage"; then echo "is_triage=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
-          if echo "$BODY" | grep -qiE "^@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
+          # We check for commands anywhere in the text (start of line or after a space)
+          # to reliably detect triggers.
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@gemini-bot"; then echo "is_review=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@pr-squash"; then echo "is_squash=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@conflict-resolve"; then echo "is_resolve=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@gemini-triage"; then echo "is_triage=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
+          if printf "%s\n" "$BODY" | grep -qiE "(^|[[:space:]])@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
 
   execute-review:
     needs: [router]
@@ -166,9 +166,9 @@ jobs:
       needs.execute-review.outputs.review_performed == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       base_sha: ${{ needs.prepare-review-issues.outputs.base_sha }}
-      run_id: ${{ github.run_id }}
+      run_id: ${{ format('{0}', github.run_id) }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -206,9 +206,9 @@ jobs:
     if: github.event.issue.pull_request && needs.router.outputs.is_squash == 'true'
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       comment_body: ${{ github.event.comment.body }}
-      comment_id: ${{ github.event.comment.id }}
+      comment_id: ${{ format('{0}', github.event.comment.id) }}
     secrets: inherit
 
   # Restoring conflict resolution logic from gemini-orchestrator.yml
@@ -251,5 +251,5 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
     secrets: inherit
