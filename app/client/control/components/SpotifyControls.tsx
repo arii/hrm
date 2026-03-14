@@ -22,6 +22,9 @@ import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
 import throttle from 'lodash.throttle'
+import { useSyncLock } from '@/hooks/useSyncLock'
+
+const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -36,7 +39,7 @@ const SpotifyControls = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSliding, setIsSliding] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
-  const lastUserInteractionRef = useRef<number>(0)
+  const { isLocked, updateInteraction } = useSyncLock(SYNC_LOCK_DURATION)
 
   const hrmDevice = useMemo(
     () =>
@@ -99,10 +102,7 @@ const SpotifyControls = () => {
 
     if (isSliding) return
 
-    const isLocked =
-      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
-
-    if (isLocked) return
+    if (isLocked()) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {
@@ -201,9 +201,14 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, executeSpotify]
   )
 
+  const sendCommandRef = useRef(sendVolumeCommand)
+  useEffect(() => {
+    sendCommandRef.current = sendVolumeCommand
+  }, [sendVolumeCommand])
+
   const throttledSendVolumeCommand = useMemo(
-    () => throttle(sendVolumeCommand, 200),
-    [sendVolumeCommand]
+    () => throttle((val: number) => sendCommandRef.current(val), 200),
+    []
   )
 
   useEffect(() => {
@@ -215,7 +220,7 @@ const SpotifyControls = () => {
   const handleVolumeChange = useCallback(
     (val: number) => {
       setIsSliding(true)
-      lastUserInteractionRef.current = Date.now()
+      updateInteraction()
       setVolume(val)
       throttledSendVolumeCommand(val)
 
@@ -228,16 +233,22 @@ const SpotifyControls = () => {
         }
       }
     },
-    [connectionStatus, showWarning, setVolume, throttledSendVolumeCommand]
+    [
+      connectionStatus,
+      showWarning,
+      setVolume,
+      throttledSendVolumeCommand,
+      updateInteraction,
+    ]
   )
 
   const handleVolumeChangeCommitted = useCallback(
     (val: number) => {
       setIsSliding(false)
-      lastUserInteractionRef.current = Date.now()
+      updateInteraction()
       sendVolumeCommand(val)
     },
-    [sendVolumeCommand]
+    [sendVolumeCommand, updateInteraction]
   )
 
   useEffect(() => {
@@ -315,7 +326,7 @@ const SpotifyControls = () => {
               onToggleMute={toggleMute}
               showValue
               size="medium"
-              sx={{ mt: 3, mb: 1 }}
+              sx={VOLUME_SLIDER_SX}
             />
 
             {devices.length > 0 && (

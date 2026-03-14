@@ -14,13 +14,14 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import { SPOTIFY_BRAND_COLOR, SYNC_LOCK_DURATION } from '@/constants/spotify'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
+import { useSyncLock } from '@/hooks/useSyncLock'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -135,7 +136,7 @@ const SpotifyDisplay = () => {
   }
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
-  const lastUserInteractionRef = useRef<number>(0)
+  const { isLocked, updateInteraction } = useSyncLock(SYNC_LOCK_DURATION)
 
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
@@ -146,9 +147,7 @@ const SpotifyDisplay = () => {
       return
     }
 
-    const isLocked =
-      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
-    if (isLocked) {
+    if (isLocked()) {
       return
     }
 
@@ -163,6 +162,7 @@ const SpotifyDisplay = () => {
     spotifyData.playback.volume_percent,
     spotifyData.playback.isMuted,
     state.isSliding,
+    isLocked,
   ])
 
   // Centralized command sender for volume changes
@@ -188,12 +188,12 @@ const SpotifyDisplay = () => {
   )
 
   const handleVolumeChange = (newVolume: number) => {
-    lastUserInteractionRef.current = Date.now()
+    updateInteraction()
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
   }
 
   const handleVolumeChangeCommitted = (newVolume: number) => {
-    lastUserInteractionRef.current = Date.now()
+    updateInteraction()
     sendVolumeCommand(newVolume)
     dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
   }
