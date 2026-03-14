@@ -87,6 +87,9 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
+      // Explicitly set dimensions to prevent flaky scrollbar/resizing issues
+      await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
+
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.3,
         mask: [
