@@ -37,11 +37,11 @@ const envSchema = z
       }, z.boolean())
       .default(false),
     NEXT_PUBLIC_API_URL: z.preprocess(
-      (val) => (val === '' ? undefined : val),
+      (str) => (str === '' ? undefined : str),
       z.string().url().optional()
     ),
     NEXT_PUBLIC_WS_URL: z.preprocess(
-      (val) => (val === '' ? undefined : val),
+      (str) => (str === '' ? undefined : str),
       z.string().url().optional()
     ),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),

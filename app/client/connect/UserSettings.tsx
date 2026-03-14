@@ -5,7 +5,6 @@ import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import {
   FormControl,
   FormLabel,
@@ -31,15 +30,9 @@ const visuallyHidden = {
 
 interface UserSettingsProps {
   profile: UserProfileState
-  onForgetDevice?: () => Promise<void>
-  isResetting?: boolean
 }
 
-const UserSettings: React.FC<UserSettingsProps> = ({
-  profile,
-  onForgetDevice,
-  isResetting = false,
-}) => {
+const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
   const { data, handlers, errors } = profile
 
   return (
@@ -172,20 +165,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
         </RadioGroup>
       </FormControl>
-      {onForgetDevice && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Button
-            variant="text"
-            color="error"
-            size="small"
-            onClick={onForgetDevice}
-            disabled={isResetting}
-            fullWidth
-          >
-            {isResetting ? 'Clearing...' : 'Clear Saved Device'}
-          </Button>
-        </Box>
-      )}
     </Stack>
   )
 }

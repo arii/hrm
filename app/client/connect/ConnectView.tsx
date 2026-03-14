@@ -78,6 +78,10 @@ export default function ConnectView({
 }: ConnectViewProps) {
   const { data } = userProfile
 
+  const isDeviceBusy = ['Connecting', 'Scanning', 'Checking'].some((status) =>
+    deviceStatus.includes(status)
+  )
+
   useEffect(() => {
     if (isConnected) {
       logger.debug(
@@ -123,11 +127,7 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings
-            profile={userProfile}
-            onForgetDevice={onForgetDevice}
-            isResetting={isResetting}
-          />
+          <UserSettings profile={userProfile} />
         ) : (
           <Box
             sx={{
@@ -190,22 +190,10 @@ export default function ConnectView({
               variant="contained"
               size="large"
               onClick={onConnect}
-              disabled={
-                !data.userName.trim() ||
-                !data.userAge.trim() ||
-                deviceStatus.includes('Connecting') ||
-                deviceStatus.includes('Scanning') ||
-                deviceStatus.includes('Checking')
-              }
-              aria-busy={
-                deviceStatus.includes('Connecting') ||
-                deviceStatus.includes('Scanning') ||
-                deviceStatus.includes('Checking')
-              }
+              disabled={!data.userName.trim() || !data.userAge.trim() || isDeviceBusy}
+              aria-busy={isDeviceBusy}
             >
-              {deviceStatus.includes('Connecting') ||
-              deviceStatus.includes('Scanning') ||
-              deviceStatus.includes('Checking') ? (
+              {isDeviceBusy ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>
@@ -312,6 +300,20 @@ export default function ConnectView({
         </Typography>
 
         <ResetSection onReset={onForgetDevice} isResetting={isResetting} />
+        {!showUserDetails && (
+          <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button
+              variant="text"
+              color="error"
+              size="small"
+              onClick={onForgetDevice}
+              disabled={isResetting}
+              fullWidth
+            >
+              {isResetting ? 'Clearing...' : 'Clear Saved Device'}
+            </Button>
+          </Box>
+        )}
       </Container>
       <BottomNavBar />
     </>

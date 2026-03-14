@@ -575,7 +575,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           (event: unknown) => {
             const now = Date.now()
 
-            // Calculate Delta (Period) for Signal Quality
             if (lastDataTime.current > 0) {
               const delta = now - lastDataTime.current
               updateSignalPeriod(delta)
@@ -813,7 +812,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             error instanceof Error ? error.message : String(error)
           logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
 
-          // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
           throw error
@@ -857,7 +855,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         silent: true,
         deviceId: savedDeviceId,
       })
-    } catch {
+    } catch (error) {
       setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
     }
   }, [connectAndStream])

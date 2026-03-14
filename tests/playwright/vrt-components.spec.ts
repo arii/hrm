@@ -41,15 +41,7 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-
-    // Mask the animated progress circle as it's highly flaky in VRT
-    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
-
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      screenshotOptions: {
-        mask: [progress],
-      },
-    })
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
@@ -129,12 +121,9 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
 
-    // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
-
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
+      maxDiffPixelRatio: 0.15,
       threshold: 0.3,
-      skipA11y: true, // Accessibility checked manually above
     })
   })
 

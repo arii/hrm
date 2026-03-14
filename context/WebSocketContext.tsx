@@ -114,12 +114,12 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
 
-      if (isTestEnvironment()) {
+      if (isTestEnvironment() && window.__TEST_CONTROLS__) {
         window.__TEST_CONTROLS__ = {
           ...window.__TEST_CONTROLS__,
           dispatch,
-          disconnect: window.__TEST_CONTROLS__?.disconnect || (() => {}),
-          connect: window.__TEST_CONTROLS__?.connect || (() => {}),
+          disconnect: window.__TEST_CONTROLS__.disconnect || (() => {}),
+          connect: window.__TEST_CONTROLS__.connect || (() => {}),
         }
       }
     }
@@ -314,15 +314,20 @@ export const WebSocketProvider = ({
     connectRef.current = connect
     connect()
 
-    if (isTestEnvironment()) {
-      const testControls = window.__TEST_CONTROLS__
-      if (testControls) {
-        testControls.disconnect = disconnect
-        testControls.connect = connect
-      }
+    if (isTestEnvironment() && window.__TEST_CONTROLS__) {
+      window.__TEST_CONTROLS__.disconnect = disconnect
+      window.__TEST_CONTROLS__.connect = connect
     }
 
     return () => {
+      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
+        if (window.__TEST_CONTROLS__.disconnect === disconnect) {
+          delete window.__TEST_CONTROLS__.disconnect
+        }
+        if (window.__TEST_CONTROLS__.connect === connect) {
+          delete window.__TEST_CONTROLS__.connect
+        }
+      }
       disconnect()
     }
   }, [connect, disconnect])
