@@ -34,14 +34,14 @@ jobs:
         run: |
           # Extract the command, strictly enforcing it occurs at the start of a line
           # We use printf for secure variable expansion of arbitrary user input
-          CMD=$(printf "%s\n" "$BODY" | grep -oiE "(^|\r?\n)@(gemini-bot|pr-squash|conflict-resolve|gemini-triage|gemini-coder|create-review-issues|gemini-help)" | head -n1 | tr '[:upper:]' '[:lower:]' | xargs)
+          CMD=$(printf "%s\n" "$BODY" | grep -oiE "(^|\r?\n)(@gemini-bot|@pr-squash|@conflict-resolve|@gemini-triage|@gemini-coder|/create-issues|@gemini-help)" | head -n1 | tr '[:upper:]' '[:lower:]' | xargs)
           case "$CMD" in
             "@gemini-bot")          echo "is_review=true" >> $GITHUB_OUTPUT ;;
             "@pr-squash")           echo "is_squash=true" >> $GITHUB_OUTPUT ;;
             "@conflict-resolve")    echo "is_resolve=true" >> $GITHUB_OUTPUT ;;
             "@gemini-triage")       echo "is_triage=true" >> $GITHUB_OUTPUT ;;
             "@gemini-coder")        echo "is_coder=true" >> $GITHUB_OUTPUT ;;
-            "@create-review-issues")echo "is_review_issues=true" >> $GITHUB_OUTPUT ;;
+            "/create-issues")       echo "is_review_issues=true" >> $GITHUB_OUTPUT ;;
             "@gemini-help")         echo "is_help=true" >> $GITHUB_OUTPUT ;;
           esac
 
@@ -184,18 +184,6 @@ jobs:
         with:
           script: |
             const body = '### 🤖 Gemini Manual Trigger Reference\n\n' +
-              'You can trigger the following Gemini AI workflows via comments:\n\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@jules-new` | Create Jules Session (PR only) |\n' +
-              '| `@jules-delete` | Delete Jules Session (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
               'For more details and GitHub CLI examples, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
 
             github.rest.issues.createComment({

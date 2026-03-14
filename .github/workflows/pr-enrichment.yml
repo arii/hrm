@@ -34,6 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Ref parameter intentionally removed to align with default checkout behavior
           fetch-depth: 0
 
       - name: Setup Environment
