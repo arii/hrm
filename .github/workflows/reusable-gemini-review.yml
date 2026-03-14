@@ -107,6 +107,7 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
+          # If head_sha is provided, use it.
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
           # Otherwise, if we have a PR number, fetch the head and base OIDs from the API.
@@ -123,9 +124,10 @@ jobs:
               echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
             fi
             # Pass the JSON payload as an environment variable to avoid double fetching
-            echo "PR_JSON<<EOF" >> $GITHUB_ENV
+            EOF_BOUNDARY=$(openssl rand -hex 16)
+            echo "PR_JSON<<$EOF_BOUNDARY" >> $GITHUB_ENV
             echo "$PR_JSON" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
+            echo "$EOF_BOUNDARY" >> $GITHUB_ENV
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
           fi
@@ -178,8 +180,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BASE_SHA=${{ needs.analyze-changes.outputs.base-sha }}
-          HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha }}
+          # The PR's base commit SHA, for an accurate diff at the time of branching.
+          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
+          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
+          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
 
@@ -210,12 +214,12 @@ jobs:
 
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
           echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${{ needs.analyze-changes.outputs.head-sha }}" >> $GITHUB_ENV
+          echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
           # Define SHAs for Gemini Client (Metric Calculation moved to TS)
-          echo "BASE_SHA=${{ needs.analyze-changes.outputs.base-sha }}" >> $GITHUB_ENV
-          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha }}" >> $GITHUB_ENV
+          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
 
           # Get REVIEW_COUNT using gh cli
           # If this fails (e.g. no PR context), default to 0
@@ -434,7 +438,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          HEAD_SHA: ${{ needs.analyze-changes.outputs.head-sha }}
+          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
           if [ -f "review_result.json" ]; then
             # Extract the original comment
@@ -553,7 +557,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Gemini Code Review',
-              head_sha: '${{ needs.analyze-changes.outputs.head-sha || github.event.pull_request.head.sha }}',
+              head_sha: '${{ inputs.head_sha || github.event.pull_request.head.sha }}',
               status: 'completed',
               conclusion: 'skipped',
               output: {

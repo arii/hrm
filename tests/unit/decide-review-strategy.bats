@@ -47,7 +47,7 @@ setup() {
   assert_output "skip-reason" ""
 }
 
-@test "should succeed on manual override even if SHAs are missing" {
+@test "should fail fast on manual override if SHAs are missing" {
   export TRIGGER_EVENT="comment"
   export COMMENT_BODY="@gemini-bot"
   export BASE_SHA=""
@@ -57,11 +57,8 @@ setup() {
 
   run_script
 
-  [ "$status" -eq 0 ]
-  assert_output "needs-review" "true"
-  assert_output "skip-reason" ""
-  assert_output "base-sha" "HEAD^"
-  assert_output "head-sha" "HEAD"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"BASE_SHA or HEAD_SHA could not be resolved. Aborting."* ]]
 }
 
 @test "should trigger review on manual override (workflow_dispatch)" {
