@@ -34,8 +34,6 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
-        // Stabilize background for VRT by making it opaque
-        el.style.backgroundColor = 'rgb(0, 0, 0)'
         // Pause any CSS animations/transitions specifically on this element
         el.style.animationPlayState = 'paused'
         el.style.transition = 'none'
@@ -129,17 +127,12 @@ test.describe('Component-Specific VRT', () => {
     await selectorButton.click()
 
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
-    const menuPaper = dashboardPage.getByTestId(
-      'spotify-device-selector-menu-paper'
-    )
     await expect(menu).toBeVisible()
-    await expect(menuPaper).toBeVisible()
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 
-    // Snapshot the Paper element directly to avoid noise from the outer Menu container
-    await takeScreenshot(menuPaper, 'spotify-device-selector-menu.png', {
+    await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })
