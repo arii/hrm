@@ -80,6 +80,8 @@ jobs:
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       skip-reason: ${{ steps.decision.outputs.skip-reason }}
+      base_sha: ${{ steps.fetch-shas.outputs.base_sha }}
+      head_sha: ${{ steps.fetch-shas.outputs.head_sha }}
     steps:
       - name: Install jq
         run: |
@@ -100,18 +102,23 @@ jobs:
           BASE_SHA="${{ inputs.base_sha || github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ inputs.head_sha || github.event.pull_request.head.sha }}"
           if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
-            PR_DATA=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid) || {
-              echo "::error::Failed to fetch PR data for PR #$PR_NUMBER"
-              exit 1
-            }
-            FETCHED_BASE=$(echo "$PR_DATA" | jq -r .baseRefOid)
-            FETCHED_HEAD=$(echo "$PR_DATA" | jq -r .headRefOid)
-            [ -z "$BASE_SHA" ] && BASE_SHA="$FETCHED_BASE"
-            [ -z "$HEAD_SHA" ] && HEAD_SHA="$FETCHED_HEAD"
+            if PR_DATA=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid 2>/dev/null); then
+              FETCHED_BASE=$(echo "$PR_DATA" | jq -r .baseRefOid)
+              FETCHED_HEAD=$(echo "$PR_DATA" | jq -r .headRefOid)
+              if [ -z "$BASE_SHA" ] && [ "$FETCHED_BASE" != "null" ]; then
+                BASE_SHA="$FETCHED_BASE"
+              fi
+              if [ -z "$HEAD_SHA" ] && [ "$FETCHED_HEAD" != "null" ]; then
+                HEAD_SHA="$FETCHED_HEAD"
+              fi
+            else
+              echo "::warning::Failed to fetch PR data for PR #$PR_NUMBER; SHAs will be empty"
+            fi
           fi
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "null" ] || [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" = "null" ]; then
-            echo "::error::Could not resolve BASE_SHA or HEAD_SHA for PR #$PR_NUMBER"
-            exit 1
+          if [ "$BASE_SHA" = "null" ] || [ "$HEAD_SHA" = "null" ]; then
+            echo "::warning::Could not resolve BASE_SHA or HEAD_SHA for PR #$PR_NUMBER"
+            BASE_SHA=""
+            HEAD_SHA=""
           fi
           echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
@@ -139,8 +146,8 @@ jobs:
     name: Execute Gemini Review
     needs: analyze-changes
     if: |
-      (github.event_name == 'workflow_dispatch' || inputs.trigger_event == 'comment') ||
-      (vars.GEMINI_ENABLE_PR_REVIEW != 'false' && needs.analyze-changes.outputs.needs-review == 'true')
+      github.event_name == 'workflow_dispatch' ||
+      needs.analyze-changes.outputs.needs-review == 'true'
     runs-on: ubuntu-latest
     outputs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
@@ -159,9 +166,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # The PR's base commit SHA, for an accurate diff at the time of branching.
-          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
+          BASE_SHA=${{ needs.analyze-changes.outputs.base_sha || inputs.base_sha || github.event.pull_request.base.sha }}
           # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
-          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head_sha || inputs.head_sha || github.event.pull_request.head.sha }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
 
@@ -192,12 +199,12 @@ jobs:
 
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
           echo "PR_AUTHOR=$PR_AUTHOR" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${{ inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "COMMIT_HASH=${{ needs.analyze-changes.outputs.head_sha || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
           # Define SHAs for Gemini Client (Metric Calculation moved to TS)
-          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "BASE_SHA=${{ needs.analyze-changes.outputs.base_sha || inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head_sha || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
 
           # Get REVIEW_COUNT using gh cli
           # If this fails (e.g. no PR context), default to 0
@@ -222,8 +229,8 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || github.event.pull_request.head.sha }}
+            BASE_SHA=${{ needs.analyze-changes.outputs.base_sha || github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head_sha || github.event.pull_request.head.sha }}
 
             # Create temp files
             FILE_LIST=$(mktemp)
@@ -269,7 +276,7 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ needs.analyze-changes.outputs.head_sha || inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
           FINAL_CHECKS_JSON="[]"
           # OPTION 1: Use the pre-compiled failure report from the caller if available and not empty
@@ -416,7 +423,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ needs.analyze-changes.outputs.head_sha || inputs.head_sha || github.event.pull_request.head.sha }}
         run: |
           if [ -f "review_result.json" ]; then
             # Extract the original comment
