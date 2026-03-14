@@ -112,7 +112,7 @@ jobs:
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
           # Otherwise, if we have a PR number, fetch the head and base OIDs from the API.
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid 2>/dev/null || echo "{}")
+            PR_JSON=$(gh pr view "$PR_NUMBER" --json comments,headRefOid,baseRefOid 2>/dev/null || echo "{}")
             REF=$(echo "$PR_JSON" | jq -r '.headRefOid // ""')
             BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefOid // ""')
             if [ -n "$REF" ]; then
@@ -123,6 +123,10 @@ jobs:
             if [ -n "$BASE_REF" ]; then
               echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
             fi
+            # Pass the JSON payload as an environment variable to avoid double fetching
+            echo "PR_JSON<<EOF" >> $GITHUB_ENV
+            echo "$PR_JSON" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
           fi
