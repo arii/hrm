@@ -187,13 +187,11 @@ const SpotifyDisplay = () => {
     [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
   )
 
-  // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
     lastUserInteractionRef.current = Date.now()
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
   }
 
-  // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
     lastUserInteractionRef.current = Date.now()
     sendVolumeCommand(newVolume)
