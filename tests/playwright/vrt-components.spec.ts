@@ -42,11 +42,13 @@ test.describe('Component-Specific VRT', () => {
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
 
-    // Mask the circular progress to avoid flakes from small animation differences
-    // or rendering variations of the spinner itself.
+    // Mask the animated progress circle as it's highly flaky in VRT
+    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
+
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      mask: [loadingIndicator.locator('.MuiCircularProgress-root')],
-      maxDiffPixelRatio: 0.2,
+      screenshotOptions: {
+        mask: [progress],
+      },
     })
   })
 
@@ -132,7 +134,6 @@ test.describe('Component-Specific VRT', () => {
     await checkAccessibility(dashboardPage)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.15,
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })
