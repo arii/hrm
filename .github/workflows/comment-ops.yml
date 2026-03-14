@@ -90,7 +90,7 @@ jobs:
             exit 1
           fi
 
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          EOF="EOF-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           echo "task<<$EOF" >> $GITHUB_OUTPUT
           echo "$TASK" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
@@ -144,7 +144,6 @@ jobs:
     if: github.event.issue.pull_request && needs.router.outputs.is_review_issues == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      trigger_event: 'comment'
       pr_number: ${{ format('{0}', github.event.issue.number) }}
       run_id: ${{ needs.prepare-review-issues-manual.outputs.run_id }}
     secrets:

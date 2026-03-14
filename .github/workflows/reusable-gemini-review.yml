@@ -28,15 +28,15 @@ on:
         required: false
         type: string
       pr_number:
-        description: 'PR Number (override for workflow_dispatch)'
+        description: 'PR Number'
         required: false
         type: string
       base_sha:
-        description: 'Base SHA (override for workflow_dispatch)'
+        description: 'Base SHA'
         required: false
         type: string
       head_sha:
-        description: 'Head SHA (override for workflow_dispatch)'
+        description: 'Head SHA'
         required: false
         type: string
     secrets:
