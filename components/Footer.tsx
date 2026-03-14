@@ -13,17 +13,10 @@ export default function Footer() {
       sx={{
         mt: 'auto',
         textAlign: 'center',
+        py: 3,
         borderTop: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'background.paper',
-        height: 56,
-        boxSizing: 'border-box',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 0,
-        m: 0,
       }}
     >
       <Typography

@@ -26,11 +26,11 @@ import { getSpotifyMasks, getDynamicContentMasks, waitForFontsLoaded } from '.'
  * @property {number} maxDiffPixelRatio - Allowed ratio of differing pixels.
  */
 export const SCREENSHOT_OPTIONS = {
-  fullPage: false,
+  fullPage: true,
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.1, // Increased to 0.1 to match playwright.config.ts and reduce flakiness
+  maxDiffPixelRatio: 0.02,
 }
 
 /**
@@ -151,7 +151,7 @@ export async function takeDashboardScreenshot(
       page.getByTestId('footer'),
       page.getByTestId('bottom-nav-bar'),
     ],
-    maxDiffPixelRatio: 0.2, // Increased for stability in complex dashboard states
+    maxDiffPixelRatio: 0.02,
   })
 }
 
