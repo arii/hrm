@@ -30,10 +30,14 @@ const envSchema = z
         return val === true
       }, z.boolean())
       .default(false),
-    NEXT_PUBLIC_API_URL: z
-      .preprocess((val) => (val === '' ? undefined : val), z.string().url().optional()),
-    NEXT_PUBLIC_WS_URL: z
-      .preprocess((val) => (val === '' ? undefined : val), z.string().url().optional()),
+    NEXT_PUBLIC_API_URL: z.preprocess(
+      (val) => (val === '' ? undefined : val),
+      z.string().url().optional()
+    ),
+    NEXT_PUBLIC_WS_URL: z.preprocess(
+      (val) => (val === '' ? undefined : val),
+      z.string().url().optional()
+    ),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
