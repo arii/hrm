@@ -13,7 +13,6 @@ set -e
 : "${PR_NUMBER:?}"
 : "${PR_QUALITY_RESULT:?}"
 
-# Optional variables (may be missing in some trigger contexts)
 BASE_SHA="${BASE_SHA:-}"
 HEAD_SHA="${HEAD_SHA:-}"
 COMMENT_BODY="${COMMENT_BODY:-}"
@@ -67,30 +66,24 @@ if [ -z "$HEAD_SHA" ]; then
   HEAD_SHA="HEAD"
 fi
 
-# Check 1: Manual Override (PRIORITIZED)
-# Bypasses all other checks including global enablement.
-# Matches @bot-handle at start of string or after space, case-insensitively.
-if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
-  echo "::info::Manual review triggered via comment. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-  exit 0
-elif [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
-  echo "::info::Manual review triggered via UI/force. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-  exit 0
-fi
-
 # Check 0: Gemini Review Enablement
 if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
   echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
   echo "needs-review=false" >> "$GITHUB_OUTPUT"
   echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
+# Check 1: Manual Override
+# Bypasses all other checks except global enablement.
+# Matches @bot-handle at start of string or after space, case-insensitively.
+if { [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; } || \
+   [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
+  echo "::info::Manual review triggered. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
@@ -142,7 +135,6 @@ if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
       SKIP_REASON="static analysis failures only (knip/lint/build)"
     fi
   fi
-# Check 5: New Pull Request
 elif [[ "$TRIGGER_EVENT" == "pull_request" && "$ACTION_TYPE" == "opened" ]]; then
   NEEDS_REVIEW="true"
   SKIP_REASON=""
