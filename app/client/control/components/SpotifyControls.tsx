@@ -45,6 +45,14 @@ const SpotifyControls = () => {
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
 
   const hrmDevice = useMemo(
     () =>
@@ -200,8 +208,8 @@ const SpotifyControls = () => {
         case 'TRANSFER_PLAYBACK':
           if (deviceId) {
             executeSpotify('TRANSFER_PLAYBACK', { deviceId })
-            // Ensure loading state resets on timeout if the command fails/is ignored.
-            setTimeout(() => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            timeoutRef.current = setTimeout(() => {
               setIsConnecting(false)
             }, 3000)
           }
