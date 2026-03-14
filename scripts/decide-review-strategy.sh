@@ -11,8 +11,8 @@ set -e
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
-: "${BASE_SHA:?}"
-: "${HEAD_SHA:?}"
+: "${BASE_SHA:-}"
+: "${HEAD_SHA:-}"
 : "${PR_QUALITY_RESULT:?}"
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
@@ -139,38 +139,42 @@ else
     fi
 
     if [ -z "$LAST_REVIEWED_SHA" ]; then
+      NEEDS_REVIEW="true"
+      SKIP_REASON=""
+    else
+      if [ -z "$HEAD_SHA" ] || [ -z "$BASE_SHA" ]; then
+        # SHAs are required for commit comparison but were not provided; default to review needed.
         NEEDS_REVIEW="true"
         SKIP_REASON=""
-    else
-        if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
-            SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
-            NEEDS_REVIEW="false"
-        else
-            # Check for substantial code changes since the last review.
-            if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-                CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+      elif [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
+        SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
+        NEEDS_REVIEW="false"
+      else
+        # Check for substantial code changes since the last review.
+        if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
+          CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
+          SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
 
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
-            else
-                # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
-                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-                    SKIP_REASON="no significant code changes from base"
-                    NEEDS_REVIEW="false"
-                else
-                    NEEDS_REVIEW="true"
-                    SKIP_REASON=""
-                fi
-            fi
+          if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+            SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+            NEEDS_REVIEW="false"
+          else
+            NEEDS_REVIEW="true"
+            SKIP_REASON=""
+          fi
+        else
+          # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+          if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+            SKIP_REASON="no significant code changes from base"
+            NEEDS_REVIEW="false"
+          else
+            NEEDS_REVIEW="true"
+            SKIP_REASON=""
+          fi
         fi
+      fi
     fi
   fi
 fi

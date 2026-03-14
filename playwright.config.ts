@@ -71,9 +71,8 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: false,
-  // CI uses a single worker to prevent state pollution in the shared backend.
-  workers: process.env.CI ? 1 : 1,
-  timeout: 45 * 1000, // Global test timeout (45s) - Increased to accommodate CI variance
+  workers: process.env.CI ? 2 : 1,
+  timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -85,7 +84,7 @@ export default defineConfig({
   expect: {
     timeout: 5000, // Assertions fail after 5s
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.15, // Relaxed to 0.15 for stability in CI
+      maxDiffPixelRatio: 0.1, // Relaxed to 0.1 for stability (0.02 was too flaky)
     },
   },
 

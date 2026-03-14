@@ -73,14 +73,10 @@ export async function mockMultipleHrDevices(
 ): Promise<void> {
   await page.evaluate((payload) => {
     // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    if (window.__TEST_CONTROLS__) {
-      window.__TEST_CONTROLS__.dispatch({
-        type: 'HRM_UPDATE',
-        payload,
-      })
-    } else {
-      console.warn('__TEST_CONTROLS__ not found. mockMultipleHrDevices failed.')
-    }
+    window.__TEST_CONTROLS__?.dispatch({
+      type: 'HRM_UPDATE',
+      payload,
+    })
   }, devices)
 }
 
