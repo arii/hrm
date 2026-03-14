@@ -91,6 +91,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch PR SHAs
+        id: fetch-shas
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
+        run: |
+          BASE_SHA="${{ inputs.base_sha || github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ inputs.head_sha || github.event.pull_request.head.sha }}"
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            PR_DATA=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid) || {
+              echo "::error::Failed to fetch PR data for PR #$PR_NUMBER"
+              exit 1
+            }
+            FETCHED_BASE=$(echo "$PR_DATA" | jq -r .baseRefOid)
+            FETCHED_HEAD=$(echo "$PR_DATA" | jq -r .headRefOid)
+            [ -z "$BASE_SHA" ] && BASE_SHA="$FETCHED_BASE"
+            [ -z "$HEAD_SHA" ] && HEAD_SHA="$FETCHED_HEAD"
+          fi
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "null" ] || [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" = "null" ]; then
+            echo "::error::Could not resolve BASE_SHA or HEAD_SHA for PR #$PR_NUMBER"
+            exit 1
+          fi
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Decide Review Strategy
         id: decision
         env:
@@ -98,8 +123,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ steps.fetch-shas.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.fetch-shas.outputs.head_sha }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
