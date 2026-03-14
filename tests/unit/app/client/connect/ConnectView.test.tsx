@@ -53,7 +53,7 @@ describe('ConnectView', () => {
     connectionStatus: 'Connected',
     bluetoothConnected: false,
     hasStarted: false,
-    isResetting: false,
+    onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
@@ -77,7 +77,7 @@ describe('ConnectView', () => {
     expect(resetButton).toBeEnabled()
   })
 
-  it('calls onForgetDevice when the reset button is clicked', async () => {
+  it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
@@ -86,6 +86,7 @@ describe('ConnectView', () => {
 
     await waitFor(() => {
       expect(mockProps.onForgetDevice).toHaveBeenCalled()
+      expect(mockProps.onReset).toHaveBeenCalled()
     })
   })
 

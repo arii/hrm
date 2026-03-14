@@ -26,11 +26,11 @@ import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
  * @property {number} maxDiffPixelRatio - Allowed ratio of differing pixels.
  */
 export const SCREENSHOT_OPTIONS = {
-  fullPage: false,
+  fullPage: true,
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.15, // Default threshold for VRT stability in CI variance
+  maxDiffPixelRatio: 0.02,
 }
 
 /**
