@@ -42,8 +42,6 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
-    page.locator(VRT_MASK_SELECTORS.spotifyInitializingSpinner),
-    page.locator(VRT_MASK_SELECTORS.spotifyConnectingSpinner),
     page.locator(VRT_MASK_SELECTORS.globalLoadingSpinner),
     page.locator(VRT_MASK_SELECTORS.loadingIndicator),
   ]
