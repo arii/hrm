@@ -70,10 +70,6 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
-    await waitForPageReady(dashboardPage)
-
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
         json: {
@@ -81,6 +77,10 @@ test.describe('Component-Specific VRT', () => {
         },
       })
     })
+
+    // Ensure we are in native mode for this test
+    await dashboardPage.goto('/?native=true')
+    await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
