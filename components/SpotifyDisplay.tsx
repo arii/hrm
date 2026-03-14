@@ -19,7 +19,7 @@ import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
-import { SPOTIFY_BRAND_COLOR, SYNC_LOCK_DURATION } from '@/constants/spotify'
+import { SYNC_LOCK_DURATION } from '@/constants/spotify'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 import { useSyncLock } from '@/hooks/useSyncLock'
 
@@ -425,7 +425,6 @@ const SpotifyDisplay = () => {
             onToggleMute={handleToggleMute}
             showValue={true}
             disabled={!hasActiveDevice}
-            sliderColor={SPOTIFY_BRAND_COLOR}
           />
           <SpotifyDeviceSelector
             availableDevices={spotifyData.devices || []}
