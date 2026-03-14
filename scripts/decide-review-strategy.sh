@@ -11,8 +11,8 @@ set -e
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
-: "${BASE_SHA:?}"
-: "${HEAD_SHA:?}"
+: "${BASE_SHA:-}"
+: "${HEAD_SHA:-}"
 : "${PR_QUALITY_RESULT:?}"
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
@@ -122,6 +122,15 @@ else
   # Check 6: Re-review based on new changes
   # This handles subsequent pushes to an already-open PR.
   echo "::info::Analyzing for re-review..."
+
+  if [ -z "${BASE_SHA}" ]; then
+    echo "::warning::BASE_SHA is not set. Skipping diff-related checks."
+    NEEDS_REVIEW="true"
+    SKIP_REASON=""
+    echo "needs-review=$NEEDS_REVIEW" >> "$GITHUB_OUTPUT"
+    echo "skip-reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"
+    exit 0
+  fi
 
   # Use the AI review bot's username to find the last review comment.
   LAST_COMMENT_BODY=$(gh pr view "$PR_NUMBER" --json comments | jq -r --arg bot_user "$BOT_USERNAME" '.comments | map(select(.author.login? == $bot_user and ((.body // "") | test("[0-9a-f]{7,40}|Review|Suggested|Failed|commit|analysis"; "i")))) | .[-1].body // ""')
