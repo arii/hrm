@@ -29,6 +29,47 @@ FORCE_REVIEW="${FORCE_REVIEW:-false}"
 NEEDS_REVIEW="false"
 SKIP_REASON="no criteria met"
 
+# --- 1. Manual Override (PRIORITIZED) ---
+# Check this BEFORE strict parameter validation to allow comment triggers to work
+# even if SHAs are not yet populated in the environment.
+# Matches @bot-handle at start of string or after space, case-insensitively.
+if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
+  echo "::info::Manual review triggered via comment. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+
+  # For manual review, try fetching SHAs if missing
+  if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ] || [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then
+    echo "::info::Fetching PR #$PR_NUMBER metadata for manual review..."
+    set +e
+    PR_DATA=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid 2>/dev/null)
+    set -e
+
+    if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid // ""'); fi
+    if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
+  fi
+
+  # Fallbacks
+  if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA="HEAD^"; fi
+  if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA="HEAD"; fi
+
+  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+  exit 0
+elif [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
+  echo "::info::Manual review triggered via UI/force. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+
+  # Fallbacks
+  if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA="HEAD^"; fi
+  if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA="HEAD"; fi
+
+  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
 # --- Main Logic ---
 
 # Fetch PR metadata once (comments + Ref OIDs) to reduce API calls and latency.
@@ -58,32 +99,13 @@ if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then BASE_SHA=$(echo "$PR_DA
 if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid // ""'); fi
 
 # Address edge case: If API failed and inputs were empty, ensure SHAs are not empty
-if [ -z "$BASE_SHA" ]; then
+if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "null" ]; then
   echo "::warning::BASE_SHA is empty, falling back to HEAD^"
   BASE_SHA="HEAD^"
 fi
-if [ -z "$HEAD_SHA" ]; then
+if [ -z "$HEAD_SHA" ] || [ "$HEAD_SHA" == "null" ]; then
   echo "::warning::HEAD_SHA is empty, falling back to HEAD"
   HEAD_SHA="HEAD"
-fi
-
-# Check 1: Manual Override (PRIORITIZED)
-# Bypasses all other checks including global enablement.
-# Matches @bot-handle at start of string or after space, case-insensitively.
-if [[ "$TRIGGER_EVENT" == "comment" ]] && echo "$COMMENT_BODY" | grep -qiE "(^|[[:space:]])(@gemini-bot|@jules)"; then
-  echo "::info::Manual review triggered via comment. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-  exit 0
-elif [[ "$TRIGGER_EVENT" == "workflow_dispatch" ]] || [[ "$FORCE_REVIEW" == "true" ]]; then
-  echo "::info::Manual review triggered via UI/force. Bypassing all checks."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
-  echo "base-sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-  echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-  exit 0
 fi
 
 # Check 0: Gemini Review Enablement
