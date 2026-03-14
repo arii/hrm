@@ -46,7 +46,7 @@ test.describe('Component-Specific VRT', () => {
     // or rendering variations of the spinner itself.
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
       mask: [loadingIndicator.locator('.MuiCircularProgress-root')],
-      maxDiffPixelRatio: 0.2,
+      maxDiffPixelRatio: 0.02,
     })
   })
 
@@ -132,7 +132,7 @@ test.describe('Component-Specific VRT', () => {
     await checkAccessibility(dashboardPage)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.15,
+      maxDiffPixelRatio: 0.02,
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })
