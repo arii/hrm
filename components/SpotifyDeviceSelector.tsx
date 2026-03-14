@@ -50,8 +50,9 @@ const SpotifyDeviceSelector = ({
         }}
         data-testid="spotify-device-selector-menu"
         PaperProps={{
+          // @ts-expect-error - data-testid is not in MUI's PaperProps type but is supported at runtime
           'data-testid': 'spotify-device-selector-menu-paper',
-        } as any}
+        }}
       >
         {availableDevices.length > 0 ? (
           availableDevices.map((device) => (
