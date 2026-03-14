@@ -12,11 +12,11 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
-        p: 0,
-        m: 0,
         height: 54,
         minHeight: 54,
         maxHeight: 54,
+        p: 0,
+        m: 0,
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
