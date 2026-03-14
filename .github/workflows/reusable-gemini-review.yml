@@ -175,9 +175,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The PR's base commit SHA, for an accurate diff at the time of branching.
           BASE_SHA=${{ needs.analyze-changes.outputs.base-sha }}
-          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
           HEAD_SHA=${{ inputs.last_non_empty_commit || needs.analyze-changes.outputs.head-sha }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
