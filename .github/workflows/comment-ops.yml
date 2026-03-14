@@ -116,7 +116,7 @@ jobs:
     uses: ./.github/workflows/gemini-coder.yml
     with:
       task_description: ${{ needs.prepare-coder.outputs.task }}
-      branch_name: "ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}"
+      branch_name: 'ai/comment-task-${{ github.event.issue.number }}-${{ github.run_id }}'
     secrets: inherit
 
   prepare-review-issues-manual:
@@ -217,6 +217,8 @@ jobs:
               '| `@gemini-triage` | Run Issue Triage |\n' +
               '| `@gemini-coder <task>` | Generate Code |\n' +
               '| `@create-review-issues` | Create issues from review (PR only) |\n' +
+              '| `@jules-new` | Create Jules Session (PR only) |\n' +
+              '| `@jules-delete` | Delete Jules Session (PR only) |\n' +
               '| `@gemini-help` | Show this help message |\n' +
               '| `@pr-squash` | Squash PR commits (PR only) |\n' +
               '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
