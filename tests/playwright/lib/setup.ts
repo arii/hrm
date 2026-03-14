@@ -245,6 +245,10 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
  * CSS injected into pages during VRT to disable animations and stabilize layout.
  */
 export const STABILIZATION_CSS = `
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
   .MuiCircularProgress-root, .MuiSkeleton-root, [role="progressbar"] {
     animation: none !important;
     transition: none !important;

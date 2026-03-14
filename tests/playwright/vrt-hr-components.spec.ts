@@ -64,38 +64,35 @@ test.describe('Visual Regression Tests', () => {
   test.afterEach(async () => {
     // Clear mock HR devices to prevent state pollution between tests
     await mockMultipleHrDevices(dashboardPage, [])
+    // Wait for the UI to reflect the cleared state to prevent pollution
+    await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
+      timeout: 7000,
+    })
   })
 
   test.describe('HR-Related Components', () => {
-    // Reset devices after each test to prevent state pollution
-    test.afterEach(async () => {
-      await mockMultipleHrDevices(dashboardPage, [])
-      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0)
-    })
-
     test('dashboard with HR data', async () => {
-      // Ensure mock page is ready to send data
+      // 1. Ensure a clean start by verifying no HR tiles exist
+      await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
+        timeout: 5000,
+      })
+
+      // 2. Ensure mock page is ready to send data
       await expect(mockPage.getByLabel('Current BPM')).toBeVisible()
 
-      // Set value and zone
+      // 3. Set value and zone
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
-      // Wait a moment for the initial packet to be sent via WebSocket
-      await mockPage.waitForTimeout(500)
+      // 4. Wait for HR tile and data to appear on dashboard
+      // Using a stronger assertion with a generous timeout for CI
+      const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
+      await expect(hrTile).toBeVisible({ timeout: 15000 })
 
-      // Wait for HR tile and data to appear on dashboard
-      await expect(
-        dashboardPage.getByTestId('hr-tile-card').first()
-      ).toBeVisible()
-
-      // Verify BPM value with a retry-friendly assertion
-      await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
-        /155/,
-        {
-          timeout: 10000,
-        }
-      )
+      // 5. Verify BPM value with a retry-friendly assertion
+      await expect(hrTile.getByTestId('bpm-value')).toHaveText(/155/, {
+        timeout: 15000,
+      })
 
       // Assert HR tile height is within limits
       const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
