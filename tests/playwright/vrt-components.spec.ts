@@ -34,6 +34,8 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
+        // Force a solid background color to prevent underlying content shifts from causing VRT failures
+        el.style.backgroundColor = 'rgb(0, 0, 0)'
         // Pause any CSS animations/transitions specifically on this element
         el.style.animationPlayState = 'paused'
         el.style.transition = 'none'
@@ -126,13 +128,13 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
-    await expect(menu).toBeVisible()
+    const paper = dashboardPage.getByTestId('spotify-device-selector-paper')
+    await expect(paper).toBeVisible()
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
+    await checkAccessibility(paper)
 
-    await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
+    await takeScreenshot(paper, 'spotify-device-selector-menu.png', {
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })

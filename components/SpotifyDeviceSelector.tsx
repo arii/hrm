@@ -49,6 +49,9 @@ const SpotifyDeviceSelector = ({
           horizontal: 'right',
         }}
         data-testid="spotify-device-selector-menu"
+        PaperProps={{
+          'data-testid': 'spotify-device-selector-paper',
+        } as any}
       >
         {availableDevices.length > 0 ? (
           availableDevices.map((device) => (
