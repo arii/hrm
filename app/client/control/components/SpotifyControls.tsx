@@ -111,7 +111,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices, isLocked]) // Rely on devices update to trigger sync
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {

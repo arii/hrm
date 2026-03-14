@@ -189,18 +189,16 @@ const SpotifyDisplay = () => {
 
   const handleVolumeChange = (newVolume: number) => {
     updateInteraction()
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
+    dispatch({ type: 'SET_VOLUME', payload: newVolume })
   }
 
   const handleVolumeChangeCommitted = (newVolume: number) => {
     updateInteraction()
     sendVolumeCommand(newVolume)
-    dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
+    dispatch({ type: 'SET_SLIDING', payload: false })
   }
 
-  // Handler for the VolumeSlider's mute button
   const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
     const newMutedState = !isMuted
     const newVolume = newMutedState
       ? 0
@@ -208,8 +206,8 @@ const SpotifyDisplay = () => {
         ? state.lastVolume
         : 50
 
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
-    sendVolumeCommand(newVolume) // Send command with the new volume
+    dispatch({ type: 'TOGGLE_MUTE' })
+    sendVolumeCommand(newVolume)
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
   // Effect to auto-select the active device
