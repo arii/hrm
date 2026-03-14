@@ -34,7 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ inputs.pr_number || github.event.pull_request.number }}/head
           fetch-depth: 0
 
       - name: Setup Environment
@@ -265,10 +264,10 @@ jobs:
             try {
               let rawData = fs.readFileSync('pr_description.json', 'utf8');
 
-              // Extract JSON from markdown code blocks if present
-              const jsonMatch = rawData.match(/```(?:json)?\s*([\s\S]*?)```/);
-              if (jsonMatch) {
-                rawData = jsonMatch[1].trim();
+              // Extract JSON from markdown code blocks if present (strip leading/trailing fences only)
+              const trimmed = rawData.trim();
+              if (trimmed.startsWith('```')) {
+                rawData = trimmed.replace(/^```(?:json)?\s*/, '').replace(/\s*```\s*$/, '');
               }
 
               // Try to parse as JSON, handling potential control characters
