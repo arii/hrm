@@ -51,29 +51,25 @@ jobs:
           fi
       - name: Acknowledge command
         uses: actions/github-script@v6
-        env:
-          COMMENT_ID: ${{ inputs.comment_id }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: Number(process.env.COMMENT_ID),
+              comment_id: ${{ inputs.comment_id }},
               content: 'rocket'
             });
 
       - name: Get PR data
         id: pr_data
         uses: actions/github-script@v6
-        env:
-          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
             const response = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: Number(process.env.PR_NUMBER)
+              pull_number: ${{ inputs.pr_number }}
             });
             core.setOutput('head_ref', response.data.head.ref);
             core.setOutput('base_ref', response.data.base.ref);
@@ -154,35 +150,30 @@ jobs:
       - name: Handle Rebase Failure
         if: steps.squash_rebase.outcome == 'failure'
         uses: actions/github-script@v6
-        env:
-          COMMENT_ID: ${{ inputs.comment_id }}
-          PR_NUMBER: ${{ inputs.pr_number }}
-          BASE_REF: ${{ steps.pr_data.outputs.base_ref }}
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: Number(process.env.COMMENT_ID),
+              comment_id: ${{ inputs.comment_id }},
               content: 'confused'
             });
+
+            const footer = '\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| `@gemini-bot` | Run AI Code Review (PR only) |\n| `@gemini-triage` | Run Issue Triage |\n| `@gemini-coder <task>` | Generate Code |\n| `@create-review-issues` | Create issues from review (PR only) |\n| `@gemini-help` | Show this help message |\n| `@pr-squash` | Squash PR commits (PR only) |\n| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.PR_NUMBER),
-              body: `❌ Automatic squash and rebase failed. The branch has conflicts with \`${process.env.BASE_REF}\`. Please resolve the conflicts manually and try again.`
+              issue_number: ${{ inputs.pr_number }},
+              body: '❌ Automatic squash and rebase failed. The branch has conflicts with `${{ steps.pr_data.outputs.base_ref }}`. Please resolve the conflicts manually and try again.' + footer
             });
 
       - name: Success
         if: steps.squash_rebase.outcome == 'success'
         uses: actions/github-script@v6
-        env:
-          COMMAND: ${{ steps.command.outputs.command }}
-          COMMENT_ID: ${{ inputs.comment_id }}
-          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           script: |
-            const command = process.env.COMMAND;
+            const command = '${{ steps.command.outputs.command }}';
             let messageBody;
 
             if (command === 'squash-rebase') {
@@ -191,17 +182,19 @@ jobs:
               messageBody = '✅ Commits squashed successfully!';
             }
 
+            const footer = '\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| `@gemini-bot` | Run AI Code Review (PR only) |\n| `@gemini-triage` | Run Issue Triage |\n| `@gemini-coder <task>` | Generate Code |\n| `@create-review-issues` | Create issues from review (PR only) |\n| `@gemini-help` | Show this help message |\n| `@pr-squash` | Squash PR commits (PR only) |\n| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: Number(process.env.COMMENT_ID),
+              comment_id: ${{ inputs.comment_id }},
               content: 'hooray'
             });
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.PR_NUMBER),
-              body: messageBody
+              issue_number: ${{ inputs.pr_number }},
+              body: messageBody + footer
             });
 
   check-for-changes-after-squash:
