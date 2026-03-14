@@ -166,9 +166,9 @@ jobs:
       needs.execute-review.outputs.review_performed == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       base_sha: ${{ needs.prepare-review-issues.outputs.base_sha }}
-      run_id: ${{ github.run_id }}
+      run_id: ${{ format('{0}', github.run_id) }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -206,9 +206,9 @@ jobs:
     if: github.event.issue.pull_request && needs.router.outputs.is_squash == 'true'
     uses: ./.github/workflows/pr-squash.yml
     with:
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
       comment_body: ${{ github.event.comment.body }}
-      comment_id: ${{ github.event.comment.id }}
+      comment_id: ${{ format('{0}', github.event.comment.id) }}
     secrets: inherit
 
   # Restoring conflict resolution logic from gemini-orchestrator.yml
@@ -251,5 +251,5 @@ jobs:
     with:
       target_branch: ${{ needs.prepare-resolve.outputs.target_branch }}
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
-      pr_number: ${{ github.event.issue.number }}
+      pr_number: ${{ format('{0}', github.event.issue.number) }}
     secrets: inherit
