@@ -253,7 +253,13 @@ export class SpotifyPolling implements SpotifyService {
     const playback = this.state?.playback
 
     if ((command === 'PLAY' || command === 'PAUSE') && playback) {
-      playback.is_playing = command === 'PLAY'
+      this.setState((prevState) => ({
+        ...prevState,
+        playback: {
+          ...prevState.playback,
+          is_playing: command === 'PLAY',
+        },
+      }))
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
     }
 

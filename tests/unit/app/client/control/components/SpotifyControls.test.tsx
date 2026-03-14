@@ -111,7 +111,6 @@ describe('components/SpotifyControls', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
-    jest.useRealTimers()
   })
 
   it('renders Spotify controls with track info', () => {
@@ -177,25 +176,6 @@ describe('components/SpotifyControls', () => {
     })
   })
 
-  const mockSpotifyWithVolume = (vol: number) => ({
-    connectionStatus: 'Connected',
-    spotifyData: createMockSpotifyData({
-      playback: {
-        ...createMockSpotifyData().playback,
-        volume_percent: vol,
-      },
-      devices: [
-        createMockSpotifyDevice({
-          id: '1',
-          is_active: true,
-          volume_percent: vol,
-        }),
-      ],
-    }),
-    sendData: mockSendData,
-    spotifyServiceInitialized: true,
-  })
-
   it('prevents volume snap-back during slider drag', async () => {
     const setVolumeMock = jest.fn()
     const mockUseVolumePreference = useVolumePreference as jest.Mock
@@ -217,7 +197,24 @@ describe('components/SpotifyControls', () => {
     fireEvent.change(volumeSlider, { target: { value: '80' } })
 
     // Simulate WebSocket update (server volume is still 50, or changed to 40)
-    mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 40,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 40,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
 
     rerender(<SpotifyControls />)
 
@@ -264,7 +261,24 @@ describe('components/SpotifyControls', () => {
     // 2. Simulate WebSocket update arriving 1s later (within 2s lock)
     jest.advanceTimersByTime(1000)
 
-    mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 40,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 40,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
 
     rerender(<SpotifyControls />)
 
@@ -275,7 +289,24 @@ describe('components/SpotifyControls', () => {
     jest.advanceTimersByTime(1100)
 
     // Trigger another update to see if it now syncs
-    mockWebSocket.mockReturnValue(mockSpotifyWithVolume(40))
+    mockWebSocket.mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          volume_percent: 40,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: '1',
+            is_active: true,
+            volume_percent: 40,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
 
     rerender(<SpotifyControls />)
 
