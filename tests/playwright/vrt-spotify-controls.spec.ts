@@ -74,6 +74,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Ensure element is visible before screenshot
       await spotifyControls.waitFor({ state: 'visible' })
+
       await takeScreenshot(spotifyControls, 'spotify-controls-logged-out.png')
     })
 

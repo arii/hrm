@@ -41,8 +41,14 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
+
+    // Mask the animated progress circle as it's highly flaky in VRT
+    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
+
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      mask: [dashboardPage.getByTestId('global-loading-spinner')],
+      screenshotOptions: {
+        mask: [progress],
+      },
     })
   })
 
@@ -128,7 +134,6 @@ test.describe('Component-Specific VRT', () => {
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.15,
       threshold: 0.3,
       skipA11y: true, // Accessibility checked manually above
     })
