@@ -1,5 +1,12 @@
 {
-  "review": ["approved", "not approved", "not reviewed", "changes-requested", "ai-reviewed", "ci-failure"],
+  "review": [
+    "approved",
+    "not approved",
+    "not reviewed",
+    "changes-requested",
+    "ai-reviewed",
+    "ci-failure"
+  ],
   "scope_prefix": "scope:",
   "obsolete": [
     "ready-for-approval",

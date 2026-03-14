@@ -49,11 +49,8 @@ const SpotifyDeviceSelector = ({
           horizontal: 'right',
         }}
         data-testid="spotify-device-selector-menu"
-        slotProps={{
-          paper: {
-            // @ts-expect-error - data-testid is not in PaperProps but is passed through
-            'data-testid': 'spotify-device-selector-paper',
-          },
+        PaperProps={{
+          'data-testid': 'spotify-device-selector-menu-paper',
         }}
       >
         {availableDevices.length > 0 ? (

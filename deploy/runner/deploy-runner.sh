@@ -203,8 +203,15 @@ fi
 DOCKER_ARGS+=(
   "-e" "REPO_URL=$REPO_URL"
   "-e" "RUNNER_TOKEN=$RUNNER_TOKEN"
-  "hrm-actions-runner"
 )
+
+# Use host network for DNS resolution if configured
+if [ "${RUNNER_NETWORK_HOST:-false}" = "true" ]; then
+  echo "Using host network for runner container..."
+  DOCKER_ARGS+=("--network=host")
+fi
+
+DOCKER_ARGS+=("hrm-actions-runner")
 
 # Execute the command
 docker run "${DOCKER_ARGS[@]}"
