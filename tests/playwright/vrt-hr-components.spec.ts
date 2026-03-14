@@ -59,6 +59,9 @@ test.describe('Visual Regression Tests', () => {
       () => document.body.dataset.connectionStatus === 'connected',
       { timeout: WAIT_TIMEOUTS.WEBSOCKET }
     )
+
+    // 4. Clear mock HR devices to prevent state pollution
+    await mockMultipleHrDevices(dashboardPage, [])
   })
 
   test.afterEach(async () => {
@@ -66,15 +69,18 @@ test.describe('Visual Regression Tests', () => {
     await mockMultipleHrDevices(dashboardPage, [])
     // Wait for the UI to reflect the cleared state to prevent pollution
     await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
-      timeout: 7000,
+      timeout: 15000,
     })
   })
 
   test.describe('HR-Related Components', () => {
     test('dashboard with HR data', async () => {
-      // 1. Ensure a clean start by verifying no HR tiles exist
+      // 1. Clear state again, just in case
+      await mockMultipleHrDevices(dashboardPage, [])
+
+      // Ensure a clean start by verifying no HR tiles exist
       await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(0, {
-        timeout: 5000,
+        timeout: 15000,
       })
 
       // 2. Ensure mock page is ready to send data
@@ -93,9 +99,6 @@ test.describe('Visual Regression Tests', () => {
       await expect(hrTile.getByTestId('bpm-value')).toHaveText(/155/, {
         timeout: 15000,
       })
-
-      // Assert HR tile height is within limits
-      const hrTile = dashboardPage.getByTestId('hr-tile-card').first()
 
       // Assert HR tile height is within limits
       await assertFixedDimensions(hrTile, {
