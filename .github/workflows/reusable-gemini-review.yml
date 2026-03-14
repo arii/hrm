@@ -107,10 +107,8 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
-          # If head_sha is provided, use it.
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
-          # Otherwise, if we have a PR number, fetch the head and base OIDs from the API.
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             PR_JSON=$(gh pr view "$PR_NUMBER" --json comments,headRefOid,baseRefOid 2>/dev/null || echo "{}")
             REF=$(echo "$PR_JSON" | jq -r '.headRefOid // ""')
@@ -123,7 +121,10 @@ jobs:
             if [ -n "$BASE_REF" ]; then
               echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
             fi
-            echo "$PR_JSON" > pr_context.json
+            EOF_BOUNDARY=$(openssl rand -hex 16)
+            echo "PR_CONTEXT<<$EOF_BOUNDARY" >> $GITHUB_ENV
+            echo "$PR_JSON" >> $GITHUB_ENV
+            echo "$EOF_BOUNDARY" >> $GITHUB_ENV
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
           fi
@@ -176,9 +177,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The PR's base commit SHA, for an accurate diff at the time of branching.
           BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
           HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."

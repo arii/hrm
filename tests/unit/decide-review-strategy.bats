@@ -199,7 +199,7 @@ setup() {
 
   [ "$status" -eq 0 ]
   assert_output "needs-review" "false"
-  assert_output "skip-reason" "GitHub API failure (Exit Code: 1)"
+  assert_output "skip-reason" "GitHub API failure"
 }
 
 # Helper function to assert the output of the script

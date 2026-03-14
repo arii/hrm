@@ -31,24 +31,19 @@ SKIP_REASON="no criteria met"
 
 # --- Main Logic ---
 
-if [ -f "pr_context.json" ]; then
+if [ -n "$PR_CONTEXT" ]; then
   echo "::info::Using pre-fetched PR_JSON payload..."
-  PR_DATA=$(cat "pr_context.json")
+  PR_DATA="$PR_CONTEXT"
 else
   echo "::info::Fetching PR #$PR_NUMBER metadata..."
-  set +e
-  PR_DATA=$(gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid 2> gh_error.log)
-  GH_EXIT_CODE=$?
-  set -e
-
-  if [[ $GH_EXIT_CODE -ne 0 ]]; then
-    echo "::warning::GitHub CLI failed to fetch PR data (Exit Code: $GH_EXIT_CODE)."
+  if ! PR_DATA=$(gh pr view "$PR_NUMBER" --json comments,baseRefOid,headRefOid 2> gh_error.log); then
+    echo "::warning::GitHub CLI failed to fetch PR data."
     cat gh_error.log >&2
 
     # For automated reviews, we fail-closed if the API is unreachable.
     if [[ "$TRIGGER_EVENT" == "pull_request" ]]; then
       echo "needs-review=false" >> "$GITHUB_OUTPUT"
-      echo "skip-reason=GitHub API failure (Exit Code: $GH_EXIT_CODE)" >> "$GITHUB_OUTPUT"
+      echo "skip-reason=GitHub API failure" >> "$GITHUB_OUTPUT"
       exit 0
     fi
     PR_DATA='{"comments":[],"baseRefOid":"","headRefOid":""}'
@@ -117,8 +112,6 @@ if [ -n "$LAST_REVIEW_TIMESTAMP" ]; then
     exit 0
   fi
 fi
-
-echo "::info::Passed initial checks (override, limit, throttling). analyzing review necessity."
 
 # Check 4: Quality Check Failures
 if [[ "$PR_QUALITY_RESULT" != "success" ]]; then
