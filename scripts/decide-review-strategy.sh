@@ -11,8 +11,8 @@ set -e
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
-: "${BASE_SHA:?}"
-: "${HEAD_SHA:?}"
+: "${BASE_SHA:-}"
+: "${HEAD_SHA:-}"
 : "${PR_QUALITY_RESULT:?}"
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
@@ -139,10 +139,14 @@ else
     fi
 
     if [ -z "$LAST_REVIEWED_SHA" ]; then
+      NEEDS_REVIEW="true"
+      SKIP_REASON=""
+    else
+      if [ -z "$HEAD_SHA" ] || [ -z "$BASE_SHA" ]; then
+        # SHAs are required for commit comparison but were not provided; default to review needed.
         NEEDS_REVIEW="true"
         SKIP_REASON=""
-    else
-        if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
+      elif [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
             SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
             NEEDS_REVIEW="false"
         else
