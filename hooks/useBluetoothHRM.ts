@@ -855,7 +855,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         silent: true,
         deviceId: savedDeviceId,
       })
-    } catch (error) {
+    } catch {
       setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
     }
   }, [connectAndStream])

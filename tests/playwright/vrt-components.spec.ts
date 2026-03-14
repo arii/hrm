@@ -5,7 +5,6 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
 } from './lib'
-import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'

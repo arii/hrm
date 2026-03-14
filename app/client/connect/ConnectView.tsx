@@ -190,7 +190,9 @@ export default function ConnectView({
               variant="contained"
               size="large"
               onClick={onConnect}
-              disabled={!data.userName.trim() || !data.userAge.trim() || isDeviceBusy}
+              disabled={
+                !data.userName.trim() || !data.userAge.trim() || isDeviceBusy
+              }
               aria-busy={isDeviceBusy}
             >
               {isDeviceBusy ? (
