@@ -27,13 +27,6 @@ const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-class NoSavedDeviceError extends Error {
-  constructor() {
-    super('No saved device')
-    this.name = 'NoSavedDeviceError'
-  }
-}
-
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
 export const HEARTBEAT_INTERVAL_MS =
@@ -707,7 +700,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           const savedDeviceId = forceDeviceId || Cookies.get('hrm_device_id')
 
           if (silent && !savedDeviceId) {
-            throw new NoSavedDeviceError()
+            logger.debug('No saved device ID for silent connection. Skipping.')
+            return false
           }
 
           logger.info(
@@ -771,13 +765,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!silent) {
           handleConnectionError(error)
         } else {
-          const isNoSavedDevice = error instanceof NoSavedDeviceError
-
-          if (!isNoSavedDevice) {
-            const errorMsg =
-              error instanceof Error ? error.message : String(error)
-            logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-          }
+          const errorMsg =
+            error instanceof Error ? error.message : String(error)
+          logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
 
           // Reset the status to allow for a manual connection attempt.
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
@@ -803,7 +793,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    // 1. Guard against overlapping or redundant attempts
     if (
       statusRef.current === BluetoothConnectionStatus.CONNECTED ||
       isConnecting.current
@@ -811,7 +800,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       return
     }
 
-    // 2. Check for saved device before proceeding
     const savedDeviceId = Cookies.get('hrm_device_id')
     if (!savedDeviceId) {
       logger.debug('No saved device ID for auto-connect. Skipping.')
@@ -819,7 +807,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       return
     }
 
-    // 3. Initiate silent connection
     setConnectionAttempted(true)
     try {
       await connectAndStream(undefined, undefined, {
@@ -827,10 +814,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceId: savedDeviceId,
       })
     } catch (error) {
-      if (!(error instanceof NoSavedDeviceError)) {
-        setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
-      }
-      // Status is already reset in connectAndStream's catch block for silent connections
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
     }
   }, [connectAndStream])
 
