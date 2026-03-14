@@ -28,12 +28,19 @@ test.describe('Component-Specific VRT', () => {
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
     // Force visibility and pause animation for VRT
     await dashboardPage.evaluate(() => {
+      if (window.__TEST_CONTROLS__) {
+        window.__TEST_CONTROLS__.setIsLoading?.(true)
+      }
+    })
+
+    const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
+    await expect(loadingIndicator).toBeVisible()
+
+    await dashboardPage.evaluate(() => {
       const el = document.querySelector(
         '[data-testid="loading-indicator"]'
       ) as HTMLElement
       if (el) {
-        el.style.opacity = '1'
-        el.style.visibility = 'visible'
         // Force an opaque background to prevent pixel leakage from underlying content
         el.style.backgroundColor = 'rgb(0, 0, 0)'
         // Pause any CSS animations/transitions specifically on this element
@@ -41,8 +48,6 @@ test.describe('Component-Specific VRT', () => {
         el.style.transition = 'none'
       }
     })
-    const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
-    await expect(loadingIndicator).toBeVisible()
 
     // Mask the animated progress circle as it's highly flaky in VRT
     const progress = loadingIndicator.getByTestId('loading-indicator-progress')
