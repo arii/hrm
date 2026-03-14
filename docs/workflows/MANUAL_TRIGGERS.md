@@ -4,16 +4,14 @@ This document provides a comprehensive guide for manually invoking Gemini AI wor
 
 ## Summary Table
 
-| Workflow                 | Comment Command         | Workflow Dispatch Input                 | CLI Command                                                                        |
-| :----------------------- | :---------------------- | :-------------------------------------- | :--------------------------------------------------------------------------------- |
-| **PR Review**            | `@gemini-bot`           | `pr_number` (string)                    | `gh workflow run reusable-gemini-review.yml -f pr_number=123`                      |
-| **Issue Triage**         | `@gemini-triage`        | `issue_number` (number)                 | `gh workflow run gemini-triage.yml -f issue_number=456`                            |
-| **Code Generation**      | `@gemini-coder <task>`  | `task_description` (string)             | `gh workflow run gemini-coder.yml -f task_description="..."`                       |
-| **Create Issues**        | `@create-review-issues` | `pr_number` (string), `run_id` (string) | `gh workflow run reusable-create-review-issues.yml -f pr_number=123 -f run_id=...` |
-| **PR Squash**            | `@pr-squash`            | N/A                                     | N/A                                                                                |
-| **Conflict Resolve**     | `@conflict-resolve`     | N/A                                     | N/A                                                                                |
-| **Create Jules Session** | `@jules-new`            | N/A                                     | N/A                                                                                |
-| **Delete Jules Session** | `@jules-delete`         | N/A                                     | N/A                                                                                |
+| Workflow | Comment Command | Workflow Dispatch Input | CLI Command |
+| :--- | :--- | :--- | :--- |
+| **PR Review** | `@gemini-bot` | `pr_number` (string) | `gh workflow run reusable-gemini-review.yml -f pr_number=123` |
+| **Issue Triage** | `@gemini-triage` | `issue_number` (number) | `gh workflow run gemini-triage.yml -f issue_number=456` |
+| **Code Generation** | `@gemini-coder <task>` | `task_description` (string) | `gh workflow run gemini-coder.yml -f task_description="..."` |
+| **Create Issues** | `@create-review-issues` | `pr_number` (string), `run_id` (string) | `gh workflow run reusable-create-review-issues.yml -f pr_number=123 -f run_id=...` |
+| **PR Squash** | `@pr-squash` | N/A | N/A |
+| **Conflict Resolve** | `@conflict-resolve` | N/A | N/A |
 
 ---
 
@@ -22,15 +20,12 @@ This document provides a comprehensive guide for manually invoking Gemini AI wor
 Automated triage analyzes new issues, applies labels, assesses priority, and suggests improved titles/descriptions.
 
 ### Triggering via Comment
-
 Post a comment on any issue:
-
 ```
 @gemini-triage
 ```
 
 ### Triggering via GitHub Actions UI
-
 1. Navigate to **Actions** -> **Gemini Smart Triage**.
 2. Click **Run workflow**.
 3. Enter the **Issue number** to triage.
@@ -42,15 +37,12 @@ Post a comment on any issue:
 Generates an AI-powered code review for a pull request.
 
 ### Triggering via Comment
-
 Post a comment on a pull request:
-
 ```
 @gemini-bot
 ```
 
 ### Triggering via GitHub Actions UI
-
 1. Navigate to **Actions** -> **Reusable Gemini Review**.
 2. Click **Run workflow**.
 3. Enter the **PR number**.
@@ -63,15 +55,12 @@ Post a comment on a pull request:
 Generates a patch and creates a pull request based on a task description.
 
 ### Triggering via Comment
-
 Post a comment on an issue or PR:
-
 ```
 @gemini-coder Implement a new utility for date formatting in lib/utils.ts
 ```
 
 ### Triggering via GitHub Actions UI
-
 1. Navigate to **Actions** -> **Gemini Coder**.
 2. Click **Run workflow**.
 3. Enter the **Task description**.
@@ -84,17 +73,13 @@ Post a comment on an issue or PR:
 Creates follow-up issues for bugs or technical debt identified during an AI review.
 
 ### Triggering via Comment
-
 Post a comment on a pull request:
-
 ```
 @create-review-issues
 ```
-
-_Note: This command uses the artifacts from the current workflow run._
+*Note: This command uses the artifacts from the current workflow run.*
 
 ### Triggering via GitHub Actions UI
-
 1. Navigate to **Actions** -> **Reusable Create Review Issues**.
 2. Click **Run workflow**.
 3. Enter the **PR number**.
@@ -102,33 +87,7 @@ _Note: This command uses the artifacts from the current workflow run._
 
 ---
 
-## 5. Jules Session Management
-
-Jules coding sessions can be initialized or terminated via pull request comments.
-
-### Creating a Session
-
-Post a comment on a pull request:
-
-```
-@jules-new
-```
-
-This command initializes a new coding session by analyzing the pull request context, including the title, body, comments, reviews, and recent git logs.
-
-### Deleting a Session
-
-Post a comment on a pull request:
-
-```
-@jules-delete
-```
-
-This command terminates the active Jules session. It automatically identifies the session to delete by locating the session ID stored in hidden metadata within the pull request's comment history.
-
----
-
-## 6. Cost and Control Guidelines
+## 5. Cost and Control Guidelines
 
 If automatic workflows are disabled via repository variables (e.g., `GEMINI_ENABLE_TRIAGE=false`), manual triggers **will still work**. This allows the team to save costs on routine events while retaining the ability to use AI for specific, high-value tasks.
 

@@ -11,8 +11,8 @@ set -e
 : "${TRIGGER_EVENT:?}"
 : "${ACTION_TYPE:?}"
 : "${PR_NUMBER:?}"
-: "${BASE_SHA:-}"
-: "${HEAD_SHA:-}"
+: "${BASE_SHA:?}"
+: "${HEAD_SHA:?}"
 : "${PR_QUALITY_RESULT:?}"
 # Configuration with defaults
 : "${MAX_COMMENTS:=60}"
@@ -23,7 +23,6 @@ set -e
 : "${QUALITY_GATE_BOT_USERNAMES:=github-actions[bot]}"
 # This variable is optional and may not be present for all event types.
 : "${COMMENT_BODY:=}"
-: "${GEMINI_ENABLE_PR_REVIEW:=true}"
 
 
 # --- Initial State ---
@@ -32,20 +31,20 @@ SKIP_REASON="no criteria met"
 
 # --- Main Logic ---
 
-# Check 1: Manual Override (Highest Priority)
-# A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
-if [[ "$TRIGGER_EVENT" == "comment" && ( "${COMMENT_BODY,,}" == *@gemini-bot* || "${COMMENT_BODY,,}" == *@jules* ) ]]; then
-  echo "::info::Manual review triggered by comment. Bypassing all checks and global toggles."
-  echo "needs-review=true" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=" >> "$GITHUB_OUTPUT"
+# Check 0: Gemini Review Enablement
+if [[ "${GEMINI_ENABLE_PR_REVIEW:-true}" == "false" ]]; then
+  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
+  echo "needs-review=false" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=Gemini review is disabled" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
-# Check 1b: Global Toggle
-if [[ "$GEMINI_ENABLE_PR_REVIEW" == "false" ]]; then
-  echo "::info::Gemini review is disabled via GEMINI_ENABLE_PR_REVIEW."
-  echo "needs-review=false" >> "$GITHUB_OUTPUT"
-  echo "skip-reason=Gemini review is globally disabled" >> "$GITHUB_OUTPUT"
+# Check 1: Manual Override
+# A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
+if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
+  echo "::info::Manual review triggered by comment. Bypassing all checks."
+  echo "needs-review=true" >> "$GITHUB_OUTPUT"
+  echo "skip-reason=" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
@@ -140,42 +139,38 @@ else
     fi
 
     if [ -z "$LAST_REVIEWED_SHA" ]; then
-      NEEDS_REVIEW="true"
-      SKIP_REASON=""
-    else
-      if [ -z "$HEAD_SHA" ] || [ -z "$BASE_SHA" ]; then
-        # SHAs are required for commit comparison but were not provided; default to review needed.
         NEEDS_REVIEW="true"
         SKIP_REASON=""
-      elif [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
-        SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
-        NEEDS_REVIEW="false"
-      else
-        # Check for substantial code changes since the last review.
-        if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
-          CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
-          SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-
-          if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-            SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+    else
+        if [[ "$LAST_REVIEWED_SHA" == "$HEAD_SHA" ]]; then
+            SKIP_REASON="already reviewed this commit ($HEAD_SHA)"
             NEEDS_REVIEW="false"
-          else
-            NEEDS_REVIEW="true"
-            SKIP_REASON=""
-          fi
         else
-          # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
-          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-          SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
-          if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
-            SKIP_REASON="no significant code changes from base"
-            NEEDS_REVIEW="false"
-          else
-            NEEDS_REVIEW="true"
-            SKIP_REASON=""
-          fi
+            # Check for substantial code changes since the last review.
+            if git cat-file -e "$LAST_REVIEWED_SHA" 2>/dev/null; then
+                CHANGED_FILES=$(git diff --name-only "$LAST_REVIEWED_SHA" "$HEAD_SHA")
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+
+                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                    SKIP_REASON="no significant code changes since last review at $LAST_REVIEWED_SHA"
+                    NEEDS_REVIEW="false"
+                else
+                    NEEDS_REVIEW="true"
+                    SKIP_REASON=""
+                fi
+            else
+                # Fallback if the last reviewed SHA is not in the history (e.g., after a force-push).
+                CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+                SIGNIFICANT_COUNT=$( (echo "$CHANGED_FILES" | grep -cvE '(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)' 2>/dev/null || echo 0) | head -n 1)
+                if [[ "$SIGNIFICANT_COUNT" -eq 0 ]]; then
+                    SKIP_REASON="no significant code changes from base"
+                    NEEDS_REVIEW="false"
+                else
+                    NEEDS_REVIEW="true"
+                    SKIP_REASON=""
+                fi
+            fi
         fi
-      fi
     fi
   fi
 fi

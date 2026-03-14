@@ -260,9 +260,9 @@ describe('components/SpotifyControls', () => {
     render(<SpotifyControls />)
 
     await waitFor(() => {
-      // Use test-id to find the device select specifically,
-      // as there are now multiple comboboxes (one for search)
-      const deviceSelect = screen.getByTestId('spotify-device-select')
+      // Check the displayed text in the select component
+      // for MUI components than checking the underlying value attribute.
+      const deviceSelect = screen.getByRole('combobox')
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
     })
   })

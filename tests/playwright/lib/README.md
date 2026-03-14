@@ -246,7 +246,6 @@ For complex scenarios requiring direct interaction with the application's intern
 
 - **Production Only**: Always wrap the `window.__TEST_CONTROLS__` assignment in a `process.env.NODE_ENV !== 'production'` check to ensure these controls are not exposed in the production build.
 - **TypeScript Definitions**: To ensure type safety, you can extend the `Window` interface in a global declaration file (e.g., `types/global.d.ts`):
-
   ```typescript
   export interface TestControls {
     dispatch?: (message: ServerMessage) => void
@@ -259,7 +258,6 @@ For complex scenarios requiring direct interaction with the application's intern
     }
   }
   ```
-
 - **Centralize**: Keep the `__TEST_CONTROLS__` logic in a single, well-defined place within the application to make it easy to manage and discover.
 
 ## Backward Compatibility
