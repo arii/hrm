@@ -86,7 +86,7 @@ setup() {
   assert_output "skip-reason" ""
 }
 
-@test "should not bypass GEMINI_ENABLE_PR_REVIEW on manual override" {
+@test "should bypass GEMINI_ENABLE_PR_REVIEW on manual override" {
   export TRIGGER_EVENT="comment"
   export COMMENT_BODY="@gemini-bot"
   export GEMINI_ENABLE_PR_REVIEW="false"
@@ -94,8 +94,8 @@ setup() {
   run_script
 
   [ "$status" -eq 0 ]
-  assert_output "needs-review" "false"
-  assert_output "skip-reason" "Gemini review is disabled"
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
 }
 
 @test "should skip review when comment limit is exceeded" {

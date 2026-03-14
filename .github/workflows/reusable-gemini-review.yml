@@ -103,22 +103,23 @@ jobs:
       - name: Resolve Checkout Ref
         id: resolve_ref
         env:
-          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
-          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
+          HEAD_SHA_INPUT: ${{ inputs.head_sha }}
         run: |
           if [ -n "$HEAD_SHA_INPUT" ]; then
             echo "ref=$HEAD_SHA_INPUT" >> $GITHUB_OUTPUT
-          elif [ -n "${{ github.event.pull_request.head.sha }}" ]; then
-            # Works for pull_request events
-            echo "ref=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
           elif [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            # Required fallback for issue_comment events
-            REF=$(gh pr view "$PR_NUMBER" --json headRefOid -q '.headRefOid' 2>/dev/null || echo "")
+            PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid 2>/dev/null || echo "{}")
+            REF=$(echo "$PR_JSON" | jq -r '.headRefOid // ""')
+            BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefOid // ""')
             if [ -n "$REF" ]; then
               echo "ref=$REF" >> $GITHUB_OUTPUT
             else
               echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+            fi
+            if [ -n "$BASE_REF" ]; then
+              echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
             fi
           else
             echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
@@ -136,8 +137,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || 'HEAD^' }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
+          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || steps.resolve_ref.outputs.base_ref || 'HEAD^' }}
+          HEAD_SHA: ${{ inputs.head_sha || steps.resolve_ref.outputs.ref || 'HEAD' }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
