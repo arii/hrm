@@ -130,7 +130,7 @@ jobs:
           MAX_COMMENTS: 60
           REVIEW_THROTTLE_MINUTES: 30
           BOT_USERNAME: 'gemini-bot'
-          GEMINI_ENABLE_PR_REVIEW: ${{ vars.GEMINI_ENABLE_PR_REVIEW || 'true' }}
+          GEMINI_ENABLE_PR_REVIEW: ${{ vars.GEMINI_ENABLE_PR_REVIEW }}
         run: |
           chmod +x ./scripts/decide-review-strategy.sh
           ./scripts/decide-review-strategy.sh

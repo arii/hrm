@@ -23,6 +23,18 @@ setup() {
   assert_output "skip-reason" ""
 }
 
+@test "should trigger review on case-insensitive manual override" {
+  export TRIGGER_EVENT="comment"
+  export ACTION_TYPE="created"
+  export COMMENT_BODY="@Gemini-Bot review"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
 @test "should skip review when comment limit is exceeded" {
   export MAX_COMMENTS=1
   export MOCK_GH_COMMENTS_JSON='[{"body":"a"},{"body":"b"}]'

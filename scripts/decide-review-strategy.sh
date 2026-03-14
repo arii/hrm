@@ -34,7 +34,7 @@ SKIP_REASON="no criteria met"
 
 # Check 1: Manual Override (Highest Priority)
 # A manual trigger (e.g., a specific comment) always forces a review, bypassing all other checks.
-if [[ "$TRIGGER_EVENT" == "comment" && ( "$COMMENT_BODY" == *@gemini-bot* || "$COMMENT_BODY" == *@jules* ) ]]; then
+if [[ "$TRIGGER_EVENT" == "comment" && ( "${COMMENT_BODY,,}" == *@gemini-bot* || "${COMMENT_BODY,,}" == *@jules* ) ]]; then
   echo "::info::Manual review triggered by comment. Bypassing all checks and global toggles."
   echo "needs-review=true" >> "$GITHUB_OUTPUT"
   echo "skip-reason=" >> "$GITHUB_OUTPUT"
