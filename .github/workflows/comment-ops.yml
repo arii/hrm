@@ -33,7 +33,9 @@ jobs:
         env:
           BODY: ${{ github.event.comment.body }}
         run: |
-          CMD=$(echo "$BODY" | grep -oiE "(^|[[:space:]])@(gemini-bot|pr-squash|conflict-resolve|gemini-triage|gemini-coder|create-review-issues|gemini-help)" | head -n1 | tr '[:upper:]' '[:lower:]' | xargs)
+          # Extract the command, strictly enforcing it occurs at the start of a line
+          # We use printf for secure variable expansion of arbitrary user input
+          CMD=$(printf "%s\n" "$BODY" | grep -oiE "(^|\r?\n)@(gemini-bot|pr-squash|conflict-resolve|gemini-triage|gemini-coder|create-review-issues|gemini-help)" | head -n1 | tr '[:upper:]' '[:lower:]' | xargs)
           case "$CMD" in
             "@gemini-bot")          echo "is_review=true" >> $GITHUB_OUTPUT ;;
             "@pr-squash")           echo "is_squash=true" >> $GITHUB_OUTPUT ;;
