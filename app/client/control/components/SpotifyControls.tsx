@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -202,7 +202,7 @@ const SpotifyControls = () => {
   )
 
   const sendCommandRef = useRef(sendVolumeCommand)
-  useEffect(() => {
+  useLayoutEffect(() => {
     sendCommandRef.current = sendVolumeCommand
   }, [sendVolumeCommand])
 
