@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Ref parameter intentionally removed to align with default checkout behavior
+          ref: refs/pull/${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}/head
           fetch-depth: 0
 
       - name: Setup Environment
