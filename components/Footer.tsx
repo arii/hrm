@@ -12,7 +12,9 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
-        height: 54,
+        height: '54px',
+        minHeight: '54px',
+        maxHeight: '54px',
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
@@ -22,6 +24,8 @@ export default function Footer() {
         backgroundColor: 'background.paper',
         boxSizing: 'border-box',
         overflow: 'hidden',
+        p: 0,
+        m: 0,
       }}
     >
       <Typography
