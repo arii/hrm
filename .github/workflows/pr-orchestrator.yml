@@ -73,7 +73,6 @@ jobs:
               - 'verification/**'
               - '*.config.*'
               - '*.ts'
-              - 'ecosystem.config.cjs'
               - 'verify_empty_dashboard.py'
 
       - uses: dorny/paths-filter@v3
@@ -107,7 +106,6 @@ jobs:
               - 'verification/**'
               - '*.config.*'
               - '*.ts'
-              - 'ecosystem.config.cjs'
               - 'verify_empty_dashboard.py'
 
       - name: Consolidate Changes

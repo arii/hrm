@@ -409,7 +409,6 @@ jobs:
             scripts/start-production.sh \
             scripts/deploy-artifact.sh \
             scripts/verify-deployment.sh \
-            ecosystem.config.cjs \
             package.json \
             pnpm-lock.yaml \
             .env.local \
