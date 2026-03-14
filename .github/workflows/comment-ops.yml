@@ -292,11 +292,10 @@ jobs:
       - execute-triage
       - execute-coder
       - execute-create-review-issues
-      - create-review-issues
       - execute-help
       - execute-squash
       - execute-resolve
-    if: always() && needs.init-status.result == 'success'
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Determine Final Status
@@ -324,11 +323,6 @@ jobs:
           check_job "Triage" "${{ needs.execute-triage.result }}" "${{ needs.router.outputs.is_triage }}"
           check_job "Coder" "${{ needs.execute-coder.result }}" "${{ needs.router.outputs.is_coder }}"
           check_job "Create Review Issues (Manual)" "${{ needs.execute-create-review-issues.result }}" "${{ needs.router.outputs.is_review_issues }}"
-
-          # create-review-issues is the automatic follow-up to execute-review
-          if [ "${{ needs.router.outputs.is_review }}" == "true" ]; then
-             check_job "Follow-up Issues (Auto)" "${{ needs.create-review-issues.result }}" "true"
-          fi
 
           check_job "Help" "${{ needs.execute-help.result }}" "${{ needs.router.outputs.is_help }}"
           check_job "Squash" "${{ needs.execute-squash.result }}" "${{ needs.router.outputs.is_squash }}"
