@@ -17,7 +17,7 @@ export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
   TEST_READY: 8000,
   /** Default timeout for WebSocket connection */
-  WEBSOCKET: 10000,
+  WEBSOCKET: 5000,
   /** Default timeout for element visibility */
   ELEMENT_VISIBLE: 3000,
   /** Default timeout for network idle */

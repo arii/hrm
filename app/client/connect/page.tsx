@@ -109,8 +109,6 @@ export default function ConnectPage() {
 
   const { showWarning } = useAppSnackbar()
 
-  const [isResetting, setIsResetting] = useState(false)
-
   const {
     connectAndStream,
     autoConnect,
@@ -131,18 +129,6 @@ export default function ConnectPage() {
     onHeartRateUpdate: handleHeartRateUpdate,
     onConnect: handleStartWorkout,
   })
-
-  const handleFullReset = useCallback(async () => {
-    setIsResetting(true)
-    try {
-      await forgetDevice()
-      handleResetWorkout()
-    } catch (error) {
-      logger.error({ error }, 'Full reset failed')
-    } finally {
-      setIsResetting(false)
-    }
-  }, [forgetDevice, handleResetWorkout])
 
   // Automatically start workout or resume when connected to maintain previous behavior
   useEffect(() => {
@@ -173,7 +159,9 @@ export default function ConnectPage() {
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
-        autoConnect()
+        autoConnect().catch(() => {
+          logger.info('Auto-connect failed, user can connect manually')
+        })
       }, 100)
       return () => clearTimeout(timeout)
     }
@@ -227,12 +215,10 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onForgetDevice={handleFullReset}
-      isResetting={isResetting}
+      onForgetDevice={forgetDevice}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       lastPeriodMs={lastPeriodMs}
-      consecutiveSlowPackets={consecutiveSlowPackets}
       currentHR={currentHR}
       hrZoneData={{
         percentage,
