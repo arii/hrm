@@ -47,7 +47,6 @@ const SpotifyControls = () => {
   const hasPendingSendRef = useRef<boolean>(false)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Clear timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
