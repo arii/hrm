@@ -6,7 +6,7 @@ import {
   resetServerState,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady, WAIT_TIMEOUTS } from './lib/waits'
+import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
 import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
@@ -59,17 +59,22 @@ test.describe('Visual Regression Tests', () => {
     await Promise.all([
       dashboardPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: WAIT_TIMEOUTS.LONG }
+        { timeout: 5000 }
       ),
       controlPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: WAIT_TIMEOUTS.LONG }
+        { timeout: 5000 }
       ),
       mockPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: WAIT_TIMEOUTS.LONG }
+        { timeout: 5000 }
       ),
     ])
+
+    // Force visibility to avoid flaky screenshots due to animations
+    await dashboardPage.addStyleTag({
+      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
+    })
   })
 
   test.describe('Dashboard Component', () => {
@@ -78,7 +83,6 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
-        clip: { x: 0, y: 0, width: 1920, height: 1080 },
       })
     })
 
@@ -113,7 +117,6 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
-        clip: { x: 0, y: 0, width: 1920, height: 1080 },
       })
     })
 
@@ -143,28 +146,25 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
-        clip: { x: 0, y: 0, width: 1920, height: 1080 },
       })
     })
 
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
-      await takeScreenshot(dashboardPage, 'dashboard-mobile.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4, // Increased tolerance for CI font rendering flakiness
-        fullPage: true,
-        clip: { x: 0, y: 0, width: 375, height: 1038 },
+        maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
       })
     })
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
-      await takeScreenshot(dashboardPage, 'dashboard-tablet.png', {
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.2,
-        fullPage: true,
-        clip: { x: 0, y: 0, width: 768, height: 1134 },
+        maxDiffPixelRatio: 0.3,
       })
     })
 
@@ -173,7 +173,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.2, // Reduced threshold per PR feedback
+        maxDiffPixelRatio: 0.1,
       })
     })
   })

@@ -18,6 +18,7 @@ test.describe('Spotify Selection Page VRT', () => {
       '/client/spotify-selection'
     )
     await waitForPageReady(dashboardPage)
+
     await takeScreenshot(dashboardPage, 'spotify-selection-page.png')
   })
 })
