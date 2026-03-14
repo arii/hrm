@@ -8,6 +8,9 @@ import TabataTimer from '../services/tabataTimer'
 // This allows various parts of the application to attach test-specific
 // functions to the window object in a type-safe manner.
 export interface TestControls {
+  // From useLoading hook
+  setIsLoading?: (isLoading: boolean) => void
+
   // From useBluetoothHRM hook
   setHrmStatus?: Dispatch<SetStateAction<BluetoothConnectionStatus>>
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
