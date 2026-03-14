@@ -11,7 +11,6 @@ export interface TestControls {
   // From useBluetoothHRM hook
   setHrmStatus?: Dispatch<SetStateAction<BluetoothConnectionStatus>>
   setCustomHrmStatusMessage?: Dispatch<SetStateAction<string | null>>
-  setSignalStatus?: Dispatch<SetStateAction<{ last: number; slow: number }>>
 
   // From WebSocketProvider context
   dispatch?: (message: ServerMessage) => void

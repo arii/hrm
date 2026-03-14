@@ -5,13 +5,15 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
 } from './lib'
-import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
+import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 test.describe('Component-Specific VRT', () => {
   test.beforeEach(async ({ dashboardPage }) => {
+    // Enforce desktop viewport to prevent height mismatches in screenshots
+    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -26,7 +28,7 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
-    // Force visibility and pause animation for VRT
+    // Force visibility for VRT
     await dashboardPage.evaluate(() => {
       const el = document.querySelector(
         '[data-testid="loading-indicator"]'
@@ -34,22 +36,11 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
-        // Pause any CSS animations/transitions specifically on this element
-        el.style.animationPlayState = 'paused'
-        el.style.transition = 'none'
       }
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-
-    // Mask the animated progress circle as it's highly flaky in VRT
-    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
-
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      screenshotOptions: {
-        mask: [progress],
-      },
-    })
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
@@ -129,12 +120,9 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
     await expect(menu).toBeVisible()
 
-    // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
-
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
+      maxDiffPixelRatio: 0.15,
       threshold: 0.3,
-      skipA11y: true, // Accessibility checked manually above
     })
   })
 

@@ -1,4 +1,5 @@
 // components/Spotify/PlaylistSelector.tsx
+import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
@@ -167,13 +168,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         value={selectedPlaylist}
         onChange={(_, newValue) => handlePlaylistSelect(newValue)}
         inputValue={searchQuery}
-        onInputChange={(_, newInputValue, reason) => {
-          if (reason === 'input') {
-            setSearchQuery(newInputValue)
-          } else if (reason === 'clear') {
-            setSearchQuery('')
-          }
-        }}
+        onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -185,7 +180,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               ),
               endAdornment: (
                 <>
-                  {searchLoading ? <CircularProgress size={20} /> : null}
+                  {searchLoading ? (
+                    <CircularProgress size={20} />
+                  ) : searchQuery ? (
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  ) : null}
                   {params.InputProps.endAdornment}
                 </>
               ),
