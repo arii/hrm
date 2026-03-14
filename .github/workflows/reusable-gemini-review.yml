@@ -98,8 +98,8 @@ jobs:
           ACTION_TYPE: ${{ github.event.action }}
           COMMENT_BODY: ${{ inputs.comment_body }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha || 'HEAD^' }}
+          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           PR_QUALITY_RESULT: ${{ inputs.pr_quality_result }}
           MAX_COMMENTS: 60
@@ -134,9 +134,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # The PR's base commit SHA, for an accurate diff at the time of branching.
-          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
+          BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha || 'HEAD^' }}
           # The PR's head commit SHA. If a last_non_empty_commit is provided, use that instead.
-          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
 
           echo "🔍 Generating diff between base commit ($BASE_SHA) and head commit ($HEAD_SHA)..."
 
@@ -171,8 +171,8 @@ jobs:
           echo "PR_BRANCH_NAME=$PR_BRANCH_NAME" >> $GITHUB_ENV
 
           # Define SHAs for Gemini Client (Metric Calculation moved to TS)
-          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          echo "BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha || 'HEAD^' }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}" >> $GITHUB_ENV
 
           # Get REVIEW_COUNT using gh cli
           # If this fails (e.g. no PR context), default to 0
@@ -197,8 +197,8 @@ jobs:
           fi
 
           if [ -z "$SLOP_REPORT" ]; then # If no errors so far
-            BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha }}
-            HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha }}
+            BASE_SHA=${{ inputs.base_sha || github.event.pull_request.base.sha || 'HEAD^' }}
+            HEAD_SHA=${{ inputs.last_non_empty_commit || inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
 
             # Create temp files
             FILE_LIST=$(mktemp)
@@ -244,7 +244,7 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           ARI_PAT: ${{ secrets.ARI_PAT }} # Pass for redaction
           FAILURE_REPORT_JSON: ${{ inputs.failure_report_json }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
         run: |
           FINAL_CHECKS_JSON="[]"
           # OPTION 1: Use the pre-compiled failure report from the caller if available and not empty
@@ -391,7 +391,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
-          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}
         run: |
           if [ -f "review_result.json" ]; then
             # Extract the original comment
@@ -510,7 +510,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'Gemini Code Review',
-              head_sha: '${{ inputs.head_sha || github.event.pull_request.head.sha }}',
+              head_sha: '${{ inputs.head_sha || github.event.pull_request.head.sha || 'HEAD' }}',
               status: 'completed',
               conclusion: 'skipped',
               output: {
