@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   issues: write
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -195,7 +195,7 @@ jobs:
 
       - name: 'Add Reaction to Comment'
         if: success()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -207,15 +207,15 @@ jobs:
             })
       - name: 'Handle Failure'
         if: failure()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const errorMessageNew = `${{ steps.jules_op_new.outputs.error_message || '' }}`;
             const errorMessageDelete = `${{ steps.jules_op_delete.outputs.error_message || '' }}`;
-            const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown error occurred';
+            const errorMessage = errorMessageNew || errorMessageDelete || 'Unknown network or resolution error';
 
-            const body = `Jules operation failed with the following error:\n\n\`\`\`\n${errorMessage}\n\`\`\``;
+            const body = `### ❌ Jules Operation Failed\n\n**Error Details:**\n\`\`\`\n${errorMessage}\n\`\`\`\n\nPlease check the [Action Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.`;
 
             try {
               github.rest.reactions.createForIssueComment({

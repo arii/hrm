@@ -91,7 +91,6 @@ jobs:
       (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') ||
       (vars.GEMINI_ENABLE_CODER != 'false' && github.event.label.name == 'auto-code')
     runs-on: self-hosted
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -331,7 +330,6 @@ jobs:
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: pnpm/action-setup@v4
-
 
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
