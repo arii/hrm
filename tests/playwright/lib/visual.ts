@@ -52,9 +52,25 @@ export async function takeScreenshot(
   await page.evaluate(() => window.scrollTo(0, 0))
 
   // 2. Ensure the height is stable for Locator targets
-  // Wait a small duration to allow browser layout calculations to settle
-  // before capturing the VRT screenshot to prevent 71px diffs
-  await page.waitForTimeout(100)
+  // Use page.waitForFunction to poll for stable dimensions over a short window
+  if ('page' in target) {
+    await target.page().waitForFunction(
+      ([element]) => {
+        if (!element) return true
+        const initialHeight = element.getBoundingClientRect().height
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const currentHeight = element.getBoundingClientRect().height
+            resolve(initialHeight === currentHeight && currentHeight > 0)
+          }, 250)
+        })
+      },
+      [await target.elementHandle()],
+      { timeout: 5000 }
+    )
+  } else {
+    await page.waitForTimeout(100)
+  }
 
   if (!skipA11y) {
     await checkAccessibility(target)

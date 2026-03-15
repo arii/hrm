@@ -143,6 +143,9 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage
       .locator('[data-testid="spotify-device-selector-menu-paper"]')
       .last()
+
+    // Give the menu time to mount in the portal and stabilize before checking visibility
+    await menu.waitFor({ state: 'attached', timeout: VRT_TIMEOUTS.STANDARD })
     await expect(menu).toBeVisible()
 
     // Give it a moment to ensure it is fully rendered
