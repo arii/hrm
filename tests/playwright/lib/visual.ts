@@ -46,12 +46,22 @@ export async function takeScreenshot(
   options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
+  const page = 'page' in target ? target.page() : (target as Page)
+
+  // 1. Force layout recalculation for tablet viewports
+  await page.evaluate(() => window.scrollTo(0, 0))
+
+  // 2. Ensure the height is stable for Locator targets
+  // Wait a small duration to allow browser layout calculations to settle
+  // before capturing the VRT screenshot to prevent 71px diffs
+  await page.waitForTimeout(100)
 
   if (!skipA11y) {
     await checkAccessibility(target)
   }
 
   await expect(target).toHaveScreenshot(snapshotName, {
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
     ...screenshotOptions,
   })

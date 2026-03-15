@@ -17,6 +17,10 @@ export async function checkAccessibility(target: Page | Locator) {
   // If the target is a Locator, we need to add a temporary unique attribute
   // to it so we can scope the accessibility scan to that element.
   if ('page' in target) {
+    // Ensure the target is actually attached to the DOM before evaluation
+    // This is critical for MUI Portals/Menus
+    await target.waitFor({ state: 'attached', timeout: 5000 })
+
     await target.evaluate((node, id) => node.setAttribute(id, ''), uniqueId)
     selector = `[${uniqueId}]`
   }

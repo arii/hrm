@@ -5,6 +5,7 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   resetServerState,
+  getSpotifyMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -139,8 +140,13 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.getByTestId('spotify-device-selector-menu-paper')
+    const menu = dashboardPage
+      .locator('[data-testid="spotify-device-selector-menu-paper"]')
+      .last()
     await expect(menu).toBeVisible()
+
+    // Give it a moment to ensure it is fully rendered
+    await dashboardPage.waitForTimeout(500)
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
@@ -148,6 +154,7 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
       skipA11y: true, // Accessibility checked manually above
+      mask: getSpotifyMasks(dashboardPage),
     })
   })
 

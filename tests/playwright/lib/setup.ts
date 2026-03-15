@@ -239,6 +239,19 @@ export async function setupMinimalVisualRegressionTest(
   page: Page,
   path: string = ''
 ): Promise<void> {
+  // Disable scrollbars to prevent layout shift in VRT
+  await page.addStyleTag({
+    content: `
+      body, html, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
+    `,
+  })
+
   // Mock the workout API response for stable VRT
   await page.route('**/api/workout*', async (route) => {
     await route.fulfill({
