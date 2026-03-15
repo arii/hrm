@@ -76,18 +76,8 @@ export async function takeScreenshot(
     `,
   })
 
-  // Force layout recalculation for tablet viewports
+  // Force layout recalculation for viewports
   await page.evaluate(() => window.scrollTo(0, 0))
-
-  // Explicit deterministic wait for the dashboard container to stabilize.
-  // We check for "stable" dimensions over a 100ms window to prevent layout shift flakiness.
-  if ('scrollIntoViewIfNeeded' in target) {
-    await expect(target).toHaveJSProperty(
-      'scrollHeight',
-      await target.evaluate((node) => node.scrollHeight),
-      { timeout: 2000 }
-    )
-  }
 
   await expect(target).toHaveScreenshot(snapshotName, {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
