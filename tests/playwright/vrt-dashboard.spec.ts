@@ -180,7 +180,9 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       // Ensure styles/layouts update after resizing
-      await dashboardPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {})
+      await dashboardPage
+        .waitForLoadState('networkidle', { timeout: 3000 })
+        .catch(() => {})
       await dashboardPage.waitForTimeout(500)
 
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
@@ -194,7 +196,9 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       // Ensure styles/layouts update after resizing
-      await dashboardPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {})
+      await dashboardPage
+        .waitForLoadState('networkidle', { timeout: 3000 })
+        .catch(() => {})
       await dashboardPage.waitForTimeout(500)
 
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
