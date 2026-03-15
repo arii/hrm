@@ -153,6 +153,9 @@ test.describe('Visual Regression Tests', () => {
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
 
+        // Allow UI animations and state updates to settle before capture
+        await dashboardPage.waitForTimeout(500)
+
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,

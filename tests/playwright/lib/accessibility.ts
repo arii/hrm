@@ -19,7 +19,7 @@ export async function checkAccessibility(target: Page | Locator) {
   if ('page' in target) {
     // Ensure the target is actually attached to the DOM before evaluation
     // This is critical for MUI Portals/Menus
-    await target.waitFor({ state: 'attached', timeout: 5000 })
+    await target.waitFor({ state: 'attached' })
 
     // Use a trial-run evaluate to check if the node is accessible in the JS context
     await target.evaluate((node) => {

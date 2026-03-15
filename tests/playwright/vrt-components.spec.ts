@@ -145,7 +145,7 @@ test.describe('Component-Specific VRT', () => {
       .last()
 
     // Give the menu time to mount in the portal and stabilize before checking visibility
-    await menu.waitFor({ state: 'attached', timeout: VRT_TIMEOUTS.STANDARD })
+    await menu.waitFor({ state: 'attached' })
     await expect(menu).toBeVisible()
 
     // Give it a moment to ensure it is fully rendered
