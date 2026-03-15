@@ -127,6 +127,13 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
+  // Trigger user interaction to unlock AudioContext (seen in logs preventing muted states)
+  try {
+    await page.mouse.click(0, 0)
+  } catch (e) {
+    console.warn(`[navigateAndWait] Failed to unlock AudioContext: ${e}`)
+  }
+
   // Stabilize VRT by disabling animations, transitions, and backdrop filters
   await page.addStyleTag({
     content: `
@@ -135,6 +142,13 @@ export async function navigateAndWait(
         animation: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+      }
+      body, html, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
       }
       [data-testid="main-content-layout"] {
         opacity: 1 !important;
@@ -195,6 +209,23 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     })
   })
 
+  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
+  await context.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
+  // Block the real Spotify SDK from loading and erroring out
+  await context.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
+
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
     context.newPage(),
@@ -239,19 +270,6 @@ export async function setupMinimalVisualRegressionTest(
   page: Page,
   path: string = ''
 ): Promise<void> {
-  // Disable scrollbars to prevent layout shift in VRT
-  await page.addStyleTag({
-    content: `
-      body, html, * {
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
-      }
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
-    `,
-  })
-
   // Mock the workout API response for stable VRT
   await page.route('**/api/workout*', async (route) => {
     await route.fulfill({
@@ -262,6 +280,23 @@ export async function setupMinimalVisualRegressionTest(
       }),
     })
   })
+
+  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
+  await page.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
+  // Block the real Spotify SDK from loading and erroring out
+  await page.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
 
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {
