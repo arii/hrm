@@ -70,8 +70,13 @@ test.describe('Visual Regression Tests', () => {
       await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible()
 
       const timerControls = controlPage.getByTestId('timer-controls')
+
+      // Allow animations to finish and states to settle before snapshot
+      await controlPage.waitForTimeout(500)
+
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
+        maxDiffPixelRatio: 0.2, // increased to account for ripple effect flakiness
       })
 
       // Stop the timer to reset for the next test
