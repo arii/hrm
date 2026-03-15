@@ -51,8 +51,23 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
+  const page = 'page' in target ? target.page() : (target as Page)
+
+  // Force layout recalculation for tablet viewports (and general stability)
+  await page.evaluate(() => window.scrollTo(0, 0))
+
+  // Ensure the height is stable if it's a Locator
+  if ('page' in target) {
+    await expect(target).toHaveJSProperty(
+      'scrollHeight',
+      await target.evaluate((node) => node.scrollHeight),
+      { timeout: 2000 }
+    )
+  }
+
   await expect(target).toHaveScreenshot(snapshotName, {
     ...SCREENSHOT_OPTIONS,
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...screenshotOptions,
   })
 }

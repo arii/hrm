@@ -178,6 +178,11 @@ test.describe('Visual Regression Tests', () => {
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // Ensure styles/layouts update after resizing
+      await dashboardPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {})
+      await dashboardPage.waitForTimeout(500)
+
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
@@ -187,6 +192,11 @@ test.describe('Visual Regression Tests', () => {
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // Ensure styles/layouts update after resizing
+      await dashboardPage.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {})
+      await dashboardPage.waitForTimeout(500)
+
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3,
