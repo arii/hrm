@@ -70,8 +70,10 @@ export async function takeScreenshot(
   }
 
   // Ensure the dashboard container stabilizes its height before taking a snapshot
-  // Using a 5000ms polling loop to check actual rendered dimensions
-  if ('getAttribute' in target) {
+  // Using a polling loop to check actual rendered dimensions.
+  // We use 'scrollIntoViewIfNeeded' to strictly verify 'target' is a Locator
+  // since Page objects do not have this method, avoiding 'getAttribute: name: expected string' errors.
+  if ('scrollIntoViewIfNeeded' in target) {
     const testId = await target.getAttribute('data-testid')
     if (testId === 'dashboard') {
       const pageRef = target.page()
