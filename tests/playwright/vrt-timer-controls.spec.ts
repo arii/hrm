@@ -3,6 +3,7 @@ import { expect, test } from './fixtures'
 import { setupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
+import { stopTimer } from './lib/setup'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -75,7 +76,7 @@ test.describe('Visual Regression Tests', () => {
       })
 
       // Stop the timer to reset for the next test
-      await controlPage.getByTestId('stop-timer-button').click()
+      await stopTimer(controlPage, dashboardPage)
     })
 
     test('start button hover state', async () => {

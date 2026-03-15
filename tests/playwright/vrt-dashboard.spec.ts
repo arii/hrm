@@ -147,6 +147,9 @@ test.describe('Visual Regression Tests', () => {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
+
+      // Stop the timer so it doesn't leak into subsequent viewport tests
+      await stopTimer(controlPage, dashboardPage)
     })
 
     // NEW: Responsive breakpoint tests
