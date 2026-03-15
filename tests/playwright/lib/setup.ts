@@ -195,6 +195,21 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     })
   })
 
+  // Prevent Spotify Auth 401s and initialization loops
+  await context.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
+  await context.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
     context.newPage(),
