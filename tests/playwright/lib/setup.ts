@@ -224,6 +224,12 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     navigateAndWait(mockPage, HRM_ROUTES.MOCK),
   ])
 
+  // Trigger a user interaction to unlock AudioContext.
+  // This prevents 'Muted' icons or error snackbars from injecting into the UI
+  // and expanding the layout unexpectedly.
+  await dashboardPage.mouse.click(0, 0)
+  await controlPage.mouse.click(0, 0)
+
   // Wait for WebSocket connections to be established (longer timeout for CI stability)
   await Promise.all([
     waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),

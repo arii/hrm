@@ -51,64 +51,8 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
-  // Ensure target is fully in view and stable
-  if ('scrollIntoViewIfNeeded' in target) {
-    await target.scrollIntoViewIfNeeded()
-  }
-
-  // Inject a strict CSS reset to disable animations and scrollbars
-  const page = 'page' in target ? target.page() : target
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        transition-duration: 0s !important;
-      }
-      body {
-        overflow: hidden !important;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
-    `,
-  })
-
-  // Force layout recalculation for viewports
-  await page.evaluate(() => window.scrollTo(0, 0))
-
-  // Dynamically wait for the target element's height to stabilize (stop changing).
-  // This handles late data hydration or MUI grid reflows without hardcoding specific viewport heights.
-  if ('elementHandle' in target) {
-    await page
-      .waitForFunction(
-        (element) => {
-          if (!element) return true
-          const initialHeight = element.getBoundingClientRect().height
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              const finalHeight = element.getBoundingClientRect().height
-              // Resolve true if the height has remained stable over 250ms
-              resolve(initialHeight === finalHeight && initialHeight > 0)
-            }, 250)
-          })
-        },
-        await target.elementHandle(),
-        { timeout: 10000 }
-      )
-      .catch(() =>
-        console.warn(
-          `Element height stabilization timed out for ${snapshotName}`
-        )
-      )
-  }
-
   await expect(target).toHaveScreenshot(snapshotName, {
-    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
-    maxDiffPixelRatio: screenshotOptions.maxDiffPixelRatio ?? 0.02,
     ...screenshotOptions,
   })
 }
@@ -127,8 +71,7 @@ export async function assertFixedDimensions(
   }
 ) {
   // Wait for the element to be visible before checking its dimensions
-  // Increased to 15000ms for slow CI runners executing multiple components
-  await locator.waitFor({ state: 'visible', timeout: 15000 })
+  await locator.waitFor({ state: 'visible', timeout: 5000 })
   const bbox = await locator.boundingBox()
 
   if (!bbox) {
