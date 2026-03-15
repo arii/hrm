@@ -140,6 +140,15 @@ export async function navigateAndWait(
         opacity: 1 !important;
         transform: none !important;
       }
+      /* Hide scrollbars to prevent layout dimension mismatches */
+      body {
+        overflow: hidden !important;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
     `,
   })
 
