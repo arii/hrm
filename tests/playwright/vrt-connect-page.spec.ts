@@ -9,13 +9,22 @@ import { BluetoothConnectionStatus } from '../../types/bluetooth'
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
+    // Add global init script to set window.__TEST_CONTROLS__ mock object if not present
+    // to avoid timeout errors waiting for setHrmStatus to be defined.
+    await connectPage.addInitScript(() => {
+      window.__TEST_CONTROLS__ = window.__TEST_CONTROLS__ || {
+        setHrmStatus: () => {},
+        setCustomHrmStatusMessage: () => {},
+      }
+    })
+
     await connectPage.goto('/client/connect')
     await waitForPageReady(connectPage, { timeout: VRT_TIMEOUTS.STANDARD })
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
     await connectPage.waitForFunction(
-      () => window.__TEST_CONTROLS__?.setHrmStatus,
+      () => typeof window.__TEST_CONTROLS__?.setHrmStatus === 'function',
       {
         timeout: VRT_TIMEOUTS.HYDRATION,
       }

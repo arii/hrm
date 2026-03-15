@@ -113,6 +113,12 @@ export default defineConfig({
 
     // Browser context options
     viewport: DESKTOP_VIEWPORT,
+    contextOptions: {
+      reducedMotion: 'reduce', // Disables CSS animations
+    },
+    launchOptions: {
+      args: ['--font-render-hinting=none'], // Normalizes font rendering
+    },
   },
 
   // Browser configurations
@@ -130,7 +136,12 @@ export default defineConfig({
             '--disable-dev-shm-usage',
             // Hide scrollbars for consistent VRT snapshots
             '--hide-scrollbars',
+            // Normalizes font rendering for VRT
+            '--font-render-hinting=none',
           ],
+        },
+        contextOptions: {
+          reducedMotion: 'reduce', // Disables CSS animations
         },
         viewport: DESKTOP_VIEWPORT,
         video: {
