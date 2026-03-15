@@ -72,6 +72,14 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
 
+      // Deterministic wait for exactly 1 HR tile to render and stabilize DOM layout.
+      await dashboardPage.waitForFunction(
+        () =>
+          document.querySelectorAll('[data-testid="hr-tile-card"]').length ===
+          1,
+        { timeout: 15000 }
+      )
+
       // Wait for HR tile to appear
       await expect(
         dashboardPage.getByTestId('hr-tile-card').first()
@@ -116,6 +124,15 @@ test.describe('Visual Regression Tests', () => {
           zone: 'Zone 4',
         },
       ])
+
+      // Deterministic wait for exactly 2 HR tiles to render and stabilize DOM layout.
+      // Uses a 15000ms timeout to account for slower CI environments where dual-mocking delays execution.
+      await dashboardPage.waitForFunction(
+        () =>
+          document.querySelectorAll('[data-testid="hr-tile-card"]').length ===
+          2,
+        { timeout: 15000 }
+      )
 
       // Wait for HR tiles to appear
       const hrTiles = dashboardPage.getByTestId('hr-tile-card')
