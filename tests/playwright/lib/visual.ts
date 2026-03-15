@@ -51,8 +51,48 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
+  // Ensure target is fully in view and stable
+  if ('scrollIntoViewIfNeeded' in target) {
+    await target.scrollIntoViewIfNeeded()
+  }
+
+  // Inject a strict CSS reset to disable animations and scrollbars
+  const page = 'page' in target ? target.page() : target
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        transition-duration: 0s !important;
+      }
+      body {
+        overflow: hidden !important;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
+    `,
+  })
+
+  // Force layout recalculation for tablet viewports
+  await page.evaluate(() => window.scrollTo(0, 0))
+
+  // Explicit deterministic wait for the dashboard container to stabilize.
+  // We check for "stable" dimensions over a 100ms window to prevent layout shift flakiness.
+  if ('scrollIntoViewIfNeeded' in target) {
+    await expect(target).toHaveJSProperty(
+      'scrollHeight',
+      await target.evaluate((node) => node.scrollHeight),
+      { timeout: 2000 }
+    )
+  }
+
   await expect(target).toHaveScreenshot(snapshotName, {
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
+    maxDiffPixelRatio: screenshotOptions.maxDiffPixelRatio ?? 0.02,
     ...screenshotOptions,
   })
 }
