@@ -6,6 +6,7 @@ import {
   mockLoggedInSession,
   resetServerState,
 } from './lib'
+import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -140,12 +141,12 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu-paper')
     await expect(menu).toBeVisible()
 
-    // Skip manual accessibility check on the specific menu element to prevent
-    // 'No elements found for include in page Context' Axe-core errors on React Portals.
+    // Perform manual accessibility check on the specific menu element to ensure context validity
+    await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
-      skipA11y: true, // Portals break Axe context
+      skipA11y: true, // Accessibility checked manually above
     })
   })
 

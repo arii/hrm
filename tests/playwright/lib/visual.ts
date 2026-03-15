@@ -51,56 +51,8 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
-  // Ensure target is fully in view and stable
-  if ('scrollIntoViewIfNeeded' in target) {
-    await target.scrollIntoViewIfNeeded()
-  }
-
-  // Force layout recalculation for viewports
-  const page = 'page' in target ? target.page() : target
-  await page.evaluate(() => window.scrollTo(0, 0))
-
-  const snapshotConfig: ScreenshotOptions = { ...SCREENSHOT_OPTIONS }
-
-  // Remove the global SCREENSHOT_OPTIONS.fullPage if target is a Locator,
-  // as Playwright throws an error if fullPage is passed to locator.toHaveScreenshot.
-  // We do not pass clip to Locator screenshots as Playwright explicitly rejects it.
-  if ('scrollIntoViewIfNeeded' in target) {
-    delete snapshotConfig.fullPage
-  }
-
-  // Ensure the dashboard container stabilizes its height before taking a snapshot
-  // Using a polling loop to check actual rendered dimensions.
-  // We use 'scrollIntoViewIfNeeded' to strictly verify 'target' is a Locator
-  // since Page objects do not have this method, avoiding 'getAttribute: name: expected string' errors.
-  if ('scrollIntoViewIfNeeded' in target) {
-    const testId = await target.getAttribute('data-testid')
-    if (testId === 'dashboard') {
-      const pageRef = target.page()
-      await pageRef
-        .waitForFunction(
-          (el) => {
-            if (!el) return true
-            const initial = el.getBoundingClientRect().height
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(
-                  initial === el.getBoundingClientRect().height && initial > 0
-                )
-              }, 250)
-            })
-          },
-          await target.elementHandle(),
-          { timeout: 10000 }
-        )
-        .catch(() => {})
-    }
-  }
-
   await expect(target).toHaveScreenshot(snapshotName, {
-    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
-    ...snapshotConfig,
-    maxDiffPixelRatio: screenshotOptions.maxDiffPixelRatio ?? 0.02,
+    ...SCREENSHOT_OPTIONS,
     ...screenshotOptions,
   })
 }
@@ -119,8 +71,7 @@ export async function assertFixedDimensions(
   }
 ) {
   // Wait for the element to be visible before checking its dimensions
-  // Increased to 15000ms for slow CI runners executing multiple components
-  await locator.waitFor({ state: 'visible', timeout: 15000 })
+  await locator.waitFor({ state: 'visible', timeout: 5000 })
   const bbox = await locator.boundingBox()
 
   if (!bbox) {

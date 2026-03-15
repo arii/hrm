@@ -140,15 +140,6 @@ export async function navigateAndWait(
         opacity: 1 !important;
         transform: none !important;
       }
-      /* Hide scrollbars to prevent layout dimension mismatches */
-      body {
-        overflow: hidden !important;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
     `,
   })
 
@@ -204,21 +195,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     })
   })
 
-  // Prevent Spotify Auth 401s and initialization loops
-  await context.route('https://sdk.scdn.co/spotify-player.js', (route) =>
-    route.abort()
-  )
-  await context.route('**/api/spotify/access-token', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        accessToken: 'mock_token',
-        expiresAt: Date.now() + 3600000,
-      }),
-    })
-  })
-
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
     context.newPage(),
@@ -232,12 +208,6 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
     navigateAndWait(mockPage, HRM_ROUTES.MOCK),
   ])
-
-  // Trigger a user interaction to unlock AudioContext.
-  // This prevents 'Muted' icons or error snackbars from injecting into the UI
-  // and expanding the layout unexpectedly.
-  await dashboardPage.mouse.click(0, 0)
-  await controlPage.mouse.click(0, 0)
 
   // Wait for WebSocket connections to be established (longer timeout for CI stability)
   await Promise.all([
