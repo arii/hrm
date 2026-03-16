@@ -87,6 +87,14 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?native=true')
     await waitForPageReady(dashboardPage)
 
+    await dashboardPage.route('/api/workout*', async (route) => {
+      await route.fulfill({
+        json: {
+          headers: ['Exercise', 'Sets', 'Reps'],
+        },
+      })
+    })
+
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
     await takeScreenshot(tableHeader, 'workout-table-header.png')
@@ -146,9 +154,10 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage
       .locator('[data-testid="spotify-device-selector-menu-paper"]')
       .last()
-
-    // Give the menu time to mount in the portal and stabilize before checking visibility
     await expect(menu).toBeVisible()
+
+    // Give it a moment to ensure it is fully rendered
+    await dashboardPage.waitForTimeout(500)
 
     // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')

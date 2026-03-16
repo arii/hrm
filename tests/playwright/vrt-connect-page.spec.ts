@@ -9,13 +9,22 @@ import { BluetoothConnectionStatus } from '../../types/bluetooth'
 test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
-    await connectPage.goto('/client/connect')
+
+    // Setup window.__TEST_CONTROLS__ before evaluating the function
+    await connectPage.addInitScript(() => {
+      window.__TEST_CONTROLS__ = window.__TEST_CONTROLS__ || {
+        setHrmStatus: () => {},
+        setCustomHrmStatusMessage: () => {},
+      }
+    })
+
+    await connectPage.goto('/client/connect?testing=true')
     await waitForPageReady(connectPage, { timeout: VRT_TIMEOUTS.STANDARD })
     await connectPage.getByLabel('Your Name').fill('VRT Runner')
     await connectPage.getByLabel('Your Age').fill('30')
 
     await connectPage.waitForFunction(
-      () => window.__TEST_CONTROLS__?.setHrmStatus,
+      () => typeof window.__TEST_CONTROLS__?.setHrmStatus === 'function',
       {
         timeout: VRT_TIMEOUTS.HYDRATION,
       }
@@ -81,10 +90,12 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('no devices found state', async ({ connectPage }) => {
-    await connectPage.evaluate(
-      (status) => window.__TEST_CONTROLS__!.setHrmStatus!(status),
-      BluetoothConnectionStatus.DISCONNECTED
-    )
+    await connectPage.evaluate((status) => {
+      window.__TEST_CONTROLS__!.setHrmStatus!(status)
+      window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
+        'Connection cancelled. No device selected.'
+      )
+    }, BluetoothConnectionStatus.DISCONNECTED)
     // The button should be visible and ready for another attempt.
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })

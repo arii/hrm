@@ -162,7 +162,7 @@ export default function ConnectView({
           !deviceStatus.includes('Disconnected') && (
             <Alert
               data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+              severity={/(fail|error)/i.test(deviceStatus) ? 'error' : 'info'}
               sx={{ mb: 2 }}
             >
               {deviceStatus}
