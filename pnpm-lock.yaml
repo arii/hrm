@@ -21,8 +21,8 @@ importers:
   .:
     dependencies:
       '@asteasolutions/zod-to-openapi':
-        specifier: ^8.4.2
-        version: 8.4.2(zod@4.3.6)
+        specifier: ^8.4.3
+        version: 8.4.3(zod@4.3.6)
       '@emotion/cache':
         specifier: ^11.14.0
         version: 11.14.0
@@ -328,8 +328,8 @@ packages:
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
 
-  '@asteasolutions/zod-to-openapi@8.4.2':
-    resolution: {integrity: sha512-4vHxKZ2goyx6K87HQNzy3VFdsvcekLszVWHTlvGlWtW7aHRyLI92Oa1lqO5GNWdReFsyrnmEuyAnmH41WAQPhA==}
+  '@asteasolutions/zod-to-openapi@8.4.3':
+    resolution: {integrity: sha512-lwfMTN7kDbFDwMniYZUebiGGHxVGBw9ZSI4IBYjm6Ey22Kd5z/fsQb2k+Okr8WMbCCC553vi/ZM9utl5/XcvuQ==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -7725,7 +7725,7 @@ snapshots:
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
-  '@asteasolutions/zod-to-openapi@8.4.2(zod@4.3.6)':
+  '@asteasolutions/zod-to-openapi@8.4.3(zod@4.3.6)':
     dependencies:
       openapi3-ts: 4.5.0
       zod: 4.3.6

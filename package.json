@@ -65,7 +65,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.4.2",
+    "@asteasolutions/zod-to-openapi": "^8.4.3",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
