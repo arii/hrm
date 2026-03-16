@@ -152,6 +152,9 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      // Force the page to recalculate layout after resize to prevent stale 1500px+ height capturing
+      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
+      await dashboardPage.waitForTimeout(500)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),

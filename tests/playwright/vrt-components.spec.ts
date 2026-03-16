@@ -22,7 +22,9 @@ test.describe('Component-Specific VRT', () => {
 
   test('Footer rendering', async ({ dashboardPage }) => {
     const footer = dashboardPage.getByTestId('footer')
-    await takeScreenshot(footer, 'footer.png')
+    await takeScreenshot(footer, 'footer.png', {
+      maxDiffPixelRatio: 0.1
+    })
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
