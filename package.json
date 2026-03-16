@@ -76,7 +76,7 @@
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
-    "framer-motion": "^12.29.2",
+    "framer-motion": "^12.37.0",
     "he": "^1.2.0",
     "idb": "^8.0.3",
     "js-cookie": "^3.0.5",
