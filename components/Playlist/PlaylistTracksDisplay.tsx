@@ -10,23 +10,26 @@ import Alert from '@mui/material/Alert'
 import IconButton from '@mui/material/IconButton'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
+import Avatar from '@mui/material/Avatar'
+import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { formatDuration } from '@/lib/utils'
-import Image from 'next/image'
 
 interface Track {
   id: string
   name: string
   artists: string
-  albumArt: string | null
-  duration: number
+  album?: {
+    name: string
+    images: { url: string; height: number; width: number }[]
+  }
+  duration_ms: number
   uri: string
 }
 
@@ -122,30 +125,35 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
 
   return (
     <Box>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Play</TableCell>
-              <TableCell>Title</TableCell>
-              <TableCell>Artist</TableCell>
-              <TableCell>Duration</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tracks.map((track, index) => {
-              const isPlaying =
-                spotifyData.playback.is_playing &&
-                spotifyData.playback.track.id === track.id
-              const playlistUri = `spotify:playlist:${playlistId}`
-              return (
-                <TableRow
-                  key={track.id}
-                  sx={{
-                    backgroundColor: isPlaying ? 'action.selected' : 'inherit',
-                  }}
-                >
-                  <TableCell>
+      <Paper>
+        <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
+          {tracks.map((track, index) => {
+            const isPlaying =
+              spotifyData.playback.is_playing &&
+              spotifyData.playback.track.id === track.id
+            const playlistUri = `spotify:playlist:${playlistId}`
+            const albumName = track.album?.name || 'Single'
+            const albumThumbnail = track.album?.images?.[2]?.url
+
+            return (
+              <ListItem
+                key={track.id}
+                divider
+                disablePadding
+                sx={{
+                  backgroundColor: isPlaying ? 'action.selected' : 'inherit',
+                }}
+                secondaryAction={
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'text.secondary', mr: 1 }}
+                    >
+                      {formatDuration(track.duration_ms, {
+                        unit: 'milliseconds',
+                        format: 'MM:SS',
+                      })}
+                    </Typography>
                     <IconButton
                       onClick={() =>
                         isPlaying
@@ -153,37 +161,49 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                           : handlePlayTrack(playlistUri, index)
                       }
                       aria-label={isPlaying ? 'Pause' : 'Play'}
+                      size="small"
                     >
                       {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                     </IconButton>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      {track.albumArt && (
-                        <Image
-                          src={track.albumArt}
-                          alt={track.name}
-                          width={40}
-                          height={40}
-                          style={{ marginRight: '8px' }}
-                        />
-                      )}
-                      {track.name}
-                    </Box>
-                  </TableCell>
-                  <TableCell>{track.artists}</TableCell>
-                  <TableCell>
-                    {formatDuration(track.duration, {
-                      unit: 'milliseconds',
-                      format: 'MM:SS',
-                    })}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </Box>
+                }
+              >
+                <ListItemButton
+                  onClick={() =>
+                    isPlaying
+                      ? handlePause()
+                      : handlePlayTrack(playlistUri, index)
+                  }
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <ListItemAvatar sx={{ minWidth: 48 }}>
+                    <Avatar
+                      variant="rounded"
+                      src={albumThumbnail || undefined}
+                      sx={{ width: 32, height: 32 }}
+                    >
+                      <MusicNoteIcon fontSize="small" />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={track.name}
+                    secondary={`${track.artists} • ${albumName}`}
+                    primaryTypographyProps={{
+                      variant: 'body2',
+                      noWrap: true,
+                      fontWeight: 'medium',
+                    }}
+                    secondaryTypographyProps={{
+                      variant: 'caption',
+                      noWrap: true,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )
+          })}
+        </List>
+      </Paper>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
         <Button onClick={handlePreviousPage} disabled={offset === 0}>
           Previous

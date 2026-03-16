@@ -77,11 +77,11 @@ describe('PlaylistDetails', () => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
     expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
+      screen.getByText('Artist 1 • Album 1', { exact: false })
     ).toBeInTheDocument()
     expect(screen.getByText('Track 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
+      screen.getByText('Artist 2 • Album 2', { exact: false })
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))
@@ -106,11 +106,11 @@ describe('PlaylistDetails', () => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
     expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
+      screen.getByText('Artist 1 • Album 1', { exact: false })
     ).toBeInTheDocument()
     expect(screen.getByText('Track 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
+      screen.getByText('Artist 2 • Album 2', { exact: false })
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))

@@ -219,8 +219,12 @@ export interface SpotifyPlaylistItem {
   name: string
   uri: string
   artists?: { name: string }[] | string
-  album?: { name: string }
+  album?: {
+    name: string
+    images: { url: string; height: number; width: number }[]
+  }
   imageUrl?: string | null
+  duration_ms?: number
 }
 
 /**
