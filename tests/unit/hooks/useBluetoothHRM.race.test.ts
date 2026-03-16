@@ -30,6 +30,19 @@ jest.mock('js-cookie', () => ({
 }))
 
 describe('useBluetoothHRM Race Conditions', () => {
+  let infoSpy: jest.SpyInstance
+  let warnSpy: jest.SpyInstance
+
+  beforeAll(() => {
+    infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    infoSpy.mockRestore()
+    warnSpy.mockRestore()
+  })
+
   const originalNavigator = global.navigator
   let mockRequestDevice: jest.Mock
   let mockGattConnect: jest.Mock
@@ -145,8 +158,8 @@ describe('useBluetoothHRM Race Conditions', () => {
 
     await act(async () => {
       await expect(firstPromise).resolves.toBe(true)
-      // The second promise resolves to false because it is initiated while the first one is still in progress,
-      // hitting the isConnecting guard which skips the concurrent attempt.
+      // The second promise resolves to false because it is blocked by the isConnecting lock.
+      // The critical check is that gatt.connect is called only once.
       await expect(secondPromise).resolves.toBe(false)
     })
 

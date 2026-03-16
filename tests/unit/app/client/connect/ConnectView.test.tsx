@@ -53,7 +53,7 @@ describe('ConnectView', () => {
     connectionStatus: 'Connected',
     bluetoothConnected: false,
     hasStarted: false,
-    isResetting: false,
+    onReset: jest.fn(),
     workoutStatus: 'idle' as const,
     onStartWorkout: jest.fn(),
     onEndWorkout: jest.fn(),

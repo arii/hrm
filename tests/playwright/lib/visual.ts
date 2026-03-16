@@ -26,11 +26,11 @@ import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
  * @property {number} maxDiffPixelRatio - Allowed ratio of differing pixels.
  */
 export const SCREENSHOT_OPTIONS = {
-  fullPage: false,
+  fullPage: true,
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.15, // Default threshold for VRT stability in CI variance
+  maxDiffPixelRatio: 0.02,
 }
 
 /**
@@ -47,11 +47,15 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
+  // Force layout recalculation for tablet viewports without invalid casting
+  await target.evaluate(() => window.scrollTo(0, 0))
+
   if (!skipA11y) {
     await checkAccessibility(target)
   }
 
   await expect(target).toHaveScreenshot(snapshotName, {
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
     ...screenshotOptions,
   })
@@ -146,7 +150,7 @@ export async function takeDashboardScreenshot(
       ...getHrMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
-      page.getByTestId('workout-table-viewer'),
+      page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
     ],
     maxDiffPixelRatio: 0.08, // Higher tolerance for font rendering in CI

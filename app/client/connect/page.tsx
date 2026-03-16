@@ -172,10 +172,7 @@ export default function ConnectPage() {
       !connectionAttempted
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
-      const timeout = setTimeout(() => {
-        autoConnect()
-      }, 100)
-      return () => clearTimeout(timeout)
+      autoConnect()
     }
     return undefined
   }, [

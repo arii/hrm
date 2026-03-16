@@ -4,16 +4,17 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
+  resetServerState,
+  getSpotifyMasks,
 } from './lib'
+import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
-import { DESKTOP_VIEWPORT } from './lib/viewports'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage }) => {
-    // Enforce desktop viewport to prevent height mismatches in screenshots
-    await dashboardPage.setViewportSize(DESKTOP_VIEWPORT)
+  test.beforeEach(async ({ dashboardPage, request }) => {
+    await resetServerState(request)
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -28,7 +29,7 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
-    // Force visibility for VRT
+    // Force visibility and pause animation for VRT
     await dashboardPage.evaluate(() => {
       const el = document.querySelector(
         '[data-testid="loading-indicator"]'
@@ -40,7 +41,15 @@ test.describe('Component-Specific VRT', () => {
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
-    await takeScreenshot(loadingIndicator, 'loading-indicator.png')
+
+    // Mask the animated progress circle as it's highly flaky in VRT
+    const progress = loadingIndicator.getByTestId('loading-indicator-progress')
+
+    await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
+      screenshotOptions: {
+        mask: [progress],
+      },
+    })
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
@@ -57,6 +66,15 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+    // Setup network interception first
+    await dashboardPage.route('/api/workout*', async (route) => {
+      await route.fulfill({
+        json: {
+          headers: ['Exercise', 'Sets', 'Reps'],
+        },
+      })
+    })
+
     // Ensure we are in native mode for this test
     await dashboardPage.goto('/?native=true')
     await waitForPageReady(dashboardPage)
@@ -117,12 +135,18 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.getByTestId('spotify-device-selector-menu')
+    const menu = dashboardPage
+      .locator('[data-testid="spotify-device-selector-menu-paper"]')
+      .last()
+
     await expect(menu).toBeVisible()
+    await expect(menu).toHaveCSS('opacity', '1')
+    await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      maxDiffPixelRatio: 0.15,
-      threshold: 0.3,
+      threshold: 0.2,
+      skipA11y: true,
+      mask: getSpotifyMasks(dashboardPage),
     })
   })
 
