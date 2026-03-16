@@ -90,10 +90,12 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('no devices found state', async ({ connectPage }) => {
-    await connectPage.evaluate(
-      (status) => window.__TEST_CONTROLS__!.setHrmStatus!(status),
-      BluetoothConnectionStatus.DISCONNECTED
-    )
+    await connectPage.evaluate((status) => {
+      window.__TEST_CONTROLS__!.setHrmStatus!(status)
+      window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
+        'Connection cancelled. No device selected.'
+      )
+    }, BluetoothConnectionStatus.DISCONNECTED)
     // The button should be visible and ready for another attempt.
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
