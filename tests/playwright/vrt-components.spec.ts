@@ -13,8 +13,7 @@ import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage, request }) => {
-    await resetServerState(request)
+  test.beforeEach(async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -89,11 +88,16 @@ test.describe('Component-Specific VRT', () => {
 
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
         json: {
           headers: ['Exercise', 'Sets', 'Reps'],
         },
       })
     })
+
+    await dashboardPage.goto('/?native=true')
+    await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
