@@ -718,9 +718,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
 
       isConnecting.current = true
+      const { silent = false } = options
       try {
-        const { silent = false } = options
-
         userDetailsRef.current = {
           name: userNameFromArgs || userName || '',
           age: userAgeFromArgs || userAge || 0,
