@@ -717,22 +717,23 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return false
       }
 
-      const { silent = false } = options
-
-      userDetailsRef.current = {
-        name: userNameFromArgs || userName || '',
-        age: userAgeFromArgs || userAge || 0,
-      }
-
-      if (statusRef.current === BluetoothConnectionStatus.CONNECTED) return true
-      if (connectionStatus !== 'Connected') {
-        const err = new Error('WebSocket not connected')
-        if (!silent) handleConnectionError(err)
-        throw err
-      }
-
       isConnecting.current = true
       try {
+        const { silent = false } = options
+
+        userDetailsRef.current = {
+          name: userNameFromArgs || userName || '',
+          age: userAgeFromArgs || userAge || 0,
+        }
+
+        if (statusRef.current === BluetoothConnectionStatus.CONNECTED)
+          return true
+        if (connectionStatus !== 'Connected') {
+          const err = new Error('WebSocket not connected')
+          if (!silent) handleConnectionError(err)
+          throw err
+        }
+
         logger.info(
           { connectionStatus, savedDevice },
           'connectAndStream called'
