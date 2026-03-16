@@ -12,12 +12,23 @@ name: PR Enrichment
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to enrich'
+        required: true
+        type: string
   workflow_call:
     inputs:
       pr_number:
         description: 'PR number to enrich'
         required: true
         type: string
+      manual_trigger:
+        description: 'Force enrichment even if disabled'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -31,6 +42,9 @@ jobs:
     # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps.
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GEMINI_ENABLE_PR_ENRICHMENT: ${{ vars.GEMINI_ENABLE_PR_ENRICHMENT }}
+      DISABLE_PR_ENRICHMENT: ${{ vars.DISABLE_PR_ENRICHMENT }}
+      DISABLE_TITLE_ENHANCEMENT: ${{ vars.DISABLE_TITLE_ENHANCEMENT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,15 +59,30 @@ jobs:
         env:
           PR_TITLE_EVENT: ${{ github.event.pull_request.title }}
           HEAD_REF_EVENT: ${{ github.event.pull_request.head.ref || github.head_ref }}
+          MANUAL_TRIGGER: ${{ github.event_name == 'workflow_dispatch' || inputs.manual_trigger == true }}
         run: |
-          # 1. Check for manual disable toggle
+          # 1. Check for manual override (Highest Priority)
+          if [ "$MANUAL_TRIGGER" == "true" ]; then
+            echo "disabled=false" >> $GITHUB_OUTPUT
+            echo "::notice::PR enrichment manually triggered. Bypassing disable checks."
+            exit 0
+          fi
+
+          # 2. Check for manual disable toggle (Legacy)
           if [ "${DISABLE_PR_ENRICHMENT:-false}" == "true" ]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
             echo "::notice::PR enrichment is disabled (DISABLE_PR_ENRICHMENT=true)"
             exit 0
           fi
 
-          # 2. Automatically disable for E2E tests to prevent interfering with test expectations
+          # 3. Check for Gemini Enable Toggle (Standard)
+          if [ "${GEMINI_ENABLE_PR_ENRICHMENT:-true}" == "false" ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::notice::PR enrichment is disabled (GEMINI_ENABLE_PR_ENRICHMENT=false)"
+            exit 0
+          fi
+
+          # 4. Automatically disable for E2E tests to prevent interfering with test expectations
           # Consistent with pr-orchestrator.yml bypass logic.
           if [[ "$PR_TITLE_EVENT" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_EVENT" == "e2e-test-"* ]]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
@@ -67,7 +96,7 @@ jobs:
         id: pr_context
         env:
           PR_NUMBER_INPUT: ${{ inputs.pr_number }}
-          PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
+          PR_NUMBER_EVENT: ${{ github.event.pull_request.number || github.event.issue.number }}
         run: |
           source scripts/ci/github-utils.sh
 
