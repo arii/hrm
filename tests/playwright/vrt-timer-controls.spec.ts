@@ -39,7 +39,7 @@ test.describe('Visual Regression Tests', () => {
       // Wait for layout to settle (e.g. accordion animations)
       await controlPage.waitForTimeout(500)
       await takeScreenshot(timerControls, 'timer-controls-idle.png', {
-        maxDiffPixelRatio: 0.1
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -101,7 +101,7 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
         // Performance: Skip a11y check for alternate mode; main mode is fully covered
         skipA11y: true,
-        maxDiffPixelRatio: 0.1
+        maxDiffPixelRatio: 0.1,
       })
       // Switch back to Tabata for subsequent tests
       await controlPage.getByTestId('tabata-mode-button').click()
