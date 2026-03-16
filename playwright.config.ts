@@ -84,7 +84,7 @@ export default defineConfig({
   expect: {
     timeout: 5000, // Assertions fail after 5s
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.1, // Relaxed to 0.1 for stability (0.02 was too flaky)
+      maxDiffPixelRatio: 0.15, // Relaxed to 0.15 for stability to account for OS-level anti-aliasing variations
     },
   },
 

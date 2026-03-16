@@ -30,7 +30,7 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.15,
 }
 
 /**

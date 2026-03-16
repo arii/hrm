@@ -29,6 +29,7 @@ import {
 import DurationStepper from './DurationStepper'
 
 import { useTheme, alpha, Theme } from '@mui/material/styles'
+import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -154,6 +155,15 @@ const TimerControls = () => {
 
   const controlsDisabled = isRunning || connectionStatus !== 'Connected'
   const modes = ['TABATA', 'STOPWATCH']
+
+  // Ensure consistency between server and client for the first render
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) return <DashboardSectionLoadingSkeleton />
 
   return (
     <Card
