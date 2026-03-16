@@ -43,8 +43,6 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GEMINI_ENABLE_PR_ENRICHMENT: ${{ vars.GEMINI_ENABLE_PR_ENRICHMENT }}
-      DISABLE_PR_ENRICHMENT: ${{ vars.DISABLE_PR_ENRICHMENT }}
-      DISABLE_TITLE_ENHANCEMENT: ${{ vars.DISABLE_TITLE_ENHANCEMENT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,7 +57,7 @@ jobs:
         env:
           PR_TITLE_EVENT: ${{ github.event.pull_request.title }}
           HEAD_REF_EVENT: ${{ github.event.pull_request.head.ref || github.head_ref }}
-          MANUAL_TRIGGER: ${{ github.event_name == 'workflow_dispatch' || inputs.manual_trigger == true }}
+          MANUAL_TRIGGER: ${{ github.event_name == 'workflow_dispatch' || inputs.manual_trigger }}
         run: |
           # 1. Check for manual override (Highest Priority)
           if [ "$MANUAL_TRIGGER" == "true" ]; then
@@ -68,21 +66,14 @@ jobs:
             exit 0
           fi
 
-          # 2. Check for manual disable toggle (Legacy)
-          if [ "${DISABLE_PR_ENRICHMENT:-false}" == "true" ]; then
-            echo "disabled=true" >> $GITHUB_OUTPUT
-            echo "::notice::PR enrichment is disabled (DISABLE_PR_ENRICHMENT=true)"
-            exit 0
-          fi
-
-          # 3. Check for Gemini Enable Toggle (Standard)
+          # 2. Check for Gemini Enable Toggle (Standard)
           if [ "${GEMINI_ENABLE_PR_ENRICHMENT:-true}" == "false" ]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
             echo "::notice::PR enrichment is disabled (GEMINI_ENABLE_PR_ENRICHMENT=false)"
             exit 0
           fi
 
-          # 4. Automatically disable for E2E tests to prevent interfering with test expectations
+          # 3. Automatically disable for E2E tests to prevent interfering with test expectations
           # Consistent with pr-orchestrator.yml bypass logic.
           if [[ "$PR_TITLE_EVENT" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_EVENT" == "e2e-test-"* ]]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
@@ -375,7 +366,7 @@ jobs:
         run: rm -f pr_description.json
 
       - name: Enhance PR Title
-        if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
+        if: steps.check-disabled.outputs.disabled == 'false' && vars.DISABLE_TITLE_ENHANCEMENT != 'true'
         run: |
           CURRENT_TITLE="$PR_TITLE"
 
