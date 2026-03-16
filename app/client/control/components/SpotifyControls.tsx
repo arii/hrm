@@ -17,7 +17,11 @@ import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
-import { HRM_WEB_PLAYER_NAME, SYNC_LOCK_DURATION } from '@/constants/spotify'
+import {
+  HRM_WEB_PLAYER_NAME,
+  SYNC_LOCK_DURATION,
+  SPOTIFY_BRAND_COLOR,
+} from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -314,6 +318,7 @@ const SpotifyControls = () => {
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
               onToggleMute={toggleMute}
               showValue
+              sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"
               sx={VOLUME_SLIDER_SX}
             />
