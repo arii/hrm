@@ -141,9 +141,12 @@ test.describe('Component-Specific VRT', () => {
     const menu = dashboardPage.getByTestId('spotify-device-selector-menu-paper')
     await expect(menu).toBeVisible()
 
+    // Perform manual accessibility check on the specific menu element to ensure context validity
+    await checkAccessibility(menu)
+
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
-      skipA11y: true, // A11y on detached popovers frequently fails Context check in axe-core Playwright
+      skipA11y: true, // Accessibility checked manually above
     })
   })
 

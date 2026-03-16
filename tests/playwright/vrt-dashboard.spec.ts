@@ -109,11 +109,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
-      // Note: We don't strictly assert the height to 400 because sometimes it expands slightly more
-      // than 400 depending on screen size or other components pushing it.
-      // 600px is a safe upper bound just to make sure it didn't completely blow up the page height
       await assertFixedDimensions(timerCard, {
-        maxHeight: 600,
+        maxHeight: 400,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -121,8 +118,6 @@ test.describe('Visual Regression Tests', () => {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
       })
-
-      await stopTimer(controlPage, dashboardPage)
     })
 
     // NEW: Active timer WITH HR data (the regression scenario)
@@ -144,7 +139,7 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 600,
+        maxHeight: 400,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -152,12 +147,6 @@ test.describe('Visual Regression Tests', () => {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
-
-      // Stop the timer so it doesn't leak into subsequent viewport tests
-      await stopTimer(controlPage, dashboardPage)
-
-      // Stop HR mock to avoid leaking
-      await mockPage.getByRole('button', { name: 'Disconnect' }).click()
     })
 
     // NEW: Responsive breakpoint tests
