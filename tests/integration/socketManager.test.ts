@@ -198,8 +198,7 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    expect(clientData?.name).toBeUndefined()
-    expect(clientData?.value).toBe(0)
+    expect(clientData).toBeUndefined()
 
     ws2.close()
   })
