@@ -10,7 +10,8 @@ import { v4 as uuidv4 } from 'uuid'
  * @throws An error if any accessibility violations are found.
  */
 export async function checkAccessibility(target: Page | Locator) {
-  const page = 'page' in target ? target.page() : (target as Page)
+  // Safely extract the page object based on the target type
+  const page = 'page' in target ? (target as Locator).page() : (target as Page)
   const uniqueId = `axe-${uuidv4()}`
   let selector: string | undefined = undefined
 

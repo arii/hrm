@@ -47,6 +47,9 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
+  // Force layout recalculation for tablet viewports without invalid casting
+  await target.evaluate(() => window.scrollTo(0, 0))
+
   if (!skipA11y) {
     await checkAccessibility(target)
   }
@@ -66,6 +69,7 @@ export async function takeScreenshot(
   }
 
   await expect(target).toHaveScreenshot(snapshotName, {
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...screenshotOptions,

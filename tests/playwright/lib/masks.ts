@@ -21,6 +21,7 @@ export const VRT_MASK_SELECTORS = {
   timerCountdown: '[data-testid="timer-countdown"]',
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
+  spotifyCurrentTrack: '[data-testid="spotify-current-track-name"]',
 } as const
 
 /**
@@ -66,4 +67,8 @@ export function getTimerMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
   ]
+}
+
+export function getSpotifyMasks(page: Page): Locator[] {
+  return [page.locator(VRT_MASK_SELECTORS.spotifyCurrentTrack)]
 }

@@ -127,6 +127,13 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
+  // Trigger user interaction to unlock AudioContext (seen in logs preventing muted states)
+  try {
+    await page.mouse.click(0, 0)
+  } catch (e) {
+    console.warn(`[navigateAndWait] Failed to unlock AudioContext: ${e}`)
+  }
+
   // Stabilize VRT by disabling animations, transitions, and backdrop filters
   await page.addStyleTag({
     content: `
@@ -135,6 +142,13 @@ export async function navigateAndWait(
         animation: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+      }
+      body, html, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
       }
       [data-testid="main-content-layout"] {
         opacity: 1 !important;
@@ -170,6 +184,35 @@ export async function resetServerState(
  * @param browser - The Playwright Browser fixture
  * @returns An object containing the context and all created pages.
  */
+export async function mockSpotifyEnvironment(
+  contextOrPage: BrowserContext | Page
+) {
+  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
+  await contextOrPage.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
+  // Block the real Spotify SDK from loading and erroring out
+  await contextOrPage.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
+}
+
+/**
+ * Comprehensive setup for visual regression tests.
+ * Creates a clean browser context, initializes all required pages,
+ * and prepares them for snapshot testing.
+ *
+ * @param browser - The Playwright Browser fixture
+ * @returns An object containing the context and all created pages.
+ */
 export async function setupVisualRegressionTest(browser: Browser): Promise<{
   context: BrowserContext
   dashboardPage: Page
@@ -194,6 +237,8 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
       }),
     })
   })
+
+  await mockSpotifyEnvironment(context)
 
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
@@ -249,6 +294,8 @@ export async function setupMinimalVisualRegressionTest(
       }),
     })
   })
+
+  await mockSpotifyEnvironment(page)
 
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {

@@ -5,6 +5,7 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   resetServerState,
+  getSpotifyMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -70,6 +71,15 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+    // Setup network interception first
+    await dashboardPage.route('/api/workout*', async (route) => {
+      await route.fulfill({
+        json: {
+          headers: ['Exercise', 'Sets', 'Reps'],
+        },
+      })
+    })
+
     // Ensure we are in native mode for this test
     await dashboardPage.goto('/?native=true')
     await waitForPageReady(dashboardPage)
@@ -146,12 +156,16 @@ test.describe('Component-Specific VRT', () => {
     // Give it a moment to ensure it is fully rendered
     await dashboardPage.waitForTimeout(500)
 
+    // Wait for the opacity transition to finish rendering
+    await expect(menu).toHaveCSS('opacity', '1')
+
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
       skipA11y: true, // Accessibility checked manually above
+      mask: getSpotifyMasks(dashboardPage),
     })
   })
 
