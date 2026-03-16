@@ -118,6 +118,8 @@ test.describe('Visual Regression Tests', () => {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
       })
+
+      await stopTimer(controlPage, dashboardPage)
     })
 
     // NEW: Active timer WITH HR data (the regression scenario)
