@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
-import useVolumePreference from '@/hooks/useVolumePreference'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -82,7 +81,9 @@ describe('SpotifyControls Reproduction', () => {
     // EXPECTED BEHAVIOR (Fixed):
     // Playback controls should be shown because an active device exists
 
-    const selectMusicButton = screen.queryByTestId('spotify-select-music-button')
+    const selectMusicButton = screen.queryByTestId(
+      'spotify-select-music-button'
+    )
     const playButton = screen.queryByLabelText('Play')
 
     // EXPECTED BEHAVIOR (Fixed):
