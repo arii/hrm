@@ -159,38 +159,68 @@ export class SpotifyPlayerManager {
     params: SpotifyCommandParameters
   ) {
     const { deviceId, volume, playlistUri, contextUri, uri } = params
+    const previousState = this.getState()
+
+    if (command === 'PLAY' || command === 'PAUSE') {
+      this.setState((prev) => ({
+        ...prev,
+        playback: {
+          ...prev.playback,
+          is_playing: command === 'PLAY',
+        },
+      }))
+      this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
+    }
     const effectiveContextUri = contextUri || playlistUri
     const sdk = this.sdk
 
     switch (command) {
       case 'PLAY':
-        await this.executeSdkCommand(
-          command,
-          () => {
-            if (uri) {
-              return sdk.player.startResumePlayback(
-                deviceId as string,
-                undefined,
-                [uri]
-              )
-            }
-            if (effectiveContextUri) {
-              return sdk.player.startResumePlayback(
-                deviceId as string,
-                effectiveContextUri
-              )
-            }
-            return sdk.player.startResumePlayback(deviceId as string)
-          },
-          { deviceId, contextUri: effectiveContextUri, uri }
-        )
+        try {
+          await this.executeSdkCommand(
+            command,
+            () => {
+              if (uri) {
+                return sdk.player.startResumePlayback(
+                  deviceId as string,
+                  undefined,
+                  [uri]
+                )
+              }
+              if (effectiveContextUri) {
+                return sdk.player.startResumePlayback(
+                  deviceId as string,
+                  effectiveContextUri
+                )
+              }
+              return sdk.player.startResumePlayback(deviceId as string)
+            },
+            { deviceId, contextUri: effectiveContextUri, uri }
+          )
+        } catch (error) {
+          this.setState(previousState)
+          this.broadcastUpdate({
+            type: 'SPOTIFY_UPDATE',
+            payload: this.getState(),
+          })
+          throw error
+        }
         break
       case 'PAUSE':
-        await this.executeSdkCommand(
-          command,
-          () => sdk.player.pausePlayback(deviceId as string),
-          { deviceId }
-        )
+        try {
+          await this.executeSdkCommand(
+            command,
+            () => sdk.player.pausePlayback(deviceId as string),
+            { deviceId }
+          )
+        } catch (error) {
+          this.setState(previousState)
+          this.broadcastUpdate({
+            type: 'SPOTIFY_UPDATE',
+            payload: this.getState(),
+          })
+          throw error
+        }
         break
       case 'NEXT':
         await this.executeSdkCommand(
@@ -218,7 +248,6 @@ export class SpotifyPlayerManager {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          const previousState = this.getState()
 
           this.setState((prevState: SpotifyData) => ({
             ...prevState,

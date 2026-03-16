@@ -8,7 +8,6 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -57,13 +56,6 @@ jest.mock('@/hooks/useVolumePreference', () => {
     default: jest.fn(),
   }
 })
-
-// Mock the snackbar hook
-jest.mock('@/hooks/useAppSnackbar', () => ({
-  useAppSnackbar: jest.fn(() => ({
-    showWarning: jest.fn(),
-  })),
-}))
 
 // Mock the spotify constants
 jest.mock('@/constants/spotify', () => ({
@@ -266,7 +258,6 @@ describe('components/SpotifyControls', () => {
       expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
     })
   })
-
 
   it('uses HRM Web Player as fallback if no device is active or selected', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({

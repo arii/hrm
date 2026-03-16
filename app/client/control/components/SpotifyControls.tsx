@@ -14,7 +14,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import throttle from 'lodash.throttle'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
@@ -34,9 +33,7 @@ const SpotifyControls = () => {
   const { execute: executeSpotify } = useSpotifyCommand()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSliding, setIsSliding] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)

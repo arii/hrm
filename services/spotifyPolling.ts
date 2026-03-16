@@ -261,20 +261,6 @@ export class SpotifyPolling implements SpotifyService {
         return
       }
 
-      if (command === 'PLAY' || command === 'PAUSE') {
-        this.setState((prev) => ({
-          ...prev,
-          playback: {
-            ...prev.playback,
-            is_playing: command === 'PLAY',
-          },
-        }))
-        this.broadcastUpdate({
-          type: 'SPOTIFY_UPDATE',
-          payload: this.getState(),
-        })
-      }
-
       await this.playerManager!.executeSpotifyCommand(command, params)
 
       // Revert to 500ms delay to avoid race conditions with sluggish Spotify API
