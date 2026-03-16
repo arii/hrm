@@ -254,7 +254,8 @@ export async function setupMinimalVisualRegressionTest(
   if (path === '' || path === '/') {
     await mockGoogleDocIframe(page)
   }
-  await navigateAndWait(page, path)
+  const queryParamSeparator = path.includes('?') ? '&' : '?'
+  await navigateAndWait(page, `${path}${queryParamSeparator}testing=true`)
 }
 
 /**

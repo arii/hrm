@@ -157,17 +157,22 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        {deviceStatus && !isConnected && (
+          <Alert
+            data-testid="connection-status-alert"
+            severity={
+              deviceStatus.includes('Failed') ||
+              deviceStatus.includes('failed') ||
+              deviceStatus.includes('Error') ||
+              deviceStatus.includes('error')
+                ? 'error'
+                : 'info'
+            }
+            sx={{ mb: 2 }}
+          >
+            {deviceStatus}
+          </Alert>
+        )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (

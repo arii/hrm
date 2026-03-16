@@ -113,12 +113,6 @@ export default defineConfig({
 
     // Browser context options
     viewport: DESKTOP_VIEWPORT,
-    contextOptions: {
-      reducedMotion: 'reduce', // Disables CSS animations
-    },
-    launchOptions: {
-      args: ['--font-render-hinting=none'], // Normalizes font rendering
-    },
   },
 
   // Browser configurations
@@ -188,7 +182,11 @@ export default defineConfig({
           // Mock Google Doc URLs to prevent configuration errors in VRT
           GOOGLE_DOC_WORKOUT_URL:
             'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+          NEXT_PUBLIC_GOOGLE_DOC_WORKOUT_URL:
+            'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
           GOOGLE_DOC_IFRAME_URL:
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
+          NEXT_PUBLIC_GOOGLE_DOC_IFRAME_URL:
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
           WEBSOCKET_WATCHDOG_INTERVAL: '5000',
         },

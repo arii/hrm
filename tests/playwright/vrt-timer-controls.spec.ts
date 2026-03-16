@@ -71,9 +71,6 @@ test.describe('Visual Regression Tests', () => {
 
       const timerControls = controlPage.getByTestId('timer-controls')
 
-      // Allow animations to finish and states to settle before snapshot
-      await controlPage.waitForTimeout(500)
-
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
         maxDiffPixelRatio: 0.2, // increased to account for ripple effect flakiness
