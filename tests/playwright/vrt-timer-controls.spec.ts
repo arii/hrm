@@ -77,7 +77,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
-        maxDiffPixelRatio: 0.1, // increased to account for ripple effect flakiness
+        maxDiffPixelRatio: 0.1, // Restored baseline threshold
       })
 
       // Stop the timer to reset for the next test

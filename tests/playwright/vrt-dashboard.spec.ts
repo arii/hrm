@@ -170,7 +170,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.1, // Higher threshold for complex combined state
+        maxDiffPixelRatio: 0.1, // Restored baseline threshold
       })
     })
 
@@ -183,7 +183,8 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for layout adjustment to complete
       await dashboardPage.waitForFunction(
-        () => document.body.clientWidth === 390
+        (width) => document.body.clientWidth === width,
+        MOBILE_VIEWPORT.width
       )
 
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
