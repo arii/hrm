@@ -218,12 +218,8 @@ export class SpotifyPlayerManager {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.executeSdkCommand(
-            command,
-            () =>
-              sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
-            { deviceId, volume: clampedVolume }
-          )
+
+          // Immediate Optimistic Update
           this.setState((prevState: SpotifyData) => ({
             ...prevState,
             playback: {
@@ -236,6 +232,13 @@ export class SpotifyPlayerManager {
             type: 'SPOTIFY_UPDATE',
             payload: this.getState(),
           })
+
+          await this.executeSdkCommand(
+            command,
+            () =>
+              sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
+            { deviceId, volume: clampedVolume }
+          )
         }
         break
     }

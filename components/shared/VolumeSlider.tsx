@@ -31,11 +31,11 @@ const StyledSlider = styled(Slider, {
   shouldForwardProp: (prop) => prop !== 'sliderColor',
 })<{ sliderColor?: string }>(({ theme, sliderColor, size }) => ({
   color: sliderColor || theme.palette.primary.main,
-  height: 6,
+  height: size === 'small' ? 6 : 8,
   '& .MuiSlider-thumb': {
     backgroundColor: 'white',
-    width: size === 'small' ? 18 : 22,
-    height: size === 'small' ? 18 : 22,
+    width: size === 'small' ? 20 : 28,
+    height: size === 'small' ? 20 : 28,
     boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
     '&:hover, &.Mui-focusVisible': {
       boxShadow: sliderColor
@@ -53,7 +53,7 @@ const StyledSlider = styled(Slider, {
       transform: 'translate(-50%, -50%)',
     },
   },
-  '& .MuiSlider-track, .MuiSlider-rail': { height: 6 },
+  '& .MuiSlider-track, .MuiSlider-rail': { height: size === 'small' ? 6 : 8 },
   '& .MuiSlider-rail': { opacity: 0.3 },
 }))
 
@@ -106,14 +106,15 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
+          padding: size === 'small' ? '8px' : '12px',
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
       >
         {muted || volume === 0 ? (
-          <VolumeOff fontSize={size} />
+          <VolumeOff fontSize={size === 'small' ? 'small' : 'medium'} />
         ) : (
-          <VolumeDown fontSize={size} />
+          <VolumeDown fontSize={size === 'small' ? 'small' : 'medium'} />
         )}
       </IconButton>
 
@@ -125,6 +126,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         disabled={disabled}
         sliderColor={sliderColor}
         aria-label="Volume control"
+        getAriaValueText={(value) => `${value}%`}
         data-testid="volume-slider-input"
       />
       <VolumeUp sx={{ color: 'grey.400' }} fontSize={size} />
