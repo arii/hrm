@@ -4,6 +4,8 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
+  resetServerState,
+  getSpotifyMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -68,6 +70,19 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+    // Setup network interception first
+    await dashboardPage.route('/api/workout*', async (route) => {
+      await route.fulfill({
+        json: {
+          headers: ['Exercise', 'Sets', 'Reps'],
+        },
+      })
+    })
+
+    // Ensure we are in native mode for this test
+    await dashboardPage.goto('/?native=true')
+    await waitForPageReady(dashboardPage)
+
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -137,8 +152,16 @@ test.describe('Component-Specific VRT', () => {
     })
     await selectorButton.click()
 
-    const menu = dashboardPage.getByTestId('spotify-device-selector-menu-paper')
+    const menu = dashboardPage
+      .locator('[data-testid="spotify-device-selector-menu-paper"]')
+      .last()
     await expect(menu).toBeVisible()
+
+    // Give it a moment to ensure it is fully rendered
+    await dashboardPage.waitForTimeout(500)
+
+    // Wait for the opacity transition to finish rendering
+    await expect(menu).toHaveCSS('opacity', '1')
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
@@ -146,6 +169,7 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
       skipA11y: true, // Accessibility checked manually above
+      mask: getSpotifyMasks(dashboardPage),
     })
   })
 

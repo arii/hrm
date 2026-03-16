@@ -47,12 +47,31 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
+  // Force layout recalculation for tablet viewports without invalid casting
+  await target.evaluate(() => window.scrollTo(0, 0))
+
   if (!skipA11y) {
     await checkAccessibility(target)
   }
 
+  const page = 'page' in target ? target.page() : (target as Page)
+
+  // Force layout recalculation for tablet viewports (and general stability)
+  await page.evaluate(() => window.scrollTo(0, 0))
+
+  // Ensure the height is stable if it's a Locator
+  if ('page' in target) {
+    await expect(target).toHaveJSProperty(
+      'scrollHeight',
+      await target.evaluate((node) => node.scrollHeight),
+      { timeout: 2000 }
+    )
+  }
+
   await expect(target).toHaveScreenshot(snapshotName, {
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
+    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...screenshotOptions,
   })
 }

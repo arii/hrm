@@ -10,13 +10,23 @@ import { v4 as uuidv4 } from 'uuid'
  * @throws An error if any accessibility violations are found.
  */
 export async function checkAccessibility(target: Page | Locator) {
-  const page = 'page' in target ? target.page() : (target as Page)
+  // Safely extract the page object based on the target type
+  const page = 'page' in target ? (target as Locator).page() : (target as Page)
   const uniqueId = `axe-${uuidv4()}`
   let selector: string | undefined = undefined
 
   // If the target is a Locator, we need to add a temporary unique attribute
   // to it so we can scope the accessibility scan to that element.
   if ('page' in target) {
+    // Ensure the target is actually attached to the DOM before evaluation
+    // This is critical for MUI Portals/Menus
+    await target.waitFor({ state: 'attached', timeout: 5000 })
+
+    // Use a trial-run evaluate to check if the node is accessible in the JS context
+    await target.evaluate((node) => {
+      if (!node) throw new Error('Target node disappeared during evaluation')
+    })
+
     await target.evaluate((node, id) => node.setAttribute(id, ''), uniqueId)
     selector = `[${uniqueId}]`
   }
