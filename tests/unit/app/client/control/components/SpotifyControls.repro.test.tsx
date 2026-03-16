@@ -76,18 +76,10 @@ describe('SpotifyControls Reproduction', () => {
 
     render(<SpotifyControls />)
 
-    // CURRENT BEHAVIOR (Buggy):
-    // The "Select Music" button is shown because hasSpotifyData is false
-    // EXPECTED BEHAVIOR (Fixed):
-    // Playback controls should be shown because an active device exists
-
     const selectMusicButton = screen.queryByTestId(
       'spotify-select-music-button'
     )
     const playButton = screen.queryByLabelText('Play')
-
-    // EXPECTED BEHAVIOR (Fixed):
-    // Playback controls should be shown because an active device exists
 
     expect(selectMusicButton).not.toBeInTheDocument()
     expect(playButton).toBeInTheDocument()

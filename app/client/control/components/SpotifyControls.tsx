@@ -84,16 +84,23 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // Force device refresh when tab regains focus
+  // Force device refresh when tab regains focus (debounced to prevent API spam)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
     const handleFocus = () => {
-      if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-        sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
-      }
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
+          sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+        }
+      }, 1000)
     }
 
     window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      clearTimeout(timeoutId)
+    }
   }, [connectionStatus, spotifyServiceInitialized, sendData])
 
   // 4. Sync selected device and volume with active device
@@ -405,7 +412,6 @@ const SpotifyControls = () => {
             onClick={handleBrowseClick}
             data-testid="spotify-select-music-button"
             disabled={!spotifyServiceInitialized}
-            aria-disabled={!spotifyServiceInitialized}
             startIcon={
               !spotifyServiceInitialized ? (
                 <CircularProgress size={20} color="inherit" />
