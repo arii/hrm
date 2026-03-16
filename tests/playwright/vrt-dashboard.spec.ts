@@ -159,6 +159,7 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.3, // Higher tolerance for responsive shifts in CI
+        fullPage: false, // Ensure we only capture the explicit viewport bounds, ignoring expanded content
       })
     })
 
