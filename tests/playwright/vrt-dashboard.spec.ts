@@ -156,7 +156,9 @@ test.describe('Visual Regression Tests', () => {
       )
 
       // Wait for heart rate components to fully settle using explicit text match assertion
-      await expect(dashboardPage.getByTestId('hr-tile-bpm-value').first()).toHaveText('155', {
+      await expect(
+        dashboardPage.getByTestId('hr-tile-bpm-value').first()
+      ).toHaveText('155', {
         timeout: VRT_TIMEOUTS.STANDARD,
       })
 
@@ -190,6 +192,13 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.waitForFunction(
         (width) => document.body.clientWidth === width,
         MOBILE_VIEWPORT.width
+      )
+
+      // Explicitly wait for dimensions to settle using standard JS property evaluation to prevent 1000px vs 1038px flakiness
+      await expect(dashboard).toHaveJSProperty(
+        'scrollHeight',
+        await dashboard.evaluate((node) => node.scrollHeight),
+        { timeout: 2000 }
       )
 
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
