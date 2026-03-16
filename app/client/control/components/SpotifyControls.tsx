@@ -13,6 +13,7 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { throttle } from 'lodash'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -78,8 +79,6 @@ const SpotifyControls = () => {
     (hasSpotifyData || devices.some((d) => d.is_active))
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout
-
     const fetchDevices = () => {
       if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
         const now = Date.now()
@@ -93,16 +92,17 @@ const SpotifyControls = () => {
       }
     }
 
-    const debouncedFetch = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(fetchDevices, 2000)
-    }
+    // Execute immediately on first focus, but throttle subsequent rapid fires
+    const throttledFetch = throttle(fetchDevices, 2000, {
+      leading: true,
+      trailing: false,
+    })
 
     fetchDevices()
-    window.addEventListener('focus', debouncedFetch)
+    window.addEventListener('focus', throttledFetch)
     return () => {
-      window.removeEventListener('focus', debouncedFetch)
-      clearTimeout(timeoutId)
+      window.removeEventListener('focus', throttledFetch)
+      throttledFetch.cancel()
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
