@@ -85,9 +85,6 @@ test.describe('Visual Regression Tests', () => {
         minHeight: HR_TILE_MIN_HEIGHT,
       })
 
-      // Allow UI animations and state updates to settle before capture
-      await dashboardPage.waitForTimeout(500)
-
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
@@ -155,9 +152,6 @@ test.describe('Visual Regression Tests', () => {
         await expect(
           dashboardPage.getByTestId('hr-tile-card').first()
         ).toBeVisible()
-
-        // Allow UI animations and state updates to settle before capture
-        await dashboardPage.waitForTimeout(500)
 
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {

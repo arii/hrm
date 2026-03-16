@@ -30,7 +30,7 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.15,
+  maxDiffPixelRatio: 0.02,
 }
 
 /**
@@ -46,21 +46,9 @@ export async function takeScreenshot(
   options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
-  const page = 'page' in target ? target.page() : (target as Page)
 
-  // 1. Force layout recalculation for tablet viewports
-  await page.evaluate(() => window.scrollTo(0, 0))
-
-  // 2. Ensure the height is stable for Locator targets
-  // Check for "stable" dimensions
-  if ('page' in target) {
-    await expect(target).toHaveJSProperty(
-      'scrollHeight',
-      await target.evaluate((node) => node.scrollHeight)
-    )
-  } else {
-    await page.waitForTimeout(100)
-  }
+  // Force layout recalculation for tablet viewports without invalid casting
+  await target.evaluate(() => window.scrollTo(0, 0))
 
   if (!skipA11y) {
     await checkAccessibility(target)

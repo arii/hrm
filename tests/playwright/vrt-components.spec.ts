@@ -145,11 +145,10 @@ test.describe('Component-Specific VRT', () => {
       .last()
 
     // Give the menu time to mount in the portal and stabilize before checking visibility
-    await menu.waitFor({ state: 'attached' })
     await expect(menu).toBeVisible()
 
-    // Give it a moment to ensure it is fully rendered
-    await dashboardPage.waitForTimeout(500)
+    // Wait for the opacity transition to finish rendering
+    await expect(menu).toHaveCSS('opacity', '1')
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)

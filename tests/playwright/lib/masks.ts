@@ -69,13 +69,6 @@ export function getTimerMasks(page: Page): Locator[] {
   ]
 }
 
-/**
- * Returns an array of locators specifically for Spotify-related elements.
- * Masks the current track name which can be dynamic and cause VRT flakiness.
- *
- * @param page - The Playwright Page object.
- * @returns An array of Locators for Spotify elements to be masked.
- */
 export function getSpotifyMasks(page: Page): Locator[] {
   return [page.locator(VRT_MASK_SELECTORS.spotifyCurrentTrack)]
 }

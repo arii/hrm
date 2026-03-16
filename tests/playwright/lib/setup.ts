@@ -184,6 +184,35 @@ export async function resetServerState(
  * @param browser - The Playwright Browser fixture
  * @returns An object containing the context and all created pages.
  */
+export async function mockSpotifyEnvironment(
+  contextOrPage: BrowserContext | Page
+) {
+  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
+  await contextOrPage.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
+  // Block the real Spotify SDK from loading and erroring out
+  await contextOrPage.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
+}
+
+/**
+ * Comprehensive setup for visual regression tests.
+ * Creates a clean browser context, initializes all required pages,
+ * and prepares them for snapshot testing.
+ *
+ * @param browser - The Playwright Browser fixture
+ * @returns An object containing the context and all created pages.
+ */
 export async function setupVisualRegressionTest(browser: Browser): Promise<{
   context: BrowserContext
   dashboardPage: Page
@@ -209,22 +238,7 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     })
   })
 
-  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
-  await context.route('**/api/spotify/access-token', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        accessToken: 'mock_token',
-        expiresAt: Date.now() + 3600000,
-      }),
-    })
-  })
-
-  // Block the real Spotify SDK from loading and erroring out
-  await context.route('https://sdk.scdn.co/spotify-player.js', (route) =>
-    route.abort()
-  )
+  await mockSpotifyEnvironment(context)
 
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
@@ -281,22 +295,7 @@ export async function setupMinimalVisualRegressionTest(
     })
   })
 
-  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
-  await page.route('**/api/spotify/access-token', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        accessToken: 'mock_token',
-        expiresAt: Date.now() + 3600000,
-      }),
-    })
-  })
-
-  // Block the real Spotify SDK from loading and erroring out
-  await page.route('https://sdk.scdn.co/spotify-player.js', (route) =>
-    route.abort()
-  )
+  await mockSpotifyEnvironment(page)
 
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {
