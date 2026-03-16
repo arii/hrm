@@ -7,7 +7,7 @@ setup() {
   # Reset all environment variables to a clean slate
   unset TRIGGER_EVENT ACTION_TYPE COMMENT_BODY PR_NUMBER BASE_SHA HEAD_SHA \
         PR_QUALITY_RESULT MAX_COMMENTS REVIEW_THROTTLE_MINUTES BOT_USERNAME \
-        QUALITY_GATE_BOT_USERNAMES MOCK_GH_COMMENTS_JSON
+        QUALITY_GATE_BOT_USERNAMES MOCK_GH_COMMENTS_JSON GEMINI_ENABLE_PR_REVIEW
 }
 
 @test "should trigger review on manual override" {
@@ -15,6 +15,18 @@ setup() {
   export ACTION_TYPE="created"
   export COMMENT_BODY="@gemini-bot review"
   export MAX_COMMENTS=0 # Prove that this check is bypassed
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
+}
+
+@test "should trigger review on case-insensitive manual override" {
+  export TRIGGER_EVENT="comment"
+  export ACTION_TYPE="created"
+  export COMMENT_BODY="@Gemini-Bot review"
 
   run_script
 
@@ -112,7 +124,20 @@ setup() {
 
   [ "$status" -eq 0 ]
   assert_output "needs-review" "false"
-  assert_output "skip-reason" "Gemini review is disabled"
+  assert_output "skip-reason" "Gemini review is globally disabled"
+}
+
+@test "should trigger review on manual override even if GEMINI_ENABLE_PR_REVIEW is false" {
+  export GEMINI_ENABLE_PR_REVIEW="false"
+  export TRIGGER_EVENT="comment"
+  export ACTION_TYPE="created"
+  export COMMENT_BODY="@gemini-bot review"
+
+  run_script
+
+  [ "$status" -eq 0 ]
+  assert_output "needs-review" "true"
+  assert_output "skip-reason" ""
 }
 
 # Helper function to assert the output of the script

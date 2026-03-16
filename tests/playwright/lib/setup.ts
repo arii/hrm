@@ -16,7 +16,6 @@ import {
   waitForFontsLoaded,
   waitForPageReady,
   waitForWebSocketConnection,
-  WAIT_TIMEOUTS,
 } from './waits'
 
 /**
@@ -128,13 +127,34 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
-  // Force disconnect to remove HrmConnectionPanel skeleton
-  await page.evaluate(() => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    if (window.__TEST_CONTROLS__) {
-      // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-      window.__TEST_CONTROLS__.disconnect()
-    }
+  // Trigger user interaction to unlock AudioContext (seen in logs preventing muted states)
+  try {
+    await page.mouse.click(0, 0)
+  } catch (e) {
+    console.warn(`[navigateAndWait] Failed to unlock AudioContext: ${e}`)
+  }
+
+  // Stabilize VRT by disabling animations, transitions, and backdrop filters
+  await page.addStyleTag({
+    content: `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      body, html, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
+      [data-testid="main-content-layout"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    `,
   })
 
   await waitForPageReady(page)
@@ -154,6 +174,35 @@ export async function resetServerState(
       `Warning: Failed to reset server state. Status: ${response.status()}`
     )
   }
+}
+
+/**
+ * Comprehensive setup for visual regression tests.
+ * Creates a clean browser context, initializes all required pages,
+ * and prepares them for snapshot testing.
+ *
+ * @param browser - The Playwright Browser fixture
+ * @returns An object containing the context and all created pages.
+ */
+export async function mockSpotifyEnvironment(
+  contextOrPage: BrowserContext | Page
+) {
+  // Mock internal Auth API for Spotify VRT to prevent 401s and websocket reset loops
+  await contextOrPage.route('**/api/spotify/access-token', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken: 'mock_token',
+        expiresAt: Date.now() + 3600000,
+      }),
+    })
+  })
+
+  // Block the real Spotify SDK from loading and erroring out
+  await contextOrPage.route('https://sdk.scdn.co/spotify-player.js', (route) =>
+    route.abort()
+  )
 }
 
 /**
@@ -189,6 +238,8 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     })
   })
 
+  await mockSpotifyEnvironment(context)
+
   // Create all pages in parallel for efficiency
   const [dashboardPage, controlPage, mockPage] = await Promise.all([
     context.newPage(),
@@ -196,30 +247,18 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     context.newPage(),
   ])
 
-  // Navigate all pages to their respective routes in parallel
-  const baseUrl = getBaseURL()
+  // Navigate all pages to their respective routes in parallel and stabilize
   await Promise.all([
-    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
-    controlPage.goto(`${baseUrl}${HRM_ROUTES.CONTROL}`),
-    mockPage.goto(`${baseUrl}${HRM_ROUTES.MOCK}`),
+    navigateAndWait(dashboardPage, HRM_ROUTES.DASHBOARD),
+    navigateAndWait(controlPage, HRM_ROUTES.CONTROL),
+    navigateAndWait(mockPage, HRM_ROUTES.MOCK),
   ])
 
-  // Wait for all pages to be fully loaded and idle
+  // Wait for WebSocket connections to be established (longer timeout for CI stability)
   await Promise.all([
-    waitForPageReady(dashboardPage),
-    waitForPageReady(controlPage),
-    waitForPageReady(mockPage),
-  ])
-
-  // Wait for WebSocket connections to be established
-  await Promise.all([
-    waitForWebSocketConnection(dashboardPage, {
-      timeout: WAIT_TIMEOUTS.WEBSOCKET,
-    }),
-    waitForWebSocketConnection(controlPage, {
-      timeout: WAIT_TIMEOUTS.WEBSOCKET,
-    }),
-    waitForWebSocketConnection(mockPage, { timeout: WAIT_TIMEOUTS.WEBSOCKET }),
+    waitForWebSocketConnection(dashboardPage, { timeout: 10000 }),
+    waitForWebSocketConnection(controlPage, { timeout: 10000 }),
+    waitForWebSocketConnection(mockPage, { timeout: 10000 }),
   ])
 
   // Ensure all custom fonts are loaded to prevent visual shifts
@@ -229,44 +268,10 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
     waitForFontsLoaded(mockPage),
   ])
 
-  await Promise.all([
-    dashboardPage.addInitScript(initStabilization, STABILIZATION_CSS),
-    controlPage.addInitScript(initStabilization, STABILIZATION_CSS),
-    mockPage.addInitScript(initStabilization, STABILIZATION_CSS),
-  ])
-
   // Stop any running timers to ensure a consistent initial state
   await stopTimer(controlPage, dashboardPage)
 
   return { context, dashboardPage, controlPage, mockPage }
-}
-
-/**
- * CSS injected into pages during VRT to disable animations and stabilize layout.
- */
-export const STABILIZATION_CSS = `
-  *, *::before, *::after {
-    transition: none !important;
-    animation: none !important;
-  }
-  .MuiCircularProgress-root, .MuiSkeleton-root, [role="progressbar"] {
-    animation: none !important;
-    transition: none !important;
-  }
-  [data-testid="main-content-layout"], [data-testid="dashboard"], [data-testid="timer-controls"], [data-testid="loading-indicator"] {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-`
-
-/**
- * Helper to inject CSS into a page.
- */
-export const initStabilization = (css: string) => {
-  const style = document.createElement('style')
-  style.innerHTML = css
-  document.head.appendChild(style)
 }
 
 /**
@@ -279,9 +284,6 @@ export async function setupMinimalVisualRegressionTest(
   page: Page,
   path: string = ''
 ): Promise<void> {
-  // Inject stabilization CSS early to ensure consistency
-  await page.addInitScript(initStabilization, STABILIZATION_CSS)
-
   // Mock the workout API response for stable VRT
   await page.route('**/api/workout*', async (route) => {
     await route.fulfill({
@@ -292,6 +294,8 @@ export async function setupMinimalVisualRegressionTest(
       }),
     })
   })
+
+  await mockSpotifyEnvironment(page)
 
   // Mock the iframe for the root path before navigation
   if (path === '' || path === '/') {
@@ -357,7 +361,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     () => {
       return document.body.dataset.connectionStatus === 'connected'
     },
-    { timeout: WAIT_TIMEOUTS.WEBSOCKET }
+    { timeout: 10000 }
   )
 }
 
