@@ -78,6 +78,8 @@ const SpotifyControls = () => {
     (hasSpotifyData || devices.some((d) => d.is_active))
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+
     const fetchDevices = () => {
       if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
         const now = Date.now()
@@ -91,9 +93,17 @@ const SpotifyControls = () => {
       }
     }
 
+    const debouncedFetch = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(fetchDevices, 2000)
+    }
+
     fetchDevices()
-    window.addEventListener('focus', fetchDevices)
-    return () => window.removeEventListener('focus', fetchDevices)
+    window.addEventListener('focus', debouncedFetch)
+    return () => {
+      window.removeEventListener('focus', debouncedFetch)
+      clearTimeout(timeoutId)
+    }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Sync selected device and volume with active device
