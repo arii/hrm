@@ -5,6 +5,7 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   getSpotifyMasks,
+  resetServerState,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -12,7 +13,8 @@ import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage }) => {
+  test.beforeEach(async ({ dashboardPage, request }) => {
+    await resetServerState(request)
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -85,19 +87,6 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?native=true')
     await waitForPageReady(dashboardPage)
 
-    await dashboardPage.route('/api/workout*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        json: {
-          headers: ['Exercise', 'Sets', 'Reps'],
-        },
-      })
-    })
-
-    await dashboardPage.goto('/?native=true')
-    await waitForPageReady(dashboardPage)
-
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
     await takeScreenshot(tableHeader, 'workout-table-header.png')
@@ -158,9 +147,6 @@ test.describe('Component-Specific VRT', () => {
       .locator('[data-testid="spotify-device-selector-menu-paper"]')
       .last()
     await expect(menu).toBeVisible()
-
-    // Give it a moment to ensure it is fully rendered
-    await dashboardPage.waitForTimeout(500)
 
     // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')

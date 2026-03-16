@@ -170,7 +170,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.25, // Higher threshold for complex combined state
+        maxDiffPixelRatio: 0.1, // Higher threshold for complex combined state
       })
     })
 
@@ -179,8 +179,12 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       // Force the page to recalculate layout after resize to prevent stale 1500px+ height capturing
       await dashboardPage.evaluate(() => window.scrollTo(0, 0))
-      await dashboardPage.waitForTimeout(500)
       const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // Wait for layout adjustment to complete
+      await dashboardPage.waitForFunction(
+        () => document.body.clientWidth === 390
+      )
 
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),

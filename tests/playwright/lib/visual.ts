@@ -71,7 +71,6 @@ export async function takeScreenshot(
   await expect(target).toHaveScreenshot(snapshotName, {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
-    scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...screenshotOptions,
   })
 }

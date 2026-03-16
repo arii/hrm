@@ -130,12 +130,11 @@ export default defineConfig({
             '--disable-dev-shm-usage',
             // Hide scrollbars for consistent VRT snapshots
             '--hide-scrollbars',
-            // Normalizes font rendering for VRT
             '--font-render-hinting=none',
           ],
         },
         contextOptions: {
-          reducedMotion: 'reduce', // Disables CSS animations
+          reducedMotion: 'reduce',
         },
         viewport: DESKTOP_VIEWPORT,
         video: {

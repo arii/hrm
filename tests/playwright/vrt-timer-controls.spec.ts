@@ -36,8 +36,8 @@ test.describe('Visual Regression Tests', () => {
   test.describe('TimerControls Component', () => {
     test('initial state', async () => {
       const timerControls = controlPage.getByTestId('timer-controls')
-      // Wait for layout to settle (e.g. accordion animations)
-      await controlPage.waitForTimeout(500)
+      // Wait for layout to settle by waiting for the start button
+      await expect(controlPage.getByTestId('start-timer-button')).toBeVisible()
       await takeScreenshot(timerControls, 'timer-controls-idle.png', {
         maxDiffPixelRatio: 0.1,
       })
@@ -77,7 +77,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
-        maxDiffPixelRatio: 0.2, // increased to account for ripple effect flakiness
+        maxDiffPixelRatio: 0.1, // increased to account for ripple effect flakiness
       })
 
       // Stop the timer to reset for the next test
@@ -96,7 +96,7 @@ test.describe('Visual Regression Tests', () => {
     test('in stopwatch mode', async () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
       // Wait for layout to settle after mode switch
-      await controlPage.waitForTimeout(500)
+      await expect(controlPage.getByTestId('work-duration-input')).toBeHidden()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
         // Performance: Skip a11y check for alternate mode; main mode is fully covered
