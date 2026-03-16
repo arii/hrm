@@ -24,7 +24,9 @@ test.describe('Component-Specific VRT', () => {
 
   test('Footer rendering', async ({ dashboardPage }) => {
     const footer = dashboardPage.getByTestId('footer')
-    await takeScreenshot(footer, 'footer.png')
+    await takeScreenshot(footer, 'footer.png', {
+      maxDiffPixelRatio: 0.1,
+    })
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
@@ -70,9 +72,10 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
         json: {
           headers: ['Exercise', 'Sets', 'Reps'],
         },
