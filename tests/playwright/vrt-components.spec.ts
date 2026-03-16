@@ -4,7 +4,6 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
-  resetServerState,
   getSpotifyMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
