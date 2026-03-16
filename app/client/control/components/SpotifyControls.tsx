@@ -4,6 +4,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
@@ -69,6 +70,10 @@ const SpotifyControls = () => {
     spotifyData.playback.track.name !== '' &&
     spotifyData.playback.track.name !== 'No Track Playing'
 
+  const shouldShowControls =
+    spotifyServiceInitialized &&
+    (hasSpotifyData || devices.some((d) => d.is_active))
+
   // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
@@ -78,6 +83,18 @@ const SpotifyControls = () => {
       })
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
+
+  // Force device refresh when tab regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
+        sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [connectionStatus, spotifyServiceInitialized, sendData])
 
   // 4. Sync selected device and volume with active device
   useEffect(() => {
@@ -286,7 +303,7 @@ const SpotifyControls = () => {
           <SpotifySearchInput onTrackSelect={handleTrackSelect} />
         </Box>
 
-        {hasSpotifyData ? (
+        {shouldShowControls ? (
           <>
             <Box
               sx={{
@@ -387,8 +404,32 @@ const SpotifyControls = () => {
           <Button
             onClick={handleBrowseClick}
             data-testid="spotify-select-music-button"
+            disabled={!spotifyServiceInitialized}
+            aria-disabled={!spotifyServiceInitialized}
+            startIcon={
+              !spotifyServiceInitialized ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : null
+            }
+            sx={{
+              width: '100%',
+              mt: 2,
+              backgroundColor: spotifyServiceInitialized
+                ? SPOTIFY_BRAND_COLOR
+                : 'rgba(29, 185, 84, 0.5)',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#1ed760',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(29, 185, 84, 0.3)',
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
+            }}
           >
-            Select Music
+            {spotifyServiceInitialized
+              ? 'Connect to HRM Web Player'
+              : 'Searching for Web Player...'}
           </Button>
         )}
       </CardContent>
