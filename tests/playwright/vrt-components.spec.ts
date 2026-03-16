@@ -4,7 +4,6 @@ import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
   mockLoggedInSession,
-  resetServerState,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -12,8 +11,7 @@ import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage, request }) => {
-    await resetServerState(request)
+  test.beforeEach(async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
   })
 
@@ -70,17 +68,18 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
-    await waitForPageReady(dashboardPage)
-
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
         json: {
           headers: ['Exercise', 'Sets', 'Reps'],
         },
       })
     })
+
+    await dashboardPage.goto('/?native=true')
+    await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
     await expect(tableHeader).toBeVisible()
