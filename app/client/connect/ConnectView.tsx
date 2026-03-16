@@ -164,6 +164,8 @@ export default function ConnectView({
               data-testid="connection-status-alert"
               severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
               sx={{ mb: 2 }}
+              role="status"
+              aria-live="polite"
             >
               {deviceStatus}
             </Alert>
@@ -228,7 +230,12 @@ export default function ConnectView({
                 Disconnect
               </Button>
               {deviceStatus !== 'Connected' && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  role="status"
+                  aria-live="polite"
+                >
                   Status: {deviceStatus}
                 </Typography>
               )}

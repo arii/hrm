@@ -451,14 +451,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnecting.current) {
-        logger.warn(
-          { device: device.name },
-          'Connection already in progress. Skipping.'
-        )
-        return false
-      }
-
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
         logger.warn(
@@ -718,6 +710,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
+      if (isConnecting.current) {
+        logger.warn('connectAndStream called while already connecting. Skipping.')
+        return false
+      }
+
       const { silent = false } = options
 
       userDetailsRef.current = {
@@ -732,6 +729,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw err
       }
 
+      isConnecting.current = true
       try {
         logger.info(
           { connectionStatus, savedDevice },
@@ -746,11 +744,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
           // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
-            logger.warn(
+            logger.info(
               { savedDeviceId },
               'Aborting silent connect: No saved device ID.'
             )
-            throw new Error('No saved device ID for silent connection.')
+            return false
           }
 
           logger.info(
@@ -824,6 +822,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           throw error
         }
         return false
+      } finally {
+        isConnecting.current = false
       }
     },
     [
