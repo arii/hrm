@@ -261,7 +261,6 @@ export class SpotifyPolling implements SpotifyService {
         return
       }
 
-      // 1. Immediate Optimistic Broadcast for Play/Pause
       if (command === 'PLAY' || command === 'PAUSE') {
         this.setState((prev) => ({
           ...prev,
@@ -276,14 +275,12 @@ export class SpotifyPolling implements SpotifyService {
         })
       }
 
-      // All other commands are player-related
       await this.playerManager!.executeSpotifyCommand(command, params)
 
-      // Slight delay to allow Spotify API to update before we re-poll
-      setTimeout(() => this.getCurrentlyPlaying(), 300)
+      // Revert to 500ms delay to avoid race conditions with sluggish Spotify API
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
     } catch (error) {
       await logSpotifyCommandError(command, error)
-      // Revert state on failure
       await this.getCurrentlyPlaying()
     }
   }

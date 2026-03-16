@@ -218,8 +218,8 @@ export class SpotifyPlayerManager {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
+          const previousState = this.getState()
 
-          // Immediate Optimistic Update
           this.setState((prevState: SpotifyData) => ({
             ...prevState,
             playback: {
@@ -233,12 +233,22 @@ export class SpotifyPlayerManager {
             payload: this.getState(),
           })
 
-          await this.executeSdkCommand(
-            command,
-            () =>
-              sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
-            { deviceId, volume: clampedVolume }
-          )
+          try {
+            await this.executeSdkCommand(
+              command,
+              () =>
+                sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
+              { deviceId, volume: clampedVolume }
+            )
+          } catch (error) {
+            // Revert localized optimistic state immediately before throwing
+            this.setState(previousState)
+            this.broadcastUpdate({
+              type: 'SPOTIFY_UPDATE',
+              payload: this.getState(),
+            })
+            throw error
+          }
         }
         break
     }

@@ -214,23 +214,20 @@ const SpotifyControls = () => {
     [sendVolumeCommand]
   )
 
+  useEffect(() => {
+    return () => {
+      throttledSendVolume.cancel()
+    }
+  }, [throttledSendVolume])
+
   const handleVolumeChange = useCallback(
     (val: number) => {
       lastUserInteractionRef.current = Date.now()
       setIsSliding(true)
       setVolume(val)
       throttledSendVolume(val)
-
-      if (connectionStatus !== 'Connected') {
-        const now = Date.now()
-        // Throttle warning to once every 3 seconds to avoid spam during sliding
-        if (now - lastWarningTimeRef.current > 3000) {
-          showWarning('Changes not saved: Offline')
-          lastWarningTimeRef.current = now
-        }
-      }
     },
-    [connectionStatus, showWarning, setVolume, throttledSendVolume]
+    [setVolume, throttledSendVolume]
   )
 
   const handleVolumeChangeCommitted = useCallback(
