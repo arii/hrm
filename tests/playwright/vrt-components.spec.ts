@@ -37,11 +37,6 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
-        // Force an opaque background to prevent pixel leakage from underlying content
-        el.style.backgroundColor = 'rgb(0, 0, 0)'
-        // Pause any CSS animations/transitions specifically on this element
-        el.style.animationPlayState = 'paused'
-        el.style.transition = 'none'
       }
     })
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
@@ -144,18 +139,13 @@ test.describe('Component-Specific VRT', () => {
       .locator('[data-testid="spotify-device-selector-menu-paper"]')
       .last()
 
-    // Give the menu time to mount in the portal and stabilize before checking visibility
     await expect(menu).toBeVisible()
-
-    // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')
-
-    // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      threshold: 0.2, // Tighter threshold for the Paper element
-      skipA11y: true, // Accessibility checked manually above
+      threshold: 0.2,
+      skipA11y: true,
       mask: getSpotifyMasks(dashboardPage),
     })
   })

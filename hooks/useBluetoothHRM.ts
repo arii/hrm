@@ -685,9 +685,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } finally {
         // We do NOT reset isConnecting.current here as it's managed by the caller
         // (connectAndStream or reconnect) to ensure the whole sequence is guarded.
-        if (abortControllerRef.current?.signal.aborted) {
-          abortControllerRef.current = null
-        }
+        abortControllerRef.current = null
       }
     },
     [onDisconnected, updateSignalPeriod]

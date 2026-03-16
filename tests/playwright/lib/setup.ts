@@ -127,36 +127,6 @@ export async function navigateAndWait(
     })
     .catch(() => console.warn('Test controls not found within timeout'))
 
-  // Trigger user interaction to unlock AudioContext (seen in logs preventing muted states)
-  try {
-    await page.mouse.click(0, 0)
-  } catch (e) {
-    console.warn(`[navigateAndWait] Failed to unlock AudioContext: ${e}`)
-  }
-
-  // Stabilize VRT by disabling animations, transitions, and backdrop filters
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      body, html, * {
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
-      }
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
-      [data-testid="main-content-layout"] {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-    `,
-  })
-
   await waitForPageReady(page)
 }
 
