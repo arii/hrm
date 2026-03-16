@@ -10,14 +10,19 @@ import { v4 as uuidv4 } from 'uuid'
  * @throws An error if any accessibility violations are found.
  */
 export async function checkAccessibility(target: Page | Locator) {
-  const page = 'page' in target ? target.page() : (target as Page)
+  // Safely extract the page object based on the target type
+  const page = 'page' in target ? (target as Locator).page() : (target as Page)
   const uniqueId = `axe-${uuidv4()}`
   let selector: string | undefined = undefined
 
   // If the target is a Locator, we need to add a temporary unique attribute
   // to it so we can scope the accessibility scan to that element.
   if ('page' in target) {
-    await target.evaluate((node, id) => node.setAttribute(id, ''), uniqueId)
+    await (target as Locator).waitFor({ state: 'attached' })
+    await (target as Locator).evaluate(
+      (node, id) => node.setAttribute(id, ''),
+      uniqueId
+    )
     selector = `[${uniqueId}]`
   }
 

@@ -72,6 +72,7 @@ export {
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
+  getSpotifyMasks,
 } from './masks'
 
 // ============================================================================
