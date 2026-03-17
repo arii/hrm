@@ -1,5 +1,6 @@
 import { env } from './env'
 import logger from '@/utils/logger'
+import { SpotifyPlaylistItem } from '@/types/core'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',
@@ -63,3 +64,9 @@ export async function refreshSpotifyToken(refreshToken: string) {
 
   return response.json()
 }
+
+/**
+ * Normalizes artist names from a SpotifyPlaylistItem
+ */
+export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) =>
+  Array.isArray(artists) ? artists.map((a) => a.name).join(', ') : artists

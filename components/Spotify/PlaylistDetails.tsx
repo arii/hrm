@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { SpotifyPlaylistItem as Track } from '../../types/core'
 import { formatDuration } from '@/lib/utils'
+import { getArtistNames } from '@/lib/spotify'
 
 interface PlaylistDetailsProps {
   playlistId: string
@@ -106,12 +107,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         >
           <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
             {tracks.map((track, index) => {
-              const artistNames = Array.isArray(track.artists)
-                ? track.artists.map((a) => a.name).join(', ')
-                : track.artists
               const albumName = track.album?.name || 'Single'
-              const albumThumbnail =
-                track.album?.images?.slice(-1)[0]?.url || ''
+              const albumThumbnail = track.album?.images?.at(-1)?.url || ''
 
               return (
                 <ListItem
@@ -147,7 +144,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                     </ListItemAvatar>
                     <ListItemText
                       primary={track.name}
-                      secondary={`${artistNames} • ${albumName}`}
+                      secondary={`${getArtistNames(track.artists)} • ${albumName}`}
                       primaryTypographyProps={{
                         variant: 'body2',
                         noWrap: true,

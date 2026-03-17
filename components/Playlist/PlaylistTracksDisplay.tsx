@@ -21,6 +21,7 @@ import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { formatDuration } from '@/lib/utils'
 import { SpotifyPlaylistItem } from '@/types/core'
+import { getArtistNames } from '@/lib/spotify'
 
 interface PlaylistTracksDisplayProps {
   playlistId: string
@@ -122,7 +123,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
               spotifyData.playback.track.id === track.id
             const playlistUri = `spotify:playlist:${playlistId}`
             const albumName = track.album?.name || 'Single'
-            const albumThumbnail = track.album?.images?.slice(-1)[0]?.url || ''
+            const albumThumbnail = track.album?.images?.at(-1)?.url || ''
 
             return (
               <ListItem
@@ -178,7 +179,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} • ${albumName}`}
+                    secondary={`${getArtistNames(track.artists)} • ${albumName}`}
                     primaryTypographyProps={{
                       variant: 'body2',
                       noWrap: true,
