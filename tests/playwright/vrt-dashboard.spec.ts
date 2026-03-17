@@ -172,7 +172,10 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
 
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
       })
     })
 
@@ -187,10 +190,15 @@ test.describe('Visual Regression Tests', () => {
       )
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(() => document.fonts.status === 'loaded')
+      await dashboardPage.waitForFunction(
+        () => document.fonts.status === 'loaded'
+      )
 
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         fullPage: false,
       })
     })
@@ -201,10 +209,15 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(() => document.fonts.status === 'loaded')
+      await dashboardPage.waitForFunction(
+        () => document.fonts.status === 'loaded'
+      )
 
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         maxDiffPixelRatio: 0.05,
         fullPage: false,
       })
@@ -216,10 +229,15 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(() => document.fonts.status === 'loaded')
+      await dashboardPage.waitForFunction(
+        () => document.fonts.status === 'loaded'
+      )
 
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         maxDiffPixelRatio: 0.1,
         fullPage: false,
       })
