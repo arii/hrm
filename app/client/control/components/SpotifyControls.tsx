@@ -101,14 +101,12 @@ const SpotifyControls = () => {
     spotifyServiceInitialized,
     sendData,
   })
-
-  useEffect(() => {
-    focusStateRef.current = {
-      connectionStatus,
-      spotifyServiceInitialized,
-      sendData,
-    }
-  }, [connectionStatus, spotifyServiceInitialized, sendData])
+  // Track latest dependencies for the focus listener without causing re-subscriptions
+  focusStateRef.current = {
+    connectionStatus,
+    spotifyServiceInitialized,
+    sendData,
+  }
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>
