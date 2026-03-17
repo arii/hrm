@@ -29,8 +29,7 @@ git for-each-ref --format='%(committerdate:unix) %(refname:short)' refs/remotes/
         # Check for open Pull Requests using GitHub CLI
         PR_COUNT=$(gh pr list --head "$branch_name" --state open --json number --jq 'length' 2>/dev/null)
         
-        # If PR_COUNT is 0 (or command fails, assuming no PR), proceed with deletion
-        if [[ "$PR_COUNT" -eq 0 ]]; then
+        if [ "${PR_COUNT:-0}" -eq 0 ]; then
             echo "Deleting stale branch: $branch_name"
             
             # Delete from remote
@@ -45,4 +44,3 @@ git for-each-ref --format='%(committerdate:unix) %(refname:short)' refs/remotes/
         fi
     fi
 done
-

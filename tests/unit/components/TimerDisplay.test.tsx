@@ -35,7 +35,7 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
     // In the IDLE state, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('timer-phase-label')).not.toBeInTheDocument()
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
   })
 
@@ -52,7 +52,7 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
 
-    expect(screen.getByTestId('timer-phase')).toHaveTextContent('WORK')
+    expect(screen.getByTestId('timer-phase-label')).toHaveTextContent('WORK')
     // It should display the remaining time formatted as MM:SS
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:15')
   })
@@ -70,7 +70,7 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
 
-    expect(screen.getByTestId('timer-phase')).toHaveTextContent('REST')
+    expect(screen.getByTestId('timer-phase-label')).toHaveTextContent('REST')
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:05')
   })
 
@@ -88,7 +88,7 @@ describe('TimerDisplay', () => {
     )
 
     // In stopwatch mode, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('timer-phase-label')).not.toBeInTheDocument()
     // It should display the elapsed time
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('02:05')
   })
@@ -106,7 +106,7 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
 
-    expect(screen.getByTestId('timer-phase')).toHaveTextContent('GET READY')
+    expect(screen.getByTestId('timer-phase-label')).toHaveTextContent('GET READY')
     // Prepare phase shows seconds only
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('03')
   })
