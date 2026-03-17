@@ -94,6 +94,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ (github.event.issue.pull_request || github.event.pull_request) && format('refs/pull/{0}/head', github.event.issue.number || github.event.pull_request.number) || github.sha }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
