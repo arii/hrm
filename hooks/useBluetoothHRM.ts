@@ -8,7 +8,6 @@ import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
-import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
@@ -22,6 +21,15 @@ import {
   MIN_MISSED_PACKET_THRESHOLD_MS,
   ROLLING_AVG_HISTORY_LENGTH,
 } from '@/constants/bluetooth'
+import useBluetoothStorage from './useBluetoothStorage'
+
+let isConnectingGlobal = false
+
+export const _test_resetIsConnectingGlobal = () => {
+  if (process.env.NODE_ENV === 'test') {
+    isConnectingGlobal = false
+  }
+}
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -99,10 +107,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
   const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isConnecting = useRef(false)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
+  const { savedDeviceId, saveDeviceId, clearDeviceId } = useBluetoothStorage()
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -274,7 +282,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     disconnect()
     setConnectionAttempted(false)
     try {
-      Cookies.remove('hrm_device_id')
+        clearDeviceId()
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
     } catch (e) {
@@ -353,7 +361,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       reconnectTimeoutRef.current = setTimeout(() => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
-          !isConnecting.current &&
+          !isConnectingGlobal &&
           !isManualDisconnect.current
         ) {
           connectToGattRef.current?.(device, true).catch((error: unknown) => {
@@ -451,6 +459,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
+      if (isConnectingGlobal) return false
+
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
         logger.warn(
@@ -460,7 +470,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
-      isConnecting.current = true
+      isConnectingGlobal = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -618,11 +628,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           BLUETOOTH_MESSAGES.connectedToDevice(device.name || '')
         )
         setSavedDevice(device)
-        Cookies.set('hrm_device_id', device.id, {
-          expires: 365,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-        })
+        saveDeviceId(device.id)
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
@@ -665,7 +671,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
-            Cookies.remove('hrm_device_id')
+            clearDeviceId()
             setStatus(BluetoothConnectionStatus.DISCONNECTED)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
             setSavedDevice(null)
@@ -687,10 +693,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } finally {
         // This is reset at the end of the function, but if an abort happens,
         // we need to ensure it's also reset.
-        isConnecting.current = false
+        isConnectingGlobal = false
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [onDisconnected, updateSignalPeriod, saveDeviceId, clearDeviceId]
   )
 
   useEffect(() => {
@@ -710,14 +716,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
-      if (isConnecting.current) {
+      if (isConnectingGlobal) {
         logger.warn(
           'connectAndStream called while already connecting. Skipping.'
         )
         return false
       }
 
-      isConnecting.current = true
+      isConnectingGlobal = true
       const { silent = false } = options
       try {
         userDetailsRef.current = {
@@ -742,14 +748,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device) {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
-          const savedDeviceId = Cookies.get('hrm_device_id')
 
-          // Abort silent connection if no device ID is found, to prevent looping.
           if (silent && !savedDeviceId) {
-            logger.info(
-              { savedDeviceId },
-              'Aborting silent connect: No saved device ID.'
-            )
             return false
           }
 
@@ -825,12 +825,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false
       } finally {
-        isConnecting.current = false
+        isConnectingGlobal = false
       }
     },
     [
       connectionStatus,
       savedDevice,
+      savedDeviceId,
       connectToGatt,
       handleConnectionError,
       userName,
@@ -839,7 +840,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) return
+    if (isConnectingGlobal) return
 
     try {
       setConnectionAttempted(true)

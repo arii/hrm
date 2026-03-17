@@ -74,28 +74,6 @@ test.describe('Visual Regression Tests', () => {
       ),
     ])
 
-    // Force visibility and disable animations/scrollbars to avoid flaky screenshots
-    await dashboardPage.addStyleTag({
-      content: `
-        *, *::before, *::after {
-          transition: none !important;
-          animation: none !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-        }
-        body, html, * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-        ::-webkit-scrollbar {
-          display: none !important;
-        }
-        [data-testid="main-content-layout"] {
-          opacity: 1 !important;
-          transform: none !important;
-        }
-      `,
-    })
   })
 
   test.describe('Dashboard Component', () => {
@@ -122,10 +100,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
-        {
-          timeout: 20000,
-        }
+        /00:00/
       )
 
       // Assert timer tile height is fixed
@@ -149,10 +124,7 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for timer to start on dashboard
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
-        {
-          timeout: 20000,
-        }
+        /00:00/
       )
 
       // Assert grid row height is stable

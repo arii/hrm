@@ -16,7 +16,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import Cookies from 'js-cookie'
+import useBluetoothStorage from '@/hooks/useBluetoothStorage'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -151,8 +151,9 @@ export default function ConnectPage() {
     gender,
   ])
 
+  const { savedDeviceId } = useBluetoothStorage()
+
   useEffect(() => {
-    const savedDeviceId = Cookies.get('hrm_device_id')
     if (
       !isConnected &&
       isSupported &&
@@ -162,9 +163,7 @@ export default function ConnectPage() {
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
+        autoConnect()
       }, 100)
       return () => clearTimeout(timeout)
     }
@@ -175,6 +174,7 @@ export default function ConnectPage() {
     isSupported,
     autoConnect,
     connectionAttempted,
+    savedDeviceId,
   ])
 
   const { zone, percentage } = calculateZoneFromMaxHr(
