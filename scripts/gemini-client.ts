@@ -353,8 +353,18 @@ export async function generateContentWithFallback({
       const isNotFound = errorMessage.includes('404') || errorStatus === 404
       const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
       const isRateLimited = errorMessage.includes('429') || errorStatus === 429
+      const isRetriableInfrastructure =
+        errorMessage.includes('500') ||
+        errorStatus === 500 ||
+        errorMessage.includes('503') ||
+        errorStatus === 503
 
-      if (isNotFound || isBadRequest || isRateLimited) {
+      if (
+        isNotFound ||
+        isBadRequest ||
+        isRateLimited ||
+        isRetriableInfrastructure
+      ) {
         let reason = 'Unknown Error'
         if (isRateLimited) {
           reason = 'Rate Limited'
@@ -362,6 +372,8 @@ export async function generateContentWithFallback({
           reason = 'Not Found'
         } else if (isBadRequest) {
           reason = 'Invalid Request'
+        } else if (isRetriableInfrastructure) {
+          reason = 'Infrastructure Issue (Retriable)'
         }
         const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
         console.warn(
