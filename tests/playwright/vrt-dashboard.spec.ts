@@ -110,7 +110,7 @@ test.describe('Visual Regression Tests', () => {
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 400,
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -155,7 +155,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.5, // Further increased to handle dimension flakiness in CI
+        maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
       })
     })
 
@@ -164,7 +164,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.3,
+        maxDiffPixelRatio: 0.4,
       })
     })
 

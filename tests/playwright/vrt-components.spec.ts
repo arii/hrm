@@ -131,9 +131,7 @@ test.describe('Component-Specific VRT', () => {
       ],
     })
 
-    const selectorButton = dashboardPage.getByTestId(
-      'spotify-device-selector-button'
-    )
+    const selectorButton = dashboardPage.getByTestId('spotify-device-select')
     await expect(selectorButton).toBeVisible({
       timeout: VRT_TIMEOUTS.STANDARD,
     })
