@@ -241,7 +241,7 @@ const TimerControls = () => {
           >
             {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'error.main' }}>
+          <Typography variant="body2" sx={{ color: 'error.main' }} data-testid="timer-phase">
             {timerData.currentPhase}
           </Typography>
         </Box>

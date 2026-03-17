@@ -30,6 +30,11 @@ on:
         required: true
         type: string
 
+env:
+  TARGET: ${{ github.event.pull_request.base.ref || inputs.target_branch }}
+  SOURCE: ${{ github.event.pull_request.head.ref || inputs.source_branch }}
+  PR_NUMBER: ${{ inputs.pr_number }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -37,15 +42,13 @@ jobs:
       skipped: ${{ steps.validate_branches.outputs.skipped }}
       base_sha: ${{ steps.validate_branches.outputs.base_sha }}
       error_msg: ${{ steps.validate_branches.outputs.error_msg }}
-    env:
-      TARGET: ${{ github.event.pull_request.base.ref || inputs.target_branch }}
-      SOURCE: ${{ github.event.pull_request.head.ref || inputs.source_branch }}
     steps:
       - name: Validate branches
         id: validate_branches
         shell: bash
+        env:
+          REPO_URL: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         run: |
-          REPO_URL="https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           if ! git ls-remote --exit-code --heads "$REPO_URL" "$TARGET" > /dev/null 2>&1; then
             echo "skipped=true" >> $GITHUB_OUTPUT
             echo "error_msg=❌ Error: Target branch \`$TARGET\` not found. Please ensure the target branch exists and the bot has permissions to access it." >> $GITHUB_OUTPUT
@@ -59,7 +62,6 @@ jobs:
           fi
 
           # Capture base SHA (target branch)
-          # Use ls-remote instead of fetch to avoid redundant network calls
           echo "base_sha=$(git ls-remote --heads "$REPO_URL" "$TARGET" | awk '{print $1}')" >> $GITHUB_OUTPUT
           echo "skipped=false" >> $GITHUB_OUTPUT
 
@@ -80,10 +82,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      TARGET: ${{ github.event.pull_request.base.ref || inputs.target_branch }}
-      SOURCE: ${{ github.event.pull_request.head.ref || inputs.source_branch }}
-      PR_NUMBER: ${{ inputs.pr_number }}
     steps:
       - name: Install jq
         run: |
