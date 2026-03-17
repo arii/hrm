@@ -111,11 +111,9 @@ const SpotifyControls = () => {
   }, [connectionStatus, spotifyServiceInitialized, sendData])
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let timeoutId: ReturnType<typeof setTimeout>
     const handleFocus = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
+      clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
         const {
           connectionStatus: currentStatus,
@@ -132,9 +130,7 @@ const SpotifyControls = () => {
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
+      clearTimeout(timeoutId)
     }
   }, [])
 

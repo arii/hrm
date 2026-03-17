@@ -83,5 +83,6 @@ describe('SpotifyControls Reproduction', () => {
 
     expect(selectMusicButton).not.toBeInTheDocument()
     expect(playButton).toBeInTheDocument()
+    expect(playButton).toHaveAttribute('aria-label', 'Play')
   })
 })
