@@ -1,14 +1,14 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import Cookies from 'js-cookie'
 
+/** @public */
 export const useBluetoothStorage = () => {
-  const [savedDeviceId, setSavedDeviceId] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Read the cookie only on the client side
-    const id = Cookies.get('hrm_device_id')
-    setSavedDeviceId(id || null)
-  }, [])
+  const [savedDeviceId, setSavedDeviceId] = useState<string | null>(() => {
+    if (typeof document !== 'undefined') {
+      return Cookies.get('hrm_device_id') || null
+    }
+    return null
+  })
 
   const saveDeviceId = useCallback((id: string) => {
     Cookies.set('hrm_device_id', id, {
@@ -26,5 +26,3 @@ export const useBluetoothStorage = () => {
 
   return { savedDeviceId, saveDeviceId, clearDeviceId }
 }
-
-export default useBluetoothStorage

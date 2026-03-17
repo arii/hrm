@@ -25,6 +25,7 @@ import useBluetoothStorage from './useBluetoothStorage'
 
 let isConnectingGlobal = false
 
+/** @public - Exported only for tests to reset global state */
 export const _test_resetIsConnectingGlobal = () => {
   if (process.env.NODE_ENV === 'test') {
     isConnectingGlobal = false
@@ -282,7 +283,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     disconnect()
     setConnectionAttempted(false)
     try {
-        clearDeviceId()
+      clearDeviceId()
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
     } catch (e) {
@@ -290,7 +291,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setStatus(BluetoothConnectionStatus.ERROR)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
     }
-  }, [disconnect])
+  }, [disconnect, clearDeviceId])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = BLUETOOTH_MESSAGES.unknownError

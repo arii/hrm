@@ -16,7 +16,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import useBluetoothStorage from '@/hooks/useBluetoothStorage'
+import { useBluetoothStorage } from '@/hooks/useBluetoothStorage'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
