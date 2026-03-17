@@ -1,0 +1,42 @@
+name: Gemini UI Review
+
+on:
+  workflow_call:
+
+jobs:
+  ui-review:
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@gemini-ui-review')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start App (if no deployment URL)
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'a-super-long-and-secure-secret-for-ci-tests' }}
+          SPOTIFY_CLIENT_ID: 'test_client_id'
+          SPOTIFY_CLIENT_SECRET: 'test_client_secret'
+        run: |
+          pnpm run build
+          bash scripts/start-production.sh &
+          npx wait-on http://localhost:3000/api/health/simple --timeout 120000
+
+      - name: Run UI Review Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DEPLOYMENT_URL: 'http://localhost:3000'
+        run: npx tsx scripts/ci/run-ui-review.ts

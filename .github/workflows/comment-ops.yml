@@ -28,6 +28,7 @@ jobs:
       is_coder: ${{ steps.route.outputs.is_coder || 'false' }}
       is_review_issues: ${{ steps.route.outputs.is_review_issues || 'false' }}
       is_enrich: ${{ steps.route.outputs.is_enrich || 'false' }}
+      is_ui_review: ${{ steps.route.outputs.is_ui_review || 'false' }}
       is_help: ${{ steps.route.outputs.is_help || 'false' }}
     steps:
       - id: route
@@ -44,6 +45,7 @@ jobs:
           if echo "$BODY" | grep -qiE "^@gemini-coder"; then echo "is_coder=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "^@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "^@gemini-enrich"; then echo "is_enrich=true" >> $GITHUB_OUTPUT; fi
+          if echo "$BODY" | grep -qiE "^@gemini-ui-review"; then echo "is_ui_review=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "^@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
 
   init-status:
@@ -93,6 +95,12 @@ jobs:
     with:
       pr_number: ${{ format('{0}', github.event.issue.number) }}
       manual_trigger: true
+    secrets: inherit
+
+  execute-ui-review:
+    needs: [router]
+    if: github.event.issue.pull_request && needs.router.outputs.is_ui_review == 'true'
+    uses: ./.github/workflows/gemini-ui-review.yml
     secrets: inherit
 
   prepare-coder:
@@ -220,6 +228,7 @@ jobs:
               '| :--- | :--- |\n' +
               '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
               '| `@gemini-enrich` | Run PR Enrichment (PR only) |\n' +
+              '| `@gemini-ui-review` | Run Multimodal UI Review (PR only) |\n' +
               '| `@gemini-triage` | Run Issue Triage |\n' +
               '| `@gemini-coder <task>` | Generate Code |\n' +
               '| `@create-review-issues` | Create issues from review (PR only) |\n' +
@@ -296,6 +305,7 @@ jobs:
       - init-status
       - execute-review
       - execute-triage
+      - execute-ui-review
       - execute-coder
       - execute-create-review-issues
       - execute-help
@@ -326,6 +336,7 @@ jobs:
 
           check_job "Review" "${{ needs.execute-review.result }}" "${{ needs.router.outputs.is_review }}"
           check_job "Triage" "${{ needs.execute-triage.result }}" "${{ needs.router.outputs.is_triage }}"
+          check_job "UI Review" "${{ needs.execute-ui-review.result }}" "${{ needs.router.outputs.is_ui_review }}"
           check_job "Coder" "${{ needs.execute-coder.result }}" "${{ needs.router.outputs.is_coder }}"
           check_job "Create Review Issues (Manual)" "${{ needs.execute-create-review-issues.result }}" "${{ needs.router.outputs.is_review_issues }}"
 
