@@ -111,6 +111,27 @@ export class SpotifyPlayerManager {
     }
   }
 
+  private async executeOptimistic(
+    commandName: string,
+    optimisticUpdate: () => void,
+    execute: () => Promise<void>
+  ) {
+    const previousState = this.getState()
+    try {
+      optimisticUpdate()
+      await execute()
+    } catch (error) {
+      logger.error(
+        { command: commandName, error },
+        'Optimistic Spotify command failed, reverting state.'
+      )
+      this.setState(previousState)
+      throw error
+    } finally {
+      this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
+    }
+  }
+
   private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
     const playbackState = await this.sdk.player.getPlaybackState()
 
@@ -159,76 +180,64 @@ export class SpotifyPlayerManager {
     params: SpotifyCommandParameters
   ) {
     const { deviceId, volume, playlistUri, contextUri, uri, offset } = params
-    const previousState = this.getState()
-
-    if (command === 'PLAY' || command === 'PAUSE') {
-      this.setState((prev) => ({
-        ...prev,
-        playback: {
-          ...prev.playback,
-          is_playing: command === 'PLAY',
-        },
-      }))
-      this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
-    }
     const effectiveContextUri = contextUri || playlistUri
     const sdk = this.sdk
 
     switch (command) {
       case 'PLAY':
-        try {
-          await this.executeSdkCommand(
-            command,
-            () => {
-              if (uri) {
-                return sdk.player.startResumePlayback(
-                  deviceId as string,
-                  undefined,
-                  [uri],
-                  offset
-                )
+        await this.executeOptimistic(
+          command,
+          () =>
+            this.setState((prev) => ({
+              ...prev,
+              playback: { ...prev.playback, is_playing: true },
+            })),
+          () =>
+            this.executeSdkCommand(
+              command,
+              () => {
+                if (uri) {
+                  return sdk.player.startResumePlayback(
+                    deviceId as string,
+                    undefined,
+                    [uri],
+                    offset
+                  )
+                }
+                if (effectiveContextUri) {
+                  return sdk.player.startResumePlayback(
+                    deviceId as string,
+                    effectiveContextUri,
+                    undefined,
+                    offset
+                  )
+                }
+                return sdk.player.startResumePlayback(deviceId as string)
+              },
+              {
+                deviceId,
+                contextUri: effectiveContextUri,
+                uri,
+                offset: offset?.position,
               }
-              if (effectiveContextUri) {
-                return sdk.player.startResumePlayback(
-                  deviceId as string,
-                  effectiveContextUri,
-                  undefined,
-                  offset
-                )
-              }
-              return sdk.player.startResumePlayback(deviceId as string)
-          },
-          {
-            deviceId,
-            contextUri: effectiveContextUri,
-            uri,
-            offset: offset?.position,
-          }
-          )
-        } catch (error) {
-          this.setState(previousState)
-          this.broadcastUpdate({
-            type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
-          })
-          throw error
-        }
+            )
+        )
         break
       case 'PAUSE':
-        try {
-          await this.executeSdkCommand(
-            command,
-            () => sdk.player.pausePlayback(deviceId as string),
-            { deviceId }
-          )
-        } catch (error) {
-          this.setState(previousState)
-          this.broadcastUpdate({
-            type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
-          })
-          throw error
-        }
+        await this.executeOptimistic(
+          command,
+          () =>
+            this.setState((prev) => ({
+              ...prev,
+              playback: { ...prev.playback, is_playing: false },
+            })),
+          () =>
+            this.executeSdkCommand(
+              command,
+              () => sdk.player.pausePlayback(deviceId as string),
+              { deviceId }
+            )
+        )
         break
       case 'NEXT':
         await this.executeSdkCommand(
@@ -256,36 +265,28 @@ export class SpotifyPlayerManager {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-
-          this.setState((prevState: SpotifyData) => ({
-            ...prevState,
-            playback: {
-              ...prevState.playback,
-              volume_percent: clampedVolume,
-              isMuted: clampedVolume === 0,
-            },
-          }))
-          this.broadcastUpdate({
-            type: 'SPOTIFY_UPDATE',
-            payload: this.getState(),
-          })
-
-          try {
-            await this.executeSdkCommand(
-              command,
-              () =>
-                sdk.player.setPlaybackVolume(clampedVolume, deviceId as string),
-              { deviceId, volume: clampedVolume }
-            )
-          } catch (error) {
-            // Revert localized optimistic state immediately before throwing
-            this.setState(previousState)
-            this.broadcastUpdate({
-              type: 'SPOTIFY_UPDATE',
-              payload: this.getState(),
-            })
-            throw error
-          }
+          await this.executeOptimistic(
+            command,
+            () =>
+              this.setState((prevState: SpotifyData) => ({
+                ...prevState,
+                playback: {
+                  ...prevState.playback,
+                  volume_percent: clampedVolume,
+                  isMuted: clampedVolume === 0,
+                },
+              })),
+            () =>
+              this.executeSdkCommand(
+                command,
+                () =>
+                  sdk.player.setPlaybackVolume(
+                    clampedVolume,
+                    deviceId as string
+                  ),
+                { deviceId, volume: clampedVolume }
+              )
+          )
         }
         break
     }

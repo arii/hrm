@@ -9,3 +9,4 @@ export const SPOTIFY_DEFAULT_TOKEN_EXPIRY_S = 3600
 
 // Centralized constants for Spotify integration
 export const SPOTIFY_BRAND_COLOR = '#1DB954'
+export const SYNC_LOCK_DURATION = 2000
