@@ -139,12 +139,11 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                       variant="caption"
                       sx={{ color: 'text.secondary', mr: 1 }}
                     >
-                      {track.duration_ms
-                        ? formatDuration(track.duration_ms, {
-                            unit: 'milliseconds',
-                            format: 'MM:SS',
-                          })
-                        : null}
+                      {!!track.duration_ms &&
+                        formatDuration(track.duration_ms, {
+                          unit: 'milliseconds',
+                          format: 'MM:SS',
+                        })}
                     </Typography>
                     <IconButton
                       onClick={() =>

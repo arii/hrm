@@ -103,7 +103,7 @@ async function getPlaylistTracks(
           name: track.album.name,
           images:
             track.album.images.length > 0
-              ? [track.album.images[track.album.images.length - 1]]
+              ? [track.album.images[0], track.album.images.at(-1)!]
               : [],
         },
         duration_ms: track.duration_ms,

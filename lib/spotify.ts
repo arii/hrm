@@ -65,8 +65,7 @@ export async function refreshSpotifyToken(refreshToken: string) {
   return response.json()
 }
 
-/**
- * Normalizes artist names from a SpotifyPlaylistItem
- */
 export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) =>
-  Array.isArray(artists) ? artists.map((a) => a.name).join(', ') : artists
+  Array.isArray(artists)
+    ? artists.map((a) => a?.name ?? 'Unknown').join(', ')
+    : artists || 'Unknown'
