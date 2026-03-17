@@ -29,6 +29,22 @@ import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
+const getConnectButtonSx = (initialized: boolean | undefined) => ({
+  width: '100%',
+  mt: 2,
+  backgroundColor: initialized
+    ? SPOTIFY_BRAND_COLOR
+    : 'rgba(29, 185, 84, 0.5)',
+  color: 'white',
+  '&:hover': {
+    backgroundColor: '#1ed760',
+  },
+  '&.Mui-disabled': {
+    backgroundColor: 'rgba(29, 185, 84, 0.3)',
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+})
+
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
@@ -65,14 +81,12 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData =
-    spotifyData.playback.track.name !== 'Awaiting Login...' &&
-    spotifyData.playback.track.name !== '' &&
-    spotifyData.playback.track.name !== 'No Track Playing'
-
   const shouldShowControls =
     spotifyServiceInitialized &&
-    (hasSpotifyData || devices.some((d) => d.is_active))
+    ((spotifyData.playback.track.name !== 'Awaiting Login...' &&
+      spotifyData.playback.track.name !== '' &&
+      spotifyData.playback.track.name !== 'No Track Playing') ||
+      devices.some((d) => d.is_active))
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -84,14 +98,37 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // Force device refresh when tab regains focus (debounced to prevent API spam)
+  const focusStateRef = useRef({
+    connectionStatus,
+    spotifyServiceInitialized,
+    sendData,
+  })
+
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout
+    focusStateRef.current = {
+      connectionStatus,
+      spotifyServiceInitialized,
+      sendData,
+    }
+  }, [connectionStatus, spotifyServiceInitialized, sendData])
+
+  useEffect(() => {
+    const timeoutRef: { current: ReturnType<typeof setTimeout> | null } = {
+      current: null,
+    }
     const handleFocus = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
-          sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = setTimeout(() => {
+        const {
+          connectionStatus: currentStatus,
+          spotifyServiceInitialized: currentInit,
+          sendData: currentSend,
+        } = focusStateRef.current
+
+        if (currentStatus === 'Connected' && currentInit) {
+          currentSend({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
         }
       }, 1000)
     }
@@ -99,9 +136,11 @@ const SpotifyControls = () => {
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      clearTimeout(timeoutId)
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
-  }, [connectionStatus, spotifyServiceInitialized, sendData])
+  }, [])
 
   // 4. Sync selected device and volume with active device
   useEffect(() => {
@@ -417,21 +456,7 @@ const SpotifyControls = () => {
                 <CircularProgress size={20} color="inherit" />
               ) : null
             }
-            sx={{
-              width: '100%',
-              mt: 2,
-              backgroundColor: spotifyServiceInitialized
-                ? SPOTIFY_BRAND_COLOR
-                : 'rgba(29, 185, 84, 0.5)',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: '#1ed760',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: 'rgba(29, 185, 84, 0.3)',
-                color: 'rgba(255, 255, 255, 0.5)',
-              },
-            }}
+            sx={getConnectButtonSx(spotifyServiceInitialized)}
           >
             {spotifyServiceInitialized
               ? 'Connect to HRM Web Player'
