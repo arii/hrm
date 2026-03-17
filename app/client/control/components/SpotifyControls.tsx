@@ -32,9 +32,7 @@ const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 const getConnectButtonSx = (initialized: boolean | undefined) => ({
   width: '100%',
   mt: 2,
-  backgroundColor: initialized
-    ? SPOTIFY_BRAND_COLOR
-    : 'rgba(29, 185, 84, 0.5)',
+  backgroundColor: initialized ? SPOTIFY_BRAND_COLOR : 'rgba(29, 185, 84, 0.5)',
   color: 'white',
   '&:hover': {
     backgroundColor: '#1ed760',
