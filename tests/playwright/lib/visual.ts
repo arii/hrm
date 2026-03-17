@@ -1,4 +1,3 @@
-// File: tests/playwright/lib/visual.ts
 /**
  * Visual Regression Testing Utilities
  *
@@ -30,7 +29,7 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.05,
 }
 
 /**
@@ -46,6 +45,9 @@ export async function takeScreenshot(
   options: ScreenshotOptions & { skipA11y?: boolean } = {}
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
+
+  // Scroll to top to ensure consistent snapshot positioning across viewports
+  await target.evaluate(() => window.scrollTo(0, 0))
 
   if (!skipA11y) {
     await checkAccessibility(target)

@@ -13,6 +13,7 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import throttle from 'lodash.throttle'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -91,9 +92,18 @@ const SpotifyControls = () => {
       }
     }
 
+    // Execute immediately on first focus, but throttle subsequent rapid fires
+    const throttledFetch = throttle(fetchDevices, 2000, {
+      leading: true,
+      trailing: false,
+    })
+
     fetchDevices()
-    window.addEventListener('focus', fetchDevices)
-    return () => window.removeEventListener('focus', fetchDevices)
+    window.addEventListener('focus', throttledFetch)
+    return () => {
+      window.removeEventListener('focus', throttledFetch)
+      throttledFetch.cancel()
+    }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   // 4. Sync selected device and volume with active device
