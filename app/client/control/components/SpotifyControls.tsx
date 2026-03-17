@@ -331,6 +331,7 @@ const SpotifyControls = () => {
         ? state.lastVolume
         : 50
 
+    dispatch({ type: 'TOGGLE_MUTE' })
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
