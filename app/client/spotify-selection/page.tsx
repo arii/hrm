@@ -46,11 +46,11 @@ const SpotifySelectionPage = () => {
     executeSpotify('PLAY', { contextUri: uri })
   }
 
-  const handleTrackPlay = (index: number) => {
+  const handleTrackPlay = (uri: string) => {
     if (selectedPlaylistId) {
       executeSpotify('PLAY', {
         contextUri: `spotify:playlist:${selectedPlaylistId}`,
-        offset: { position: index },
+        uri,
       })
     }
   }
