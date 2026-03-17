@@ -30,7 +30,7 @@ git for-each-ref --format='%(committerdate:unix) %(refname:short)' refs/remotes/
         PR_COUNT=$(gh pr list --head "$branch_name" --state open --json number --jq 'length' 2>/dev/null)
         
         # If PR_COUNT is 0 (or command fails, assuming no PR), proceed with deletion
-        if [ "$PR_COUNT" -eq 0 ] || [ -z "$PR_COUNT" ]; then
+        if [[ "$PR_COUNT" -eq 0 ]]; then
             echo "Deleting stale branch: $branch_name"
             
             # Delete from remote
