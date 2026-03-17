@@ -122,10 +122,12 @@ export class SpotifyPlayerManager {
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
       await execute()
     } catch (error) {
-      logger.error(
-        { command: commandName, error },
-        'Optimistic Spotify command failed, reverting state.'
-      )
+      if (!(error instanceof SyntaxError)) {
+        logger.error(
+          { command: commandName, error },
+          'Optimistic Spotify command failed, reverting state.'
+        )
+      }
       this.setState(previousState)
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
       throw error
