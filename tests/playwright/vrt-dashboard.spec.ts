@@ -99,6 +99,20 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Dashboard Component', () => {
+    // Helper to dry up viewport VRTs
+    const getVrtOptions = (page: Page) => ({
+      mask: [
+        ...getDynamicContentMasks(page),
+        page.locator('.variable-text-container'),
+      ],
+      fullPage: false,
+    })
+
+    test.beforeEach(async () => {
+      // Ensure fonts are loaded before taking snapshots
+      await dashboardPage.evaluateHandle(() => document.fonts.ready)
+    })
+
     test('initial, empty state', async () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
@@ -107,9 +121,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    // NEW: Active timer with no HR data
     test('active timer without HR data', async () => {
-      // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
       )
@@ -120,7 +132,6 @@ test.describe('Visual Regression Tests', () => {
 
       await controlPage.getByTestId('start-timer-button').click()
 
-      // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
@@ -128,7 +139,6 @@ test.describe('Visual Regression Tests', () => {
         }
       )
 
-      // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
         maxHeight: 400,
@@ -190,17 +200,8 @@ test.describe('Visual Regression Tests', () => {
       )
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(
-        () => document.fonts.status === 'loaded'
-      )
 
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          dashboardPage.locator('.variable-text-container'),
-        ],
-        fullPage: false,
-      })
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', getVrtOptions(dashboardPage))
     })
 
     test('tablet viewport', async () => {
@@ -209,17 +210,10 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(
-        () => document.fonts.status === 'loaded'
-      )
 
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          dashboardPage.locator('.variable-text-container'),
-        ],
+        ...getVrtOptions(dashboardPage),
         maxDiffPixelRatio: 0.05,
-        fullPage: false,
       })
     })
 
@@ -229,17 +223,10 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await expect(dashboard).toBeVisible()
-      await dashboardPage.waitForFunction(
-        () => document.fonts.status === 'loaded'
-      )
 
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          dashboardPage.locator('.variable-text-container'),
-        ],
+        ...getVrtOptions(dashboardPage),
         maxDiffPixelRatio: 0.1,
-        fullPage: false,
       })
     })
   })
