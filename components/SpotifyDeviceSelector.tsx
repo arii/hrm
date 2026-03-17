@@ -32,7 +32,7 @@ const SpotifyDeviceSelector = ({
           '&:hover': { backgroundColor: 'grey.800' },
         }}
         aria-label="Select playback device"
-        data-testid="spotify-device-selector-button"
+        data-testid="spotify-device-select"
       >
         <SpeakerIcon fontSize="small" />
       </IconButton>
@@ -59,7 +59,7 @@ const SpotifyDeviceSelector = ({
               key={device.id}
               onClick={() => onDeviceSelect(device.id)}
               selected={device.is_active}
-              data-testid={`spotify-device-selector-item-${device.id}`}
+              data-testid={`spotify-device-select-option-${device.id}`}
             >
               {device.name} {device.is_active && '✓'}
             </MenuItem>
