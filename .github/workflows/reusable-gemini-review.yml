@@ -427,7 +427,7 @@ jobs:
               COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
 
               # Create manual trigger footer
-              FOOTER="\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n| Command | Action |\n| :--- | :--- |\n| \`@gemini-bot\` | Run AI Code Review (PR only) |\n| \`@gemini-triage\` | Run Issue Triage |\n| \`@gemini-coder <task>\` | Generate Code |\n| \`@create-review-issues\` | Create issues from review (PR only) |\n| \`@gemini-help\` | Show this help message |\n\n[Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+              FOOTER="\n\n---\n#### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
 
               # Combine the header and the original comment
               FINAL_COMMENT="${COMMIT_HASH_MSG}\n\n${REVIEW_COMMENT}${FOOTER}"
@@ -499,15 +499,7 @@ jobs:
               '2. Click "Run workflow"\n' +
               '3. Enter PR number: `' + context.payload.pull_request.number + '`\n\n' +
               '**Via GitHub CLI:**\n```bash\ngh workflow run reusable-gemini-review.yml -f pr_number=' + context.payload.pull_request.number + '\n```\n\n' +
-              '#### 🤖 Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n\n' +
-              'Full reference: [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
+              '#### 🤖 [Gemini Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)\n\n' +
               '**To re-enable:** Set repository variable `GEMINI_ENABLE_PR_REVIEW=true`';
 
             github.rest.issues.createComment({
@@ -558,15 +550,7 @@ jobs:
 
             if (triggerEvent === 'comment' || !shouldIgnore) {
               const body = '### 🤖 Gemini Review Skipped\n\nReview was skipped for the following reason: `' + skipReason + '`' +
-                '\n\n#### 🤖 Manual Trigger Quick Reference\n' +
-                '| Command | Action |\n' +
-                '| :--- | :--- |\n' +
-                '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-                '| `@gemini-triage` | Run Issue Triage |\n' +
-                '| `@gemini-coder <task>` | Generate Code |\n' +
-                '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-                '| `@gemini-help` | Show this help message |\n\n' +
-                '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+                '\n\n#### 🤖 [Gemini Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
 
               github.rest.issues.createComment({
                 owner: context.repo.owner,

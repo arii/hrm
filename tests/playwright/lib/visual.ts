@@ -54,11 +54,19 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
-  await expect(target).toHaveScreenshot(snapshotName, {
+  const isLocator = 'scrollIntoViewIfNeeded' in target
+  const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
     ...screenshotOptions,
-  })
+  }
+
+  // Remove fullPage option if the target is a Locator, as it's only valid for Page screenshots.
+  if (isLocator && finalOptions.fullPage) {
+    delete finalOptions.fullPage
+  }
+
+  await expect(target).toHaveScreenshot(snapshotName, finalOptions)
 }
 
 /**
