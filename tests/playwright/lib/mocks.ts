@@ -72,11 +72,13 @@ export async function mockMultipleHrDevices(
   devices: HrmData[]
 ): Promise<void> {
   await page.evaluate((payload) => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    window.__TEST_CONTROLS__?.dispatch({
-      type: 'HRM_UPDATE',
-      payload,
-    })
+    const win = window as any
+    if (win.__TEST_CONTROLS__?.dispatch) {
+      win.__TEST_CONTROLS__.dispatch({
+        type: 'HRM_UPDATE',
+        payload,
+      })
+    }
   }, devices)
 }
 
@@ -123,14 +125,14 @@ export async function mockSpotifyPlaybackState(
   }
 
   await page.evaluate((payload) => {
-    // @ts-expect-error - __TEST_CONTROLS__ is added at runtime
-    if (window.__TEST_CONTROLS__) {
+    const win = window as any
+    if (win.__TEST_CONTROLS__?.dispatch) {
       // Ensure Spotify display is initialized before updating state
-      window.__TEST_CONTROLS__.dispatch({
+      win.__TEST_CONTROLS__.dispatch({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: true,
       })
-      window.__TEST_CONTROLS__.dispatch({
+      win.__TEST_CONTROLS__.dispatch({
         type: 'SPOTIFY_UPDATE',
         payload,
       })

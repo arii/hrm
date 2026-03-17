@@ -82,9 +82,12 @@ async function performUIReview() {
     const prNumber = process.env.PR_NUMBER
     if (prNumber) {
       console.log(`💬 Posting feedback to PR #${prNumber}...`)
-      const [owner, repo] = (process.env.GITHUB_REPOSITORY || 'arii/hrm').split(
-        '/'
-      )
+      const repository = process.env.GITHUB_REPOSITORY || 'arii/hrm'
+      const [owner, repo] = repository.split('/')
+
+      if (!owner || !repo) {
+        throw new Error(`Invalid GITHUB_REPOSITORY format: ${repository}`)
+      }
 
       await octokit.issues.createComment({
         owner,
