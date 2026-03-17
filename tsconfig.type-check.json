@@ -11,6 +11,7 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
+    "tests/**/*",
     "playwright.config.ts"
   ]
 }

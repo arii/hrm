@@ -72,6 +72,7 @@ export async function mockMultipleHrDevices(
   devices: HrmData[]
 ): Promise<void> {
   await page.evaluate((payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const win = window as any
     if (win.__TEST_CONTROLS__?.dispatch) {
       win.__TEST_CONTROLS__.dispatch({
@@ -125,6 +126,7 @@ export async function mockSpotifyPlaybackState(
   }
 
   await page.evaluate((payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const win = window as any
     if (win.__TEST_CONTROLS__?.dispatch) {
       // Ensure Spotify display is initialized before updating state
