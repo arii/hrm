@@ -79,12 +79,12 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
+  const hasValidTrack = !['Awaiting Login...', '', 'No Track Playing'].includes(
+    spotifyData.playback.track.name
+  )
   const shouldShowControls =
     spotifyServiceInitialized &&
-    ((spotifyData.playback.track.name !== 'Awaiting Login...' &&
-      spotifyData.playback.track.name !== '' &&
-      spotifyData.playback.track.name !== 'No Track Playing') ||
-      devices.some((d) => d.is_active))
+    (hasValidTrack || devices.some((d) => d.is_active))
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -111,14 +111,12 @@ const SpotifyControls = () => {
   }, [connectionStatus, spotifyServiceInitialized, sendData])
 
   useEffect(() => {
-    const timeoutRef: { current: ReturnType<typeof setTimeout> | null } = {
-      current: null,
-    }
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
     const handleFocus = () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
       }
-      timeoutRef.current = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         const {
           connectionStatus: currentStatus,
           spotifyServiceInitialized: currentInit,
@@ -134,8 +132,8 @@ const SpotifyControls = () => {
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
       }
     }
   }, [])
