@@ -2,23 +2,19 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS, _test_resetIsConnectingGlobal } from '@/hooks/useBluetoothHRM'
+import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-reconnection'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import { env } from '@/lib/env'
-import * as useBluetoothStorageModule from '@/hooks/useBluetoothStorage'
+import * as bluetoothStorageModule from '@/utils/bluetoothStorage'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
-jest.mock('@/hooks/useBluetoothStorage', () => {
-  const useBluetoothStorageMock = jest.fn(() => ({
-    savedDeviceId: null,
-    saveDeviceId: jest.fn(),
-    clearDeviceId: jest.fn()
-  }))
+jest.mock('@/utils/bluetoothStorage', () => {
   return {
     __esModule: true,
-    useBluetoothStorage: useBluetoothStorageMock,
-    default: useBluetoothStorageMock
+    getSavedDeviceId: jest.fn(),
+    saveDeviceId: jest.fn(),
+    clearDeviceId: jest.fn(),
   }
 })
 
@@ -48,7 +44,12 @@ describe('useBluetoothHRM', () => {
     getDevices: jest.Mock<Promise<MockDevice[]>>
   }
 
+  let useBluetoothHRM: typeof import('@/hooks/useBluetoothHRM').default
+
   beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    useBluetoothHRM = require('@/hooks/useBluetoothHRM').default
+
     // Reset mocks before each test
     jest.clearAllMocks()
     jest.useFakeTimers()
@@ -74,11 +75,9 @@ describe('useBluetoothHRM', () => {
     })
 
     // Mock hook logic
-    ;(useBluetoothStorageModule.useBluetoothStorage as jest.Mock).mockReturnValue({
-      savedDeviceId: null,
-      saveDeviceId: jest.fn(),
-      clearDeviceId: jest.fn()
-    })
+    ;(bluetoothStorageModule.getSavedDeviceId as jest.Mock).mockReturnValue(
+      null
+    )
 
     // Mock Bluetooth device
     const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
@@ -124,7 +123,6 @@ describe('useBluetoothHRM', () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     jest.clearAllTimers()
-    _test_resetIsConnectingGlobal()
   })
 
   it('should not attempt to auto-connect if no device is saved', async () => {
@@ -140,11 +138,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should auto-connect to a saved device', async () => {
-    ;(useBluetoothStorageModule.useBluetoothStorage as jest.Mock).mockReturnValue({
-      savedDeviceId: 'test-device-id',
-      saveDeviceId: jest.fn(),
-      clearDeviceId: jest.fn()
-    })
+    ;(bluetoothStorageModule.getSavedDeviceId as jest.Mock).mockReturnValue(
+      'test-device-id'
+    )
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -161,11 +157,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should handle silent connection failure gracefully', async () => {
-    ;(useBluetoothStorageModule.useBluetoothStorage as jest.Mock).mockReturnValue({
-      savedDeviceId: 'test-device-id',
-      saveDeviceId: jest.fn(),
-      clearDeviceId: jest.fn()
-    })
+    ;(bluetoothStorageModule.getSavedDeviceId as jest.Mock).mockReturnValue(
+      'test-device-id'
+    )
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
     const { result } = renderHook(() => useBluetoothHRM())
@@ -487,11 +481,9 @@ describe('useBluetoothHRM', () => {
 
     beforeEach(() => {
       // Mock hook logic for inner tests
-      ;(useBluetoothStorageModule.useBluetoothStorage as jest.Mock).mockReturnValue({
-        savedDeviceId: null,
-        saveDeviceId: jest.fn(),
-        clearDeviceId: jest.fn()
-      })
+      ;(bluetoothStorageModule.getSavedDeviceId as jest.Mock).mockReturnValue(
+        null
+      )
       // Capture the 'gattserverdisconnected' event listener
       onDisconnectedCallback = () => {} // Reset before each test
       mockDevice.addEventListener.mockImplementation(

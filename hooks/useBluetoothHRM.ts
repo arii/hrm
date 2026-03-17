@@ -21,16 +21,13 @@ import {
   MIN_MISSED_PACKET_THRESHOLD_MS,
   ROLLING_AVG_HISTORY_LENGTH,
 } from '@/constants/bluetooth'
-import useBluetoothStorage from './useBluetoothStorage'
+import {
+  getSavedDeviceId,
+  saveDeviceId,
+  clearDeviceId,
+} from '@/utils/bluetoothStorage'
 
 let isConnectingGlobal = false
-
-/** @public - Exported only for tests to reset global state */
-export const _test_resetIsConnectingGlobal = () => {
-  if (process.env.NODE_ENV === 'test') {
-    isConnectingGlobal = false
-  }
-}
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -39,6 +36,7 @@ const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
 const HEARTBEAT_INTERVAL_MS_test = 500
 const HEARTBEAT_INTERVAL_MS_prod = 1000
+/** @public - Only exported for tests to mock intervals */
 export const HEARTBEAT_INTERVAL_MS =
   typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
     ? HEARTBEAT_INTERVAL_MS_test
@@ -111,7 +109,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
-  const { savedDeviceId, saveDeviceId, clearDeviceId } = useBluetoothStorage()
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -291,7 +288,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setStatus(BluetoothConnectionStatus.ERROR)
       setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
     }
-  }, [disconnect, clearDeviceId])
+  }, [disconnect])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = BLUETOOTH_MESSAGES.unknownError
@@ -697,7 +694,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isConnectingGlobal = false
       }
     },
-    [onDisconnected, updateSignalPeriod, saveDeviceId, clearDeviceId]
+    [onDisconnected, updateSignalPeriod]
   )
 
   useEffect(() => {
@@ -749,6 +746,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (!device) {
           setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
+          const savedDeviceId = getSavedDeviceId()
 
           if (silent && !savedDeviceId) {
             return false
@@ -832,7 +830,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [
       connectionStatus,
       savedDevice,
-      savedDeviceId,
       connectToGatt,
       handleConnectionError,
       userName,

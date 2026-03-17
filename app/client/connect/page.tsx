@@ -16,7 +16,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { useBluetoothStorage } from '@/hooks/useBluetoothStorage'
+import { getSavedDeviceId } from '@/utils/bluetoothStorage'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -151,9 +151,8 @@ export default function ConnectPage() {
     gender,
   ])
 
-  const { savedDeviceId } = useBluetoothStorage()
-
   useEffect(() => {
+    const savedDeviceId = getSavedDeviceId()
     if (
       !isConnected &&
       isSupported &&
@@ -174,7 +173,6 @@ export default function ConnectPage() {
     isSupported,
     autoConnect,
     connectionAttempted,
-    savedDeviceId,
   ])
 
   const { zone, percentage } = calculateZoneFromMaxHr(

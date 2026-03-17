@@ -74,10 +74,15 @@ test.describe('Visual Regression Tests', () => {
       ),
     ])
 
-    // Force visibility and disable scrollbars to avoid flaky screenshots,
-    // relying on Playwright's native animations: 'disabled' for transitions.
+    // Force visibility and disable animations/scrollbars to avoid flaky screenshots
     await dashboardPage.addStyleTag({
       content: `
+        *, *::before, *::after {
+          transition: none !important;
+          animation: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
         body, html, * {
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
