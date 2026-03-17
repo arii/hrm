@@ -158,7 +158,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                       onClick={() =>
                         isPlaying
                           ? handlePause()
-                          : handlePlayTrack(playlistUri, index)
+                          : handlePlayTrack(playlistUri, offset + index)
                       }
                       aria-label={isPlaying ? 'Pause' : 'Play'}
                       size="small"

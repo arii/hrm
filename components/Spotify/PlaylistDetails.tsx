@@ -17,7 +17,7 @@ import { formatDuration } from '@/lib/utils'
 
 interface PlaylistDetailsProps {
   playlistId: string
-  onTrackPlay: (trackUri: string) => void
+  onTrackPlay: (index: number) => void
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
@@ -161,6 +161,20 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                 </ListItem>
               )
             })}
+          <List dense>
+            {tracks.map((track, index) => (
+              <ListItem key={`${track.id}-${index}`} divider disablePadding>
+                <ListItemButton onClick={() => onTrackPlay(index)}>
+                  <MusicNote
+                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
+                  />
+                  <ListItemText
+                    primary={track.name}
+                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
           </List>
         </InfiniteScroll>
       </Paper>
