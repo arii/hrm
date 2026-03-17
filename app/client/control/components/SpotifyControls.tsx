@@ -85,7 +85,7 @@ const SpotifyControls = () => {
       return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
     }
 
-    if (shouldUpdateToActive() && activeId) {
+    if (shouldUpdateToActive() && activeId && selectedDeviceId !== activeId) {
       setSelectedDeviceId(activeId)
     }
 
@@ -101,7 +101,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync. isLocked is omitted intentionally.
+  }, [devices])
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
