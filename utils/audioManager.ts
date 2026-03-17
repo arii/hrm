@@ -8,7 +8,7 @@
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))
 
-export class AudioManager {
+class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false

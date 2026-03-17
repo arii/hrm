@@ -11,7 +11,9 @@ jest.mock('@/utils/audioManager', () => ({
     setVolume: jest.fn(),
     setMuted: jest.fn(),
   },
-  clampVolume: jest.fn((val: number) => Math.min(100, Math.max(0, Math.round(val)))),
+  clampVolume: jest.fn((val: number) =>
+    Math.min(100, Math.max(0, Math.round(val)))
+  ),
 }))
 
 describe('hooks/useVolumePreference', () => {

@@ -11,7 +11,14 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useReducer,
+  useState,
+} from 'react'
 import { clampVolume } from '@/utils/audioManager'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -116,6 +123,9 @@ const SpotifyControls = () => {
   const lastWarningTimeRef = useRef<number>(0)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const hasPendingSendRef = useRef<boolean>(false)
+  const pendingSendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
 
   const hrmDevice = useMemo(
     () =>
@@ -173,9 +183,6 @@ const SpotifyControls = () => {
   // Effect to auto-select the active device or HRM Web Player
   useEffect(() => {
     if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
       return
     }
 
@@ -186,6 +193,7 @@ const SpotifyControls = () => {
       activeDevice &&
       (!selectedDeviceId || activeDevice.id !== prevActiveIdRef.current)
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDeviceId(activeDevice.id)
       prevActiveIdRef.current = activeDevice.id
       return
@@ -194,6 +202,7 @@ const SpotifyControls = () => {
     // 2. Selected device no longer exists
     if (selectedDeviceId && !devices.some((d) => d.id === selectedDeviceId)) {
       const nextId = activeDevice?.id || hrmDevice?.id || ''
+
       setSelectedDeviceId(nextId)
       return
     }
@@ -286,9 +295,14 @@ const SpotifyControls = () => {
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
+      if (pendingSendTimeoutRef.current) {
+        clearTimeout(pendingSendTimeoutRef.current)
+      }
+
       hasPendingSendRef.current = true
-      setTimeout(() => {
+      pendingSendTimeoutRef.current = setTimeout(() => {
         hasPendingSendRef.current = false
+        pendingSendTimeoutRef.current = null
       }, VOLUME_SYNC_GRACE_PERIOD_MS)
 
       executeSpotify('SET_VOLUME', {
@@ -325,6 +339,14 @@ const SpotifyControls = () => {
       lastSentVolumeRef.current = null
     }
   }, [connectionStatus])
+
+  useEffect(() => {
+    return () => {
+      if (pendingSendTimeoutRef.current) {
+        clearTimeout(pendingSendTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <ControlCard
