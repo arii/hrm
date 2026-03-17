@@ -72,7 +72,6 @@ test.describe('Visual Regression Tests', () => {
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
-        maxDiffPixels: 50000,
       })
 
       // Stop the timer to reset for the next test
