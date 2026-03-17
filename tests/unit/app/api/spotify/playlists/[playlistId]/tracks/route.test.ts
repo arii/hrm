@@ -55,10 +55,7 @@ describe('GET /api/spotify/playlists/[playlistId]/tracks', () => {
       name: 'Track 1',
       artists: 'Artist 1',
       album: {
-        images: [
-          { url: 'http://example.com/art1.jpg' },
-          { url: 'http://example.com/art1.jpg' },
-        ],
+        images: [{ url: 'http://example.com/art1.jpg' }],
         name: 'Album 1',
       },
       duration_ms: 180000,
