@@ -4,8 +4,7 @@ import { audioManager } from '../utils/audioManager'
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
 
-export const clampVolume = (value: number): number =>
-  Math.min(100, Math.max(0, Math.round(value)))
+import { clampVolume } from '@/utils/audioManager'
 
 // Manages user's volume and mute preferences with localStorage persistence.
 const useVolumePreference = (defaultVolume = 70) => {

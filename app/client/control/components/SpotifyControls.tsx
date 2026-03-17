@@ -11,8 +11,15 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useReducer } from 'react'
-import { clampVolume } from '@/hooks/useVolumePreference'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useReducer,
+  useState,
+} from 'react'
+import { clampVolume } from '@/utils/audioManager'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
@@ -28,27 +35,22 @@ import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
-// 1. State Shape
 interface SpotifyControlsState {
   displayVolume: number
   isMuted: boolean
   isSliding: boolean
   lastVolume: number // Last non-zero volume
-  selectedDeviceId: string
 }
 
-// 2. Actions
 type SpotifyControlsAction =
   | { type: 'SET_VOLUME'; payload: number }
   | { type: 'SET_SLIDING'; payload: boolean }
   | { type: 'TOGGLE_MUTE' }
-  | { type: 'SELECT_DEVICE'; payload: string }
   | {
       type: 'SYNC_WITH_WEBSOCKET'
       payload: { volume?: number; isMuted?: boolean }
     }
 
-// 3. Reducer Logic
 const spotifyControlsReducer = (
   state: SpotifyControlsState,
   action: SpotifyControlsAction
@@ -78,14 +80,12 @@ const spotifyControlsReducer = (
     case 'TOGGLE_MUTE': {
       const newMutedState = !state.isMuted
       if (newMutedState) {
-        // Muting: set volume to 0
         return {
           ...state,
           isMuted: true,
           displayVolume: 0,
         }
       } else {
-        // Unmuting: restore to last known volume
         return {
           ...state,
           isMuted: false,
@@ -93,11 +93,6 @@ const spotifyControlsReducer = (
         }
       }
     }
-    case 'SELECT_DEVICE':
-      return {
-        ...state,
-        selectedDeviceId: action.payload,
-      }
     default:
       return state
   }
@@ -111,7 +106,6 @@ const SpotifyControls = () => {
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { showWarning } = useAppSnackbar()
 
-  // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyControlsReducer, {
     displayVolume: spotifyData.playback.volume_percent ?? 70,
     isMuted: spotifyData.playback.isMuted ?? false,
@@ -121,15 +115,17 @@ const SpotifyControls = () => {
       spotifyData.playback.volume_percent > 0
         ? spotifyData.playback.volume_percent
         : 70,
-    selectedDeviceId: '',
   })
-  const { displayVolume, isMuted, isSliding, selectedDeviceId } = state
+  const { displayVolume, isMuted, isSliding } = state
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
 
   const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
-  const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
+  const pendingSendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  )
 
   const hrmDevice = useMemo(
     () =>
@@ -166,29 +162,9 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // Synchronize with WebSocket data whenever it changes.
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
   useEffect(() => {
-    const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
-
-    // Only apply grace period if a send is pending and within the window.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastVolumeSend < VOLUME_SYNC_GRACE_PERIOD_MS
-
-    if (isSliding || shouldRespectGracePeriod) {
+    if (isSliding || hasPendingSendRef.current) {
       return
-    }
-
-    // Once grace period has elapsed, clear the pending send flag
-    if (
-      hasPendingSendRef.current &&
-      timeSinceLastVolumeSend >= VOLUME_SYNC_GRACE_PERIOD_MS
-    ) {
-      hasPendingSendRef.current = false
     }
 
     dispatch({
@@ -207,9 +183,6 @@ const SpotifyControls = () => {
   // Effect to auto-select the active device or HRM Web Player
   useEffect(() => {
     if (devices.length === 0) {
-      if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
-      }
       return
     }
 
@@ -220,7 +193,8 @@ const SpotifyControls = () => {
       activeDevice &&
       (!selectedDeviceId || activeDevice.id !== prevActiveIdRef.current)
     ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedDeviceId(activeDevice.id)
       prevActiveIdRef.current = activeDevice.id
       return
     }
@@ -228,13 +202,14 @@ const SpotifyControls = () => {
     // 2. Selected device no longer exists
     if (selectedDeviceId && !devices.some((d) => d.id === selectedDeviceId)) {
       const nextId = activeDevice?.id || hrmDevice?.id || ''
-      dispatch({ type: 'SELECT_DEVICE', payload: nextId })
+
+      setSelectedDeviceId(nextId)
       return
     }
 
     // 3. Auto-select HRM Web Player if no active device and nothing selected
     if (!selectedDeviceId && !activeDevice && hrmDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: hrmDevice.id })
+      setSelectedDeviceId(hrmDevice.id)
     }
   }, [devices, selectedDeviceId, hrmDevice])
 
@@ -320,8 +295,15 @@ const SpotifyControls = () => {
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
 
+      if (pendingSendTimeoutRef.current) {
+        clearTimeout(pendingSendTimeoutRef.current)
+      }
+
       hasPendingSendRef.current = true
-      lastVolumeSyncTimeRef.current = Date.now()
+      pendingSendTimeoutRef.current = setTimeout(() => {
+        hasPendingSendRef.current = false
+        pendingSendTimeoutRef.current = null
+      }, VOLUME_SYNC_GRACE_PERIOD_MS)
 
       executeSpotify('SET_VOLUME', {
         volume: sanitized,
@@ -342,7 +324,6 @@ const SpotifyControls = () => {
   )
 
   const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
     const newMutedState = !isMuted
     const newVolume = newMutedState
       ? 0
@@ -350,7 +331,6 @@ const SpotifyControls = () => {
         ? state.lastVolume
         : 50
 
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
@@ -359,6 +339,14 @@ const SpotifyControls = () => {
       lastSentVolumeRef.current = null
     }
   }, [connectionStatus])
+
+  useEffect(() => {
+    return () => {
+      if (pendingSendTimeoutRef.current) {
+        clearTimeout(pendingSendTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <ControlCard
@@ -443,7 +431,7 @@ const SpotifyControls = () => {
                     value={selectedDeviceId}
                     onChange={(e) => {
                       const deviceId = e.target.value as string
-                      dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+                      setSelectedDeviceId(deviceId)
                       if (deviceId) {
                         sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                       }
