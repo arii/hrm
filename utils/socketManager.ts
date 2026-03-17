@@ -435,6 +435,7 @@ const handleIncomingMessage = (
           playlistUri?: string
           contextUri?: string
           uri?: string
+          offset?: { position: number }
         } = {}
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
@@ -445,6 +446,7 @@ const handleIncomingMessage = (
         if (commandMsg.contextUri)
           spotifyCommandParams.contextUri = commandMsg.contextUri
         if (commandMsg.uri) spotifyCommandParams.uri = commandMsg.uri
+        if (commandMsg.offset) spotifyCommandParams.offset = commandMsg.offset
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
