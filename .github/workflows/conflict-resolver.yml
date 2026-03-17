@@ -117,15 +117,7 @@ jobs:
             ✅ Successfully resolved all conflicts by merging the latest changes from `${{ inputs.target_branch }}`. The pull request has been updated.
 
             ---
-            #### 🤖 Gemini Manual Trigger Quick Reference
-            | Command | Action |
-            | :--- | :--- |
-            | \`@gemini-bot\` | Run AI Code Review |
-            | \`@gemini-triage\` | Run Issue Triage |
-            | \`@gemini-coder <task>\` | Generate Code |
-            | \`@create-review-issues\` | Create issues from review |
-
-            [Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            #### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -145,15 +137,7 @@ jobs:
             Please resolve these conflicts manually.
 
             ---
-            #### 🤖 Gemini Manual Trigger Quick Reference
-            | Command | Action |
-            | :--- | :--- |
-            | \`@gemini-bot\` | Run AI Code Review |
-            | \`@gemini-triage\` | Run Issue Triage |
-            | \`@gemini-coder <task>\` | Generate Code |
-            | \`@create-review-issues\` | Create issues from review |
-
-            [Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            #### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
