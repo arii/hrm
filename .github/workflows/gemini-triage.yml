@@ -133,7 +133,7 @@ jobs:
             const path = require('path');
             const issue_number = parseInt(process.env.ISSUE_NUMBER);
 
-            const footer = '\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n' +
+            const fullFooter = '\n\n---\n#### 🤖 Gemini Manual Trigger Quick Reference\n' +
               '| Command | Action |\n' +
               '| :--- | :--- |\n' +
               '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
@@ -142,6 +142,10 @@ jobs:
               '| `@create-review-issues` | Create issues from review (PR only) |\n' +
               '| `@gemini-help` | Show this help message |\n\n' +
               '[Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+
+            const shortFooter = '\n\n---\n#### 🤖 [Gemini Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)';
+
+            const footer = (context.eventName === 'issues' && (context.payload.action === 'opened' || context.payload.action === 'reopened')) ? fullFooter : shortFooter;
 
             try {
               const filePath = path.resolve(process.cwd(), 'triage_result.json');
