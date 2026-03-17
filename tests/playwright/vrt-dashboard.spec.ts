@@ -73,6 +73,24 @@ test.describe('Visual Regression Tests', () => {
         { timeout: 5000 }
       ),
     ])
+
+    // Force visibility and disable scrollbars to avoid flaky screenshots,
+    // relying on Playwright's native animations: 'disabled' for transitions.
+    await dashboardPage.addStyleTag({
+      content: `
+        body, html, * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        ::-webkit-scrollbar {
+          display: none !important;
+        }
+        [data-testid="main-content-layout"] {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      `,
+    })
   })
 
   test.describe('Dashboard Component', () => {
