@@ -101,7 +101,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices])
+  }, [devices, isLocked])
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
