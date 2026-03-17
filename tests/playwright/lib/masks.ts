@@ -19,7 +19,7 @@ export const VRT_MASK_SELECTORS = {
   bpmValue: '[data-testid="bpm-value"]',
   caloriesValue: '[data-testid="calories-value"]',
   timerCountdown: '[data-testid="timer-countdown"]',
-  timerPhaseLabel: '[data-testid="timer-phase-label"]',
+  timerPhaseLabel: '[data-testid="timer-phase"]',
   hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
   spotifyCurrentTrack: '[data-testid="spotify-current-track-name"]',
 } as const
