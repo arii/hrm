@@ -17,7 +17,7 @@ import { formatDuration } from '@/lib/utils'
 
 interface PlaylistDetailsProps {
   playlistId: string
-  onTrackPlay: (index: number) => void
+  onTrackPlay: (uri: string) => void
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
@@ -110,7 +110,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                 ? track.artists.map((a) => a.name).join(', ')
                 : track.artists
               const albumName = track.album?.name || 'Single'
-              const albumThumbnail = track.album?.images?.[2]?.url
+              const albumThumbnail =
+                track.album?.images?.slice(-1)[0]?.url || ''
 
               return (
                 <ListItem
@@ -138,7 +139,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                     <ListItemAvatar sx={{ minWidth: 48 }}>
                       <Avatar
                         variant="rounded"
-                        src={albumThumbnail || undefined}
+                        src={albumThumbnail}
                         sx={{ width: 32, height: 32 }}
                       >
                         <MusicNote fontSize="small" />
@@ -161,20 +162,6 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
                 </ListItem>
               )
             })}
-          <List dense>
-            {tracks.map((track, index) => (
-              <ListItem key={`${track.id}-${index}`} divider disablePadding>
-                <ListItemButton onClick={() => onTrackPlay(index)}>
-                  <MusicNote
-                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-                  />
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
           </List>
         </InfiniteScroll>
       </Paper>

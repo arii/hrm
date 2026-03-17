@@ -20,18 +20,7 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { formatDuration } from '@/lib/utils'
-
-interface Track {
-  id: string
-  name: string
-  artists: string
-  album?: {
-    name: string
-    images: { url: string; height: number; width: number }[]
-  }
-  duration_ms: number
-  uri: string
-}
+import { SpotifyPlaylistItem } from '@/types/core'
 
 interface PlaylistTracksDisplayProps {
   playlistId: string
@@ -40,7 +29,7 @@ interface PlaylistTracksDisplayProps {
 const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const [tracks, setTracks] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<SpotifyPlaylistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
@@ -133,7 +122,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
               spotifyData.playback.track.id === track.id
             const playlistUri = `spotify:playlist:${playlistId}`
             const albumName = track.album?.name || 'Single'
-            const albumThumbnail = track.album?.images?.[2]?.url
+            const albumThumbnail = track.album?.images?.slice(-1)[0]?.url || ''
 
             return (
               <ListItem
@@ -149,10 +138,12 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                       variant="caption"
                       sx={{ color: 'text.secondary', mr: 1 }}
                     >
-                      {formatDuration(track.duration_ms, {
-                        unit: 'milliseconds',
-                        format: 'MM:SS',
-                      })}
+                      {track.duration_ms
+                        ? formatDuration(track.duration_ms, {
+                            unit: 'milliseconds',
+                            format: 'MM:SS',
+                          })
+                        : null}
                     </Typography>
                     <IconButton
                       onClick={() =>
@@ -179,7 +170,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                   <ListItemAvatar sx={{ minWidth: 48 }}>
                     <Avatar
                       variant="rounded"
-                      src={albumThumbnail || undefined}
+                      src={albumThumbnail}
                       sx={{ width: 32, height: 32 }}
                     >
                       <MusicNoteIcon fontSize="small" />
@@ -187,7 +178,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={track.name}
-                    secondary={`${track.artists} • ${albumName}`}
+                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} • ${albumName}`}
                     primaryTypographyProps={{
                       variant: 'body2',
                       noWrap: true,
