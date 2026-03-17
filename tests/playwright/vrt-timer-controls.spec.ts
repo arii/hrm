@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest } from './lib'
+import { setupVisualRegressionTest, stopTimer } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -75,7 +75,7 @@ test.describe('Visual Regression Tests', () => {
       })
 
       // Stop the timer to reset for the next test
-      await controlPage.getByTestId('stop-timer-button').click()
+      await stopTimer(controlPage, dashboardPage)
     })
 
     test('start button hover state', async () => {
