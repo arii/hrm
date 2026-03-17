@@ -106,7 +106,9 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
 
-    expect(screen.getByTestId('timer-phase-label')).toHaveTextContent('GET READY')
+    expect(screen.getByTestId('timer-phase-label')).toHaveTextContent(
+      'GET READY'
+    )
     // Prepare phase shows seconds only
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('03')
   })
