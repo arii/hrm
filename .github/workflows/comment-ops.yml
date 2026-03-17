@@ -20,6 +20,7 @@ jobs:
     name: 🔍 Route Comment
     runs-on: ubuntu-latest
     outputs:
+      is_command_triggered: ${{ steps.route.outputs.is_command_triggered || 'false' }}
       is_review: ${{ steps.route.outputs.is_review || 'false' }}
       is_squash: ${{ steps.route.outputs.is_squash || 'false' }}
       is_resolve: ${{ steps.route.outputs.is_resolve || 'false' }}
@@ -44,6 +45,27 @@ jobs:
           if echo "$BODY" | grep -qiE "^@create-review-issues"; then echo "is_review_issues=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "^@gemini-enrich"; then echo "is_enrich=true" >> $GITHUB_OUTPUT; fi
           if echo "$BODY" | grep -qiE "^@gemini-help"; then echo "is_help=true" >> $GITHUB_OUTPUT; fi
+
+  init-status:
+    needs: [router]
+    if: needs.router.outputs.is_command_triggered == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      comment_id: ${{ steps.post-comment.outputs.comment-id }}
+    steps:
+      - name: Post Initial Status
+        id: post-comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ### 🤖 Command Operation Status
+
+            ⏳ **Status:** In Progress...
+
+            Triggered by: @${{ github.actor }} via [comment](${{ github.event.comment.html_url }})
+
+            <!-- id: comment-op-status-${{ github.event.comment.id }} -->
 
   execute-review:
     needs: [router]
@@ -267,3 +289,60 @@ jobs:
       source_branch: ${{ needs.prepare-resolve.outputs.source_branch }}
       pr_number: ${{ github.event.issue.number }}
     secrets: inherit
+
+  finalize-status:
+    needs:
+      - router
+      - init-status
+      - execute-review
+      - execute-triage
+      - execute-coder
+      - execute-create-review-issues
+      - execute-help
+      - execute-squash
+      - execute-resolve
+    if: always() && needs.init-status.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Final Status
+        id: status
+        run: |
+          REPORT="### 🤖 Command Operation Status\n\n"
+
+          check_job() {
+            local name=$1
+            local result=$2
+            local triggered=$3
+            if [ "$triggered" == "true" ]; then
+              case $result in
+                success) REPORT="${REPORT}✅ **$name:** Success\n" ;;
+                failure) REPORT="${REPORT}❌ **$name:** Failed\n" ;;
+                cancelled) REPORT="${REPORT}🚫 **$name:** Cancelled\n" ;;
+                skipped) REPORT="${REPORT}⏭️ **$name:** Skipped\n" ;;
+                *) REPORT="${REPORT}❓ **$name:** Unknown ($result)\n" ;;
+              esac
+            fi
+          }
+
+          check_job "Review" "${{ needs.execute-review.result }}" "${{ needs.router.outputs.is_review }}"
+          check_job "Triage" "${{ needs.execute-triage.result }}" "${{ needs.router.outputs.is_triage }}"
+          check_job "Coder" "${{ needs.execute-coder.result }}" "${{ needs.router.outputs.is_coder }}"
+          check_job "Create Review Issues (Manual)" "${{ needs.execute-create-review-issues.result }}" "${{ needs.router.outputs.is_review_issues }}"
+
+          check_job "Help" "${{ needs.execute-help.result }}" "${{ needs.router.outputs.is_help }}"
+          check_job "Squash" "${{ needs.execute-squash.result }}" "${{ needs.router.outputs.is_squash }}"
+          check_job "Resolve" "${{ needs.execute-resolve.result }}" "${{ needs.router.outputs.is_resolve }}"
+
+          REPORT="${REPORT}\n---\nTriggered by: @${{ github.actor }} via [comment](${{ github.event.comment.html_url }})"
+          REPORT="${REPORT}\n\n<!-- id: comment-op-status-${{ github.event.comment.id }} -->"
+
+          echo "REPORT<<EOF" >> $GITHUB_OUTPUT
+          printf "%b\n" "$REPORT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update Status Comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ needs.init-status.outputs.comment_id }}
+          body: ${{ steps.status.outputs.REPORT }}
+          edit-mode: replace
