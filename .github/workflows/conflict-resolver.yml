@@ -31,8 +31,8 @@ on:
         type: string
 
 env:
-  TARGET: ${{ github.event.pull_request.base.ref || inputs.target_branch }}
-  SOURCE: ${{ github.event.pull_request.head.ref || inputs.source_branch }}
+  TARGET: ${{ inputs.target_branch }}
+  SOURCE: ${{ inputs.source_branch }}
   PR_NUMBER: ${{ inputs.pr_number }}
 
 jobs:
@@ -64,18 +64,19 @@ jobs:
         shell: bash
         run: |
           if ! git ls-remote --exit-code --heads origin "$TARGET" > /dev/null 2>&1; then
+            echo "::warning::Target branch $TARGET missing. Skipping resolver."
             echo "skipped=true" >> $GITHUB_OUTPUT
             echo "error_msg=❌ Error: Target branch \`$TARGET\` not found. Please ensure the target branch exists and the bot has permissions to access it." >> $GITHUB_OUTPUT
             exit 0
           fi
 
           if ! git ls-remote --exit-code --heads origin "$SOURCE" > /dev/null 2>&1; then
+            echo "::warning::Source branch $SOURCE missing. Skipping resolver."
             echo "skipped=true" >> $GITHUB_OUTPUT
             echo "error_msg=❌ Error: Source branch \`$SOURCE\` not found. It may have been deleted or renamed." >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Capture base SHA (target branch)
           git fetch origin "$TARGET"
           echo "base_sha=$(git rev-parse origin/"$TARGET")" >> $GITHUB_OUTPUT
           echo "skipped=false" >> $GITHUB_OUTPUT
