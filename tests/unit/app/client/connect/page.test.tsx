@@ -18,6 +18,13 @@ const mockAutoConnect = jest.fn().mockResolvedValue(undefined)
 const mockDisconnect = jest.fn()
 const mockForgetDevice = jest.fn()
 
+jest.mock('@/utils/bluetoothStorage', () => ({
+  __esModule: true,
+  getSavedDeviceId: jest.fn(() => null),
+  saveDeviceId: jest.fn(),
+  clearDeviceId: jest.fn(),
+}))
+
 jest.mock('@/hooks/useBluetoothHRM', () =>
   jest.fn(() => ({
     connectAndStream: mockConnectAndStream,

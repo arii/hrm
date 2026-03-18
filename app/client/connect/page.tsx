@@ -16,7 +16,7 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import Cookies from 'js-cookie'
+import { getSavedDeviceId } from '@/utils/bluetoothStorage'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -152,7 +152,7 @@ export default function ConnectPage() {
   ])
 
   useEffect(() => {
-    const savedDeviceId = Cookies.get('hrm_device_id')
+    const savedDeviceId = getSavedDeviceId()
     if (
       !isConnected &&
       isSupported &&
@@ -161,14 +161,10 @@ export default function ConnectPage() {
       savedDeviceId
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
-      const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
-      }, 100)
-      return () => clearTimeout(timeout)
+      autoConnect().catch(() => {
+        logger.info('Auto-connect failed, user can connect manually')
+      })
     }
-    return undefined
   }, [
     connectionStatus,
     isConnected,

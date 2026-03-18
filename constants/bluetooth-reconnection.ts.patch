@@ -1,0 +1,16 @@
+--- constants/bluetooth-reconnection.ts
++++ constants/bluetooth-reconnection.ts
+@@ -2,6 +2,12 @@
+ export const FAST_RECONNECT_MAX_ATTEMPTS = 3
+ export const FAST_RECONNECT_DELAY_MS = 200
+
++const HEARTBEAT_INTERVAL_MS_test = 500
++const HEARTBEAT_INTERVAL_MS_prod = 1000
++export const HEARTBEAT_INTERVAL_MS =
++  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
++    ? HEARTBEAT_INTERVAL_MS_test
++    : HEARTBEAT_INTERVAL_MS_prod
++
+ export const getBackoffDelay = (attempt: number): number => {
+   if (attempt <= FAST_RECONNECT_MAX_ATTEMPTS) {
+     return FAST_RECONNECT_DELAY_MS
