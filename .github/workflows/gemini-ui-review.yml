@@ -21,17 +21,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
 
-      - name: Cache Playwright Browsers
-        id: cache-playwright
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
       - name: Install Playwright Browsers
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Get Deployment URL
@@ -41,7 +31,7 @@ jobs:
           BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
 
           # Try to find target_url from the most recent deployment status for this branch
-          URL=$(gh api "repos/${{ github.repository }}/deployments?ref=$BRANCH" --jq '.[0].id' | xargs -I {} gh api "repos/${{ github.repository }}/deployments/{}/statuses" --jq 'map(select(.state == "success")) | .[0].target_url' 2>/dev/null || true)
+          URL=$(gh api repos/${{ github.repository }}/deployments -q '.[] | select(.environment=="preview" and .ref=="'"$BRANCH"'") | .id' | head -n 1 | xargs -I {} gh api repos/${{ github.repository }}/deployments/{}/statuses -q 'map(select(.state == "success")) | .[0].target_url' 2>/dev/null || true)
 
           if [ -z "$URL" ] || [ "$URL" == "null" ]; then
             echo "::error::No successful deployment found for branch $BRANCH. UI Review requires a preview environment."
