@@ -14,12 +14,14 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
+import { useOptimisticSync } from '@/hooks/useOptimisticSync'
+import { SYNC_LOCK_DURATION } from '@/constants/spotify'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -128,9 +130,7 @@ const SpotifyDisplay = () => {
     !!selectedDeviceId ||
     spotifyData.devices?.some((device) => device.is_active)
 
-  // Track user interaction to prevent sync race conditions
-  const lastUserInteractionRef = useRef<number>(0)
-  const SYNC_LOCK_DURATION = 2000
+  const { isLocked, markInteraction } = useOptimisticSync(SYNC_LOCK_DURATION)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -144,10 +144,7 @@ const SpotifyDisplay = () => {
 
   // Synchronize with WebSocket data whenever it changes.
   useEffect(() => {
-    const isLocked =
-      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
-
-    if (state.isSliding || isLocked) {
+    if (state.isSliding || isLocked()) {
       return
     }
 
@@ -186,13 +183,13 @@ const SpotifyDisplay = () => {
 
   // Handler for immediate UI update while sliding
   const handleVolumeChange = (newVolume: number) => {
-    lastUserInteractionRef.current = Date.now()
+    markInteraction()
     dispatch({ type: 'SET_VOLUME', payload: newVolume })
   }
 
   // Handler for sending the final volume value after sliding stops
   const handleVolumeChangeCommitted = (newVolume: number) => {
-    lastUserInteractionRef.current = Date.now()
+    markInteraction()
     sendVolumeCommand(newVolume)
     dispatch({ type: 'SET_SLIDING', payload: false })
   }

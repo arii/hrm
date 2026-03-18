@@ -21,10 +21,10 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
+import { SPOTIFY_BRAND_COLOR, SYNC_LOCK_DURATION } from '@/constants/spotify'
+import { useOptimisticSync } from '@/hooks/useOptimisticSync'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
-const SYNC_LOCK_DURATION = 2000
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -36,8 +36,7 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSliding, setIsSliding] = useState(false)
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
-  const lastUserInteractionRef = useRef<number>(0)
+  const { isLocked, markInteraction } = useOptimisticSync(SYNC_LOCK_DURATION)
 
   const hrmDevice = useMemo(
     () =>
@@ -79,31 +78,18 @@ const SpotifyControls = () => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Helper: determine if device should be updated to activeId
-    const shouldUpdateToActive = () => {
-      // Initial sync or active device changed externally
-      if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
-        return Boolean(activeId)
-      }
-      // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
+    if (
+      activeId &&
+      selectedDeviceId !== activeId &&
+      !devices.some((d) => d.id === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(activeId)
     }
 
-    if (shouldUpdateToActive()) {
-      setSelectedDeviceId(activeId!)
-    }
-    prevActiveIdRef.current = activeId
-
-    // Sync Volume (if not dragging and not within lock duration after interaction)
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
-
-    const isLocked =
-      Date.now() - lastUserInteractionRef.current < SYNC_LOCK_DURATION
-
-    if (isLocked) return
+    if (isLocked()) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {
@@ -112,7 +98,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices])
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
@@ -219,21 +205,21 @@ const SpotifyControls = () => {
 
   const handleVolumeChange = useCallback(
     (val: number) => {
-      lastUserInteractionRef.current = Date.now()
+      markInteraction()
       setIsSliding(true)
       setVolume(val)
       throttledSendVolume(val)
     },
-    [setVolume, throttledSendVolume]
+    [setVolume, throttledSendVolume, markInteraction]
   )
 
   const handleVolumeChangeCommitted = useCallback(
     (val: number) => {
-      lastUserInteractionRef.current = Date.now()
+      markInteraction()
       setIsSliding(false)
       sendVolumeCommand(val)
     },
-    [sendVolumeCommand]
+    [sendVolumeCommand, markInteraction]
   )
 
   useEffect(() => {
