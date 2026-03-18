@@ -2,12 +2,14 @@ name: Gemini UI Review
 
 on:
   workflow_call:
+  issue_comment:
+    types: [created]
 
 jobs:
   ui-review:
     if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@gemini-ui-review')
+      (github.event_name == 'workflow_call') ||
+      (github.event.issue.pull_request && contains(github.event.comment.body, '@gemini-ui-review'))
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -22,7 +24,18 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Set Deployment URL
+        id: deploy-url
+        run: |
+          # Try to get the target URL from the latest deployment if possible
+          # Default to localhost:3000 if not found
+          URL=$(gh pr view ${{ github.event.issue.number || github.event.pull_request.number }} --json headRefName --jq '.headRefName' | xargs -I {} gh api repos/${{ github.repository }}/deployments?ref={} --jq '.[0].id' | xargs -I {} gh api repos/${{ github.repository }}/deployments/{}/statuses --jq '.[0].target_url' 2>/dev/null || echo "http://localhost:3000")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Start App (if no deployment URL)
+        if: steps.deploy-url.outputs.url == 'http://localhost:3000'
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'a-super-long-and-secure-secret-for-ci-tests' }}
           SPOTIFY_CLIENT_ID: 'test_client_id'
@@ -35,8 +48,7 @@ jobs:
       - name: Run UI Review Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          DEPLOYMENT_URL: 'http://localhost:3000'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          DEPLOYMENT_URL: ${{ steps.deploy-url.outputs.url }}
         run: npx tsx scripts/ci/run-ui-review.ts

@@ -10,6 +10,11 @@ import type {
   HrmData,
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
+import type { TestControls } from '../../../types/global'
+
+interface TestWindow extends Window {
+  __TEST_CONTROLS__?: TestControls
+}
 
 /**
  * A consistent, offline-safe 1x1 transparent PNG image for VRT.
@@ -72,8 +77,7 @@ export async function mockMultipleHrDevices(
   devices: HrmData[]
 ): Promise<void> {
   await page.evaluate((payload) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any
+    const win = window as TestWindow
     if (win.__TEST_CONTROLS__?.dispatch) {
       win.__TEST_CONTROLS__.dispatch({
         type: 'HRM_UPDATE',
@@ -126,8 +130,7 @@ export async function mockSpotifyPlaybackState(
   }
 
   await page.evaluate((payload) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any
+    const win = window as TestWindow
     if (win.__TEST_CONTROLS__?.dispatch) {
       // Ensure Spotify display is initialized before updating state
       win.__TEST_CONTROLS__.dispatch({

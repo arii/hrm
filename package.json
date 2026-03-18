@@ -73,7 +73,6 @@
     "@mui/icons-material": "^7.3.8",
     "@mui/material": "^7.3.8",
     "@mui/material-nextjs": "^7.3.8",
-    "@octokit/rest": "^22.0.1",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",

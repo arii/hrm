@@ -1,12 +1,11 @@
 import { chromium } from '@playwright/test'
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
-import { Octokit } from '@octokit/rest'
 import fs from 'fs'
+import { execSync } from 'child_process'
 import { mockLoggedInSession } from '../../tests/playwright/lib/mocks'
 import { DESKTOP_VIEWPORT } from '../../tests/playwright/lib/viewports'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
 async function performUIReview() {
   console.log('🚀 Starting Gemini Multimodal UI Review...')
@@ -16,20 +15,21 @@ async function performUIReview() {
     viewport: DESKTOP_VIEWPORT,
   })
 
-  // Mock the session to ensure we are logged in
   await mockLoggedInSession(context)
 
   const page = await context.newPage()
 
-  // In CI, point to the local server or a Vercel/Preview URL
   const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
   console.log(`🔗 Navigating to ${targetUrl}...`)
 
   try {
     await page.goto(targetUrl, { waitUntil: 'networkidle' })
 
-    // Additional wait for any dynamic content/animations to settle
-    await page.waitForTimeout(2000)
+    // Wait for main content to be visible instead of using hardcoded timeout
+    await page.waitForSelector('[data-testid="main-content-layout"]', {
+      state: 'visible',
+      timeout: 30000,
+    })
 
     const screenshotPath = 'ui-snapshot.png'
     console.log('📸 Capturing screenshot...')
@@ -81,25 +81,25 @@ async function performUIReview() {
 
     const prNumber = process.env.PR_NUMBER
     if (prNumber) {
-      console.log(`💬 Posting feedback to PR #${prNumber}...`)
-      const repository = process.env.GITHUB_REPOSITORY || 'arii/hrm'
-      const [owner, repo] = repository.split('/')
+      console.log(`💬 Posting feedback to PR #${prNumber} using gh CLI...`)
+      const body = `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`
 
-      if (!owner || !repo) {
-        throw new Error(`Invalid GITHUB_REPOSITORY format: ${repository}`)
+      // Use temporary file for the comment body to handle multiline/special characters safely
+      const bodyFile = 'ui_review_body.md'
+      fs.writeFileSync(bodyFile, body)
+
+      try {
+        execSync(`gh pr comment ${prNumber} --body-file ${bodyFile}`, {
+          stdio: 'inherit',
+        })
+        console.log('✅ Comment posted successfully.')
+      } finally {
+        if (fs.existsSync(bodyFile)) {
+          fs.unlinkSync(bodyFile)
+        }
       }
-
-      await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: parseInt(prNumber),
-        body: `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`,
-      })
-      console.log('✅ Comment posted successfully.')
     } else {
-      console.log(
-        '⚠️ PR_NUMBER not provided. Printing feedback to console instead:'
-      )
+      console.log('⚠️ PR_NUMBER not provided. Analysis output:')
       console.log(feedback)
     }
   } catch (error) {
@@ -107,6 +107,9 @@ async function performUIReview() {
     process.exit(1)
   } finally {
     await browser.close()
+    if (fs.existsSync('ui-snapshot.png')) {
+      fs.unlinkSync('ui-snapshot.png')
+    }
   }
 }
 
