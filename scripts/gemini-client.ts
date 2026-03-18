@@ -350,32 +350,31 @@ export async function generateContentWithFallback({
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
-      const isNotFound = errorMessage.includes('404') || errorStatus === 404
-      const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
-      const isRateLimited = errorMessage.includes('429') || errorStatus === 429
-      const isRetriableInfrastructure =
-        errorMessage.includes('500') ||
-        errorStatus === 500 ||
-        errorMessage.includes('503') ||
-        errorStatus === 503
+      const retriableCodes = [400, 404, 429, 500, 503]
+      const isRetriableCode =
+        errorStatus !== undefined && retriableCodes.includes(errorStatus)
+      const isRetriableMessage = new RegExp(
+        retriableCodes.join('|')
+      ).test(errorMessage)
 
-      if (
-        isNotFound ||
-        isBadRequest ||
-        isRateLimited ||
-        isRetriableInfrastructure
-      ) {
-        let reason = 'Unknown Error'
-        if (isRateLimited) {
+      if (isRetriableCode || isRetriableMessage) {
+        let reason = 'Unknown Retriable Error'
+        if (errorMessage.includes('429') || errorStatus === 429) {
           reason = 'Rate Limited'
-        } else if (isNotFound) {
+        } else if (errorMessage.includes('404') || errorStatus === 404) {
           reason = 'Not Found'
-        } else if (isBadRequest) {
+        } else if (errorMessage.includes('400') || errorStatus === 400) {
           reason = 'Invalid Request'
-        } else if (isRetriableInfrastructure) {
-          reason = 'Infrastructure Issue (Retriable)'
+        } else if (
+          /500|503/.test(errorMessage) ||
+          errorStatus === 500 ||
+          errorStatus === 503
+        ) {
+          reason = 'Infrastructure Issue'
         }
-        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
+
+        const details =
+          reason === 'Unknown Retriable Error' ? `: ${errorMessage}` : ''
         console.warn(
           `Model ${modelName} failed (${reason}${details}). Trying next model...`
         )
