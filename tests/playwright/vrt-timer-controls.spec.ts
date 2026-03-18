@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest } from './lib'
+import { setupVisualRegressionTest, stopTimer } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -31,6 +31,10 @@ test.describe('Visual Regression Tests', () => {
   test.beforeEach(async () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(dashboardPage)
+  })
+
+  test.afterEach(async () => {
+    await stopTimer(controlPage, dashboardPage)
   })
 
   test.describe('TimerControls Component', () => {
@@ -73,9 +77,6 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
       })
-
-      // Stop the timer to reset for the next test
-      await controlPage.getByTestId('stop-timer-button').click()
     })
 
     test('start button hover state', async () => {
