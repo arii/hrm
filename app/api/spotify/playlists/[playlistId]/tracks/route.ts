@@ -101,7 +101,7 @@ async function getPlaylistTracks(
         artists: track.artists.map((artist) => artist.name).join(', '),
         album: {
           name: track.album.name,
-          images: track.album.images.slice(0, 2),
+          images: track.album.images,
         },
         duration_ms: track.duration_ms,
         uri: track.uri,
