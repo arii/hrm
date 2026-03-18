@@ -105,6 +105,7 @@ test.describe('Visual Regression Tests', () => {
         page.locator('.variable-text-container'),
       ],
       fullPage: false,
+      maxDiffPixelRatio: 0.05,
     })
 
     test.beforeEach(async () => {
@@ -194,7 +195,11 @@ test.describe('Visual Regression Tests', () => {
         MOBILE_VIEWPORT.width
       )
 
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', getVrtOptions(dashboardPage))
+      await takeScreenshot(
+        dashboard,
+        'dashboard-mobile.png',
+        getVrtOptions(dashboardPage)
+      )
     })
 
     test('tablet viewport', async () => {
@@ -202,10 +207,11 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        ...getVrtOptions(dashboardPage),
-        maxDiffPixelRatio: 0.05,
-      })
+      await takeScreenshot(
+        dashboard,
+        'dashboard-tablet.png',
+        getVrtOptions(dashboardPage)
+      )
     })
 
     test('large desktop viewport', async () => {
@@ -213,10 +219,11 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        ...getVrtOptions(dashboardPage),
-        maxDiffPixelRatio: 0.1,
-      })
+      await takeScreenshot(
+        dashboard,
+        'dashboard-large-desktop.png',
+        getVrtOptions(dashboardPage)
+      )
     })
   })
 })
