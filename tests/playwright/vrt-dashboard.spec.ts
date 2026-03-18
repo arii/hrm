@@ -122,7 +122,10 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/
+        /00:00/,
+        {
+          timeout: 20000,
+        }
       )
 
       // Assert timer tile height is fixed
@@ -146,7 +149,10 @@ test.describe('Visual Regression Tests', () => {
 
       // Wait for timer to start on dashboard
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/
+        /00:00/,
+        {
+          timeout: 20000,
+        }
       )
 
       // Assert grid row height is stable

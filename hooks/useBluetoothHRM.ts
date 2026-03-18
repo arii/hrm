@@ -26,21 +26,22 @@ import {
   saveDeviceId,
   clearDeviceId,
 } from '@/utils/bluetoothStorage'
+import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-reconnection'
 
-let isConnectingGlobal = false
+export class BluetoothLock {
+  private static instance: BluetoothLock
+  public isConnecting = false
+
+  static getInstance() {
+    if (!this.instance) this.instance = new BluetoothLock()
+    return this.instance
+  }
+}
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-const HEARTBEAT_INTERVAL_MS_test = 500
-const HEARTBEAT_INTERVAL_MS_prod = 1000
-/** @public - Only exported for tests to mock intervals */
-export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_test
-    : HEARTBEAT_INTERVAL_MS_prod
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
@@ -279,15 +280,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     setConnectionAttempted(false)
-    try {
-      clearDeviceId()
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-    } catch (e) {
-      logger.warn({ error: e }, 'Error during device forget')
-      setStatus(BluetoothConnectionStatus.ERROR)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
-    }
+    clearDeviceId()
+    setStatus(BluetoothConnectionStatus.DISCONNECTED)
+    setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
   }, [disconnect])
 
   const handleConnectionError = useCallback((error: unknown) => {
@@ -359,7 +354,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       reconnectTimeoutRef.current = setTimeout(() => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
-          !isConnectingGlobal &&
+          !BluetoothLock.getInstance().isConnecting &&
           !isManualDisconnect.current
         ) {
           connectToGattRef.current?.(device, true).catch((error: unknown) => {
@@ -457,7 +452,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (isConnectingGlobal) return false
+      const lock = BluetoothLock.getInstance()
+      if (lock.isConnecting) return false
 
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
@@ -468,7 +464,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
-      isConnectingGlobal = true
+      lock.isConnecting = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -627,7 +623,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         setSavedDevice(device)
         saveDeviceId(device.id)
-        isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
         onConnectRef.current?.()
@@ -691,7 +686,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       } finally {
         // This is reset at the end of the function, but if an abort happens,
         // we need to ensure it's also reset.
-        isConnectingGlobal = false
+        lock.isConnecting = false
       }
     },
     [onDisconnected, updateSignalPeriod]
@@ -714,14 +709,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
-      if (isConnectingGlobal) {
+      const lock = BluetoothLock.getInstance()
+      if (lock.isConnecting) {
         logger.warn(
           'connectAndStream called while already connecting. Skipping.'
         )
         return false
       }
 
-      isConnectingGlobal = true
+      lock.isConnecting = true
       const { silent = false } = options
       try {
         userDetailsRef.current = {
@@ -824,7 +820,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false
       } finally {
-        isConnectingGlobal = false
+        lock.isConnecting = false
       }
     },
     [
@@ -838,7 +834,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnectingGlobal) return
+    const lock = BluetoothLock.getInstance()
+    if (lock.isConnecting) return
 
     try {
       setConnectionAttempted(true)
