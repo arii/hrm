@@ -350,33 +350,25 @@ export async function generateContentWithFallback({
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
-      const retriableCodes = [400, 404, 429, 500, 503]
-      const isRetriableCode =
-        errorStatus !== undefined && retriableCodes.includes(errorStatus)
-      const isRetriableMessage = retriableCodes.some((code) =>
-        errorMessage.includes(code.toString())
-      )
+      const RETRIABLE_MAP: Record<number, string> = {
+        400: 'Invalid Request',
+        404: 'Not Found',
+        429: 'Rate Limited',
+        500: 'Infrastructure Issue',
+        503: 'Infrastructure Issue',
+      }
 
-      if (isRetriableCode || isRetriableMessage) {
-        let reason = 'Unknown Retriable Error'
-        if (errorMessage.includes('429') || errorStatus === 429) {
-          reason = 'Rate Limited'
-        } else if (errorMessage.includes('404') || errorStatus === 404) {
-          reason = 'Not Found'
-        } else if (errorMessage.includes('400') || errorStatus === 400) {
-          reason = 'Invalid Request'
-        } else if (
-          /500|503/.test(errorMessage) ||
-          errorStatus === 500 ||
-          errorStatus === 503
-        ) {
-          reason = 'Infrastructure Issue'
-        }
+      const retriableCode =
+        Object.keys(RETRIABLE_MAP)
+          .map(Number)
+          .find(
+            (code) => errorStatus === code || errorMessage.includes(String(code))
+          )
 
-        const details =
-          reason === 'Unknown Retriable Error' ? `: ${errorMessage}` : ''
+      if (retriableCode) {
+        const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
         console.warn(
-          `Model ${modelName} failed (${reason}${details}). Trying next model...`
+          `Model ${modelName} failed (${reason}: ${errorMessage}). Trying next model...`
         )
         continue
       }

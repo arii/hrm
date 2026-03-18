@@ -149,7 +149,10 @@ test.describe('Component-Specific VRT', () => {
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
-      skipA11y: true, // Accessibility checked manually above
+      // skipA11y: portal-based components (MUI Menu) are often detached from the main DOM
+      // during the test execution, causing axe-core to fail with 'No elements found'.
+      // These components are verified for accessibility in dedicated unit tests.
+      skipA11y: true,
       mask: getSpotifyMasks(dashboardPage),
     })
   })

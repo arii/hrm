@@ -155,7 +155,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.5, // Increased tolerance for responsive shifts in CI
+        maxDiffPixelRatio: 0.4, // Reduced tolerance after improving stabilization
       })
     })
 
