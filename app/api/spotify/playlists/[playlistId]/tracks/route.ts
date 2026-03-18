@@ -104,6 +104,7 @@ async function getPlaylistTracks(
           images: track.album.images,
         },
         duration_ms: track.duration_ms,
+        duration: track.duration_ms, // Alias for backward compatibility
         uri: track.uri,
       }
     })

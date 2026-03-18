@@ -447,7 +447,8 @@ const handleIncomingMessage = (
           spotifyCommandParams.contextUri = commandMsg.contextUri
         if (commandMsg.uri) spotifyCommandParams.uri = commandMsg.uri
         if (commandMsg.offset) {
-          spotifyCommandParams.offset = commandMsg.offset as any
+          spotifyCommandParams.offset =
+            commandMsg.offset as SpotifyCommandParameters['offset']
         }
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)

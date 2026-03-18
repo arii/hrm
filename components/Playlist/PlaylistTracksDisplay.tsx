@@ -7,9 +7,6 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
-import IconButton from '@mui/material/IconButton'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import PauseIcon from '@mui/icons-material/Pause'
 import List from '@mui/material/List'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
@@ -60,10 +57,10 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     fetchTracks(offset)
   }, [fetchTracks, offset])
 
-  const handlePlayTrack = (playlistUri: string, position: number) => {
+  const handlePlayTrack = (playlistUri: string, uri: string) => {
     executeSpotify('PLAY', {
       contextUri: playlistUri,
-      offset: { position },
+      offset: { uri },
     })
   }
 
@@ -111,7 +108,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     <Box>
       <Paper>
         <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
-          {tracks.map((track, index) => {
+          {tracks.map((track) => {
             const isPlaying =
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
@@ -125,32 +122,19 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                 onClick={() =>
                   isPlaying
                     ? handlePause()
-                    : handlePlayTrack(playlistUri, index)
+                    : handlePlayTrack(playlistUri, track.uri)
                 }
                 secondaryAction={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'text.secondary', mr: 1 }}
-                    >
-                      {!!track.duration_ms &&
-                        formatDuration(track.duration_ms, {
-                          unit: 'milliseconds',
-                          format: 'MM:SS',
-                        })}
-                    </Typography>
-                    <IconButton
-                      onClick={() =>
-                        isPlaying
-                          ? handlePause()
-                          : handlePlayTrack(playlistUri, offset + index)
-                      }
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                      size="small"
-                    >
-                      {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-                    </IconButton>
-                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', mr: 1 }}
+                  >
+                    {!!track.duration_ms &&
+                      formatDuration(track.duration_ms, {
+                        unit: 'milliseconds',
+                        format: 'MM:SS',
+                      })}
+                  </Typography>
                 }
               />
             )

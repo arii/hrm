@@ -59,6 +59,7 @@ describe('GET /api/spotify/playlists/[playlistId]/tracks', () => {
         name: 'Album 1',
       },
       duration_ms: 180000,
+      duration: 180000,
       uri: 'spotify:track:t1',
     })
   })

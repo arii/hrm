@@ -218,13 +218,13 @@ export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
-  artists?: { name: string }[] | string
+  artists?: string
   album?: {
     name: string
     images: { url: string; height: number; width: number }[]
   }
-  imageUrl?: string | null
   duration_ms?: number
+  duration?: number
 }
 
 /**
