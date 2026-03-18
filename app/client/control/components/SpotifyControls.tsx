@@ -122,7 +122,6 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
-  const hasPendingSendRef = useRef<boolean>(false)
   const pendingSendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
@@ -163,7 +162,7 @@ const SpotifyControls = () => {
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
   useEffect(() => {
-    if (isSliding || hasPendingSendRef.current) {
+    if (isSliding || pendingSendTimeoutRef.current) {
       return
     }
 
@@ -299,9 +298,7 @@ const SpotifyControls = () => {
         clearTimeout(pendingSendTimeoutRef.current)
       }
 
-      hasPendingSendRef.current = true
       pendingSendTimeoutRef.current = setTimeout(() => {
-        hasPendingSendRef.current = false
         pendingSendTimeoutRef.current = null
       }, VOLUME_SYNC_GRACE_PERIOD_MS)
 
