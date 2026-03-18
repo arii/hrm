@@ -99,6 +99,23 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Dashboard Component', () => {
+    const BASE_VRT_OPTIONS = {
+      maxDiffPixelRatio: 0.05,
+      fullPage: false,
+    }
+
+    const getVrtOptions = (page: Page) => ({
+      ...BASE_VRT_OPTIONS,
+      mask: [
+        ...getDynamicContentMasks(page),
+        page.locator('.variable-text-container'),
+      ],
+    })
+
+    test.beforeEach(async () => {
+      await dashboardPage.evaluateHandle(() => document.fonts.ready)
+    })
+
     test('initial, empty state', async () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
@@ -107,9 +124,7 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    // NEW: Active timer with no HR data
     test('active timer without HR data', async () => {
-      // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
       )
@@ -120,7 +135,6 @@ test.describe('Visual Regression Tests', () => {
 
       await controlPage.getByTestId('start-timer-button').click()
 
-      // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
@@ -128,7 +142,6 @@ test.describe('Visual Regression Tests', () => {
         }
       )
 
-      // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
         maxHeight: 400,
@@ -141,13 +154,11 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    // NEW: Active timer WITH HR data (the regression scenario)
     test('active timer with HR data', async () => {
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
 
-      // Wait for timer to start on dashboard
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
@@ -155,76 +166,71 @@ test.describe('Visual Regression Tests', () => {
         }
       )
 
-      // Wait for heart rate components to fully settle using explicit text match assertion
+      // Ensure data binding worked
       await expect(
-        dashboardPage.getByTestId('hr-tile-bpm-value').first()
-      ).toHaveText('155', {
+        dashboardPage.getByTestId('bpm-value').first()
+      ).toHaveText('155 BPM', {
         timeout: VRT_TIMEOUTS.STANDARD,
       })
 
-      // Assert grid row height is stable
       const topRow = dashboardPage
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 800, // relaxed from 400 to account for varied grid rendering in CI
+        maxHeight: 800,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      // Explicitly set dimensions to prevent flaky scrollbar/resizing issues
       await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
 
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
-        mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.15, // Account for visual flakiness
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
       })
     })
 
-    // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
-      // Force the page to recalculate layout after resize to prevent stale 1500px+ height capturing
       await dashboardPage.evaluate(() => window.scrollTo(0, 0))
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      // Wait for layout adjustment to complete
       await dashboardPage.waitForFunction(
         (width) => document.body.clientWidth === width,
         MOBILE_VIEWPORT.width
       )
 
-      // Explicitly wait for dimensions to settle using standard JS property evaluation to prevent 1000px vs 1038px flakiness
-      await expect(dashboard).toHaveJSProperty(
-        'scrollHeight',
-        await dashboard.evaluate((node) => node.scrollHeight),
-        { timeout: 2000 }
+      await takeScreenshot(
+        dashboard,
+        'dashboard-mobile.png',
+        getVrtOptions(dashboardPage)
       )
-
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        fullPage: false, // Ensure we only capture the explicit viewport bounds, ignoring expanded content
-        maxDiffPixelRatio: 0.15, // Account for visual flakiness
-      })
     })
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
+
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.05,
-      })
+      await takeScreenshot(
+        dashboard,
+        'dashboard-tablet.png',
+        getVrtOptions(dashboardPage)
+      )
     })
 
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
+
       const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
-      })
+
+      await takeScreenshot(
+        dashboard,
+        'dashboard-large-desktop.png',
+        getVrtOptions(dashboardPage)
+      )
     })
   })
 })
