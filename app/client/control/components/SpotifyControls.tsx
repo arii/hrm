@@ -36,7 +36,6 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isSliding, setIsSliding] = useState(false)
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
   const { isLocked, markInteraction } = useOptimisticSync(SYNC_LOCK_DURATION)
 
   const hrmDevice = useMemo(
@@ -79,26 +78,18 @@ const SpotifyControls = () => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Helper: determine if device should be updated to activeId
-    const shouldUpdateToActive = () => {
-      // Initial sync or active device changed externally
-      if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
-        return Boolean(activeId)
-      }
-      // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
+    if (
+      activeId &&
+      selectedDeviceId !== activeId &&
+      !devices.some((d) => d.id === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(activeId)
     }
-
-    if (shouldUpdateToActive()) {
-      setSelectedDeviceId(activeId!)
-    }
-    prevActiveIdRef.current = activeId
 
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
-    if (isLocked()) return
+    if (isLocked) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {
@@ -107,7 +98,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices, isLocked])
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
