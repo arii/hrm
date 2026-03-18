@@ -10,7 +10,7 @@ import { formatDuration } from '@/lib/utils'
 import { getArtistNames } from '@/lib/spotify'
 import { SpotifyPlaylistItem } from '@/types/core'
 
-export interface TrackListItemProps {
+interface TrackListItemProps {
   track: SpotifyPlaylistItem
   onClick: () => void
   secondaryAction?: React.ReactNode
@@ -72,5 +72,3 @@ export const TrackListItem: React.FC<TrackListItemProps> = ({
     </ListItem>
   )
 }
-
-export default TrackListItem
