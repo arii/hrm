@@ -149,7 +149,7 @@ test.describe('Component-Specific VRT', () => {
     await expect(menu).toHaveCSS('opacity', '1')
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
+    await checkAccessibility(dashboardPage)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
