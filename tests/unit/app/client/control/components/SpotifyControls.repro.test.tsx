@@ -79,9 +79,10 @@ describe('SpotifyControls Reproduction', () => {
     const selectMusicButton = screen.queryByTestId(
       'spotify-select-music-button'
     )
-    const playButton = screen.queryByLabelText('Play')
+    const playButton = screen.queryByTestId('spotify-play-pause')
 
     expect(selectMusicButton).not.toBeInTheDocument()
     expect(playButton).toBeInTheDocument()
+    expect(playButton).toHaveAttribute('aria-label', 'Play')
   })
 })
