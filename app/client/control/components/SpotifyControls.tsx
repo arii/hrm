@@ -78,21 +78,18 @@ const SpotifyControls = () => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Helper: determine if device should be updated to activeId
-    const shouldUpdateToActive = () => {
-      // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
-    }
-
-    if (shouldUpdateToActive() && activeId && selectedDeviceId !== activeId) {
+    if (
+      activeId &&
+      selectedDeviceId !== activeId &&
+      !devices.some((d) => d.id === selectedDeviceId)
+    ) {
       setSelectedDeviceId(activeId)
     }
 
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
-    if (isLocked()) return
+    if (isLocked) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {

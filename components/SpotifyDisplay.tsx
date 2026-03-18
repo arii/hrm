@@ -144,7 +144,7 @@ const SpotifyDisplay = () => {
 
   // Synchronize with WebSocket data whenever it changes.
   useEffect(() => {
-    if (state.isSliding || isLocked()) {
+    if (state.isSliding || isLocked) {
       return
     }
 
