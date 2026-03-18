@@ -11,27 +11,11 @@ import IconButton from '@mui/material/IconButton'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
 import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemAvatar from '@mui/material/ListItemAvatar'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemText from '@mui/material/ListItemText'
-import Avatar from '@mui/material/Avatar'
-import MusicNoteIcon from '@mui/icons-material/MusicNote'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { formatDuration } from '@/lib/utils'
-
-interface Track {
-  id: string
-  name: string
-  artists: string
-  album?: {
-    name: string
-    images: { url: string; height: number; width: number }[]
-  }
-  duration_ms: number
-  uri: string
-}
+import { SpotifyPlaylistItem } from '@/types/core'
+import { TrackListItem } from '../Spotify/TrackListItem'
 
 interface PlaylistTracksDisplayProps {
   playlistId: string
@@ -40,7 +24,7 @@ interface PlaylistTracksDisplayProps {
 const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const { spotifyData } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const [tracks, setTracks] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<SpotifyPlaylistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
@@ -132,27 +116,28 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
               spotifyData.playback.is_playing &&
               spotifyData.playback.track.id === track.id
             const playlistUri = `spotify:playlist:${playlistId}`
-            const albumName = track.album?.name || 'Single'
-            const albumThumbnail = track.album?.images?.[2]?.url
 
             return (
-              <ListItem
+              <TrackListItem
                 key={track.id}
-                divider
-                disablePadding
-                sx={{
-                  backgroundColor: isPlaying ? 'action.selected' : 'inherit',
-                }}
+                track={track}
+                isSelected={isPlaying}
+                onClick={() =>
+                  isPlaying
+                    ? handlePause()
+                    : handlePlayTrack(playlistUri, index)
+                }
                 secondaryAction={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography
                       variant="caption"
                       sx={{ color: 'text.secondary', mr: 1 }}
                     >
-                      {formatDuration(track.duration_ms, {
-                        unit: 'milliseconds',
-                        format: 'MM:SS',
-                      })}
+                      {!!track.duration_ms &&
+                        formatDuration(track.duration_ms, {
+                          unit: 'milliseconds',
+                          format: 'MM:SS',
+                        })}
                     </Typography>
                     <IconButton
                       onClick={() =>
@@ -167,39 +152,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     </IconButton>
                   </Box>
                 }
-              >
-                <ListItemButton
-                  onClick={() =>
-                    isPlaying
-                      ? handlePause()
-                      : handlePlayTrack(playlistUri, index)
-                  }
-                  sx={{ py: 0.5, px: 1 }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 48 }}>
-                    <Avatar
-                      variant="rounded"
-                      src={albumThumbnail || undefined}
-                      sx={{ width: 32, height: 32 }}
-                    >
-                      <MusicNoteIcon fontSize="small" />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${track.artists} • ${albumName}`}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      noWrap: true,
-                      fontWeight: 'medium',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      noWrap: true,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
+              />
             )
           })}
         </List>

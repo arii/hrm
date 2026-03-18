@@ -236,7 +236,7 @@ export interface SpotifyCommandParameters {
   playlistUri?: string
   contextUri?: string
   uri?: string
-  offset?: { position: number }
+  offset?: { position?: number; uri?: string }
 }
 
 /**
