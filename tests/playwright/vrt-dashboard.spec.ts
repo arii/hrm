@@ -139,13 +139,13 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 600, // Increased from 400 to accommodate layout fluctuations
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
+        maxDiffPixelRatio: 0.15,
       })
     })
 
@@ -173,7 +173,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.25, // Relaxed to handle CI rendering differences
+        maxDiffPixelRatio: 0.15,
       })
     })
   })

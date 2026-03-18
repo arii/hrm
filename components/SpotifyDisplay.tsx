@@ -3,7 +3,7 @@
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
-import { clampVolume } from '@/hooks/useVolumePreference'
+import { clampVolume } from '@/utils/audioManager'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
