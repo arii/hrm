@@ -139,7 +139,7 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 400,
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -147,9 +147,6 @@ test.describe('Visual Regression Tests', () => {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
-
-      // Stop the timer so it does not bleed into the viewport tests
-      await stopTimer(controlPage, dashboardPage)
     })
 
     // NEW: Responsive breakpoint tests

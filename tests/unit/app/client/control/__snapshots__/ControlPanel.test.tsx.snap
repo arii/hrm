@@ -97,7 +97,6 @@ exports[`ControlPanel Component should match snapshot 1`] = `
           </h6>
           <p
             class="MuiTypography-root MuiTypography-body2 css-65t7lf-MuiTypography-root"
-            data-testid="timer-phase"
           />
         </div>
         <div

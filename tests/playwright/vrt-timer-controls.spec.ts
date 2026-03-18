@@ -33,6 +33,12 @@ test.describe('Visual Regression Tests', () => {
     await waitForPageReady(dashboardPage)
   })
 
+  test.afterEach(async () => {
+    // Ensure timer is stopped after each test to maintain a clean state,
+    // especially if an assertion fails mid-test
+    await stopTimer(controlPage, dashboardPage)
+  })
+
   test.describe('TimerControls Component', () => {
     test('initial state', async () => {
       const timerControls = controlPage.getByTestId('timer-controls')
@@ -71,14 +77,8 @@ test.describe('Visual Regression Tests', () => {
 
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
-        mask: [
-          controlPage.getByTestId('timer-countdown'),
-          controlPage.getByTestId('timer-phase'),
-        ],
+        mask: [controlPage.getByTestId('timer-countdown')],
       })
-
-      // Stop the timer to reset for the next test
-      await stopTimer(controlPage, dashboardPage)
     })
 
     test('start button hover state', async () => {
