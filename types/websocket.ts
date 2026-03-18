@@ -163,7 +163,8 @@ export interface SpotifyCommandMessage {
   contextUri?: string // Generic support for albums/artists
   uri?: string
   offset?: {
-    position: number
+    position?: number
+    uri?: string
   }
 }
 
