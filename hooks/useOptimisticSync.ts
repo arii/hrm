@@ -1,19 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useRef } from 'react'
 
 export const useOptimisticSync = (lockDuration: number) => {
-  const [lastInteraction, setLastInteraction] = useState<number>(0)
-  const [isLocked, setIsLocked] = useState<boolean>(false)
+  const lastInteractionRef = useRef<number>(0)
 
-  useEffect(() => {
-    if (lastInteraction === 0) return
-    const timer = setTimeout(() => setIsLocked(false), lockDuration)
-    return () => clearTimeout(timer)
-  }, [lastInteraction, lockDuration])
+  const markInteraction = useCallback(() => {
+    lastInteractionRef.current = Date.now()
+  }, [])
 
-  const markInteraction = () => {
-    setLastInteraction(Date.now())
-    setIsLocked(true)
-  }
+  const isLocked = useCallback(() => {
+    return Date.now() - lastInteractionRef.current < lockDuration
+  }, [lockDuration])
 
   return { isLocked, markInteraction }
 }

@@ -89,7 +89,7 @@ const SpotifyControls = () => {
     const playbackVolume = spotifyData.playback.volume_percent
 
     if (isSliding) return
-    if (isLocked) return
+    if (isLocked()) return
 
     if (activeDevice && typeof playbackVolume === 'number') {
       if (playbackVolume !== volume) {
@@ -98,7 +98,7 @@ const SpotifyControls = () => {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices, isLocked])
+  }, [devices])
 
   // Auto-select HRM Web Player if no active device is available
   useEffect(() => {

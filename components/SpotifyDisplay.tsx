@@ -144,7 +144,7 @@ const SpotifyDisplay = () => {
 
   // Synchronize with WebSocket data whenever it changes.
   useEffect(() => {
-    if (state.isSliding || isLocked) {
+    if (state.isSliding || isLocked()) {
       return
     }
 
@@ -159,7 +159,6 @@ const SpotifyDisplay = () => {
     spotifyData.playback.volume_percent,
     spotifyData.playback.isMuted,
     state.isSliding,
-    isLocked,
   ])
 
   // Centralized command sender for volume changes
