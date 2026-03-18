@@ -30,7 +30,6 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.15,
 }
 
 /**
@@ -68,7 +67,6 @@ export async function takeScreenshot(
     )
   }
 
-  await expect(target).toHaveScreenshot(snapshotName, {
   const isLocator = 'scrollIntoViewIfNeeded' in target
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
@@ -173,7 +171,7 @@ export async function takeDashboardScreenshot(
       ...getHrMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
-      page.getByTestId('workout-table-viewer'),
+      page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
     ],
     maxDiffPixelRatio: 0.08, // Higher tolerance for font rendering in CI

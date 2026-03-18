@@ -4,6 +4,7 @@ import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
   resetServerState,
+  mockLoggedInSession,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -42,41 +43,25 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.beforeEach(async ({ request }) => {
-    // 1. Intercept Spotify SDK to prevent 401s and initialization errors
     await dashboardPage.route(
       'https://sdk.scdn.co/spotify-player.js',
       (route) => route.abort()
     )
 
-    // 2. Mock Internal Auth API for VRT
-    await dashboardPage.route('**/api/spotify/access-token', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          accessToken: 'mock_token',
-          expiresAt: Date.now() + 3600000,
-        }),
-      })
-    })
+    await mockLoggedInSession(context)
 
-    // 3. Reset server-side state
     await resetServerState(request)
 
-    // 4. Reload pages to ensure clean client state and fresh WebSocket connection
     await dashboardPage.reload()
     await controlPage.reload()
     await mockPage.reload()
 
-    // 5. Navigate and trigger user interaction to unlock AudioContext
     await dashboardPage.mouse.click(0, 0)
 
-    // 6. Wait for pages to be ready and connected
     await waitForPageReady(dashboardPage)
     await waitForPageReady(controlPage)
     await waitForPageReady(mockPage)
 
-    // Ensure WebSocket is re-established after server reset
     await Promise.all([
       dashboardPage.waitForFunction(
         () => document.body.dataset.connectionStatus === 'connected',
