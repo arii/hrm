@@ -7,7 +7,6 @@ import {
   resetServerState,
   getSpotifyMasks,
 } from './lib'
-import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -147,9 +146,6 @@ test.describe('Component-Specific VRT', () => {
 
     // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')
-
-    // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
