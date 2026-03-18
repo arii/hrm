@@ -79,7 +79,12 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasValidTrack = !['Awaiting Login...', '', 'No Track Playing'].includes(
+  const INVALID_TRACK_NAMES = new Set([
+    'Awaiting Login...',
+    '',
+    'No Track Playing',
+  ])
+  const hasValidTrack = !INVALID_TRACK_NAMES.has(
     spotifyData.playback.track.name
   )
   const shouldShowControls =
@@ -110,11 +115,15 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, spotifyServiceInitialized, sendData])
 
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
-    let timeoutId: number
     const handleFocus = () => {
-      clearTimeout(timeoutId)
-      timeoutId = window.setTimeout(() => {
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current)
+      }
+
+      timeoutIdRef.current = setTimeout(() => {
         const {
           connectionStatus: currentStatus,
           spotifyServiceInitialized: currentInit,
@@ -130,7 +139,9 @@ const SpotifyControls = () => {
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      clearTimeout(timeoutId)
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current)
+      }
     }
   }, [])
 
