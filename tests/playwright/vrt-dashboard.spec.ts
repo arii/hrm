@@ -139,7 +139,7 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 400,
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')

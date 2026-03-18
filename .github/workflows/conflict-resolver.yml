@@ -36,59 +36,12 @@ env:
   PR_NUMBER: ${{ inputs.pr_number }}
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    outputs:
-      skipped: ${{ steps.validate_branches.outputs.skipped }}
-      base_sha: ${{ steps.validate_branches.outputs.base_sha }}
-      error_msg: ${{ steps.validate_branches.outputs.error_msg }}
-    steps:
-      - name: Validate branches
-        id: validate_branches
-        shell: bash
-        env:
-          REPO_URL: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-        run: |
-          if ! git ls-remote --exit-code --heads "$REPO_URL" "$TARGET" > /dev/null 2>&1; then
-            echo "skipped=true" >> $GITHUB_OUTPUT
-            echo "error_msg=❌ Error: Target branch \`$TARGET\` not found. Please ensure the target branch exists and the bot has permissions to access it." >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          if ! git ls-remote --exit-code --heads "$REPO_URL" "$SOURCE" > /dev/null 2>&1; then
-            echo "skipped=true" >> $GITHUB_OUTPUT
-            echo "error_msg=❌ Error: Source branch \`$SOURCE\` not found. It may have been deleted or renamed." >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Capture base SHA (target branch)
-          echo "base_sha=$(git ls-remote --heads "$REPO_URL" "$TARGET" | awk '{print $1}')" >> $GITHUB_OUTPUT
-          echo "skipped=false" >> $GITHUB_OUTPUT
-
-      - name: Comment on validation failure
-        if: steps.validate_branches.outputs.skipped == 'true' && inputs.pr_number && inputs.pr_number != '0'
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ inputs.pr_number }}
-          body: |
-            ${{ steps.validate_branches.outputs.error_msg }}
-            <!-- id: conflict-resolver-bot -->
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   merge_and_resolve:
-    needs: validate
-    if: needs.validate.outputs.skipped != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-
       - name: Create or update comment
         if: env.PR_NUMBER && env.PR_NUMBER != '0'
         uses: peter-evans/create-or-update-comment@v5
@@ -106,21 +59,53 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
+      - name: Validate branches
+        id: validate_branches
+        shell: bash
+        run: |
+          if ! git ls-remote --exit-code --heads origin "$TARGET" > /dev/null 2>&1; then
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            echo "error_msg=❌ Error: Target branch \`$TARGET\` not found. Please ensure the target branch exists and the bot has permissions to access it." >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if ! git ls-remote --exit-code --heads origin "$SOURCE" > /dev/null 2>&1; then
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            echo "error_msg=❌ Error: Source branch \`$SOURCE\` not found. It may have been deleted or renamed." >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Capture base SHA (target branch)
+          git fetch origin "$TARGET"
+          echo "base_sha=$(git rev-parse origin/"$TARGET")" >> $GITHUB_OUTPUT
+          echo "skipped=false" >> $GITHUB_OUTPUT
+
+      - name: Comment on validation failure
+        if: steps.validate_branches.outputs.skipped == 'true' && env.PR_NUMBER && env.PR_NUMBER != '0'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ env.PR_NUMBER }}
+          body: |
+            ${{ steps.validate_branches.outputs.error_msg }}
+            <!-- id: conflict-resolver-bot -->
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Merge target branch
+        if: steps.validate_branches.outputs.skipped != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$TARGET"
           git merge origin/"$TARGET" --no-commit --no-ff || true
 
       - name: Resolve conflicts
+        if: steps.validate_branches.outputs.skipped != 'true'
         id: resolve
         uses: VeyronSakai/conflict-resolver@7d650534ba240658a381241823f8b4f13861c2ad # pin to v0.5.1
         with:
           config-path: .github/conflict-resolver.yml
 
       - name: Commit and push changes
-        if: steps.resolve.outputs.unresolved-files == ''
+        if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files == ''
         run: |
           git add .
           git commit -m "Auto-resolve merge conflicts by merging $TARGET"
@@ -129,17 +114,17 @@ jobs:
         id: commit_push
 
       - name: Trigger Gemini Orchestrator
-        if: steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
+        if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
         env:
           # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
           GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ steps.commit_push.outputs.resolved_sha }}
-          BASE_SHA: ${{ needs.validate.outputs.base_sha }}
+          BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
         run: |
           gh workflow run "Gemini Orchestrator" --ref "$SOURCE" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET"
 
       - name: Update comment on success
-        if: success() && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
+        if: steps.validate_branches.outputs.skipped != 'true' && success() && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
         uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ env.PR_NUMBER }}
@@ -160,7 +145,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
-        if: (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && env.PR_NUMBER && env.PR_NUMBER != '0'
+        if: steps.validate_branches.outputs.skipped != 'true' && (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && env.PR_NUMBER && env.PR_NUMBER != '0'
         uses: peter-evans/create-or-update-comment@v5
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
@@ -188,7 +173,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fail the workflow if conflicts were not resolved
-        if: steps.resolve.outputs.unresolved-files != ''
-        run: |
-          echo "Workflow failed because unresolved conflicts remain."
-          exit 1
+        if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files != ''
+        run: exit 1

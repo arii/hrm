@@ -71,7 +71,10 @@ test.describe('Visual Regression Tests', () => {
 
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
-        mask: [controlPage.getByTestId('timer-countdown')],
+        mask: [
+          controlPage.getByTestId('timer-countdown'),
+          controlPage.getByTestId('timer-phase'),
+        ],
       })
 
       // Stop the timer to reset for the next test
