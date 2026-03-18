@@ -376,10 +376,7 @@ export async function stopTimer(
   controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = controlPage.getByRole('button', {
-    name: 'STOP',
-    exact: true,
-  })
+  const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
     // If timer is running, stop it
