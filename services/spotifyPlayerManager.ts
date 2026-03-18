@@ -116,7 +116,10 @@ export class SpotifyPlayerManager {
     optimisticUpdate: () => void,
     execute: () => Promise<unknown>
   ) {
-    const previousState = JSON.parse(JSON.stringify(this.getState()))
+    const previousState = {
+      ...this.getState(),
+      playback: { ...this.getState().playback },
+    }
     optimisticUpdate()
     this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
 

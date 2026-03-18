@@ -1,3 +1,6 @@
+export const clampVolume = (value: number): number =>
+  Math.min(100, Math.max(0, Math.round(value)))
+
 /**
  * Audio Manager for Tabata Timer Sounds
  * Handles beep sounds for countdown and phase transitions
