@@ -114,7 +114,7 @@ export class SpotifyPlayerManager {
   private async executeOptimistic(
     commandName: string,
     optimisticUpdate: () => void,
-    execute: () => Promise<void>
+    execute: () => Promise<unknown>
   ) {
     const currentState = this.getState()
     const previousState: SpotifyData = {
