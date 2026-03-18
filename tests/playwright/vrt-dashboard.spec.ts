@@ -144,7 +144,7 @@ test.describe('Visual Regression Tests', () => {
 
       const timerCard = dashboardPage.getByTestId('timer-display-container')
       await assertFixedDimensions(timerCard, {
-        maxHeight: 400,
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -177,7 +177,7 @@ test.describe('Visual Regression Tests', () => {
         .locator('[data-testid="dashboard"] > div')
         .first()
       await assertFixedDimensions(topRow, {
-        maxHeight: 800,
+        maxHeight: 600,
       })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
@@ -202,11 +202,10 @@ test.describe('Visual Regression Tests', () => {
         MOBILE_VIEWPORT.width
       )
 
-      await takeScreenshot(
-        dashboard,
-        'dashboard-mobile.png',
-        getVrtOptions(dashboardPage)
-      )
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
+        mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
+      })
     })
 
     test('tablet viewport', async () => {

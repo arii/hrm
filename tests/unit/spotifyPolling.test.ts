@@ -222,7 +222,9 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { playlistUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         undefined,
-        playlistUri
+        playlistUri,
+        undefined,
+        undefined
       )
     })
 
@@ -231,7 +233,9 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { contextUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         undefined,
-        contextUri
+        contextUri,
+        undefined,
+        undefined
       )
     })
 
@@ -241,7 +245,9 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { contextUri, playlistUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         undefined,
-        contextUri
+        contextUri,
+        undefined,
+        undefined
       )
     })
   })

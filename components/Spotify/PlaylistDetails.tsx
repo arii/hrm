@@ -14,7 +14,7 @@ import { SpotifyPlaylistItem as Track } from '../../types/core'
 
 interface PlaylistDetailsProps {
   playlistId: string
-  onTrackPlay: (trackUri: string) => void
+  onTrackPlay: (index: number) => void
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
@@ -104,7 +104,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           <List dense>
             {tracks.map((track, index) => (
               <ListItem key={`${track.id}-${index}`} divider disablePadding>
-                <ListItemButton onClick={() => onTrackPlay(track.uri)}>
+                <ListItemButton onClick={() => onTrackPlay(index)}>
                   <MusicNote
                     sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
                   />

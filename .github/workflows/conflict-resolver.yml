@@ -18,7 +18,7 @@ on:
     inputs:
       target_branch:
         description: 'The branch to merge into'
-        required: true
+        required: false
         type: string
         default: 'leader'
       source_branch:
@@ -44,13 +44,20 @@ jobs:
           fi
       - name: Create or update comment
         if: inputs.pr_number && inputs.pr_number != '0'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ inputs.pr_number }}
           body: |
             ⏳ Attempting to automatically resolve conflicts for branch `${{ inputs.source_branch }}`...
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Validate branches
         id: validate_branches
@@ -66,13 +73,6 @@ jobs:
           # Capture base SHA (target branch)
           git fetch origin ${{ inputs.target_branch }}
           echo "base_sha=$(git rev-parse origin/${{ inputs.target_branch }})" >> $GITHUB_OUTPUT
-
-      - name: Checkout source branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.source_branch }}
-          fetch-depth: 0
-          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Merge target branch
         run: |
@@ -110,28 +110,20 @@ jobs:
 
       - name: Update comment on success
         if: success() && steps.resolve.outputs.unresolved-files == '' && inputs.pr_number && inputs.pr_number != '0'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ inputs.pr_number }}
           body: |
             ✅ Successfully resolved all conflicts by merging the latest changes from `${{ inputs.target_branch }}`. The pull request has been updated.
 
             ---
-            #### 🤖 Gemini Manual Trigger Quick Reference
-            | Command | Action |
-            | :--- | :--- |
-            | \`@gemini-bot\` | Run AI Code Review |
-            | \`@gemini-triage\` | Run Issue Triage |
-            | \`@gemini-coder <task>\` | Generate Code |
-            | \`@create-review-issues\` | Create issues from review |
-
-            [Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            #### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update comment on failure
         if: (failure() || (success() && steps.resolve.outputs.unresolved-files != '')) && inputs.pr_number && inputs.pr_number != '0'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         env:
           UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
         with:
@@ -145,15 +137,7 @@ jobs:
             Please resolve these conflicts manually.
 
             ---
-            #### 🤖 Gemini Manual Trigger Quick Reference
-            | Command | Action |
-            | :--- | :--- |
-            | \`@gemini-bot\` | Run AI Code Review |
-            | \`@gemini-triage\` | Run Issue Triage |
-            | \`@gemini-coder <task>\` | Generate Code |
-            | \`@create-review-issues\` | Create issues from review |
-
-            [Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
+            #### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)
             <!-- id: conflict-resolver-bot -->
           token: ${{ secrets.GITHUB_TOKEN }}
 
