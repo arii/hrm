@@ -161,10 +161,15 @@ export default function ConnectPage() {
       savedDeviceId
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
-      autoConnect().catch(() => {
-        logger.info('Auto-connect failed, user can connect manually')
-      })
+      const timeoutId = setTimeout(() => {
+        autoConnect().catch(() => {
+          logger.info('Auto-connect failed, user can connect manually')
+        })
+      }, 100)
+
+      return () => clearTimeout(timeoutId)
     }
+    return undefined
   }, [
     connectionStatus,
     isConnected,

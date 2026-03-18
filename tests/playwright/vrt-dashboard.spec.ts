@@ -55,9 +55,6 @@ test.describe('Visual Regression Tests', () => {
     await waitForPageReady(controlPage)
     await waitForPageReady(mockPage)
 
-    // Allow layout to settle
-    await dashboardPage.waitForTimeout(1000)
-
     // Ensure WebSocket is re-established after server reset
     await Promise.all([
       dashboardPage.waitForFunction(
@@ -73,29 +70,6 @@ test.describe('Visual Regression Tests', () => {
         { timeout: 5000 }
       ),
     ])
-
-    // Force visibility and disable animations/scrollbars to avoid flaky screenshots
-    await dashboardPage.addStyleTag({
-      content: `
-        *, *::before, *::after {
-          transition: none !important;
-          animation: none !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-        }
-        body, html, * {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-        ::-webkit-scrollbar {
-          display: none !important;
-        }
-        [data-testid="main-content-layout"] {
-          opacity: 1 !important;
-          transform: none !important;
-        }
-      `,
-    })
   })
 
   test.describe('Dashboard Component', () => {
