@@ -50,7 +50,7 @@ const SpotifySelectionPage = () => {
     if (selectedPlaylistId) {
       executeSpotify('PLAY', {
         contextUri: `spotify:playlist:${selectedPlaylistId}`,
-        uri,
+        offset: { uri },
       })
     }
   }

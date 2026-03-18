@@ -65,10 +65,10 @@ export async function refreshSpotifyToken(refreshToken: string) {
   return response.json()
 }
 
-export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) =>
-  Array.isArray(artists)
-    ? artists
-        .map((a) => a?.name)
-        .filter(Boolean)
-        .join(', ')
-    : (artists ?? 'Unknown')
+export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) => {
+  if (!Array.isArray(artists)) return artists ?? 'Unknown'
+  return artists
+    .map((a) => (typeof a === 'string' ? a : a?.name))
+    .filter(Boolean)
+    .join(', ')
+}

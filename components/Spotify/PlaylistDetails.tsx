@@ -1,4 +1,3 @@
-// components/Spotify/PlaylistDetails.tsx
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import List from '@mui/material/List'
