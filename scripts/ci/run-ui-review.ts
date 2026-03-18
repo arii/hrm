@@ -68,10 +68,7 @@ async function performUIReview() {
       },
     ])
 
-    const responseText = result.response
-      .text()
-      .replace(/```json|```/g, '')
-      .trim()
+    const responseText = result.response.text()
     let feedback: string
     try {
       const responseJson = JSON.parse(responseText)

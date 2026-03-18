@@ -19,10 +19,6 @@ export interface TestControls {
   connect?: () => void
 }
 
-/**
- * Extended Window interface for E2E testing.
- * Provides type-safe access to internal application controls.
- */
 export interface TestWindow extends Window {
   __TEST_READY__?: boolean
   __TEST_CONTROLS__?: TestControls
