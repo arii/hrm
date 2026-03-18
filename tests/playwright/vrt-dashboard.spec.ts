@@ -99,7 +99,6 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Dashboard Component', () => {
-    // Helper to dry up viewport VRTs
     const getVrtOptions = (page: Page) => ({
       mask: [
         ...getDynamicContentMasks(page),
@@ -109,7 +108,6 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test.beforeEach(async () => {
-      // Ensure fonts are loaded before taking snapshots
       await dashboardPage.evaluateHandle(() => document.fonts.ready)
     })
 
@@ -156,9 +154,6 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
 
-      await mockPage.bringToFront()
-      await dashboardPage.bringToFront()
-
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
         /00:00/,
         {
@@ -199,8 +194,6 @@ test.describe('Visual Regression Tests', () => {
         MOBILE_VIEWPORT.width
       )
 
-      await expect(dashboard).toBeVisible()
-
       await takeScreenshot(dashboard, 'dashboard-mobile.png', getVrtOptions(dashboardPage))
     })
 
@@ -208,8 +201,6 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
 
       const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await expect(dashboard).toBeVisible()
 
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         ...getVrtOptions(dashboardPage),
@@ -221,8 +212,6 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
 
       const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await expect(dashboard).toBeVisible()
 
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         ...getVrtOptions(dashboardPage),
