@@ -8,8 +8,6 @@ import { DESKTOP_VIEWPORT } from '../../tests/playwright/lib/viewports'
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 async function performUIReview() {
-  console.log('🚀 Starting Gemini Multimodal UI Review...')
-
   const browser = await chromium.launch()
   const context = await browser.newContext({
     viewport: DESKTOP_VIEWPORT,
@@ -20,22 +18,18 @@ async function performUIReview() {
   const page = await context.newPage()
 
   const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
-  console.log(`🔗 Navigating to ${targetUrl}...`)
 
   try {
     await page.goto(targetUrl, { waitUntil: 'networkidle' })
 
-    // Wait for main content to be visible instead of using hardcoded timeout
     await page.waitForSelector('[data-testid="main-content-layout"]', {
       state: 'visible',
       timeout: 30000,
     })
 
     const screenshotPath = 'ui-snapshot.png'
-    console.log('📸 Capturing screenshot...')
     await page.screenshot({ path: screenshotPath, fullPage: true })
 
-    console.log('🤖 Querying Gemini for UI analysis...')
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-pro',
       generationConfig: {
@@ -74,36 +68,39 @@ async function performUIReview() {
       },
     ])
 
-    const responseText = result.response.text()
-    const responseJson = JSON.parse(responseText)
-    const feedback = responseJson.analysis
-    console.log('✅ Analysis complete.')
+    const responseText = result.response
+      .text()
+      .replace(/```json|```/g, '')
+      .trim()
+    let feedback: string
+    try {
+      const responseJson = JSON.parse(responseText)
+      feedback = responseJson.analysis
+    } catch {
+      console.error('Failed to parse Gemini JSON. Raw response:', responseText)
+      throw new Error('Gemini returned invalid JSON format.')
+    }
 
     const prNumber = process.env.PR_NUMBER
     if (prNumber) {
-      console.log(`💬 Posting feedback to PR #${prNumber} using gh CLI...`)
       const body = `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`
-
-      // Use temporary file for the comment body to handle multiline/special characters safely
-      const bodyFile = 'ui_review_body.md'
+      const bodyFile = `ui_review_body_${Date.now()}.md`
       fs.writeFileSync(bodyFile, body)
 
       try {
         execSync(`gh pr comment ${prNumber} --body-file ${bodyFile}`, {
           stdio: 'inherit',
         })
-        console.log('✅ Comment posted successfully.')
       } finally {
         if (fs.existsSync(bodyFile)) {
           fs.unlinkSync(bodyFile)
         }
       }
     } else {
-      console.log('⚠️ PR_NUMBER not provided. Analysis output:')
-      console.log(feedback)
+      console.log('Analysis output:', feedback)
     }
   } catch (error) {
-    console.error('❌ Error during UI review:', error)
+    console.error('❌ UI review execution failed:', error)
     process.exit(1)
   } finally {
     await browser.close()
@@ -114,6 +111,6 @@ async function performUIReview() {
 }
 
 performUIReview().catch((err) => {
-  console.error('💥 Fatal error:', err)
+  console.error('💥 Fatal UI Review error:', err)
   process.exit(1)
 })

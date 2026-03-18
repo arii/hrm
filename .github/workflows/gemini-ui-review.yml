@@ -24,26 +24,23 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Set Deployment URL
+      - name: Get Deployment URL
         id: deploy-url
         run: |
-          # Try to get the target URL from the latest deployment if possible
-          # Default to localhost:3000 if not found
-          URL=$(gh pr view ${{ github.event.issue.number || github.event.pull_request.number }} --json headRefName --jq '.headRefName' | xargs -I {} gh api repos/${{ github.repository }}/deployments?ref={} --jq '.[0].id' | xargs -I {} gh api repos/${{ github.repository }}/deployments/{}/statuses --jq '.[0].target_url' 2>/dev/null || echo "http://localhost:3000")
+          PR_NUMBER=${{ github.event.issue.number || github.event.pull_request.number }}
+          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+
+          # Try to find target_url from the most recent deployment status for this branch
+          URL=$(gh api "repos/${{ github.repository }}/deployments?ref=$BRANCH" --jq '.[0].id' | xargs -I {} gh api "repos/${{ github.repository }}/deployments/{}/statuses" --jq 'map(select(.state == "success")) | .[0].target_url' 2>/dev/null || true)
+
+          if [ -z "$URL" ] || [ "$URL" == "null" ]; then
+            echo "::error::No successful deployment found for branch $BRANCH. UI Review requires a preview environment."
+            exit 1
+          fi
+
           echo "url=$URL" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Start App (if no deployment URL)
-        if: steps.deploy-url.outputs.url == 'http://localhost:3000'
-        env:
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'a-super-long-and-secure-secret-for-ci-tests' }}
-          SPOTIFY_CLIENT_ID: 'test_client_id'
-          SPOTIFY_CLIENT_SECRET: 'test_client_secret'
-        run: |
-          pnpm run build
-          bash scripts/start-production.sh &
-          npx wait-on http://localhost:3000/api/health/simple --timeout 120000
 
       - name: Run UI Review Script
         env:
