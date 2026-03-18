@@ -353,9 +353,9 @@ export async function generateContentWithFallback({
       const retriableCodes = [400, 404, 429, 500, 503]
       const isRetriableCode =
         errorStatus !== undefined && retriableCodes.includes(errorStatus)
-      const isRetriableMessage = new RegExp(
-        retriableCodes.join('|')
-      ).test(errorMessage)
+      const isRetriableMessage = retriableCodes.some((code) =>
+        errorMessage.includes(code.toString())
+      )
 
       if (isRetriableCode || isRetriableMessage) {
         let reason = 'Unknown Retriable Error'

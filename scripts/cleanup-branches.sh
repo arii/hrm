@@ -27,8 +27,8 @@ git for-each-ref --format='%(committerdate:unix) %(refname:short)' refs/remotes/
     if [ "$time" -lt "$CUTOFF" ]; then
         
         PR_COUNT=$(gh pr list --head "$branch_name" --state open --json number --jq 'length' 2>/dev/null || echo 0)
-        
-        if (( ${PR_COUNT:-0} == 0 )); then
+
+        if [[ -z "$PR_COUNT" || "$PR_COUNT" -eq 0 ]]; then
             echo "Deleting stale branch: $branch_name"
             
             # Delete from remote
