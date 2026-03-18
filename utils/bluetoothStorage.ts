@@ -2,7 +2,8 @@ import Cookies from 'js-cookie'
 
 const COOKIE_NAME = 'hrm_device_id'
 
-export const getSavedDeviceId = () => Cookies.get(COOKIE_NAME)
+export const getSavedDeviceId = (): string | undefined =>
+  Cookies.get(COOKIE_NAME)
 
 export const saveDeviceId = (id: string) => {
   Cookies.set(COOKIE_NAME, id, {
