@@ -99,13 +99,17 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test.describe('Dashboard Component', () => {
+    const BASE_VRT_OPTIONS = {
+      maxDiffPixelRatio: 0.05,
+      fullPage: false,
+    }
+
     const getVrtOptions = (page: Page) => ({
+      ...BASE_VRT_OPTIONS,
       mask: [
         ...getDynamicContentMasks(page),
         page.locator('.variable-text-container'),
       ],
-      fullPage: false,
-      maxDiffPixelRatio: 0.05,
     })
 
     test.beforeEach(async () => {
@@ -162,9 +166,12 @@ test.describe('Visual Regression Tests', () => {
         }
       )
 
+      // Ensure data binding worked
       await expect(
-        dashboardPage.getByTestId('hr-tile-card').first()
-      ).toBeVisible()
+        dashboardPage.getByTestId('bpm-value').first()
+      ).toHaveText('155 BPM', {
+        timeout: VRT_TIMEOUTS.STANDARD,
+      })
 
       const topRow = dashboardPage
         .locator('[data-testid="dashboard"] > div')
