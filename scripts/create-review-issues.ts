@@ -227,14 +227,7 @@ export class GitHubClient implements IGitHubClient {
 - **Branch:** ${branchInfo}
 - **Commit:** ${commitLink}
 
-#### 🤖 Gemini Manual Trigger Quick Reference
-| Command | Action |
-| :--- | :--- |
-| \`@gemini-bot\` | Run AI Code Review (PR only) |
-| \`@gemini-triage\` | Run Issue Triage |
-| \`@gemini-coder <task>\` | Generate Code |
-| \`@create-review-issues\` | Create issues from review (PR only) |
-| \`@gemini-help\` | Show this help message |`
+#### 🤖 [Gemini Manual Trigger Guide](https://github.com/${context.repo}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)`
 
     const fingerprintMarker = issue.fingerprint
       ? `\n<!-- fingerprint: ${issue.fingerprint} -->`
