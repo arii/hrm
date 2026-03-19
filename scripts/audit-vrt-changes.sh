@@ -7,7 +7,7 @@ for cmd in gh jq; do
   fi
 done
 
-VRT_PATTERN="tests/playwright/.*\.ts$"
+VRT_PATTERN="tests/playwright/.*(spec\.ts|visual\.ts|test-helpers\.ts)"
 OUTPUT_DIR="vrt-file-audits"
 
 rm -rf "$OUTPUT_DIR"
@@ -36,11 +36,12 @@ echo "$prs" | jq -c '.[]' | while read -r pr; do
             echo "---"
         } > "$audit_file"
 
+        pr_diff=$(gh pr diff "$pr_num" --patch)
         for file_path in $changed_files; do
             {
                 echo "### \`$file_path\`"
                 echo "\`\`\`diff"
-                gh pr diff "$pr_num" --patch | awk -v path="$file_path" '
+                echo "$pr_diff" | awk -v path="$file_path" '
                     $0 ~ "diff --git a/"path" " {hunk=1; print; next}
                     $0 ~ "diff --git a/" {hunk=0}
                     hunk {print}
