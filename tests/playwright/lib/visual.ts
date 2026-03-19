@@ -44,6 +44,7 @@ export async function waitForVRTReady(
   targetWidth?: number
 ): Promise<void> {
   await page.evaluateHandle(() => document.fonts.ready)
+  await page.waitForLoadState('domcontentloaded')
   await page.evaluate(() => document.body.offsetHeight)
   if (targetWidth !== undefined) {
     await page.waitForFunction(
@@ -68,6 +69,9 @@ export async function takeScreenshot(
   const { skipA11y = false, ...screenshotOptions } = options
 
   const isLocator = 'scrollIntoViewIfNeeded' in target
+  if (isLocator) {
+    await (target as Locator).evaluate((node) => node.getBoundingClientRect())
+  }
 
   // Only scroll to top for full-page targets: MUI portals detach if scrolled.
   if (!isLocator) {

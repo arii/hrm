@@ -155,6 +155,20 @@ test.describe('Visual Regression Tests', () => {
 
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      await dashboardPage
+        .getByTestId('main-content-layout')
+        .waitFor({ state: 'visible' })
+      await dashboardPage
+        .getByTestId('timer-display-container')
+        .waitFor({ state: 'visible' })
+      await Promise.race([
+        dashboardPage
+          .getByTestId('spotify-auth-container')
+          .waitFor({ state: 'visible' }),
+        dashboardPage
+          .getByTestId('spotify-display-container')
+          .waitFor({ state: 'visible' }),
+      ])
       await waitForVRTReady(dashboardPage, MOBILE_VIEWPORT.width)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
@@ -165,6 +179,20 @@ test.describe('Visual Regression Tests', () => {
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
+      await dashboardPage
+        .getByTestId('main-content-layout')
+        .waitFor({ state: 'visible' })
+      await dashboardPage
+        .getByTestId('timer-display-container')
+        .waitFor({ state: 'visible' })
+      await Promise.race([
+        dashboardPage
+          .getByTestId('spotify-auth-container')
+          .waitFor({ state: 'visible' }),
+        dashboardPage
+          .getByTestId('spotify-display-container')
+          .waitFor({ state: 'visible' }),
+      ])
       await waitForVRTReady(dashboardPage, TABLET_VIEWPORT.width)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
