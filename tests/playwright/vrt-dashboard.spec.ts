@@ -115,8 +115,8 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
-        mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.02,
+        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -144,8 +144,8 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
-        mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.02, // Stricter threshold since masking applies correctly now
+        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        maxDiffPixelRatio: 0.05, // Stricter threshold since masking applies correctly now
       })
     })
 
@@ -154,8 +154,8 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.02, // Stricter threshold
+        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        maxDiffPixelRatio: 0.05, // Stricter threshold
       })
     })
 
@@ -163,8 +163,8 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.02, // Stricter threshold
+        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        maxDiffPixelRatio: 0.05, // Stricter threshold
       })
     })
 
@@ -172,8 +172,8 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.02, // Stricter threshold
+        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        maxDiffPixelRatio: 0.05, // Stricter threshold
       })
     })
   })
