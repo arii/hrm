@@ -3,9 +3,10 @@ import fs from 'fs'
 import path from 'path'
 import logger from '@/utils/logger'
 import { resetSocketManager } from '@/utils/socketManager'
+import { env } from '@/lib/env'
 
 export async function POST() {
-  if (process.env.NODE_ENV !== 'development') {
+  if (env.NODE_ENV === 'production' && !env.ALLOW_DEBUG_RESET) {
     return NextResponse.json(
       { message: 'This feature is only available in development mode.' },
       { status: 403 }

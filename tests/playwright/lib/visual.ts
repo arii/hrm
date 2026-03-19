@@ -43,9 +43,8 @@ export async function waitForVRTReady(
   page: Page,
   targetWidth?: number
 ): Promise<void> {
-  await page.waitForLoadState('domcontentloaded')
   await page.evaluateHandle(() => document.fonts.ready)
-  await page.waitForTimeout(500)
+  await page.waitForLoadState('domcontentloaded')
   await page.evaluate(() => document.body.offsetHeight)
   if (targetWidth !== undefined) {
     await page.waitForFunction(
