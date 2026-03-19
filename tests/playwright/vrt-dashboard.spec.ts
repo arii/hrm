@@ -116,7 +116,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.02,
       })
     })
 
@@ -145,7 +145,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
+        maxDiffPixelRatio: 0.02, // Stricter threshold since masking applies correctly now
       })
     })
 
@@ -155,7 +155,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
+        maxDiffPixelRatio: 0.02, // Stricter threshold
       })
     })
 
@@ -164,7 +164,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4,
+        maxDiffPixelRatio: 0.02, // Stricter threshold
       })
     })
 
@@ -173,7 +173,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.1,
+        maxDiffPixelRatio: 0.02, // Stricter threshold
       })
     })
   })

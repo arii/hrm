@@ -111,6 +111,28 @@ export async function waitForFontsLoaded(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for a "Quiet State" before Visual Regression Testing (VRT).
+ * Ensures Next.js hydration is complete, network is idle, and fonts are ready.
+ * This prevents sub-pixel anti-aliasing flakiness and MUI transition artifacts.
+ *
+ * @param page - The Playwright Page object
+ */
+export async function waitForVRTReady(page: Page): Promise<void> {
+  // Wait for network requests to settle (images, data)
+  try {
+    await page.waitForLoadState('networkidle', { timeout: WAIT_TIMEOUTS.NETWORK_IDLE })
+  } catch (error) {
+    // Ignore networkidle timeouts if some polling requests are keeping it alive
+    console.warn('[waitForVRTReady] networkidle timeout, proceeding to font check')
+  }
+
+  // Ensure no active CSS transitions are running / fonts are loaded
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+}
+
+/**
  * Wait for a specific element to be visible and stable.
  * Useful for ensuring UI components have fully rendered.
  *

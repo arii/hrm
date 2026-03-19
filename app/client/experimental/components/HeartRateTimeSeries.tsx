@@ -39,6 +39,7 @@ const HeartRateTimeSeries = ({ hrHistory }: HeartRateTimeSeriesProps) => {
         <Box
           sx={{ height: 300, minHeight: 300 }}
           data-testid="hr-time-series-chart"
+          data-vrt-mask="true"
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={hrHistory} syncId="anyId">

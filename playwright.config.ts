@@ -80,11 +80,14 @@ export default defineConfig({
   // Retry failed tests on CI
   retries: process.env.CI ? 2 : 0,
 
+  // Snapshots Configuration
+  updateSnapshots: process.env.CI ? 'none' : 'missing',
+
   // Test execution optimizations - Fail Fast Strategy
   expect: {
     timeout: 5000, // Assertions fail after 5s
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.1, // Relaxed to 0.1 for stability (0.02 was too flaky)
+      maxDiffPixelRatio: 0.02, // Stricter threshold; use masks for volatile UI
     },
   },
 
@@ -130,7 +133,11 @@ export default defineConfig({
             '--disable-dev-shm-usage',
             // Hide scrollbars for consistent VRT snapshots
             '--hide-scrollbars',
+            '--font-render-hinting=none',
           ],
+        },
+        contextOptions: {
+          reducedMotion: 'reduce',
         },
         viewport: DESKTOP_VIEWPORT,
         video: {
@@ -178,6 +185,8 @@ export default defineConfig({
           GOOGLE_DOC_WORKOUT_URL:
             'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
           GOOGLE_DOC_IFRAME_URL:
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
+          NEXT_PUBLIC_GOOGLE_DOC_IFRAME_URL:
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true',
           WEBSOCKET_WATCHDOG_INTERVAL: '5000',
         },

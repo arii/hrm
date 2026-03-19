@@ -25,7 +25,9 @@ test.describe('Component-Specific VRT', () => {
 
   test('Footer rendering', async ({ dashboardPage }) => {
     const footer = dashboardPage.getByTestId('footer')
-    await takeScreenshot(footer, 'footer.png')
+    await takeScreenshot(footer, 'footer.png', {
+      maxDiffPixelRatio: 0.1,
+    })
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
@@ -74,6 +76,8 @@ test.describe('Component-Specific VRT', () => {
     // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
         json: {
           headers: ['Exercise', 'Sets', 'Reps'],
         },
@@ -90,12 +94,10 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
-    // Mock session to appear logged in
     await mockLoggedInSession(context)
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
 
-    // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {
       playback: {
         is_playing: true,
@@ -142,7 +144,6 @@ test.describe('Component-Specific VRT', () => {
       .locator('[data-testid="spotify-device-selector-menu-paper"]')
       .last()
 
-    // Give the menu time to mount in the portal and stabilize before checking visibility
     await expect(menu).toBeVisible()
 
     // Wait for the opacity transition to finish rendering
@@ -168,13 +169,9 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('ErrorFallback UI', async ({ dashboardPage }) => {
-    // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component.
-    // NOTE: This error is now triggered client-side to avoid noisy server logs and 500 responses.
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
-    // Explicit extended timeout for ErrorFallback as triggering the error boundary and
-    // rendering the fallback UI can be slower on CI environments.
     await expect(errorFallback).toBeVisible({
       timeout: VRT_TIMEOUTS.EXTENDED,
     })

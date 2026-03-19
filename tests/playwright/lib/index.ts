@@ -43,6 +43,7 @@ export {
   waitForNetworkIdle,
   waitForApiResponse,
   waitForAllConditions,
+  waitForVRTReady,
 } from './waits'
 
 // ============================================================================

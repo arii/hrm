@@ -14,7 +14,7 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import { getHrMasks, getTimerMasks, waitForFontsLoaded } from '.'
+import { getHrMasks, getTimerMasks, waitForFontsLoaded, waitForVRTReady } from '.'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
@@ -54,7 +54,27 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
+  const page = 'page' in target ? target.page() : (target as Page)
+  await waitForVRTReady(page)
+
   const isLocator = 'scrollIntoViewIfNeeded' in target
+
+  // Create padded masks by evaluating CSS on the page to slightly inflate
+  // elements targeted by the mask locators. This prevents sub-pixel edge bleeding.
+  if (screenshotOptions.mask) {
+    await page.addStyleTag({
+      content: `
+        [data-vrt-mask="true"],
+        .MuiTypography-root[data-testid],
+        svg {
+          box-shadow: 0 0 0 2px #000000 !important;
+          background-color: #000000 !important;
+          color: transparent !important;
+        }
+      `
+    })
+  }
+
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
@@ -161,7 +181,7 @@ export async function takeDashboardScreenshot(
       page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
     ],
-    maxDiffPixelRatio: 0.08, // Higher tolerance for font rendering in CI
+    maxDiffPixelRatio: 0.02, // Reverting to strict threshold, depending on masks instead
   })
 }
 

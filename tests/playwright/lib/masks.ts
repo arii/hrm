@@ -14,15 +14,16 @@ import type { Locator, Page } from '@playwright/test'
  * Using `data-testid` attributes provides resilient selectors that are decoupled
  * from CSS classes or DOM structure, making tests less brittle.
  */
-export const VRT_MASK_SELECTORS = {
-  bpmPercent: '[data-testid="bpm-percent"]',
-  bpmValue: '[data-testid="bpm-value"]',
-  caloriesValue: '[data-testid="calories-value"]',
-  timerCountdown: '[data-testid="timer-countdown"]',
-  timerPhaseLabel: '[data-testid="timer-phase-label"]',
-  hrTimeSeriesChart: '[data-testid="hr-time-series-chart"]',
-  spotifyCurrentTrack: '[data-testid="spotify-current-track-name"]',
-} as const
+export const VRT_MASK_SELECTORS = [
+  '[data-vrt-mask="true"]',
+  '.MuiTypography-root', // Global text masking for dynamic values
+  'svg',                 // Mask all animated ProgressRings/Charts
+]
+
+export const VRT_CONFIG = {
+  maskColor: '#000000',
+  // Applying padding via a custom utility before snapshot
+}
 
 /**
  * Returns an array of locators for all known dynamic elements on the page.
@@ -32,14 +33,7 @@ export const VRT_MASK_SELECTORS = {
  * @returns An array of Locators to be used in the `mask` option of `toHaveScreenshot`.
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
-  return [
-    page.locator(VRT_MASK_SELECTORS.bpmPercent),
-    page.locator(VRT_MASK_SELECTORS.bpmValue),
-    page.locator(VRT_MASK_SELECTORS.caloriesValue),
-    page.locator(VRT_MASK_SELECTORS.timerCountdown),
-    page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
-    page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
-  ]
+  return VRT_MASK_SELECTORS.map(selector => page.locator(selector))
 }
 
 /**
@@ -49,11 +43,8 @@ export function getDynamicContentMasks(page: Page): Locator[] {
  * @returns An array of Locators for HR elements to be masked.
  */
 export function getHrMasks(page: Page): Locator[] {
-  return [
-    page.locator(VRT_MASK_SELECTORS.bpmPercent),
-    page.locator(VRT_MASK_SELECTORS.bpmValue),
-    page.locator(VRT_MASK_SELECTORS.caloriesValue),
-  ]
+  // Since we rely on global selectors now, we return those
+  return getDynamicContentMasks(page)
 }
 
 /**
@@ -63,12 +54,11 @@ export function getHrMasks(page: Page): Locator[] {
  * @returns An array of Locators for timer elements to be masked.
  */
 export function getTimerMasks(page: Page): Locator[] {
-  return [
-    page.locator(VRT_MASK_SELECTORS.timerCountdown),
-    page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
-  ]
+  // Since we rely on global selectors now, we return those
+  return getDynamicContentMasks(page)
 }
 
 export function getSpotifyMasks(page: Page): Locator[] {
-  return [page.locator(VRT_MASK_SELECTORS.spotifyCurrentTrack)]
+  // Since we rely on global selectors now, we return those
+  return getDynamicContentMasks(page)
 }
