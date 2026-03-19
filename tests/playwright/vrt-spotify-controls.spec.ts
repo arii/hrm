@@ -46,9 +46,9 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('select music button hover state', async () => {
-      const selectMusicButton = controlPage.getByTestId(
-        'spotify-select-music-button'
-      )
+      const selectMusicButton = controlPage.getByRole('button', {
+        name: 'Select Music',
+      })
       await selectMusicButton.hover()
       await takeScreenshot(selectMusicButton, 'select-music-button-hover.png', {
         skipA11y: true,

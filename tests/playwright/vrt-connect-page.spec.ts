@@ -21,6 +21,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       }
     )
 
+    await connectPage.waitForTimeout(100)
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
     ).toBeVisible()
