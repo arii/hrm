@@ -44,7 +44,6 @@ export async function waitForVRTReady(
   targetWidth?: number
 ): Promise<void> {
   await page.evaluateHandle(() => document.fonts.ready)
-  await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.body.offsetHeight)
   if (targetWidth !== undefined) {
     await page.waitForFunction(
@@ -153,14 +152,6 @@ export async function takeDashboardScreenshot(
     spotifyAuthLocator.waitFor({ state: 'visible' }),
     spotifyDisplayLocator.waitFor({ state: 'visible' }),
   ])
-
-  // As a final stabilization step, wait for network idle with a short timeout.
-  // This helps catch any final rendering/data loading without failing on persistent connections.
-  try {
-    await page.waitForLoadState('networkidle', { timeout: 3000 })
-  } catch {
-    // Ignore timeout errors, as the primary element waits have already passed.
-  }
 
   const clippingRegion = await mainContentLocator.boundingBox()
   let clipOption: ScreenshotOptions['clip'] = options.clip // Preserve existing clip option if any
