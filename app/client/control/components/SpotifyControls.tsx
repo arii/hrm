@@ -43,6 +43,12 @@ const getConnectButtonSx = (initialized: boolean | undefined) => ({
   },
 })
 
+const INVALID_TRACK_NAMES = new Set([
+  'Awaiting Login...',
+  '',
+  'No Track Playing',
+])
+
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
@@ -79,11 +85,6 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const INVALID_TRACK_NAMES = new Set([
-    'Awaiting Login...',
-    '',
-    'No Track Playing',
-  ])
   const hasValidTrack = !INVALID_TRACK_NAMES.has(
     spotifyData.playback.track.name
   )
@@ -101,20 +102,6 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  const focusStateRef = useRef({
-    connectionStatus,
-    spotifyServiceInitialized,
-    sendData,
-  })
-
-  useEffect(() => {
-    focusStateRef.current = {
-      connectionStatus,
-      spotifyServiceInitialized,
-      sendData,
-    }
-  }, [connectionStatus, spotifyServiceInitialized, sendData])
-
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -124,16 +111,10 @@ const SpotifyControls = () => {
       }
 
       timeoutIdRef.current = setTimeout(() => {
-        const {
-          connectionStatus: currentStatus,
-          spotifyServiceInitialized: currentInit,
-          sendData: currentSend,
-        } = focusStateRef.current
-
-        if (currentStatus === 'Connected' && currentInit) {
-          currentSend({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+        if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
+          sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
         }
-      }, 1000)
+      }, 300)
     }
 
     window.addEventListener('focus', handleFocus)
@@ -143,7 +124,7 @@ const SpotifyControls = () => {
         clearTimeout(timeoutIdRef.current)
       }
     }
-  }, [])
+  }, [connectionStatus, spotifyServiceInitialized, sendData])
 
   // 4. Sync selected device and volume with active device
   useEffect(() => {

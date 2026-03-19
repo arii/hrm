@@ -2,22 +2,18 @@
  * @jest-environment jsdom
  */
 import { render, screen } from '@testing-library/react'
-import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
-import { mockRouter } from '@/utils/test-utils/mockRouter'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
 } from '@/tests/test-utils'
 import '@testing-library/jest-dom'
 
-// Mock the router
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }))
 
-// Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
 }))
@@ -42,10 +38,6 @@ jest.mock('@/hooks/useAppSnackbar', () => ({
 }))
 
 describe('SpotifyControls Reproduction', () => {
-  beforeEach(() => {
-    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-  })
-
   it('shows controls when an active device exists even if track is not playing (bug reproduction)', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
