@@ -296,7 +296,8 @@ This project prioritizes a lean and maintainable codebase. AI assistants should 
 
 ### 8. Visual Regression Testing (VRT) Stabilization Standards
 
-See `.github/instructions/vrt-stability.instructions.md` for VRT Stabilization Standards.
+Strictly adhere to the standards defined in:
+[.github/instructions/vrt-stability.instructions.md](.github/instructions/vrt-stability.instructions.md)
 
 ## Quick Reference: Anti-Patterns to Avoid
 
