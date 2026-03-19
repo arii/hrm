@@ -5,16 +5,12 @@ DAYS_OLD=1
 EXCLUDE_REGEX="^(gh-pages|leader|HEAD)$"
 REMOTE="origin"
 
-# 1. Update references and prune tracking branches that no longer exist on remote
 git fetch --prune
 
-# Calculate cutoff timestamp
 CUTOFF=$(date -d "$DAYS_OLD days ago" +%s)
-# Note: On macOS, use: CUTOFF=$(date -v-${DAYS_OLD}d +%s)
 
 echo "Checking for branches older than $DAYS_OLD days with no open PRs..."
 
-# 2. Iterate through remote branches
 git for-each-ref --format='%(committerdate:unix) %(refname:short)' refs/remotes/$REMOTE/ | while read -r time ref; do
     branch_name="${ref#$REMOTE/}"
 
