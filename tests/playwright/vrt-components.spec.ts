@@ -56,8 +56,8 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
-    // Ensure we are in non-native mode for this test
-    await dashboardPage.goto('/?native=false')
+    // Ensure we are in non-native mode for this test, and enable testing mode
+    await dashboardPage.goto('/?native=false&testing=true')
     await waitForPageReady(dashboardPage)
 
     const toggleButton = dashboardPage.getByLabel('Collapse document')
@@ -78,8 +78,8 @@ test.describe('Component-Specific VRT', () => {
       })
     })
 
-    // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
+    // Ensure we are in native mode for this test, and enable testing mode
+    await dashboardPage.goto('/?native=true&testing=true')
     await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-table-header')
@@ -158,7 +158,7 @@ test.describe('Component-Specific VRT', () => {
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
     const refreshButton = dashboardPage
-      .getByTestId('refresh-icon-button')
+      .getByRole('button', { name: 'refresh workout table' })
       .first()
     await takeScreenshot(refreshButton, 'refresh-icon-button.png')
     await refreshButton.hover()
