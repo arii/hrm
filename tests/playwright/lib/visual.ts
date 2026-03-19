@@ -44,9 +44,7 @@ export async function waitForVRTReady(
   targetWidth?: number
 ): Promise<void> {
   await page.evaluateHandle(() => document.fonts.ready)
-  // Removed await page.waitForLoadState('networkidle') as it hangs indefinitely
-  // on pages with persistent WebSocket connections (like the Dashboard).
-  // Visual tests should instead rely on specific element visibility assertions.
+  await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.body.offsetHeight)
   if (targetWidth !== undefined) {
     await page.waitForFunction(
