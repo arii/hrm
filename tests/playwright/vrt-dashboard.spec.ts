@@ -5,15 +5,10 @@ import {
   setupVisualRegressionTest,
   resetServerState,
 } from './lib'
-import {
-  takeScreenshot,
-  assertFixedDimensions,
-  waitForVRTReady,
-} from './lib/visual'
+import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
-import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
