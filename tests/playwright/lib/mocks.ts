@@ -10,11 +10,7 @@ import type {
   HrmData,
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
-import type { TestControls } from '../../../types/global'
-
-interface TestWindow extends Window {
-  __TEST_CONTROLS__?: TestControls
-}
+import type { TestWindow } from '../../../types/global'
 
 /**
  * A consistent, offline-safe 1x1 transparent PNG image for VRT.

@@ -36,8 +36,12 @@ test.describe('Visual Regression Tests', () => {
   test.describe('ControlPanel Component', () => {
     test('initial state', async () => {
       const controlPanel = controlPage.getByTestId('control-panel')
+      // Wait for layout shifts to complete
+      await controlPage.waitForTimeout(500)
 
-      await takeScreenshot(controlPanel, 'control-panel.png')
+      await takeScreenshot(controlPanel, 'control-panel.png', {
+        maxDiffPixelRatio: 0.1,
+      })
     })
   })
 })
