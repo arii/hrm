@@ -1,13 +1,11 @@
 {
   "name": "HRM Development Environment",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/vim:1": {},
     "ghcr.io/devcontainers/features/jq:1": {}
   },
-  "forwardPorts": [3000, 8080],
+  "forwardPorts": [3000, 8080, 9229],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
@@ -16,10 +14,7 @@
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "ms-playwright.playwright",
-        "vscodevim.vim",
         "github.vscode-pull-request-github",
-        "GitHub.copilot",
-        "GitHub.copilot-chat",
         "firsttris.vscode-jest-runner"
       ],
       "settings": {
@@ -27,9 +22,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "explicit"
-        },
-        "vim.useSystemClipboard": true,
-        "vim.hlsearch": true
+        }
       }
     }
   }
