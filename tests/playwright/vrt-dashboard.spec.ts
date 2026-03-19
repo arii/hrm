@@ -53,29 +53,15 @@ test.describe('Visual Regression Tests', () => {
     await resetServerState(request)
 
     await dashboardPage.reload()
-    await controlPage.reload()
-    await mockPage.reload()
 
     await dashboardPage.mouse.click(0, 0)
 
     await waitForPageReady(dashboardPage)
-    await waitForPageReady(controlPage)
-    await waitForPageReady(mockPage)
 
-    await Promise.all([
-      dashboardPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      controlPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      mockPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-    ])
+    await dashboardPage.waitForFunction(
+      () => document.body.dataset.connectionStatus === 'connected',
+      { timeout: 5000 }
+    )
 
     // Force visibility to avoid flaky screenshots due to animations
     await dashboardPage.addStyleTag({
@@ -140,6 +126,23 @@ test.describe('Visual Regression Tests', () => {
     })
 
     test('active timer with HR data', async () => {
+      // Reload mockPage and controlPage specifically for this test
+      // because they weren't reloaded in the optimized beforeEach hook
+      await controlPage.reload()
+      await mockPage.reload()
+      await waitForPageReady(controlPage)
+      await waitForPageReady(mockPage)
+      await Promise.all([
+        controlPage.waitForFunction(
+          () => document.body.dataset.connectionStatus === 'connected',
+          { timeout: 5000 }
+        ),
+        mockPage.waitForFunction(
+          () => document.body.dataset.connectionStatus === 'connected',
+          { timeout: 5000 }
+        ),
+      ])
+
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
@@ -152,11 +155,12 @@ test.describe('Visual Regression Tests', () => {
       )
 
       // Ensure data binding worked
-      await expect(
-        dashboardPage.getByTestId('bpm-value').first()
-      ).toHaveText('155 BPM', {
-        timeout: VRT_TIMEOUTS.STANDARD,
-      })
+      await expect(dashboardPage.getByTestId('bpm-value').first()).toHaveText(
+        '155 BPM',
+        {
+          timeout: VRT_TIMEOUTS.STANDARD,
+        }
+      )
 
       const topRow = dashboardPage
         .locator('[data-testid="dashboard"] > div')

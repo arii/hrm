@@ -72,7 +72,6 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
     await mockLoggedInSession(context)
     await dashboardPage.reload()
