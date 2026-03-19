@@ -47,19 +47,24 @@ export async function takeScreenshot(
   const { skipA11y = false, ...screenshotOptions } = options
 
   const page = 'page' in target ? target.page() : (target as Page)
+  const isLocator = 'page' in target
 
-  // Force layout recalculation for tablet viewports without invalid casting
-  await page.evaluate(() => window.scrollTo(0, 0))
+  // Only scroll the window if the target is the full Page.
+  // Scrolling can cause MUI Popovers/Menus (Locators) to immediately close/detach.
+  if (!isLocator) {
+    await page.evaluate(() => window.scrollTo(0, 0))
+  }
 
   if (!skipA11y) {
     await checkAccessibility(target)
   }
 
-  // Force layout recalculation for tablet viewports (and general stability)
-  await page.evaluate(() => window.scrollTo(0, 0))
+  if (!isLocator) {
+    await page.evaluate(() => window.scrollTo(0, 0))
+  }
 
   // Ensure the height is stable if it's a Locator
-  if ('page' in target) {
+  if (isLocator) {
     await expect(target).toHaveJSProperty(
       'scrollHeight',
       await target.evaluate((node) => node.scrollHeight),
@@ -67,7 +72,6 @@ export async function takeScreenshot(
     )
   }
 
-  const isLocator = 'scrollIntoViewIfNeeded' in target
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
