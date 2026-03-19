@@ -14,7 +14,12 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import { getHrMasks, getTimerMasks, waitForFontsLoaded, waitForVRTReady } from '.'
+import {
+  getHrMasks,
+  getTimerMasks,
+  waitForFontsLoaded,
+  waitForVRTReady,
+} from '.'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
@@ -71,7 +76,7 @@ export async function takeScreenshot(
           background-color: #000000 !important;
           color: transparent !important;
         }
-      `
+      `,
     })
   }
 

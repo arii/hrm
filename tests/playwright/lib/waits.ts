@@ -120,10 +120,14 @@ export async function waitForFontsLoaded(page: Page): Promise<void> {
 export async function waitForVRTReady(page: Page): Promise<void> {
   // Wait for network requests to settle (images, data)
   try {
-    await page.waitForLoadState('networkidle', { timeout: WAIT_TIMEOUTS.NETWORK_IDLE })
-  } catch (error) {
+    await page.waitForLoadState('networkidle', {
+      timeout: WAIT_TIMEOUTS.NETWORK_IDLE,
+    })
+  } catch {
     // Ignore networkidle timeouts if some polling requests are keeping it alive
-    console.warn('[waitForVRTReady] networkidle timeout, proceeding to font check')
+    console.warn(
+      '[waitForVRTReady] networkidle timeout, proceeding to font check'
+    )
   }
 
   // Ensure no active CSS transitions are running / fonts are loaded

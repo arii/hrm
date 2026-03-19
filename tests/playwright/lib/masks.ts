@@ -17,7 +17,7 @@ import type { Locator, Page } from '@playwright/test'
 export const VRT_MASK_SELECTORS = [
   '[data-vrt-mask="true"]',
   '.MuiTypography-root', // Global text masking for dynamic values
-  'svg',                 // Mask all animated ProgressRings/Charts
+  'svg', // Mask all animated ProgressRings/Charts
 ]
 
 export const VRT_CONFIG = {
@@ -33,7 +33,7 @@ export const VRT_CONFIG = {
  * @returns An array of Locators to be used in the `mask` option of `toHaveScreenshot`.
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
-  return VRT_MASK_SELECTORS.map(selector => page.locator(selector))
+  return VRT_MASK_SELECTORS.map((selector) => page.locator(selector))
 }
 
 /**
