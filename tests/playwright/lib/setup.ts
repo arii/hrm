@@ -379,8 +379,8 @@ export async function stopTimer(
   const stopButton = controlPage.getByTestId('stop-timer-button')
 
   try {
-    // If timer is running, stop it
-    if (await stopButton.isVisible({ timeout: 2000 })) {
+    // Ensure the button is actually visible/clickable before attempting to stop
+    if (await stopButton.isVisible()) {
       await stopButton.click()
 
       // Wait for START button to confirm timer stopped
