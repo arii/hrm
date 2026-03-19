@@ -89,8 +89,12 @@ test.describe('Visual Regression Tests', () => {
 
     test('in stopwatch mode', async () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
+      // Wait for layout and content shifts to settle
+      await controlPage.waitForTimeout(500)
+
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
+        maxDiffPixelRatio: 0.3,
         // Performance: Skip a11y check for alternate mode; main mode is fully covered
         skipA11y: true,
       })

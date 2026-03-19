@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test'
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import fs from 'fs'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { mockLoggedInSession } from '../../tests/playwright/lib/mocks'
 import { DESKTOP_VIEWPORT } from '../../tests/playwright/lib/viewports'
 
@@ -81,29 +81,19 @@ async function performUIReview() {
     const prNumber = process.env.PR_NUMBER
     if (prNumber) {
       const body = `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`
-      const bodyFile = `ui_review_body_${Date.now()}.md`
-      fs.writeFileSync(bodyFile, body)
 
-      try {
-        execSync(`gh pr comment ${prNumber} --body-file ${bodyFile}`, {
-          stdio: 'inherit',
-        })
-      } finally {
-        if (fs.existsSync(bodyFile)) {
-          fs.unlinkSync(bodyFile)
-        }
-      }
+      execFileSync('gh', ['pr', 'comment', prNumber, '--body', body], {
+        stdio: 'inherit',
+      })
     } else {
-      console.log('Analysis output:', feedback)
+      console.log(feedback)
     }
   } catch (error) {
     console.error('❌ UI review execution failed:', error)
     process.exit(1)
   } finally {
     await browser.close()
-    if (fs.existsSync('ui-snapshot.png')) {
-      fs.unlinkSync('ui-snapshot.png')
-    }
+    fs.rmSync('ui-snapshot.png', { force: true })
   }
 }
 
