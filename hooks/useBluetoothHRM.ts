@@ -349,7 +349,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           !isManualDisconnect.current
         ) {
           connectionLock.current = true
-          connectToGattRef.current?.(device, true)
+          connectToGattRef
+            .current?.(device, true)
             .catch((error: unknown) => {
               logger.warn({ error }, 'Reconnect attempt failed')
               reconnect(
