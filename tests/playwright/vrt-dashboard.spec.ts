@@ -152,19 +152,29 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      // Lock viewport width before snapshot to prevent geometry drift in CI
+      await dashboardPage.waitForFunction(
+        (w) => document.body.clientWidth === w,
+        MOBILE_VIEWPORT.width
+      )
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
+        maxDiffPixelRatio: 0.15,
       })
     })
 
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
+      // Lock viewport width before snapshot to prevent geometry drift in CI
+      await dashboardPage.waitForFunction(
+        (w) => document.body.clientWidth === w,
+        TABLET_VIEWPORT.width
+      )
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4,
+        maxDiffPixelRatio: 0.15,
       })
     })
 

@@ -39,6 +39,7 @@ export function getDynamicContentMasks(page: Page): Locator[] {
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
     page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
+    page.locator('.variable-text-container'),
   ]
 }
 

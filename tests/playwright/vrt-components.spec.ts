@@ -51,9 +51,7 @@ test.describe('Component-Specific VRT', () => {
     const progress = loadingIndicator.getByTestId('loading-indicator-progress')
 
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
-      screenshotOptions: {
-        mask: [progress],
-      },
+      mask: [progress],
     })
   })
 

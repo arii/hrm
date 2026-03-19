@@ -153,6 +153,7 @@ export {
   takeDashboardScreenshot,
   prepareForVisualRegression,
   assertFixedDimensions,
+  waitForVRTReady,
 } from './visual'
 
 // ============================================================================
