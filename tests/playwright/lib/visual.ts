@@ -77,6 +77,35 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
+  // For Locator targets, poll until scrollHeight stabilizes across two consecutive reads.
+  // This ensures CSS Grid/Flexbox reflows (e.g. after setViewportSize) are fully settled
+  // before the snapshot is taken. A simple one-shot evaluate would capture the unsettled
+  // height immediately, since JS evaluates arguments before the function runs.
+  if (isLocator) {
+    const locator = target as Locator
+    let previousHeight: number | null = null
+    await expect
+      .poll(
+        async () => {
+          const currentHeight = await locator.evaluate(
+            (node: Element) => node.scrollHeight
+          )
+          const isStable =
+            previousHeight !== null &&
+            currentHeight === previousHeight &&
+            currentHeight > 0
+          previousHeight = currentHeight
+          return isStable
+        },
+        {
+          message: 'Waiting for locator height to stabilize',
+          timeout: 3000,
+          intervals: [100, 250, 500],
+        }
+      )
+      .toBeTruthy()
+  }
+
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
