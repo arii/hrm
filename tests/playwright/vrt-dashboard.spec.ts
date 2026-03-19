@@ -115,7 +115,10 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         maxDiffPixelRatio: 0.05,
       })
     })
@@ -144,7 +147,10 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         maxDiffPixelRatio: 0.05, // Stricter threshold since masking applies correctly now
       })
     })
@@ -152,9 +158,19 @@ test.describe('Visual Regression Tests', () => {
     // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
       const dashboard = dashboardPage.getByTestId('dashboard')
+
+      await dashboardPage.waitForFunction(
+        (width) => document.body.clientWidth === width,
+        MOBILE_VIEWPORT.width
+      )
+
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
         maxDiffPixelRatio: 0.05, // Stricter threshold
       })
     })
@@ -162,19 +178,35 @@ test.describe('Visual Regression Tests', () => {
     test('tablet viewport', async () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
-        maxDiffPixelRatio: 0.05, // Stricter threshold
-      })
+
+      await takeScreenshot(
+        dashboard,
+        'dashboard-tablet.png',
+        {
+          mask: [
+            ...getDynamicContentMasks(dashboardPage),
+            dashboardPage.locator('.variable-text-container'),
+          ],
+          maxDiffPixelRatio: 0.05,
+        }
+      )
     })
 
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
-        mask: [...getDynamicContentMasks(dashboardPage), dashboardPage.locator('.variable-text-container')],
-        maxDiffPixelRatio: 0.05, // Stricter threshold
-      })
+
+      await takeScreenshot(
+        dashboard,
+        'dashboard-large-desktop.png',
+        {
+          mask: [
+            ...getDynamicContentMasks(dashboardPage),
+            dashboardPage.locator('.variable-text-container'),
+          ],
+          maxDiffPixelRatio: 0.05,
+        }
+      )
     })
   })
 })
