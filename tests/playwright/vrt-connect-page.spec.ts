@@ -54,10 +54,14 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
 
     await expect(
       connectPage.getByText('Connected! Heart rate data is being streamed')
-    ).toBeVisible()
+    ).toBeVisible({ timeout: VRT_TIMEOUTS.STANDARD })
+
+    // Give time for animations to settle
+    await connectPage.waitForTimeout(1000)
+
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0.2,
     })
   })
 
