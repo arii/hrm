@@ -36,17 +36,22 @@ export const SCREENSHOT_OPTIONS = {
 /**
  * Waits for the page to be ready for visual regression testing.
  *
- * Minimum contract:
- * 1. Awaits fonts readiness.
- * 2. Awaits network idle.
- * 3. Forces layout reflow to ensure geometry is stable.
- *
  * @param page - The Playwright Page object to prepare.
+ * @param targetWidth - Optional expected viewport width; polls until `clientWidth` matches.
  */
-export async function waitForVRTReady(page: Page): Promise<void> {
+export async function waitForVRTReady(
+  page: Page,
+  targetWidth?: number
+): Promise<void> {
   await page.evaluateHandle(() => document.fonts.ready)
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.body.offsetHeight)
+  if (targetWidth !== undefined) {
+    await page.waitForFunction(
+      (w) => document.body.clientWidth === w,
+      targetWidth
+    )
+  }
 }
 
 /**
@@ -77,10 +82,8 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
-  // For Locator targets, poll until scrollHeight stabilizes across two consecutive reads.
-  // This ensures CSS Grid/Flexbox reflows (e.g. after setViewportSize) are fully settled
-  // before the snapshot is taken. A simple one-shot evaluate would capture the unsettled
-  // height immediately, since JS evaluates arguments before the function runs.
+  // Poll until scrollHeight stabilizes: CSS Grid/Flexbox reflows after setViewportSize
+  // settle asynchronously; two consecutive matching reads confirm layout is done.
   if (isLocator) {
     const locator = target as Locator
     let previousHeight: number | null = null
