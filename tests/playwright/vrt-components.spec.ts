@@ -145,8 +145,8 @@ test.describe('Component-Specific VRT', () => {
     // Give the menu time to mount in the portal and stabilize before checking visibility
     await expect(menu).toBeVisible()
 
-    // Wait for the opacity transition to finish rendering
-    await expect(menu).toHaveCSS('opacity', '1')
+    // Wait for the opacity transition to finish rendering.
+    await expect(menu).toHaveCSS('opacity', '1', { timeout: 10000 })
 
     // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)

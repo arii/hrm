@@ -28,7 +28,7 @@ import {
 } from '@/utils/bluetoothStorage'
 import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-reconnection'
 
-export const connectionLock = { isConnecting: false }
+const connectionLock = { current: false }
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -247,7 +247,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
-    isTimeoutDisconnect.current = false
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -346,16 +345,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       reconnectTimeoutRef.current = setTimeout(() => {
         if (
           statusRef.current !== BluetoothConnectionStatus.CONNECTED &&
-          !connectionLock.isConnecting &&
+          !connectionLock.current &&
           !isManualDisconnect.current
         ) {
-          connectToGattRef.current?.(device, true).catch((error: unknown) => {
-            logger.warn({ error }, 'Reconnect attempt failed')
-            reconnect(
-              device,
-              error instanceof Error ? error.message : String(error)
-            )
-          })
+          connectionLock.current = true
+          connectToGattRef
+            .current?.(device, true)
+            .catch((error: unknown) => {
+              logger.warn({ error }, 'Reconnect attempt failed')
+              reconnect(
+                device,
+                error instanceof Error ? error.message : String(error)
+              )
+            })
+            .finally(() => {
+              connectionLock.current = false
+            })
         }
       }, delay)
     },
@@ -444,8 +449,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
-      if (connectionLock.isConnecting) return false
-
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
         logger.warn(
@@ -455,7 +458,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
-      connectionLock.isConnecting = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -674,10 +676,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         throw error
-      } finally {
-        // This is reset at the end of the function, but if an abort happens,
-        // we need to ensure it's also reset.
-        connectionLock.isConnecting = false
       }
     },
     [onDisconnected, updateSignalPeriod]
@@ -700,14 +698,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAgeFromArgs?: number,
       options: { silent?: boolean } = {}
     ): Promise<boolean> => {
-      if (connectionLock.isConnecting) {
+      if (connectionLock.current) {
         logger.warn(
           'connectAndStream called while already connecting. Skipping.'
         )
         return false
       }
 
-      connectionLock.isConnecting = true
+      connectionLock.current = true
       const { silent = false } = options
       try {
         userDetailsRef.current = {
@@ -810,7 +808,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false
       } finally {
-        connectionLock.isConnecting = false
+        connectionLock.current = false
       }
     },
     [
@@ -824,7 +822,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (connectionLock.isConnecting) return
+    if (connectionLock.current) return
 
     try {
       setConnectionAttempted(true)
