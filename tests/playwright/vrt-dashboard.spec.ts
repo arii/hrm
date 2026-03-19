@@ -76,6 +76,7 @@ test.describe('Visual Regression Tests', () => {
     test('initial, empty state', async () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
+        animations: 'disabled',
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })
@@ -110,6 +111,7 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
+        animations: 'disabled',
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.1,
       })
@@ -139,6 +141,7 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
+        animations: 'disabled',
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
@@ -150,6 +153,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.waitForTimeout(1000) // Allow responsive layout to settle
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
+        animations: 'disabled',
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
       })
@@ -159,6 +163,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-tablet.png', {
+        animations: 'disabled',
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.4,
       })
@@ -168,6 +173,7 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
+        animations: 'disabled',
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
       })

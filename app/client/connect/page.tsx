@@ -167,7 +167,9 @@ export default function ConnectPage() {
         })
       }, 100)
 
-      return () => clearTimeout(timeoutId)
+      return () => {
+        clearTimeout(timeoutId)
+      }
     }
     return undefined
   }, [

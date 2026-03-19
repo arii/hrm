@@ -443,6 +443,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice, isReconnect = false) => {
+      if (connectionLock.current) return false
+
       // Ensure any previous connection attempt is aborted
       if (abortControllerRef.current) {
         logger.warn(
@@ -452,6 +454,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current.abort()
       }
 
+      connectionLock.current = true
       abortControllerRef.current = new AbortController()
 
       try {
@@ -670,6 +673,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         throw error
+      } finally {
+        connectionLock.current = false
       }
     },
     [onDisconnected, updateSignalPeriod]
@@ -699,7 +704,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return false
       }
 
-      connectionLock.current = true
       const { silent = false } = options
       try {
         userDetailsRef.current = {
@@ -801,8 +805,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           throw error
         }
         return false
-      } finally {
-        connectionLock.current = false
       }
     },
     [
