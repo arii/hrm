@@ -12,7 +12,7 @@ import {
   ExtWebSocket,
   HrmInputMessage,
 } from '../types/websocket'
-import { HrmStreamData } from '../types/core'
+import { HrmStreamData, SpotifyCommandParameters } from '../types/core'
 import {
   MAX_CALORIE_JUMP_PER_UPDATE,
   MAX_INITIAL_CALORIES,
@@ -429,14 +429,7 @@ const handleIncomingMessage = (
         )
 
         const spotifyService = services.spotifyService
-        const spotifyCommandParams: {
-          deviceId?: string
-          volume?: number
-          playlistUri?: string
-          contextUri?: string
-          uri?: string
-          offset?: { position: number }
-        } = {}
+        const spotifyCommandParams: SpotifyCommandParameters = {}
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
         if (commandMsg.volume !== undefined)
