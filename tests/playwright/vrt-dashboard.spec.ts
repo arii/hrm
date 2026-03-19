@@ -179,34 +179,26 @@ test.describe('Visual Regression Tests', () => {
       await dashboardPage.setViewportSize(TABLET_VIEWPORT)
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      await takeScreenshot(
-        dashboard,
-        'dashboard-tablet.png',
-        {
-          mask: [
-            ...getDynamicContentMasks(dashboardPage),
-            dashboardPage.locator('.variable-text-container'),
-          ],
-          maxDiffPixelRatio: 0.05,
-        }
-      )
+      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
+        maxDiffPixelRatio: 0.05,
+      })
     })
 
     test('large desktop viewport', async () => {
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
 
-      await takeScreenshot(
-        dashboard,
-        'dashboard-large-desktop.png',
-        {
-          mask: [
-            ...getDynamicContentMasks(dashboardPage),
-            dashboardPage.locator('.variable-text-container'),
-          ],
-          maxDiffPixelRatio: 0.05,
-        }
-      )
+      await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
+        mask: [
+          ...getDynamicContentMasks(dashboardPage),
+          dashboardPage.locator('.variable-text-container'),
+        ],
+        maxDiffPixelRatio: 0.05,
+      })
     })
   })
 })
