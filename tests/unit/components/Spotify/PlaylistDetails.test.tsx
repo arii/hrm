@@ -52,7 +52,6 @@ describe('PlaylistDetails', () => {
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 
-
   it('displays the track list and handles play clicks when artists is a string', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
