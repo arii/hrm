@@ -4,10 +4,7 @@ import {
   ActiveAlert,
   HrmData,
 } from '@/types/websocket'
-import {
-  HRM_STALE_THRESHOLD_MS,
-  HRM_WARNING_THRESHOLD_MS,
-} from '@/utils/constants'
+import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
 import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 
@@ -59,8 +56,7 @@ export const filterHrmData = <T extends HrmData | ConnectedHrmData>(
  */
 export const augmentHrmData = (
   hrmData: ConnectedHrmData[],
-  activeAlerts: ActiveAlert[],
-  now: number
+  activeAlerts: ActiveAlert[]
 ): ClientHrmData[] => {
   return hrmData.map((user) => {
     const matchingAlert = activeAlerts.find(
@@ -68,10 +64,6 @@ export const augmentHrmData = (
         alert.clientId === user.clientId &&
         (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
     )
-
-    // Use the same reference time logic for the visual warning
-    const referenceTime = user.updatedAt ?? user.lastUpdated ?? now
-    const isDataStale = now - referenceTime > HRM_WARNING_THRESHOLD_MS
 
     // Pre-calculate HR zone info if not already present
     const { zone, percentage } = calculateZoneFromMaxHr(
@@ -84,7 +76,6 @@ export const augmentHrmData = (
       ...user,
       isAlerting: !!matchingAlert,
       alertMessage: matchingAlert?.message,
-      isDataStale,
       percentage: user.percentage ?? percentage,
       zone: user.zone ?? heartRateZone,
     }
