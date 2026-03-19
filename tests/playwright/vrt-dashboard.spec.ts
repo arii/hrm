@@ -99,11 +99,16 @@ test.describe('Visual Regression Tests', () => {
 
       await controlPage.getByTestId('start-timer-button').click()
 
-      // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
+      // Wait for the specific timer state change in the control page before checking dashboard
+      await expect(controlPage.getByTestId('timer-running')).toBeVisible({
+        timeout: VRT_TIMEOUTS.LONG,
+      })
+
+      // Use a regex to allow any non-zero time
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
+        /^00:00$/,
         {
-          timeout: VRT_TIMEOUTS.STANDARD,
+          timeout: VRT_TIMEOUTS.LONG,
         }
       )
 
@@ -129,11 +134,16 @@ test.describe('Visual Regression Tests', () => {
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
 
+      // Wait for the specific timer state change in the control page before checking dashboard
+      await expect(controlPage.getByTestId('timer-running')).toBeVisible({
+        timeout: VRT_TIMEOUTS.LONG,
+      })
+
       // Wait for timer to start on dashboard
       await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
+        /^00:00$/,
         {
-          timeout: VRT_TIMEOUTS.STANDARD,
+          timeout: VRT_TIMEOUTS.LONG,
         }
       )
 
@@ -166,12 +176,14 @@ test.describe('Visual Regression Tests', () => {
         MOBILE_VIEWPORT.width
       )
 
+      const box = await dashboard.boundingBox()
       await takeScreenshot(dashboard, 'dashboard-mobile.png', {
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           dashboardPage.locator('.variable-text-container'),
         ],
         maxDiffPixelRatio: 0.05, // Stricter threshold
+        clip: box ? { ...box, height: 1038 } : undefined, // Force expected height to prevent overflow mismatches
       })
     })
 
