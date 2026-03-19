@@ -217,12 +217,3 @@ export async function takeDashboardScreenshot(
   })
 }
 
-/**
- * Prepares a page for visual regression testing by waiting for fonts to load.
- * This helps prevent flaky tests caused by font rendering shifts.
- *
- * @param page - The Playwright Page object to prepare.
- */
-export async function prepareForVisualRegression(page: Page): Promise<void> {
-  await waitForVRTReady(page)
-}
