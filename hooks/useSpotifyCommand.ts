@@ -16,7 +16,7 @@ type SpotifyPlayPayload = SpotifyBasePayload & {
   playlistUri?: string
   contextUri?: string
   uri?: string
-  offset?: { position: number }
+  offset?: { position?: number; uri?: string }
 }
 
 type SpotifyVolumePayload = SpotifyBasePayload & {

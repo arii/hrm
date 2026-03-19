@@ -66,9 +66,5 @@ export async function refreshSpotifyToken(refreshToken: string) {
 }
 
 export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) => {
-  if (!Array.isArray(artists)) return artists ?? 'Unknown'
-  return artists
-    .map((a) => (typeof a === 'string' ? a : a?.name))
-    .filter(Boolean)
-    .join(', ')
+  return artists ?? 'Unknown'
 }
