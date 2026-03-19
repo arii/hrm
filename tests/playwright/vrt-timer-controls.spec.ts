@@ -27,8 +27,6 @@ test.describe('Visual Regression Tests', () => {
     await context?.close()
   })
 
-  // Ensure any running timer is stopped after each test to prevent state leakage.
-  // `stopTimer` safely no-ops when no timer is active (checks button visibility first).
   test.afterEach(async () => {
     await stopTimer(controlPage, dashboardPage)
   })

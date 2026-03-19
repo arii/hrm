@@ -153,7 +153,6 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    // NEW: Responsive breakpoint tests
     test('mobile viewport', async () => {
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       await waitForVRTReady(dashboardPage, MOBILE_VIEWPORT.width)

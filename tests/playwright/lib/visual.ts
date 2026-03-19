@@ -68,45 +68,15 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
-  // Duck-typing to detect a Locator: `Locator` is imported as `type` only, so
-  // `instanceof` is unavailable at runtime. This property exists on Locator but not Page.
   const isLocator = 'scrollIntoViewIfNeeded' in target
 
-  // Only scroll to top for full-page (non-locator) targets.
-  // MUI popovers/menus rendered in portals can detach if the page is scrolled.
+  // Only scroll to top for full-page targets: MUI portals detach if scrolled.
   if (!isLocator) {
     await (target as Page).evaluate(() => window.scrollTo(0, 0))
   }
 
   if (!skipA11y) {
     await checkAccessibility(target)
-  }
-
-  // Poll until scrollHeight stabilizes: CSS Grid/Flexbox reflows after setViewportSize
-  // settle asynchronously; two consecutive matching reads confirm layout is done.
-  if (isLocator) {
-    const locator = target as Locator
-    let previousHeight: number | null = null
-    await expect
-      .poll(
-        async () => {
-          const currentHeight = await locator.evaluate(
-            (node: Element) => node.scrollHeight
-          )
-          const isStable =
-            previousHeight !== null &&
-            currentHeight === previousHeight &&
-            currentHeight > 0
-          previousHeight = currentHeight
-          return isStable
-        },
-        {
-          message: 'Waiting for locator height to stabilize',
-          timeout: 3000,
-          intervals: [100, 250, 500],
-        }
-      )
-      .toBeTruthy()
   }
 
   const finalOptions = {
