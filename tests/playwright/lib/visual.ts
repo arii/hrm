@@ -46,14 +46,14 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
+  const page = 'page' in target ? target.page() : (target as Page)
+
   // Force layout recalculation for tablet viewports without invalid casting
-  await target.evaluate(() => window.scrollTo(0, 0))
+  await page.evaluate(() => window.scrollTo(0, 0))
 
   if (!skipA11y) {
     await checkAccessibility(target)
   }
-
-  const page = 'page' in target ? target.page() : (target as Page)
 
   // Force layout recalculation for tablet viewports (and general stability)
   await page.evaluate(() => window.scrollTo(0, 0))
