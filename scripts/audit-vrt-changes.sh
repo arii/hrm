@@ -20,7 +20,7 @@ echo "$prs" | jq -c '.[]' | while read -r pr; do
     branch=$(echo "$pr" | jq -r '.headRefName')
     title=$(echo "$pr" | jq -r '.title')
 
-    changed_files=$(gh pr diff "$pr_num" --name-only | grep -E "$VRT_PATTERN")
+    changed_files=$(gh pr diff "$pr_num" --name-only | grep -E "$VRT_PATTERN" | grep -v "\.png$")
 
     if [ -n "$changed_files" ]; then
         audit_file="$OUTPUT_DIR/pr-${pr_num}.md"
