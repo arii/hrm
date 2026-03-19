@@ -1,4 +1,3 @@
-// File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
@@ -13,7 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import throttle from 'lodash.throttle'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { clampVolume } from '@/utils/audioManager'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { SpotifyCommand } from '@/types/websocket'
@@ -21,8 +20,8 @@ import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
-import { SPOTIFY_BRAND_COLOR, SYNC_LOCK_DURATION } from '@/constants/spotify'
-import { useOptimisticSync } from '@/hooks/useOptimisticSync'
+import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
+import { useSpotifyVolume } from '@/hooks/useSpotifyVolume'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
@@ -31,12 +30,9 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { devices = [] } = spotifyData
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [isSliding, setIsSliding] = useState(false)
-  const { isLocked, markInteraction } = useOptimisticSync(SYNC_LOCK_DURATION)
 
   const hrmDevice = useMemo(
     () =>
@@ -44,6 +40,76 @@ const SpotifyControls = () => {
         (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
       ),
     [devices]
+  )
+
+  const resolveTargetDeviceId = useCallback(() => {
+    return (
+      selectedDeviceId ||
+      devices.find((device) => device.is_active)?.id ||
+      hrmDevice?.id
+    )
+  }, [devices, selectedDeviceId, hrmDevice])
+
+  const sendVolumeCommand = useCallback(
+    (value: number) => {
+      if (connectionStatus !== 'Connected') return
+      const targetDeviceId = resolveTargetDeviceId()
+
+      if (!targetDeviceId) return
+
+      const sanitized = clampVolume(value)
+      const messageKey = `${targetDeviceId}:${sanitized}`
+      if (lastSentVolumeRef.current === messageKey) return
+
+      executeSpotify('SET_VOLUME', {
+        volume: sanitized,
+        deviceId: targetDeviceId,
+      })
+
+      lastSentVolumeRef.current = messageKey
+    },
+    [connectionStatus, resolveTargetDeviceId, executeSpotify]
+  )
+
+  const throttledSendVolume = useMemo(
+    () =>
+      throttle((val: number) => {
+        sendVolumeCommand(val)
+      }, 200),
+    [sendVolumeCommand]
+  )
+
+  useEffect(() => {
+    return () => {
+      throttledSendVolume.cancel()
+    }
+  }, [throttledSendVolume])
+
+  const handleThrottledVolumeChange = useCallback(
+    (val: number) => {
+      throttledSendVolume(val)
+    },
+    [throttledSendVolume]
+  )
+
+  const {
+    displayVolume,
+    isMuted,
+    handleVolumeChange,
+    handleVolumeChangeCommitted,
+    handleToggleMute,
+  } = useSpotifyVolume(
+    spotifyData.playback.volume_percent,
+    spotifyData.playback.isMuted,
+    sendVolumeCommand
+  )
+
+  const handleVolumeSlide = useCallback(
+    (val: number) => {
+      handleVolumeChange(val)
+      handleThrottledVolumeChange(val)
+    },
+    [handleVolumeChange, handleThrottledVolumeChange]
   )
 
   const handleTrackSelect = (uri: string) => {
@@ -63,7 +129,6 @@ const SpotifyControls = () => {
     spotifyData.playback.track.name !== '' &&
     spotifyData.playback.track.name !== 'No Track Playing'
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -73,34 +138,20 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Sync selected device and volume with active device
+  const deviceFingerprint = devices
+    .map((d) => `${d.id}:${d.is_active}`)
+    .join(',')
+
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    if (
-      activeId &&
-      selectedDeviceId !== activeId &&
-      !devices.some((d) => d.id === selectedDeviceId)
-    ) {
+    if (activeId && selectedDeviceId !== activeId) {
       setSelectedDeviceId(activeId)
     }
-
-    const playbackVolume = spotifyData.playback.volume_percent
-
-    if (isSliding) return
-    if (isLocked()) return
-
-    if (activeDevice && typeof playbackVolume === 'number') {
-      if (playbackVolume !== volume) {
-        setVolume(playbackVolume)
-      }
-    }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices])
+  }, [deviceFingerprint])
 
-  // Auto-select HRM Web Player if no active device is available
   useEffect(() => {
     if (
       devices.length > 0 &&
@@ -110,14 +161,6 @@ const SpotifyControls = () => {
     ) {
       setSelectedDeviceId(hrmDevice.id)
     }
-  }, [devices, selectedDeviceId, hrmDevice])
-
-  const resolveTargetDeviceId = useCallback(() => {
-    return (
-      selectedDeviceId ||
-      devices.find((device) => device.is_active)?.id ||
-      hrmDevice?.id
-    )
   }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
@@ -165,61 +208,6 @@ const SpotifyControls = () => {
       }
     },
     [sendSpotifyCommand]
-  )
-
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId = resolveTargetDeviceId()
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-
-      executeSpotify('SET_VOLUME', {
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      })
-
-      lastSentVolumeRef.current = messageKey
-    },
-    [connectionStatus, resolveTargetDeviceId, executeSpotify]
-  )
-
-  const throttledSendVolume = useMemo(
-    () =>
-      throttle((val: number) => {
-        sendVolumeCommand(val)
-      }, 200),
-    [sendVolumeCommand]
-  )
-
-  useEffect(() => {
-    return () => {
-      throttledSendVolume.cancel()
-    }
-  }, [throttledSendVolume])
-
-  const handleVolumeChange = useCallback(
-    (val: number) => {
-      markInteraction()
-      setIsSliding(true)
-      setVolume(val)
-      throttledSendVolume(val)
-    },
-    [setVolume, throttledSendVolume, markInteraction]
-  )
-
-  const handleVolumeChangeCommitted = useCallback(
-    (val: number) => {
-      markInteraction()
-      setIsSliding(false)
-      sendVolumeCommand(val)
-    },
-    [sendVolumeCommand, markInteraction]
   )
 
   useEffect(() => {
@@ -290,11 +278,11 @@ const SpotifyControls = () => {
             />
 
             <VolumeSlider
-              volume={volume}
-              muted={muted}
-              onVolumeChange={handleVolumeChange}
+              volume={displayVolume}
+              muted={isMuted}
+              onVolumeChange={handleVolumeSlide}
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
-              onToggleMute={toggleMute}
+              onToggleMute={handleToggleMute}
               showValue
               sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"

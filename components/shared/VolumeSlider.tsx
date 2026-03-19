@@ -1,4 +1,3 @@
-// components/shared/VolumeSlider.tsx
 'use client'
 import React, { memo, useCallback } from 'react'
 import {
@@ -26,36 +25,36 @@ interface VolumeSliderProps {
   sx?: SxProps<Theme>
 }
 
-// Styled component to extract complex styles and ensure accessibility
 const StyledSlider = styled(Slider, {
-  shouldForwardProp: (prop) => prop !== 'sliderColor',
-})<{ sliderColor?: string }>(({ theme, sliderColor, size }) => ({
-  color: sliderColor || theme.palette.primary.main,
-  height: size === 'small' ? 6 : 8,
-  '& .MuiSlider-thumb': {
-    backgroundColor: 'white',
-    width: size === 'small' ? 20 : 28,
-    height: size === 'small' ? 20 : 28,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-    '&:hover, &.Mui-focusVisible': {
-      boxShadow: sliderColor
-        ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
-        : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+  shouldForwardProp: (prop) => prop !== 'sliderColor' && prop !== 'scaleFactor',
+})<{ sliderColor?: string; scaleFactor: number }>(
+  ({ theme, sliderColor, scaleFactor }) => ({
+    color: sliderColor || theme.palette.primary.main,
+    height: 8 * scaleFactor,
+    '& .MuiSlider-thumb': {
+      backgroundColor: 'white',
+      width: 28 * scaleFactor,
+      height: 28 * scaleFactor,
+      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+      '&:hover, &.Mui-focusVisible': {
+        boxShadow: sliderColor
+          ? `0 0 0 8px ${alpha(sliderColor, 0.16)}`
+          : `0 0 0 8px ${alpha(theme.palette.primary.main, 0.16)}`,
+      },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        width: 44,
+        height: 44,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      },
     },
-    // Ensure 44px touch target (WCAG 2.1 compliance)
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      width: 44,
-      height: 44,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-    },
-  },
-  '& .MuiSlider-track, .MuiSlider-rail': { height: size === 'small' ? 6 : 8 },
-  '& .MuiSlider-rail': { opacity: 0.3 },
-}))
+    '& .MuiSlider-track, .MuiSlider-rail': { height: 8 * scaleFactor },
+    '& .MuiSlider-rail': { opacity: 0.3 },
+  })
+)
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
   volume,
@@ -85,6 +84,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
     [onVolumeChangeCommitted]
   )
 
+  const SCALE_FACTOR = size === 'small' ? 0.75 : 1
+
   return (
     <Stack
       direction="row"
@@ -106,7 +107,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
-          padding: size === 'small' ? '8px' : '12px',
+          padding: `${12 * SCALE_FACTOR}px`,
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
@@ -122,7 +123,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
-        size={size}
+        scaleFactor={SCALE_FACTOR}
         disabled={disabled}
         sliderColor={sliderColor}
         aria-label="Volume control"

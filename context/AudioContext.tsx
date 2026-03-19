@@ -1,7 +1,14 @@
 'use client'
 
-import { createContext, useContext } from 'react'
-import useVolumePreference from '@/hooks/useVolumePreference'
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import { audioManager, clampVolume } from '@/utils/audioManager'
 
 export interface AudioContextType {
   volume: number
@@ -13,8 +20,117 @@ export interface AudioContextType {
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined)
 
+const STORAGE_KEY_VOL = 'hrm-preferred-volume'
+const STORAGE_KEY_MUTE = 'hrm-muted'
+
+const useAudioPreference = (defaultVolume = 70) => {
+  const sanitizedDefault = clampVolume(defaultVolume)
+  const lastVolumeRef = useRef(sanitizedDefault)
+
+  const [volume, setVolumeState] = useState(sanitizedDefault)
+  const [muted, setMutedState] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    try {
+      const storedMute = window.localStorage.getItem(STORAGE_KEY_MUTE)
+      const storedVol = window.localStorage.getItem(STORAGE_KEY_VOL)
+
+      const isMuted = storedMute === 'true'
+      const preferredVolume =
+        storedVol !== null ? clampVolume(Number(storedVol)) : sanitizedDefault
+      lastVolumeRef.current = preferredVolume
+      setMutedState(isMuted)
+      setVolumeState(isMuted ? 0 : preferredVolume)
+    } catch (error) {
+      console.warn('Failed to read audio preferences from localStorage:', error)
+    } finally {
+      setIsLoaded(true)
+    }
+  }, [sanitizedDefault])
+
+  useEffect(() => {
+    if (isLoaded) {
+      audioManager.setMuted(muted)
+      audioManager.setVolume(volume)
+    }
+  }, [volume, muted, isLoaded])
+
+  const setVolume = useCallback(
+    (value: number) => {
+      const sanitized = clampVolume(value)
+      setVolumeState(sanitized)
+      if (sanitized > 0) {
+        lastVolumeRef.current = sanitized
+        setMutedState(false)
+      } else {
+        setMutedState(true)
+      }
+      window.dispatchEvent(
+        new CustomEvent('hrm:volumeChange', { detail: sanitized })
+      )
+    },
+    [setMutedState]
+  )
+
+  const toggleMute = useCallback(() => {
+    const isMuting = !muted
+    setMutedState(isMuting)
+    try {
+      window.localStorage.setItem(STORAGE_KEY_MUTE, String(isMuting))
+      if (isMuting) {
+        if (volume > 0) {
+          lastVolumeRef.current = volume
+          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
+        }
+        setVolumeState(0)
+      } else {
+        setVolumeState(lastVolumeRef.current)
+      }
+      window.dispatchEvent(
+        new CustomEvent('hrm:muteChange', { detail: isMuting })
+      )
+    } catch (error) {
+      console.warn('Could not persist mute preference:', error)
+    }
+  }, [muted, volume])
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_VOL && e.newValue !== null) {
+        setVolumeState(clampVolume(Number(e.newValue)))
+      }
+      if (e.key === STORAGE_KEY_MUTE && e.newValue !== null) {
+        setMutedState(e.newValue === 'true')
+      }
+    }
+
+    const handleLocalVolume = (e: Event) => {
+      const customEvent = e as CustomEvent
+      setVolumeState(customEvent.detail)
+    }
+
+    const handleLocalMute = (e: Event) => {
+      const customEvent = e as CustomEvent
+      setMutedState(customEvent.detail)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('hrm:volumeChange', handleLocalVolume)
+    window.addEventListener('hrm:muteChange', handleLocalMute)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('hrm:volumeChange', handleLocalVolume)
+      window.removeEventListener('hrm:muteChange', handleLocalMute)
+    }
+  }, [])
+
+  return { volume, setVolume, muted, toggleMute, isLoaded }
+}
+
 export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
-  const volumePreference = useVolumePreference()
+  const volumePreference = useAudioPreference()
   return (
     <AudioContext.Provider value={volumePreference}>
       {children}

@@ -7,7 +7,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
-import useVolumePreference from '@/hooks/useVolumePreference'
+import { useSpotifyVolume } from '@/hooks/useSpotifyVolume'
 import {
   createMockSpotifyData,
   createMockSpotifyDevice,
@@ -48,14 +48,9 @@ jest.mock('@/context/WebSocketContext', () => ({
 }))
 
 // Mock the volume preference hook
-jest.mock('@/hooks/useVolumePreference', () => {
-  const originalModule = jest.requireActual('@/hooks/useVolumePreference')
-  return {
-    __esModule: true,
-    ...originalModule,
-    default: jest.fn(),
-  }
-})
+jest.mock('@/hooks/useSpotifyVolume', () => ({
+  useSpotifyVolume: jest.fn(),
+}))
 
 // Mock the spotify constants
 jest.mock('@/constants/spotify', () => ({
@@ -93,11 +88,13 @@ describe('components/SpotifyControls', () => {
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
-    ;(useVolumePreference as jest.Mock).mockReturnValue({
-      volume: 50,
-      muted: false,
-      setVolume: jest.fn(),
-      toggleMute: jest.fn(),
+    ;(useSpotifyVolume as jest.Mock).mockReturnValue({
+      displayVolume: 50,
+      isSliding: false,
+      handleVolumeChange: jest.fn(),
+      handleVolumeChangeCommitted: jest.fn(),
+      handleToggleMute: jest.fn(),
+      isMuted: false,
     })
   })
 
@@ -138,14 +135,17 @@ describe('components/SpotifyControls', () => {
   })
 
   it('sends volume change command on commit', async () => {
-    const setVolumeMock = jest.fn()
-    const mockUseVolumePreference = useVolumePreference as jest.Mock
+    const handleVolumeChangeMock = jest.fn()
+    const mockUseSpotifyVolume = useSpotifyVolume as jest.Mock
 
-    mockUseVolumePreference.mockReturnValue({
-      volume: 50,
-      muted: false,
-      setVolume: setVolumeMock,
-      toggleMute: jest.fn(),
+    mockUseSpotifyVolume.mockReturnValue({
+      displayVolume: 50,
+      isSliding: false,
+      handleVolumeChange: jest.fn(),
+      handleVolumeChangeCommitted: jest.fn(),
+      handleToggleMute: jest.fn(),
+      isMuted: false,
+      handleVolumeChange: handleVolumeChangeMock,
     })
 
     render(<SpotifyControls />)
@@ -169,16 +169,19 @@ describe('components/SpotifyControls', () => {
   })
 
   it('prevents volume snap-back during slider drag', async () => {
-    const setVolumeMock = jest.fn()
-    const mockUseVolumePreference = useVolumePreference as jest.Mock
+    const handleVolumeChangeMock = jest.fn()
+    const mockUseSpotifyVolume = useSpotifyVolume as jest.Mock
     const mockWebSocket = useWebSocket as jest.Mock
 
     // Initial state: volume 50
-    mockUseVolumePreference.mockReturnValue({
-      volume: 50,
-      muted: false,
-      setVolume: setVolumeMock,
-      toggleMute: jest.fn(),
+    mockUseSpotifyVolume.mockReturnValue({
+      displayVolume: 50,
+      isSliding: false,
+      handleVolumeChange: jest.fn(),
+      handleVolumeChangeCommitted: jest.fn(),
+      handleToggleMute: jest.fn(),
+      isMuted: false,
+      handleVolumeChange: handleVolumeChangeMock,
     })
 
     const { rerender } = render(<SpotifyControls />)
@@ -211,7 +214,7 @@ describe('components/SpotifyControls', () => {
     rerender(<SpotifyControls />)
 
     // setVolume should NOT have been called with the server value (40) because we are sliding
-    expect(setVolumeMock).not.toHaveBeenCalledWith(40)
+    expect(handleVolumeChangeMock).not.toHaveBeenCalledWith(40)
 
     // Stop sliding
     fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
