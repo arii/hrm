@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
+import isEqual from 'lodash/isEqual'
 
 let isLocalStorageAvailable: boolean | null = null
 
@@ -74,7 +75,7 @@ function usePersistentStorage<T>(
           }
 
           setStoredValue((current) => {
-            if (JSON.stringify(valueToUse) !== JSON.stringify(current)) {
+            if (!isEqual(valueToUse, current)) {
               return valueToUse
             }
             return current
@@ -96,13 +97,32 @@ function usePersistentStorage<T>(
 
     // Only run if key changed OR initialValue changed significantly
     const keyChanged = keyRef.current !== key
-    const initialValueChanged =
-      JSON.stringify(initialValueRef.current) !== JSON.stringify(initialValue)
+    const initialValueChanged = !isEqual(initialValueRef.current, initialValue)
 
     if (keyChanged || initialValueChanged) {
       keyRef.current = key
       initialValueRef.current = initialValue
-      loadFromStorage()
+
+      const isLocalAvailable = checkLocalStorage()
+      const useCookie = !isLocalAvailable && enableCookieFallback
+      let item: string | undefined | null = null
+
+      if (isLocalAvailable) {
+        item = window.localStorage.getItem(key)
+      } else if (useCookie) {
+        item = Cookies.get(key)
+      }
+
+      if (item) {
+        loadFromStorage()
+      } else {
+        setStoredValue((current) => {
+          if (!isEqual(initialValue, current)) {
+            return initialValue
+          }
+          return current
+        })
+      }
     }
   }, [key, initialValue, enableCookieFallback])
 
@@ -149,7 +169,7 @@ function usePersistentStorage<T>(
         try {
           const parsed = JSON.parse(e.newValue)
           setStoredValue((current) => {
-            if (JSON.stringify(parsed) !== JSON.stringify(current)) {
+            if (!isEqual(parsed, current)) {
               return parsed
             }
             return current

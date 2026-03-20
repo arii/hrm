@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect } from 'react'
 import usePersistentStorage from '../hooks/usePersistentStorage'
 import { MeasurementSystem, Gender } from '../types/core'
+import isEqual from 'lodash/isEqual'
 
 // Directly define the preferences interface and defaults here
 export interface UserPreferences {
@@ -56,8 +57,13 @@ export const migratePreferences = (stored: unknown): UserPreferences => {
     ) {
       let valueToStore = storedVal
       // Ensure numeric fields are actually numbers
+      const numericFields: Array<keyof UserPreferences> = [
+        'userAge',
+        'userWeight',
+        'userHeight',
+      ]
       if (
-        (k === 'userAge' || k === 'userWeight' || k === 'userHeight') &&
+        numericFields.includes(k) &&
         typeof storedVal === 'string' &&
         storedVal !== ''
       ) {
@@ -96,8 +102,7 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const migrated = migratePreferences(userPreferences)
-    // Use JSON.stringify for comparison to avoid deep equal dependency
-    if (JSON.stringify(migrated) !== JSON.stringify(userPreferences)) {
+    if (!isEqual(migrated, userPreferences)) {
       setUserPreferences(migrated)
     }
   }, [userPreferences, setUserPreferences])

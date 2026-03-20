@@ -214,9 +214,6 @@ const SpotifyControls = () => {
           clearTimeout(playbackGraceTimerRef.current)
         }
 
-        // Set a timer to clear optimistic state after a grace period (2.5s)
-        // This ensures the UI snaps back to reality if the command fails OR
-        // stays in state until the next poll cycle confirms it.
         playbackGraceTimerRef.current = setTimeout(() => {
           setOptimisticIsPlaying(null)
           playbackGraceTimerRef.current = null
@@ -227,17 +224,6 @@ const SpotifyControls = () => {
     },
     [sendSpotifyCommand]
   )
-
-  // Clear optimistic state when the actual state matches our intent
-  useEffect(() => {
-    if (optimisticIsPlaying === spotifyData.playback.is_playing) {
-      setOptimisticIsPlaying(null)
-      if (playbackGraceTimerRef.current) {
-        clearTimeout(playbackGraceTimerRef.current)
-        playbackGraceTimerRef.current = null
-      }
-    }
-  }, [spotifyData.playback.is_playing, optimisticIsPlaying])
 
   // Cleanup timers on unmount
   useEffect(() => {
