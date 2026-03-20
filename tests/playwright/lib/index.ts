@@ -152,8 +152,8 @@ export {
   // Screenshot helpers
   takeScreenshot,
   takeDashboardScreenshot,
-  prepareForVisualRegression,
   assertFixedDimensions,
+  waitForVRTReady,
 } from './visual'
 
 // ============================================================================

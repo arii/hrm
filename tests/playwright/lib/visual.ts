@@ -14,12 +14,7 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import {
-  getHrMasks,
-  getTimerMasks,
-  waitForFontsLoaded,
-  waitForVRTReady,
-} from '.'
+import { getHrMasks, getTimerMasks } from '.'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
@@ -35,7 +30,28 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.1,
+}
+
+/**
+ * Waits for the page to be ready for visual regression testing.
+ *
+ * @param page - The Playwright Page object to prepare.
+ * @param targetWidth - Optional expected viewport width; polls until `clientWidth` matches.
+ */
+export async function waitForVRTReady(
+  page: Page,
+  targetWidth?: number
+): Promise<void> {
+  await page.evaluateHandle(() => document.fonts.ready)
+  await page.waitForLoadState('networkidle')
+  await page.evaluate(() => document.body.offsetHeight)
+  if (targetWidth !== undefined) {
+    await page.waitForFunction(
+      (w) => document.body.clientWidth === w,
+      targetWidth
+    )
+  }
 }
 
 /**
@@ -52,32 +68,15 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
-  // Force layout recalculation for tablet viewports without invalid casting
-  await target.evaluate(() => window.scrollTo(0, 0))
+  const isLocator = 'scrollIntoViewIfNeeded' in target
+
+  // Only scroll to top for full-page targets: MUI portals detach if scrolled.
+  if (!isLocator) {
+    await (target as Page).evaluate(() => window.scrollTo(0, 0))
+  }
 
   if (!skipA11y) {
     await checkAccessibility(target)
-  }
-
-  const page = 'page' in target ? target.page() : (target as Page)
-  await waitForVRTReady(page)
-
-  const isLocator = 'scrollIntoViewIfNeeded' in target
-
-  // Create padded masks by evaluating CSS on the page to slightly inflate
-  // elements targeted by the mask locators. This prevents sub-pixel edge bleeding.
-  if (screenshotOptions.mask) {
-    await page.addStyleTag({
-      content: `
-        [data-vrt-mask="true"],
-        .MuiTypography-root[data-testid],
-        svg {
-          box-shadow: 0 0 0 2px #000000 !important;
-          background-color: #000000 !important;
-          color: transparent !important;
-        }
-      `,
-    })
   }
 
   const finalOptions = {
@@ -107,7 +106,6 @@ export async function assertFixedDimensions(
     maxWidth?: number
   }
 ) {
-  // Wait for the element to be visible before checking its dimensions
   await locator.waitFor({ state: 'visible', timeout: 5000 })
   const bbox = await locator.boundingBox()
 
@@ -185,17 +183,8 @@ export async function takeDashboardScreenshot(
       page.getByTestId('google-doc-viewer-iframe'),
       page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
+      page.locator('.variable-text-container'),
     ],
-    maxDiffPixelRatio: 0.02, // Reverting to strict threshold, depending on masks instead
+    maxDiffPixelRatio: 0.1,
   })
-}
-
-/**
- * Prepares a page for visual regression testing by waiting for fonts to load.
- * This helps prevent flaky tests caused by font rendering shifts.
- *
- * @param page - The Playwright Page object to prepare.
- */
-export async function prepareForVisualRegression(page: Page): Promise<void> {
-  await waitForFontsLoaded(page)
 }

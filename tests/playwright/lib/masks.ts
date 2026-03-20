@@ -33,7 +33,15 @@ export const VRT_CONFIG = {
  * @returns An array of Locators to be used in the `mask` option of `toHaveScreenshot`.
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
-  return VRT_MASK_SELECTORS.map((selector) => page.locator(selector))
+  return [
+    page.locator(VRT_MASK_SELECTORS.bpmPercent),
+    page.locator(VRT_MASK_SELECTORS.bpmValue),
+    page.locator(VRT_MASK_SELECTORS.caloriesValue),
+    page.locator(VRT_MASK_SELECTORS.timerCountdown),
+    page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+    page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
+    page.locator('.variable-text-container'),
+  ]
 }
 
 /**

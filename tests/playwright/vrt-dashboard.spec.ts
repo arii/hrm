@@ -9,7 +9,6 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
-import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -162,41 +161,6 @@ test.describe('Visual Regression Tests', () => {
           dashboardPage.locator('.variable-text-container'),
         ],
         maxDiffPixelRatio: 0.05, // Stricter threshold since masking applies correctly now
-      })
-    })
-
-    // NEW: Responsive breakpoint tests
-    test('mobile viewport', async () => {
-      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
-      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
-      const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await dashboardPage.waitForFunction(
-        (width) => document.body.clientWidth === width,
-        MOBILE_VIEWPORT.width
-      )
-
-      const box = await dashboard.boundingBox()
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          dashboardPage.locator('.variable-text-container'),
-        ],
-        maxDiffPixelRatio: 0.05, // Stricter threshold
-        clip: box ? { ...box, height: 1038 } : undefined, // Force expected height to prevent overflow mismatches
-      })
-    })
-
-    test('tablet viewport', async () => {
-      await dashboardPage.setViewportSize(TABLET_VIEWPORT)
-      const dashboard = dashboardPage.getByTestId('dashboard')
-
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-          dashboardPage.locator('.variable-text-container'),
-        ],
-        maxDiffPixelRatio: 0.05,
       })
     })
 

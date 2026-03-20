@@ -71,14 +71,13 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: false,
-  workers: process.env.CI ? 2 : 1,
+  workers: 1, // Restricted to 1 worker globally to prevent parallel test cross-talk on the single stateful WebSocket server
   timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
 
-  // Retry failed tests on CI
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
 
   // Snapshots Configuration
   updateSnapshots: process.env.CI ? 'none' : 'missing',

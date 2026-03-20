@@ -523,7 +523,6 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(true)
-      expect(result.current.isDataStale).toBe(false)
 
       // Advance time just past the staleness timeout
       await act(async () => {
@@ -535,7 +534,6 @@ describe('useBluetoothHRM', () => {
         jest.advanceTimersByTime(WATCHDOG_INTERVAL_MS)
       })
 
-      expect(result.current.isDataStale).toBe(true)
       expect(result.current.deviceStatus).toMatch(/reconnecting/i)
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })

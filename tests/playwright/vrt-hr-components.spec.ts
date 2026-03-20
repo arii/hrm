@@ -88,7 +88,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
-        maxDiffPixelRatio: 0.3,
+        maxDiffPixelRatio: 0.15,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -133,7 +133,7 @@ test.describe('Visual Regression Tests', () => {
 
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
-        maxDiffPixelRatio: 0.3,
+        maxDiffPixelRatio: 0.15,
         mask: [
           ...getDynamicContentMasks(dashboardPage),
           ...getHrMasks(dashboardPage),
@@ -145,6 +145,9 @@ test.describe('Visual Regression Tests', () => {
     const zones = [0, 3, 6]
     for (const zone of zones) {
       test(`dashboard with HR in Zone ${zone}`, async () => {
+        // Enforce explicit viewport to ensure stable geometry across runs
+        await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
+
         await mockPage.getByLabel('Current BPM').fill(String(60 + zone * 20))
         await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 

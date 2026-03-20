@@ -182,10 +182,8 @@ describe('webSocketReducer', () => {
 
       const state = reducer(INITIAL_STATE, action)
 
-      // Expected updatedAt: 990000 + (1060000 - 1000000) = 990000 + 60000 = 1050000
-      // 1050000 is 10s before clientNow, so it correctly preserves the 10s age.
-      expect(state.hrmData[0].updatedAt).toBe(1050000)
-
+      // Since clock skew functionality was removed, updatedAt remains untouched
+      expect(state.hrmData[0].updatedAt).toBe(990000)
       dateSpy.mockRestore()
     })
 
@@ -204,7 +202,7 @@ describe('webSocketReducer', () => {
 
       const state = reducer(INITIAL_STATE, action)
       expect(state.hrmData[0].clientId).toBe('new-user')
-      expect(state.hrmData[0].updatedAt).toBe(1050000)
+      expect(state.hrmData[0].updatedAt).toBe(990000)
 
       dateSpy.mockRestore()
     })
@@ -229,7 +227,7 @@ describe('webSocketReducer', () => {
       }
 
       const state = reducer(INITIAL_STATE, action)
-      expect(state.hrmData[0].updatedAt).toBe(1050000)
+      expect(state.hrmData[0].updatedAt).toBe(990000)
 
       dateSpy.mockRestore()
     })
@@ -258,7 +256,7 @@ describe('webSocketReducer', () => {
       }
 
       const state = reducer(INITIAL_STATE, action)
-      expect(state.activeAlerts[0].timestamp).toBe(1050000)
+      expect(state.activeAlerts[0].timestamp).toBe(1060000)
 
       dateSpy.mockRestore()
     })
