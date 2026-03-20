@@ -29,20 +29,6 @@ import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
 
-const getConnectButtonSx = (initialized: boolean | undefined) => ({
-  width: '100%',
-  mt: 2,
-  backgroundColor: initialized ? SPOTIFY_BRAND_COLOR : 'rgba(29, 185, 84, 0.5)',
-  color: 'white',
-  '&:hover': {
-    backgroundColor: '#1ed760',
-  },
-  '&.Mui-disabled': {
-    backgroundColor: 'rgba(29, 185, 84, 0.3)',
-    color: 'rgba(255, 255, 255, 0.5)',
-  },
-})
-
 const INVALID_TRACK_NAMES = new Set([
   'Awaiting Login...',
   '',
@@ -85,14 +71,11 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasValidTrack = !INVALID_TRACK_NAMES.has(
-    spotifyData.playback.track.name
-  )
   const shouldShowControls =
     spotifyServiceInitialized &&
-    (hasValidTrack || devices.some((d) => d.is_active))
+    (!INVALID_TRACK_NAMES.has(spotifyData.playback.track.name) ||
+      devices.some((d) => d.is_active))
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -102,15 +85,15 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
     const handleFocus = () => {
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
       }
 
-      timeoutIdRef.current = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
           sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
         }
@@ -120,13 +103,12 @@ const SpotifyControls = () => {
     window.addEventListener('focus', handleFocus)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
       }
     }
   }, [connectionStatus, spotifyServiceInitialized, sendData])
 
-  // 4. Sync selected device and volume with active device
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
@@ -437,10 +419,28 @@ const SpotifyControls = () => {
             disabled={!spotifyServiceInitialized}
             startIcon={
               !spotifyServiceInitialized ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  data-visualtest-hide="true"
+                />
               ) : null
             }
-            sx={getConnectButtonSx(spotifyServiceInitialized)}
+            sx={{
+              width: '100%',
+              mt: 2,
+              backgroundColor: spotifyServiceInitialized
+                ? SPOTIFY_BRAND_COLOR
+                : 'rgba(29, 185, 84, 0.5)',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#1ed760',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(29, 185, 84, 0.3)',
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
+            }}
           >
             {spotifyServiceInitialized
               ? 'Connect to HRM Web Player'
