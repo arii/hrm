@@ -577,10 +577,9 @@ describe('WebSocket Manager', () => {
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         expect.objectContaining({
-          type: 'DEVICE_OFFLINE',
-          payload: { deviceId: 'test-client' },
+          type: 'HRM_UPDATE',
         }),
-        'socketManager.cleanupClientSession'
+        'socketManager.broadcastState'
       )
     })
 
@@ -655,70 +654,6 @@ describe('WebSocket Manager', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ clientId: 'test-client' }),
         'Unknown message type received'
-      )
-    })
-  })
-  describe('Session Cleanup', () => {
-    it('should clean up client session after grace period', () => {
-      const clientId = 'test-client-cleanup'
-      const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const newWs = new MockWebSocket()
-      mockWss.emit('connection', newWs, mockReq)
-
-      newWs.emit(
-        'message',
-        JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'Cleanup Athlete' },
-        })
-      )
-
-      newWs.emit('close')
-
-      // Clear previous calls
-      ;(broadcast as jest.MockedFunction<typeof broadcast>).mockClear()
-
-      // Run all timers to ensure everything triggers
-      jest.runAllTimers()
-
-      expect(logger.info).toHaveBeenCalledWith(
-        { clientId },
-        'Session expired. Deleting data.'
-      )
-
-      // Verify that state was broadcasted (should happen during cleanup)
-      const mockBroadcast = broadcast as jest.MockedFunction<typeof broadcast>
-      const updateCalls = mockBroadcast.mock.calls.filter(
-        (call) => call[1].type === 'HRM_UPDATE'
-      )
-      expect(updateCalls.length).toBeGreaterThan(0)
-    })
-
-    it('should not clean up session if client reconnects within grace period', () => {
-      const clientId = 'test-client-reconnect'
-      const mockReq = createMockRequest(`/?clientId=${clientId}`)
-      const firstWs = new MockWebSocket()
-      mockWss.emit('connection', firstWs, mockReq)
-
-      firstWs.emit(
-        'message',
-        JSON.stringify({
-          type: 'HRM_METADATA_UPDATE',
-          data: { name: 'Reconnect Athlete' },
-        })
-      )
-
-      firstWs.emit('close')
-      jest.advanceTimersByTime(1000)
-
-      const secondWs = new MockWebSocket()
-      mockWss.emit('connection', secondWs, mockReq)
-
-      jest.runAllTimers()
-
-      expect(logger.info).not.toHaveBeenCalledWith(
-        { clientId },
-        'Session expired. Deleting data.'
       )
     })
   })
