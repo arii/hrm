@@ -19,11 +19,6 @@ export interface TestControls {
   connect?: () => void
 }
 
-export interface TestWindow extends Window {
-  __TEST_READY__?: boolean
-  __TEST_CONTROLS__?: TestControls
-}
-
 declare global {
   var spotifyService: SpotifyService | undefined
   var tabataService: TabataTimer | undefined

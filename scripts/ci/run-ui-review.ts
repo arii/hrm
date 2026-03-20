@@ -1,23 +1,21 @@
 import { chromium } from '@playwright/test'
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import fs from 'fs'
 import { execFileSync } from 'child_process'
-import { mockLoggedInSession } from '../../tests/playwright/lib/mocks'
-import { DESKTOP_VIEWPORT } from '../../tests/playwright/lib/viewports'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 async function performUIReview() {
   const browser = await chromium.launch()
   const context = await browser.newContext({
-    viewport: DESKTOP_VIEWPORT,
+    viewport: { width: 1280, height: 720 },
   })
 
-  await mockLoggedInSession(context)
+  const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
+
+  await context.addCookies([{ name: 'session-id', value: 'mock', url: targetUrl }])
 
   const page = await context.newPage()
-
-  const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
 
   try {
     await page.goto(targetUrl, { waitUntil: 'networkidle' })
@@ -32,16 +30,6 @@ async function performUIReview() {
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-pro',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            analysis: { type: SchemaType.STRING },
-          },
-          required: ['analysis'],
-        },
-      },
     })
 
     const prompt = `
@@ -55,7 +43,7 @@ async function performUIReview() {
       5. **Feedback**: Provide a concise list of actionable UI improvements.
 
       Be specific. Mention component names or areas of the screen.
-      Return your analysis as a JSON object with an 'analysis' field containing markdown.
+      Return your analysis as a markdown string.
     `
 
     const result = await model.generateContent([
@@ -68,15 +56,7 @@ async function performUIReview() {
       },
     ])
 
-    const responseText = result.response.text()
-    let feedback: string
-    try {
-      const responseJson = JSON.parse(responseText)
-      feedback = responseJson.analysis
-    } catch {
-      console.error('Failed to parse Gemini JSON. Raw response:', responseText)
-      throw new Error('Gemini returned invalid JSON format.')
-    }
+    const feedback = result.response.text()
 
     const prNumber = process.env.PR_NUMBER
     if (prNumber) {
