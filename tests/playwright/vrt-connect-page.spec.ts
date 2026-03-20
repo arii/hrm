@@ -10,14 +10,6 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
 
-    // Setup window.__TEST_CONTROLS__ before evaluating the function
-    await connectPage.addInitScript(() => {
-      window.__TEST_CONTROLS__ = window.__TEST_CONTROLS__ || {
-        setHrmStatus: () => {},
-        setCustomHrmStatusMessage: () => {},
-      }
-    })
-
     await connectPage.goto('/client/connect?testing=true')
     await waitForPageReady(connectPage, { timeout: VRT_TIMEOUTS.STANDARD })
     await connectPage.getByLabel('Your Name').fill('VRT Runner')

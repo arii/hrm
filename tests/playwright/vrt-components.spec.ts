@@ -31,7 +31,6 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
-    // Force visibility and pause animation for VRT
     await dashboardPage.evaluate(() => {
       const el = document.querySelector(
         '[data-testid="loading-indicator"]'
@@ -39,9 +38,7 @@ test.describe('Component-Specific VRT', () => {
       if (el) {
         el.style.opacity = '1'
         el.style.visibility = 'visible'
-        // Force an opaque background to prevent pixel leakage from underlying content
         el.style.backgroundColor = 'rgb(0, 0, 0)'
-        // Pause any CSS animations/transitions specifically on this element
         el.style.animationPlayState = 'paused'
         el.style.transition = 'none'
       }
@@ -49,7 +46,6 @@ test.describe('Component-Specific VRT', () => {
     const loadingIndicator = dashboardPage.getByTestId('loading-indicator')
     await expect(loadingIndicator).toBeVisible()
 
-    // Mask the animated progress circle as it's highly flaky in VRT
     const progress = loadingIndicator.getByTestId('loading-indicator-progress')
 
     await takeScreenshot(loadingIndicator, 'loading-indicator.png', {
@@ -58,7 +54,6 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
-    // Ensure we are in non-native mode for this test, and enable testing mode
     await dashboardPage.goto('/?native=false&testing=true')
     await waitForPageReady(dashboardPage)
 
@@ -71,7 +66,6 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
         json: {
@@ -80,7 +74,6 @@ test.describe('Component-Specific VRT', () => {
       })
     })
 
-    // Ensure we are in native mode for this test, and enable testing mode
     await dashboardPage.goto('/?native=true&testing=true')
     await waitForPageReady(dashboardPage)
 
@@ -94,12 +87,8 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
 
-    // Wait for the WebSocket to fully reconnect after the reload
-    // before applying mocks, otherwise the server's initial STATE_SYNC
-    // will immediately overwrite the mock.
     await waitForWebSocketConnection(dashboardPage)
 
-    // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {
       playback: {
         is_playing: true,
@@ -147,10 +136,8 @@ test.describe('Component-Specific VRT', () => {
       .last()
     await expect(menu).toBeVisible()
 
-    // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')
 
-    // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
