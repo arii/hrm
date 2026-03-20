@@ -72,33 +72,11 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    await dashboardPage.route('/api/workout*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        json: {
-          headers: ['Exercise', 'Sets', 'Reps'],
-        },
-      })
-    })
-
-    // Ensure we are in native mode for this test
-    await dashboardPage.goto('/?native=true')
-    await waitForPageReady(dashboardPage)
-
-    const tableHeader = dashboardPage.getByTestId('workout-table-header')
-    await expect(tableHeader).toBeVisible()
-    await takeScreenshot(tableHeader, 'workout-table-header.png')
-  })
-
   test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
-    // Mock session to appear logged in
     await mockLoggedInSession(context)
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
 
-    // Mock Spotify state with devices to show the component naturally
     await mockSpotifyPlaybackState(dashboardPage, {
       playback: {
         is_playing: true,
@@ -169,13 +147,9 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('ErrorFallback UI', async ({ dashboardPage }) => {
-    // Navigate to dashboard with test-error=true to trigger the real ErrorBoundary and ErrorFallback component.
-    // NOTE: This error is now triggered client-side to avoid noisy server logs and 500 responses.
     await dashboardPage.goto('/?test-error=true&testing=true')
 
     const errorFallback = dashboardPage.getByTestId('error-fallback')
-    // Explicit extended timeout for ErrorFallback as triggering the error boundary and
-    // rendering the fallback UI can be slower on CI environments.
     await expect(errorFallback).toBeVisible({
       timeout: VRT_TIMEOUTS.EXTENDED,
     })

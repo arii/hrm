@@ -30,7 +30,6 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.15,
 }
 
 /**
@@ -47,20 +46,25 @@ export async function takeScreenshot(
 ) {
   const { skipA11y = false, ...screenshotOptions } = options
 
-  // Force layout recalculation for tablet viewports without invalid casting
-  await target.evaluate(() => window.scrollTo(0, 0))
+  const page = 'page' in target ? target.page() : (target as Page)
+  const isLocator = 'page' in target
+
+  // Only scroll the window if the target is the full Page.
+  // Scrolling can cause MUI Popovers/Menus (Locators) to immediately close/detach.
+  if (!isLocator) {
+    await page.evaluate(() => window.scrollTo(0, 0))
+  }
 
   if (!skipA11y) {
     await checkAccessibility(target)
   }
 
-  const page = 'page' in target ? target.page() : (target as Page)
-
-  // Force layout recalculation for tablet viewports (and general stability)
-  await page.evaluate(() => window.scrollTo(0, 0))
+  if (!isLocator) {
+    await page.evaluate(() => window.scrollTo(0, 0))
+  }
 
   // Ensure the height is stable if it's a Locator
-  if ('page' in target) {
+  if (isLocator) {
     await expect(target).toHaveJSProperty(
       'scrollHeight',
       await target.evaluate((node) => node.scrollHeight),
@@ -68,8 +72,6 @@ export async function takeScreenshot(
     )
   }
 
-  await expect(target).toHaveScreenshot(snapshotName, {
-  const isLocator = 'scrollIntoViewIfNeeded' in target
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
@@ -173,7 +175,7 @@ export async function takeDashboardScreenshot(
       ...getHrMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
-      page.getByTestId('workout-table-viewer'),
+      page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
     ],
     maxDiffPixelRatio: 0.08, // Higher tolerance for font rendering in CI
