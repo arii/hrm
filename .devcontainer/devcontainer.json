@@ -2,8 +2,7 @@
   "name": "HRM Development Environment",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/jq:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "forwardPorts": [3000, 8080, 9229],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
