@@ -350,22 +350,25 @@ export async function generateContentWithFallback({
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
-      const isNotFound = errorMessage.includes('404') || errorStatus === 404
-      const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
-      const isRateLimited = errorMessage.includes('429') || errorStatus === 429
+      const RETRIABLE_MAP: Record<number, string> = {
+        400: 'Invalid Request',
+        404: 'Not Found',
+        429: 'Rate Limited',
+        500: 'Infrastructure Issue',
+        503: 'Infrastructure Issue',
+      }
 
-      if (isNotFound || isBadRequest || isRateLimited) {
-        let reason = 'Unknown Error'
-        if (isRateLimited) {
-          reason = 'Rate Limited'
-        } else if (isNotFound) {
-          reason = 'Not Found'
-        } else if (isBadRequest) {
-          reason = 'Invalid Request'
-        }
-        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
+      const retriableCode =
+        Object.keys(RETRIABLE_MAP)
+          .map(Number)
+          .find(
+            (code) => errorStatus === code || errorMessage.includes(String(code))
+          )
+
+      if (retriableCode) {
+        const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
         console.warn(
-          `Model ${modelName} failed (${reason}${details}). Trying next model...`
+          `Model ${modelName} failed (${reason}: ${errorMessage}). Trying next model...`
         )
         continue
       }
