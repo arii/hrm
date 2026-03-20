@@ -158,7 +158,7 @@ describe('useBluetoothHRM Race Conditions', () => {
 
     await act(async () => {
       await expect(firstPromise).resolves.toBe(true)
-      await expect(secondPromise).resolves.toBe(false)
+      await expect(secondPromise).rejects.toThrow('Already connecting')
     })
 
     expect(mockGattConnect).toHaveBeenCalledTimes(1)

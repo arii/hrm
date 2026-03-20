@@ -28,8 +28,6 @@ import {
 } from '@/utils/bluetoothStorage'
 import { HEARTBEAT_INTERVAL_MS } from '@/constants/bluetooth-reconnection'
 
-const connectionLock = { current: false }
-
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
@@ -101,6 +99,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
+  const connectionLock = useRef(false)
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -602,7 +601,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         setSavedDevice(device)
         saveDeviceId(device.id)
-        isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
         onConnectRef.current?.()
         return true
@@ -639,7 +637,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             clearTimeout(reconnectTimeoutRef.current)
           reconnectTimeoutRef.current = setTimeout(() => {
             isManualDisconnect.current = true
-            isTimeoutDisconnect.current = false
             if (abortControllerRef.current) {
               abortControllerRef.current.abort()
             }
@@ -688,11 +685,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         logger.warn(
           'connectAndStream called while already connecting. Skipping.'
         )
-        return false
+        return Promise.reject(new Error('Already connecting'))
       }
 
       connectionLock.current = true
       const { silent = false } = options
+
       try {
         userDetailsRef.current = {
           name: userNameFromArgs || userName || '',

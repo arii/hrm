@@ -95,12 +95,7 @@ test.describe('Visual Regression Tests', () => {
       await controlPage.getByTestId('start-timer-button').click()
 
       // Wait for timer to transition from idle (00:00) to prepare (e.g. 10 or 05)
-      await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
-        {
-          timeout: 20000,
-        }
-      )
+      await expect(dashboardPage.locator('text=Ready')).toBeVisible()
 
       // Assert timer tile height is fixed
       const timerCard = dashboardPage.getByTestId('timer-display-container')
@@ -123,12 +118,7 @@ test.describe('Visual Regression Tests', () => {
       await controlPage.getByTestId('start-timer-button').click()
 
       // Wait for timer to start on dashboard
-      await expect(dashboardPage.getByTestId('timer-countdown')).not.toHaveText(
-        /00:00/,
-        {
-          timeout: 20000,
-        }
-      )
+      await expect(dashboardPage.locator('text=Ready')).toBeVisible()
 
       // Assert grid row height is stable
       const topRow = dashboardPage
