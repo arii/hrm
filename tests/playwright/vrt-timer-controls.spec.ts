@@ -97,7 +97,6 @@ test.describe('Visual Regression Tests', () => {
       await expect(controlPage.getByTestId('work-duration-input')).toBeHidden()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
-        maxDiffPixelRatio: 0.3,
         // Performance: Skip a11y check for alternate mode; main mode is fully covered
         skipA11y: true,
       })
