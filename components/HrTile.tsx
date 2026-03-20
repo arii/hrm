@@ -122,7 +122,6 @@ const HrTile = ({
   zone = 'ZONE_0',
   calories = 0,
   isConnected = true,
-  isDataStale = false,
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
@@ -135,9 +134,7 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : isDataStale
-        ? 'Waiting for data...'
-        : `Name: ${name}, BPM: ${value ?? '---'}, Kcal: ${calories}, % Max HR: ${percentage}%`
+      : `Name: ${name}, BPM: ${value ?? '---'}, Kcal: ${calories}, % Max HR: ${percentage}%`
 
   const showName = !isGenericName(name)
 
@@ -176,7 +173,7 @@ const HrTile = ({
           position: 'relative',
           overflow: 'hidden',
           padding: 0,
-          opacity: isConnected && !isDataStale ? 1 : 0.6,
+          opacity: isConnected ? 1 : 0.6,
           transition: theme.transitions.create('opacity', {
             duration: theme.transitions.duration.short,
           }),
