@@ -11,7 +11,7 @@ import type {
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
 
-import { MOCK_IMAGE, mockSpotifyAccessToken } from './setup'
+import { MOCK_IMAGE } from './setup'
 
 const STABLE_WORKOUT_HTML = `
   <!DOCTYPE html>
@@ -188,4 +188,3 @@ export async function mockSpotifyPlaylists(
     })
   })
 }
-
