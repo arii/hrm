@@ -43,6 +43,12 @@ test.describe('Visual Regression Tests', () => {
   test.afterEach(async () => {
     // Ensure timer is stopped after each test to maintain a clean state
     await stopTimer(controlPage, dashboardPage)
+
+    // Stop mock HR stream to prevent websocket leaks and networkidle timeouts
+    const stopStreamingBtn = mockPage.locator('button:has-text("STOP Streaming")')
+    if (await stopStreamingBtn.isVisible()) {
+      await stopStreamingBtn.click()
+    }
   })
 
   test.beforeEach(async ({ request }) => {
