@@ -77,7 +77,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
-  const [isDataStale, setIsDataStale] = useState(false)
   const [signalPeriodMs, setSignalPeriodMs] = useState(0)
   const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
   const [connectionAttempted, setConnectionAttempted] = useState(false)
@@ -179,7 +178,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     const interval = setInterval(() => {
       if (
         statusRef.current === BluetoothConnectionStatus.CONNECTED &&
-        !isDataStale &&
         lastDataTime.current > 0
       ) {
         const now = Date.now()
@@ -222,29 +220,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ) {
           const timeSinceLastData = Date.now() - lastDataTime.current
 
-          if (timeSinceLastData > dataLivenessTimeoutMs && !isDataStale) {
-            setIsDataStale(true)
+          if (timeSinceLastData > dataLivenessTimeoutMs) {
             setStatus(BluetoothConnectionStatus.RECONNECTING)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
             isTimeoutDisconnect.current = true
             if (deviceRef.current?.gatt) deviceRef.current.gatt.disconnect()
-          } else if (
-            timeSinceLastData <= dataLivenessTimeoutMs &&
-            isDataStale
-          ) {
-            setIsDataStale(false)
           }
         }
       }
     }, heartbeatInterval)
 
     return () => clearInterval(interval)
-  }, [
-    dataLivenessTimeoutMs,
-    isDataStale,
-    updateSignalPeriod,
-    heartbeatInterval,
-  ])
+  }, [dataLivenessTimeoutMs, updateSignalPeriod, heartbeatInterval])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
@@ -567,7 +554,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         await characteristic.startNotifications()
-        setIsDataStale(false)
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
@@ -874,7 +860,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     deviceStatus,
     batteryLevel,
     isConnected: status === BluetoothConnectionStatus.CONNECTED,
-    isDataStale,
     isSupported, // Export this flag
     signalPeriodMs,
     lastPeriodMs: signalStatus.last,
