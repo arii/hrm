@@ -57,7 +57,7 @@ jobs:
         with:
           ref: ${{ env.SOURCE }}
           fetch-depth: 0
-          token: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Validate branches
         id: validate_branches
@@ -118,8 +118,7 @@ jobs:
       - name: Trigger Gemini Orchestrator
         if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
         env:
-          # Use CI_BOT_PAT if available to ensure workflow is triggered (GITHUB_TOKEN prevents recursion)
-          GH_TOKEN: ${{ secrets.CI_BOT_PAT || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ steps.commit_push.outputs.resolved_sha }}
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
         run: |
