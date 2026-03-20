@@ -148,14 +148,12 @@ export async function navigateAndWait(
 }
 
 /**
- * Aggressively disable animations, transitions, and scrollbars to ensure
- * pixel-perfect screenshots for visual regression testing.
- *
- * @param page - The Playwright Page object
+ * Aggressively disable animations, transitions, and scrollbars.
  */
 export async function freezeUIForVRT(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const style = document.createElement('style')
+    style.id = 'vrt-freeze-styles'
     style.textContent = `
       *, *::before, *::after {
         transition: none !important;
@@ -176,30 +174,6 @@ export async function freezeUIForVRT(page: Page): Promise<void> {
       }
     `
     document.head.appendChild(style)
-  })
-
-  // Also apply via addStyleTag for cases where the page is already loaded
-  // or for elements that might be injected later.
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      body, html, * {
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
-      }
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
-      [data-testid="main-content-layout"] {
-        opacity: 1 !important;
-        transform: none !important;
-      }
-    `,
   })
 }
 
@@ -416,9 +390,7 @@ export const MOCK_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
 
 /**
- * Mocks the NextAuth session to simulate a logged-in user.
- *
- * @param context - The Playwright BrowserContext object.
+ * Mocks the NextAuth session.
  */
 export async function mockLoggedInSession(
   context: BrowserContext

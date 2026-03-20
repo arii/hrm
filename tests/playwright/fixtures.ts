@@ -19,17 +19,11 @@ type PageFixtures = {
 }
 
 export const test = base.extend<PageFixtures>({
-  dashboardPage: async ({ browser, request }, use) => {
-    const context = await browser.newContext()
+  dashboardPage: async ({ context, request }, use) => {
     const page = await context.newPage()
 
-    // 1. Setup: Guarantee NextAuth.js session state
     await mockLoggedInSession(context)
-
-    // 2. Setup: Purge Express/WebSocket server state
     await resetServerState(request)
-
-    // 3. Freeze Material-UI animations and native scrollbars globally
     await freezeUIForVRT(page)
 
     page.on('console', (msg) => {
@@ -46,24 +40,16 @@ export const test = base.extend<PageFixtures>({
     })
 
     await use(page)
-
-    // Teardown
-    await context.close()
   },
 
-  controlPage: async ({ browser }, use) => {
-    const context = await browser.newContext()
+  controlPage: async ({ context }, use) => {
     const page = await context.newPage()
 
-    // Auth mock applies here as well
     await mockLoggedInSession(context)
-
-    // Freeze animations
     await freezeUIForVRT(page)
 
     await use(page)
 
-    // Teardown: Safely kill active timer broadcasts on the WebSocket connection
     try {
       await stopTimer(page)
     } catch (error) {
@@ -72,35 +58,24 @@ export const test = base.extend<PageFixtures>({
         error
       )
     }
-    await context.close()
   },
 
-  mockPage: async ({ browser }, use) => {
-    const context = await browser.newContext()
+  mockPage: async ({ context }, use) => {
     const page = await context.newPage()
 
-    // Auth mock applies here as well
     await mockLoggedInSession(context)
-
-    // Freeze animations
     await freezeUIForVRT(page)
 
     await use(page)
-    await context.close()
   },
 
-  connectPage: async ({ browser }, use) => {
-    const context = await browser.newContext()
+  connectPage: async ({ context }, use) => {
     const page = await context.newPage()
 
-    // Auth mock applies here as well
     await mockLoggedInSession(context)
-
-    // Freeze animations
     await freezeUIForVRT(page)
 
     await use(page)
-    await context.close()
   },
 })
 
