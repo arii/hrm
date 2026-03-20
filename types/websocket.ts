@@ -44,7 +44,6 @@ export interface ConnectedHrmData extends HrmData {
  * Includes derived state for staleness and alerts.
  */
 export interface ClientHrmData extends ConnectedHrmData {
-  isDataStale: boolean
   isAlerting: boolean
   alertMessage?: string
 }
