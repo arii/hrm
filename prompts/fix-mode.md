@@ -24,6 +24,24 @@ The CI pipeline has failed. Your ONLY goal is to diagnose the failure and provid
 2.  **Diagnose**: Why did it fail? (e.g., type error, test timeout, missing mock).
 3.  **Fix**: Provide a concrete code fix.
 
+### VRT Failure Guardrails (Apply when failure is visual regression related)
+
+1. Do not raise `maxDiffPixelRatio` as the first fix.
+2. Keep baseline `maxDiffPixelRatio: 0.1`; allow up to `0.15` only with explicit dynamic-capture justification.
+3. Treat `maxDiffPixelRatio > 0.15` as a policy violation unless exceptional rationale is provided.
+4. Keep screenshot defaults aligned with `threshold: 0.2` and `scale: 'css'`.
+5. Reject sleep-based stabilization (`waitForTimeout(...)`); prefer deterministic readiness checks:
+
+- `await page.evaluateHandle(() => document.fonts.ready)`
+- `await page.waitForLoadState('networkidle')`
+- explicit UI assertions (`toBeVisible`, `toHaveCSS`, `toHaveText`)
+- layout read (`await page.evaluate(() => document.body.offsetHeight)`)
+
+6. For responsive captures, require explicit viewport lock and width convergence checks.
+7. Prefer dynamic masking (`getDynamicContentMasks`, `getHrMasks`) over tolerance inflation.
+8. For portal-based locator captures, avoid full-page scroll side effects and use `skipA11y: true` only with rationale.
+9. Ensure deterministic lifecycle handling in stateful suites (`resetServerState(request)` and teardown hooks such as `stopTimer(...)`).
+
 ### Output Format
 
 Return a JSON object:
