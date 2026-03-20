@@ -383,11 +383,14 @@ export async function stopTimer(
   controlPage: Page,
   dashboardPage?: Page
 ): Promise<void> {
-  const stopButton = controlPage.getByTestId('stop-timer-button')
+  const stopButton = controlPage.getByRole('button', {
+    name: 'STOP',
+    exact: true,
+  })
 
   try {
-    // Ensure the button is actually visible/clickable before attempting to stop
-    if (await stopButton.isVisible()) {
+    // If timer is running, stop it
+    if (await stopButton.isVisible({ timeout: 2000 })) {
       await stopButton.click()
 
       // Wait for START button to confirm timer stopped
