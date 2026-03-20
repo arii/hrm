@@ -37,6 +37,23 @@ Security and Performance: Ensure the refactored code is performant, especially f
   - Use data factories or mock data generators for all tests to ensure consistency and readability.
   - Use ARIA labels and `data-testid` attributes for easier and more reliable testing of UI components.
 
+- **Playwright VRT Review Standards (Critical):**
+  - Treat `maxDiffPixelRatio: 0.1` as the baseline for standard snapshots.
+  - Allow up to `maxDiffPixelRatio: 0.15` only for clearly justified dynamic/complex captures (for example dense chart + HR overlays).
+  - Do not approve or suggest `maxDiffPixelRatio > 0.15` as a stabilization tactic.
+  - Keep `threshold: 0.2` and `scale: 'css'` in shared screenshot defaults.
+  - Reject arbitrary sleep-based stabilization (`waitForTimeout(...)`); require deterministic checks instead:
+    - `await page.evaluateHandle(() => document.fonts.ready)`
+    - `await page.waitForLoadState('networkidle')`
+    - explicit state assertions (`toBeVisible`, `toHaveCSS`, `toHaveText`)
+    - layout read/reflow (`await page.evaluate(() => document.body.offsetHeight)`)
+  - For responsive snapshots, require explicit viewport convergence checks:
+    - `await page.setViewportSize({ width, height })`
+    - `await page.waitForFunction((w) => document.body.clientWidth === w, width)`
+  - Prefer dynamic masking helpers (`getDynamicContentMasks`, `getHrMasks`) over raising thresholds.
+  - For portal-based targets (MUI menus/popovers/modals), avoid full-page scroll side effects on locator screenshots and allow `skipA11y: true` only with a brief rationale.
+  - In stateful VRT suites, require deterministic lifecycle handling (`resetServerState(request)` in setup and teardown hooks such as `stopTimer(...)` in `afterEach`).
+
 Output Format:
 
 Explanation: Start with a section titled Improvements: containing a concise, technical explanation of what was improved and why, with specific references to the modern features used (e.g., "Improved data transformation using array spread for guaranteed immutability and used optional chaining for safe access to the nested session.data object.").

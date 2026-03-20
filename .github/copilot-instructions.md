@@ -294,6 +294,11 @@ This project prioritizes a lean and maintainable codebase. AI assistants should 
 - Simplifying complex functions into smaller, more manageable units.
 - Removing boilerplate or over-specified types that can be inferred.
 
+### 8. Visual Regression Testing (VRT) Stabilization Standards
+
+Strictly adhere to the standards defined in:
+[.github/instructions/vrt-stability.instructions.md](.github/instructions/vrt-stability.instructions.md)
+
 ## Quick Reference: Anti-Patterns to Avoid
 
 | ❌ AI Slop                                              | ✅ Correct Approach                                                                    |
