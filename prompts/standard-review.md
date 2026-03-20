@@ -115,6 +115,22 @@ You are a senior software engineer. Your goal is to provide a high-signal, low-n
 3.  **Performance**: Look for N+1 queries, unnecessary re-renders, or memory leaks.
 4.  **Maintainability**: Is the code readable? D.R.Y.? suitably typed?
 
+### 2.1 VRT-Specific Review Policy (When Playwright visual tests are touched)
+
+- Enforce baseline `maxDiffPixelRatio: 0.1`.
+- Allow at most `maxDiffPixelRatio: 0.15` only for documented dynamic/complex captures.
+- Treat `maxDiffPixelRatio > 0.15` as a review issue unless there is exceptional, explicit rationale.
+- Ensure shared screenshot behavior keeps `threshold: 0.2` and `scale: 'css'`.
+- Reject sleep-based stabilization (`waitForTimeout(...)`) and require deterministic checks:
+  - `document.fonts.ready`
+  - `page.waitForLoadState('networkidle')`
+  - explicit `toBeVisible` / `toHaveCSS` / `toHaveText` assertions
+  - layout read (`document.body.offsetHeight`)
+- For responsive snapshots, require explicit viewport setup and width convergence checks (`document.body.clientWidth`).
+- Prefer dynamic masks (`getDynamicContentMasks`, `getHrMasks`) over threshold increases.
+- For portal captures (MUI menu/popover/modal), avoid full-page scroll side effects on locator screenshots and allow `skipA11y: true` only with rationale.
+- In stateful suites, require deterministic setup/teardown (for example `resetServerState(request)` and timer teardown hooks).
+
 ### 3. Feedback Style
 
 - **Actionable**: Suggest specific code changes with examples.

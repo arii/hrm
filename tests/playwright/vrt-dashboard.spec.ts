@@ -112,13 +112,10 @@ test.describe('Visual Regression Tests', () => {
         maxHeight: 600,
       })
 
-      // Allow visual transitions to settle
-      await dashboardPage.waitForTimeout(500)
-
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.3,
+        maxDiffPixelRatio: 0.1,
       })
     })
 
@@ -144,13 +141,10 @@ test.describe('Visual Regression Tests', () => {
         maxHeight: 600,
       })
 
-      // Give time for layout/animation to settle
-      await dashboardPage.waitForTimeout(500)
-
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.3, // Higher threshold for complex combined state
+        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
     })
 
