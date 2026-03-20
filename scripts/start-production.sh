@@ -19,8 +19,8 @@ echo "🚀 Starting production server from $(pwd)..."
 
 export NODE_ENV=production
 
-# Load secrets strictly for the process scope
-if [ -f .env.production ]; then
+# Load secrets strictly for the process scope (skip in test mode to respect Playwright vars)
+if [ -f .env.production ] && [ "$TESTING" != "true" ]; then
   echo "📄 Loading .env.production..."
   set -a
   source .env.production
