@@ -4,7 +4,6 @@ import {
   getDynamicContentMasks,
   setupVisualRegressionTest,
   resetServerState,
-  mockLoggedInSession,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
@@ -46,8 +45,6 @@ test.describe('Visual Regression Tests', () => {
       'https://sdk.scdn.co/spotify-player.js',
       (route) => route.abort()
     )
-
-    await mockLoggedInSession(context)
 
     await resetServerState(request)
 

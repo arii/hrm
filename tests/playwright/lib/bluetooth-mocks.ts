@@ -3,6 +3,11 @@ import { Page } from '@playwright/test'
 
 export const injectBluetoothMocks = async (page: Page) => {
   await page.addInitScript(() => {
+    window.__TEST_CONTROLS__ = window.__TEST_CONTROLS__ || {
+      setHrmStatus: () => {},
+      setCustomHrmStatusMessage: () => {},
+    }
+
     // 2. Internal State for the Mock
     const _pairedDevices: MockBluetoothDevice[] = []
     let _connectedDevice: MockBluetoothDevice | null = null
