@@ -26,7 +26,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     try {
       setLoading(true)
       const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=50`
+        `/api/spotify/playlists/${playlistId}/tracks?limit=50`
       )
       if (!response.ok) {
         const errorData = await response.json()
