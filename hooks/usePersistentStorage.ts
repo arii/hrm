@@ -37,54 +37,60 @@ function usePersistentStorage<T>(
 ) {
   const { enableCookieFallback = false } = options
 
-  // Read value once during initialization
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') return initialValue
-
-    try {
-      const isLocalAvailable = checkLocalStorage()
-      // Use cookies only if localStorage is unavailable AND fallback is enabled
-      const useCookie = !isLocalAvailable && enableCookieFallback
-
-      let item: string | undefined | null = null
-
-      if (isLocalAvailable) {
-        item = window.localStorage.getItem(key)
-      } else if (useCookie) {
-        item = Cookies.get(key)
-      }
-
-      if (item) {
-        const parsed = JSON.parse(item)
-
-        if (isPlainObject(parsed) && isPlainObject(initialValue)) {
-          const merged = { ...initialValue, ...parsed } as T
-          // Sync merged value back to storage if using localStorage
-          if (isLocalAvailable) {
-            window.localStorage.setItem(key, JSON.stringify(merged))
-          }
-          return merged
-        }
-        return parsed
-      }
-    } catch (error) {
-      console.error(
-        `Error reading or parsing persistent storage key “${key}”`,
-        error
-      )
-    }
-    return initialValue
-  })
+  // Initialize state with initialValue to avoid hydration mismatches.
+  // The actual stored value will be loaded in a useEffect after mounting.
+  const [storedValue, setStoredValue] = useState<T>(initialValue)
 
   // Use refs to avoid unnecessary re-renders or effect loops
   const initialValueRef = useRef(initialValue)
   const keyRef = useRef(key)
-  const isMounted = useRef(false)
+  const isHydrated = useRef(false)
 
-  // Handle key changes or external initialValue changes
+  // Handle hydration and key/initialValue changes
   useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true
+    const isLocalAvailable = checkLocalStorage()
+    const useCookie = !isLocalAvailable && enableCookieFallback
+
+    const loadFromStorage = () => {
+      try {
+        let item: string | undefined | null = null
+        if (isLocalAvailable) {
+          item = window.localStorage.getItem(key)
+        } else if (useCookie) {
+          item = Cookies.get(key)
+        }
+
+        if (item) {
+          const parsed = JSON.parse(item)
+          let valueToUse = parsed
+
+          if (isPlainObject(parsed) && isPlainObject(initialValue)) {
+            const merged = { ...initialValue, ...parsed } as T
+            valueToUse = merged
+
+            if (isLocalAvailable) {
+              window.localStorage.setItem(key, JSON.stringify(merged))
+            }
+          }
+
+          setStoredValue((current) => {
+            if (JSON.stringify(valueToUse) !== JSON.stringify(current)) {
+              return valueToUse
+            }
+            return current
+          })
+        }
+      } catch (error) {
+        console.error(
+          `Error reading or parsing persistent storage key “${key}”`,
+          error
+        )
+      }
+    }
+
+    if (!isHydrated.current) {
+      isHydrated.current = true
+      loadFromStorage()
       return
     }
 
@@ -93,59 +99,10 @@ function usePersistentStorage<T>(
     const initialValueChanged =
       JSON.stringify(initialValueRef.current) !== JSON.stringify(initialValue)
 
-    if (!keyChanged && !initialValueChanged) return
-
-    keyRef.current = key
-    initialValueRef.current = initialValue
-
-    if (typeof window === 'undefined') return
-
-    try {
-      const isLocalAvailable = checkLocalStorage()
-      const useCookie = !isLocalAvailable && enableCookieFallback
-
-      let item: string | undefined | null = null
-
-      if (isLocalAvailable) {
-        item = window.localStorage.getItem(key)
-      } else if (useCookie) {
-        item = Cookies.get(key)
-      }
-
-      if (item) {
-        const parsed = JSON.parse(item)
-        let valueToUse = parsed
-
-        if (isPlainObject(parsed) && isPlainObject(initialValue)) {
-          const merged = { ...initialValue, ...parsed } as T
-          valueToUse = merged
-
-          if (isLocalAvailable) {
-            window.localStorage.setItem(key, JSON.stringify(merged))
-          }
-        }
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setStoredValue((current) => {
-          if (JSON.stringify(valueToUse) !== JSON.stringify(current)) {
-            return valueToUse
-          }
-          return current
-        })
-      } else {
-        // If no item in storage, use initialValue
-        setStoredValue((current) => {
-          if (JSON.stringify(initialValue) !== JSON.stringify(current)) {
-            return initialValue
-          }
-          return current
-        })
-      }
-    } catch (error) {
-      console.error(
-        `Error reading or parsing persistent storage key “${key}”`,
-        error
-      )
+    if (keyChanged || initialValueChanged) {
+      keyRef.current = key
+      initialValueRef.current = initialValue
+      loadFromStorage()
     }
   }, [key, initialValue, enableCookieFallback])
 

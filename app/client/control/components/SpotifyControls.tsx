@@ -43,6 +43,10 @@ const SpotifyControls = () => {
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
+  const [optimisticIsPlaying, setOptimisticIsPlaying] = useState<
+    boolean | null
+  >(null)
+  const playbackGraceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const hrmDevice = useMemo(
     () =>
@@ -198,11 +202,51 @@ const SpotifyControls = () => {
         command === 'NEXT' ||
         command === 'PREVIOUS'
       ) {
+        // Optimistic UI update for Play/Pause
+        if (command === 'PLAY') {
+          setOptimisticIsPlaying(true)
+        } else if (command === 'PAUSE') {
+          setOptimisticIsPlaying(false)
+        }
+
+        // Clear existing timer if any
+        if (playbackGraceTimerRef.current) {
+          clearTimeout(playbackGraceTimerRef.current)
+        }
+
+        // Set a timer to clear optimistic state after a grace period (2.5s)
+        // This ensures the UI snaps back to reality if the command fails OR
+        // stays in state until the next poll cycle confirms it.
+        playbackGraceTimerRef.current = setTimeout(() => {
+          setOptimisticIsPlaying(null)
+          playbackGraceTimerRef.current = null
+        }, 2500)
+
         sendSpotifyCommand(command)
       }
     },
     [sendSpotifyCommand]
   )
+
+  // Clear optimistic state when the actual state matches our intent
+  useEffect(() => {
+    if (optimisticIsPlaying === spotifyData.playback.is_playing) {
+      setOptimisticIsPlaying(null)
+      if (playbackGraceTimerRef.current) {
+        clearTimeout(playbackGraceTimerRef.current)
+        playbackGraceTimerRef.current = null
+      }
+    }
+  }, [spotifyData.playback.is_playing, optimisticIsPlaying])
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (playbackGraceTimerRef.current) {
+        clearTimeout(playbackGraceTimerRef.current)
+      }
+    }
+  }, [])
 
   const handleVolumeChange = useCallback(
     (val: number) => {
@@ -315,7 +359,11 @@ const SpotifyControls = () => {
             </Box>
 
             <PlaybackControls
-              isPlaying={spotifyData.playback.is_playing}
+              isPlaying={
+                optimisticIsPlaying !== null
+                  ? optimisticIsPlaying
+                  : spotifyData.playback.is_playing
+              }
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />

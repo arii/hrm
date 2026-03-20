@@ -54,7 +54,19 @@ export const migratePreferences = (stored: unknown): UserPreferences => {
       storedVal !== null &&
       (isTypeMatch || isNullableField)
     ) {
-      ;(acc as Record<string, unknown>)[k] = storedVal
+      let valueToStore = storedVal
+      // Ensure numeric fields are actually numbers
+      if (
+        (k === 'userAge' || k === 'userWeight' || k === 'userHeight') &&
+        typeof storedVal === 'string' &&
+        storedVal !== ''
+      ) {
+        const num = parseFloat(storedVal)
+        if (!isNaN(num)) {
+          valueToStore = num
+        }
+      }
+      ;(acc as Record<string, unknown>)[k] = valueToStore
     }
     return acc
   }, {} as Partial<UserPreferences>)
