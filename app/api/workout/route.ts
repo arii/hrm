@@ -13,6 +13,16 @@ export async function GET(request: Request) {
     )
   }
 
+  // Prevent hitting real Google Docs in tests
+  if (
+    process.env.TESTING === 'true' ||
+    process.env.NEXT_PUBLIC_TESTING === 'true'
+  ) {
+    return NextResponse.json({
+      headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
+    })
+  }
+
   try {
     // NOTE: The Google Doc must be shared as "Anyone with the link can view"
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`
