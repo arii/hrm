@@ -296,32 +296,8 @@ This project prioritizes a lean and maintainable codebase. AI assistants should 
 
 ### 8. Visual Regression Testing (VRT) Stabilization Standards
 
-When working in Playwright VRT files, prioritize deterministic rendering and root-cause fixes over tolerance inflation.
-
-**NEVER suggest:**
-
-- Raising `maxDiffPixelRatio` as the first response to failing snapshots.
-- Using arbitrary sleeps (for example `waitForTimeout(500)` or `waitForTimeout(1000)`) for stabilization.
-- Masking stable layout regions to suppress legitimate visual regressions.
-
-**ALWAYS do:**
-
-- Keep baseline `maxDiffPixelRatio: 0.1` for standard captures.
-- Use at most `maxDiffPixelRatio: 0.15` for explicitly justified dynamic/complex captures (for example dense chart+HR overlays).
-- Keep `threshold: 0.2` and `scale: 'css'` in shared screenshot defaults.
-- Prefer deterministic readiness checks:
-  - `await page.evaluateHandle(() => document.fonts.ready)`
-  - `await page.waitForLoadState('networkidle')`
-  - explicit state assertions (`toBeVisible`, `toHaveCSS`, `toHaveText`)
-  - layout reads (`await page.evaluate(() => document.body.offsetHeight)`)
-- For responsive captures, set viewport explicitly and wait for width convergence:
-  - `await page.setViewportSize({ width, height })`
-  - `await page.waitForFunction((w) => document.body.clientWidth === w, width)`
-- Mask truly dynamic text/content through shared helpers (`getDynamicContentMasks`, `getHrMasks`) rather than increasing thresholds.
-- For MUI portal targets (menus/popovers/modals), avoid full-page scroll side effects on locator screenshots and allow `skipA11y: true` with rationale when portal detachment causes axe false positives.
-- Enforce deterministic state lifecycle:
-  - `resetServerState(request)` where shared server state can leak
-  - teardown hooks (for example `stopTimer(...)` in `afterEach`) for timer-driven specs
+Strictly adhere to the standards defined in:
+[.github/instructions/vrt-stability.instructions.md](.github/instructions/vrt-stability.instructions.md)
 
 ## Quick Reference: Anti-Patterns to Avoid
 
