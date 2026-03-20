@@ -58,8 +58,13 @@ export default function WorkoutTableHeader({
   const renderContent = () => {
     if (loading) {
       return (
-        <Box display="flex" justifyContent="center" p={4}>
-          <CircularProgress />
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          sx={{ minHeight: 57 }} // Perfectly mirrors the final TableHead minimum row height to prevent Cumulative Layout Shift
+        >
+          <CircularProgress size={24} />
         </Box>
       )
     }
