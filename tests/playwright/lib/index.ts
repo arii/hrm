@@ -111,6 +111,9 @@ export {
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,
+  freezeUIForVRT,
+  mockLoggedInSession,
+  mockSpotifyAccessToken,
   // Timer utilities
   stopTimer,
   configureTimer,
@@ -137,8 +140,6 @@ export {
   mockGoogleDocIframe,
   mockMultipleHrDevices,
   mockSpotifyPlaybackState,
-  mockLoggedInSession,
-  mockSpotifyAccessToken,
   mockSpotifyPlaylists,
 } from './mocks'
 

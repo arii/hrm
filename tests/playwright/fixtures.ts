@@ -4,6 +4,12 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
+import {
+  mockLoggedInSession,
+  resetServerState,
+  freezeUIForVRT,
+  stopTimer,
+} from './lib'
 
 type PageFixtures = {
   dashboardPage: Page
@@ -13,8 +19,19 @@ type PageFixtures = {
 }
 
 export const test = base.extend<PageFixtures>({
-  dashboardPage: async ({ context }, applyFixture) => {
+  dashboardPage: async ({ browser, request }, use) => {
+    const context = await browser.newContext()
     const page = await context.newPage()
+
+    // 1. Setup: Guarantee NextAuth.js session state
+    await mockLoggedInSession(context)
+
+    // 2. Setup: Purge Express/WebSocket server state
+    await resetServerState(request)
+
+    // 3. Freeze Material-UI animations and native scrollbars globally
+    await freezeUIForVRT(page)
+
     page.on('console', (msg) => {
       const text = msg.text()
       // Filter out expected noise
@@ -27,22 +44,63 @@ export const test = base.extend<PageFixtures>({
 
       console.log(`Console ${msg.type()}: ${text}`)
     })
-    await applyFixture(page)
+
+    await use(page)
+
+    // Teardown
+    await context.close()
   },
 
-  controlPage: async ({ context }, applyFixture) => {
+  controlPage: async ({ browser }, use) => {
+    const context = await browser.newContext()
     const page = await context.newPage()
-    await applyFixture(page)
+
+    // Auth mock applies here as well
+    await mockLoggedInSession(context)
+
+    // Freeze animations
+    await freezeUIForVRT(page)
+
+    await use(page)
+
+    // Teardown: Safely kill active timer broadcasts on the WebSocket connection
+    try {
+      await stopTimer(page)
+    } catch (error) {
+      console.warn(
+        'Failed to stop timer during teardown, WS state may linger:',
+        error
+      )
+    }
+    await context.close()
   },
 
-  mockPage: async ({ context }, applyFixture) => {
+  mockPage: async ({ browser }, use) => {
+    const context = await browser.newContext()
     const page = await context.newPage()
-    await applyFixture(page)
+
+    // Auth mock applies here as well
+    await mockLoggedInSession(context)
+
+    // Freeze animations
+    await freezeUIForVRT(page)
+
+    await use(page)
+    await context.close()
   },
 
-  connectPage: async ({ context }, applyFixture) => {
+  connectPage: async ({ browser }, use) => {
+    const context = await browser.newContext()
     const page = await context.newPage()
-    await applyFixture(page)
+
+    // Auth mock applies here as well
+    await mockLoggedInSession(context)
+
+    // Freeze animations
+    await freezeUIForVRT(page)
+
+    await use(page)
+    await context.close()
   },
 })
 

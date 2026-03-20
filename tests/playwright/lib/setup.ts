@@ -142,6 +142,44 @@ export async function navigateAndWait(
   }
 
   // Stabilize VRT by disabling animations, transitions, and backdrop filters
+  await freezeUIForVRT(page)
+
+  await waitForPageReady(page)
+}
+
+/**
+ * Aggressively disable animations, transitions, and scrollbars to ensure
+ * pixel-perfect screenshots for visual regression testing.
+ *
+ * @param page - The Playwright Page object
+ */
+export async function freezeUIForVRT(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+      body, html, * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+      }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
+      [data-testid="main-content-layout"] {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    `
+    document.head.appendChild(style)
+  })
+
+  // Also apply via addStyleTag for cases where the page is already loaded
+  // or for elements that might be injected later.
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
@@ -163,8 +201,6 @@ export async function navigateAndWait(
       }
     `,
   })
-
-  await waitForPageReady(page)
 }
 
 /**
@@ -370,6 +406,63 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     },
     { timeout: 10000 }
   )
+}
+
+/**
+ * A consistent, offline-safe 1x1 transparent PNG image for VRT.
+ * Prevents flaky tests caused by external placeholder services.
+ */
+export const MOCK_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
+
+/**
+ * Mocks the NextAuth session to simulate a logged-in user.
+ *
+ * @param context - The Playwright BrowserContext object.
+ */
+export async function mockLoggedInSession(
+  context: BrowserContext
+): Promise<void> {
+  // Mock the session endpoint
+  await context.route('**/api/auth/session', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: {
+          name: 'Test User',
+          email: 'test@example.com',
+          image: MOCK_IMAGE,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        accessToken: 'mock-access-token',
+      }),
+    })
+  })
+
+  // Mock the Spotify access token endpoint as it's required for the control panel
+  await mockSpotifyAccessToken(context)
+}
+
+/**
+ * Mocks the Spotify access token endpoint.
+ *
+ * @param context - The Playwright BrowserContext object.
+ * @param accessToken - The mock access token to return.
+ */
+export async function mockSpotifyAccessToken(
+  context: BrowserContext,
+  accessToken: string = 'mock-spotify-access-token'
+): Promise<void> {
+  await context.route('**/api/spotify/access-token', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        accessToken,
+      }),
+    })
+  })
 }
 
 /**
