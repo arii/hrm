@@ -116,12 +116,9 @@ function usePersistentStorage<T>(
       if (item) {
         loadFromStorage()
       } else {
-        setStoredValue((current) => {
-          if (!isEqual(initialValue, current)) {
-            return initialValue
-          }
-          return current
-        })
+        // Safe to call setStoredValue here because the effect body executes once when dependencies change
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStoredValue(initialValue)
       }
     }
   }, [key, initialValue, enableCookieFallback])
