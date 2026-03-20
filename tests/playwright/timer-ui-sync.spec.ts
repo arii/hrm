@@ -83,6 +83,7 @@ test.describe('Timer UI Synchronization', () => {
     page,
   }) => {
     await disconnectWebSocket(page)
+    await page.waitForTimeout(500)
     await dispatchServerMessage(page, {
       type: 'TIMER_UPDATE',
       payload: { isRunning: true },
@@ -112,6 +113,7 @@ test.describe('Timer UI Synchronization', () => {
     await expect(page.locator('[data-testid="timer-running"]')).toBeVisible()
 
     await disconnectWebSocket(page)
+    await page.waitForTimeout(500)
     await dispatchServerMessage(page, {
       type: 'TIMER_UPDATE',
       payload: { isRunning: false },
