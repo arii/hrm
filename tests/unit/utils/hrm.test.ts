@@ -1,9 +1,6 @@
 import { filterHrmData, augmentHrmData } from '@/utils/hrm'
 import { ConnectedHrmData, ActiveAlert, HrmData } from '@/types/websocket'
-import {
-  HRM_STALE_THRESHOLD_MS,
-  HRM_WARNING_THRESHOLD_MS,
-} from '@/utils/constants'
+import { HRM_STALE_THRESHOLD_MS } from '@/utils/constants'
 
 describe('HRM Utils', () => {
   const now = 100000
@@ -46,16 +43,6 @@ describe('HRM Utils', () => {
       updatedAt: now,
       isConnected: true,
       lastUpdated: now,
-      maxHr: 180,
-    },
-    {
-      clientId: 'c5', // Warning Stale
-      name: 'Charlie',
-      value: 120,
-      calories: 100,
-      updatedAt: now - HRM_WARNING_THRESHOLD_MS - 1,
-      isConnected: true,
-      lastUpdated: now - HRM_WARNING_THRESHOLD_MS - 1,
       maxHr: 180,
     },
   ]
@@ -116,38 +103,11 @@ describe('HRM Utils', () => {
       },
     ]
 
-    it('marks data as stale (warning)', () => {
-      const result = augmentHrmData(mockHrmData, [], now)
-      const c5 = result.find((d) => d.clientId === 'c5')
-      expect(c5?.isDataStale).toBe(true)
-      const c1 = result.find((d) => d.clientId === 'c1')
-      expect(c1?.isDataStale).toBe(false)
-    })
-
     it('merges active alerts', () => {
-      const result = augmentHrmData(mockHrmData, mockAlerts, now)
+      const result = augmentHrmData(mockHrmData, mockAlerts)
       const c1 = result.find((d) => d.clientId === 'c1')
       expect(c1?.isAlerting).toBe(true)
       expect(c1?.alertMessage).toBe('Fix it')
-    })
-
-    it('marks data as stale if updatedAt is old but lastUpdated is recent (server broadcast stale data)', () => {
-      const staleSensorData: ConnectedHrmData = {
-        clientId: 'c_stale_sensor',
-        name: 'Stale Sensor User',
-        value: 120,
-        calories: 100,
-        updatedAt: now - HRM_WARNING_THRESHOLD_MS - 1,
-        isConnected: true,
-        lastUpdated: now,
-        maxHr: 180,
-      }
-
-      const result = augmentHrmData([staleSensorData], [], now)
-
-      const user = result.find((d) => d.clientId === 'c_stale_sensor')
-      expect(user).toBeDefined()
-      expect(user?.isDataStale).toBe(true)
     })
 
     it('pre-calculates percentage and zone when they are missing', () => {
@@ -162,7 +122,7 @@ describe('HRM Utils', () => {
         maxHr: 185,
       }
 
-      const result = augmentHrmData([mockHrm], [], now)
+      const result = augmentHrmData([mockHrm], [])
 
       const user = result[0]
       expect(user.percentage).toBe(80)
@@ -183,7 +143,7 @@ describe('HRM Utils', () => {
         zone: 'ZONE_5',
       }
 
-      const result = augmentHrmData([mockHrm], [], now)
+      const result = augmentHrmData([mockHrm], [])
 
       const user = result[0]
       expect(user.percentage).toBe(90)
