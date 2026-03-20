@@ -234,7 +234,9 @@ describe('useBluetoothHRM', () => {
       })
 
       await act(async () => {
-        await expect(result.current.connectAndStream()).rejects.toThrow('Already connecting')
+        await expect(result.current.connectAndStream()).rejects.toThrow(
+          'Already connecting'
+        )
       })
 
       expect(mockAbort).not.toHaveBeenCalled()
