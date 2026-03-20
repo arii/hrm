@@ -14,7 +14,7 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import { getHrMasks, getTimerMasks } from '.'
+import { getDynamicContentMasks } from '.'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
@@ -31,27 +31,6 @@ export const SCREENSHOT_OPTIONS = {
   caret: 'hide' as const,
   threshold: 0.2,
   maxDiffPixelRatio: 0.1,
-}
-
-/**
- * Waits for the page to be ready for visual regression testing.
- *
- * @param page - The Playwright Page object to prepare.
- * @param targetWidth - Optional expected viewport width; polls until `clientWidth` matches.
- */
-export async function waitForVRTReady(
-  page: Page,
-  targetWidth?: number
-): Promise<void> {
-  await page.evaluateHandle(() => document.fonts.ready)
-  await page.waitForLoadState('networkidle')
-  await page.evaluate(() => document.body.offsetHeight)
-  if (targetWidth !== undefined) {
-    await page.waitForFunction(
-      (w) => document.body.clientWidth === w,
-      targetWidth
-    )
-  }
 }
 
 /**
@@ -177,13 +156,11 @@ export async function takeDashboardScreenshot(
     ...options,
     clip: clipOption, // Apply the determined clip region
     mask: [
-      ...getTimerMasks(page),
-      ...getHrMasks(page),
+      ...getDynamicContentMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
       page.getByTestId('workout-table-header'),
       page.locator('.MUI-Charts-root'),
-      page.locator('.variable-text-container'),
     ],
     maxDiffPixelRatio: 0.1,
   })

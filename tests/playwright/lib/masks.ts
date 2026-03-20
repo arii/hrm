@@ -33,40 +33,5 @@ export const VRT_CONFIG = {
  * @returns An array of Locators to be used in the `mask` option of `toHaveScreenshot`.
  */
 export function getDynamicContentMasks(page: Page): Locator[] {
-  return [
-    page.locator(VRT_MASK_SELECTORS.bpmPercent),
-    page.locator(VRT_MASK_SELECTORS.bpmValue),
-    page.locator(VRT_MASK_SELECTORS.caloriesValue),
-    page.locator(VRT_MASK_SELECTORS.timerCountdown),
-    page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
-    page.locator(VRT_MASK_SELECTORS.hrTimeSeriesChart),
-    page.locator('.variable-text-container'),
-  ]
-}
-
-/**
- * Returns an array of locators specifically for heart rate (HR) related elements.
- *
- * @param page - The Playwright Page object.
- * @returns An array of Locators for HR elements to be masked.
- */
-export function getHrMasks(page: Page): Locator[] {
-  // Since we rely on global selectors now, we return those
-  return getDynamicContentMasks(page)
-}
-
-/**
- * Returns an array of locators specifically for timer-related elements.
- *
- * @param page - The Playwright Page object.
- * @returns An array of Locators for timer elements to be masked.
- */
-export function getTimerMasks(page: Page): Locator[] {
-  // Since we rely on global selectors now, we return those
-  return getDynamicContentMasks(page)
-}
-
-export function getSpotifyMasks(page: Page): Locator[] {
-  // Since we rely on global selectors now, we return those
-  return getDynamicContentMasks(page)
+  return VRT_MASK_SELECTORS.map((selector) => page.locator(selector))
 }

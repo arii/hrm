@@ -99,41 +99,32 @@ export async function waitForWebSocketConnection(
 }
 
 /**
- * Wait for all fonts to be fully loaded before taking snapshots.
- * This eliminates font-related layout shifts in visual regression tests.
- *
- * @param page - The Playwright Page object
- */
-export async function waitForFontsLoaded(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    await document.fonts.ready
-  })
-}
-
-/**
  * Wait for a "Quiet State" before Visual Regression Testing (VRT).
  * Ensures Next.js hydration is complete, network is idle, and fonts are ready.
  * This prevents sub-pixel anti-aliasing flakiness and MUI transition artifacts.
  *
  * @param page - The Playwright Page object
+ * @param targetWidth - Optional expected viewport width; polls until `clientWidth` matches.
  */
-export async function waitForVRTReady(page: Page): Promise<void> {
-  // Wait for network requests to settle (images, data)
-  try {
-    await page.waitForLoadState('networkidle', {
-      timeout: WAIT_TIMEOUTS.NETWORK_IDLE,
-    })
-  } catch {
-    // Ignore networkidle timeouts if some polling requests are keeping it alive
-    console.warn(
-      '[waitForVRTReady] networkidle timeout, proceeding to font check'
-    )
-  }
+export async function waitForVRTReady(
+  page: Page,
+  targetWidth?: number
+): Promise<void> {
+  await page.waitForLoadState('domcontentloaded')
 
   // Ensure no active CSS transitions are running / fonts are loaded
   await page.evaluate(async () => {
     await document.fonts.ready
   })
+
+  await page.evaluate(() => document.body.offsetHeight)
+
+  if (targetWidth !== undefined) {
+    await page.waitForFunction(
+      (w) => document.body.clientWidth === w,
+      targetWidth
+    )
+  }
 }
 
 /**

@@ -12,7 +12,7 @@
  *   // Wait utilities
  *   waitForPageReady,
  *   waitForWebSocketConnection,
- *   waitForFontsLoaded,
+ *   waitForVRTReady,
  *
  *   // Assertions
  *   assertPageSnapshot,
@@ -38,7 +38,6 @@ export {
   // Wait functions
   waitForPageReady,
   waitForWebSocketConnection,
-  waitForFontsLoaded,
   waitForElementStable,
   waitForNetworkIdle,
   waitForApiResponse,
@@ -71,9 +70,6 @@ export {
   VRT_MASK_SELECTORS,
   // Mask helpers
   getDynamicContentMasks,
-  getHrMasks,
-  getTimerMasks,
-  getSpotifyMasks,
 } from './masks'
 
 // ============================================================================
@@ -153,7 +149,6 @@ export {
   takeScreenshot,
   takeDashboardScreenshot,
   assertFixedDimensions,
-  waitForVRTReady,
 } from './visual'
 
 // ============================================================================

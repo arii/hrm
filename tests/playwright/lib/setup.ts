@@ -13,8 +13,8 @@ import { getBaseURL } from '../../../utils/urls'
 import { mockGoogleDocIframe } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
-  waitForFontsLoaded,
   waitForPageReady,
+  waitForVRTReady,
   waitForWebSocketConnection,
 } from './waits'
 
@@ -270,9 +270,9 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
 
   // Ensure all custom fonts are loaded to prevent visual shifts
   await Promise.all([
-    waitForFontsLoaded(dashboardPage),
-    waitForFontsLoaded(controlPage),
-    waitForFontsLoaded(mockPage),
+    waitForVRTReady(dashboardPage),
+    waitForVRTReady(controlPage),
+    waitForVRTReady(mockPage),
   ])
 
   // Stop any running timers to ensure a consistent initial state
@@ -506,5 +506,5 @@ export async function startMockHrStreaming(mockPage: Page): Promise<void> {
 export async function prepareForVisualRegression(
   ...pages: Page[]
 ): Promise<void> {
-  await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
+  await Promise.all(pages.map((page) => waitForVRTReady(page)))
 }

@@ -5,7 +5,7 @@ import {
   mockSpotifyPlaybackState,
   mockLoggedInSession,
   resetServerState,
-  getSpotifyMasks,
+  getDynamicContentMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
@@ -71,7 +71,6 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
-    // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -96,9 +95,6 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.reload()
     await waitForPageReady(dashboardPage)
 
-    // Wait for the WebSocket to fully reconnect after the reload
-    // before applying mocks, otherwise the server's initial STATE_SYNC
-    // will immediately overwrite the mock.
     await waitForWebSocketConnection(dashboardPage)
 
     // Mock Spotify state with devices to show the component naturally
@@ -153,13 +149,12 @@ test.describe('Component-Specific VRT', () => {
     // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')
 
-    // Perform manual accessibility check on the specific menu element to ensure context validity
     await checkAccessibility(menu)
 
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
       skipA11y: true, // Accessibility checked manually above
-      mask: getSpotifyMasks(dashboardPage),
+      mask: getDynamicContentMasks(dashboardPage),
     })
   })
 
