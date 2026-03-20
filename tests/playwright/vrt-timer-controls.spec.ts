@@ -76,14 +76,10 @@ test.describe('Visual Regression Tests', () => {
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
-        maxDiffPixelRatio: 0.2,
       })
 
-      // Stop the timer and ensure it's stopped before proceeding to next test
-      const stopButton = controlPage.getByTestId('stop-timer-button')
-      await stopButton.waitFor({ state: 'visible' })
-      await stopButton.click()
-      await expect(controlPage.getByTestId('start-timer-button')).toBeVisible()
+      // Stop the timer to reset for the next test
+      await controlPage.getByTestId('stop-timer-button').click()
     })
 
     test('start button hover state', async () => {

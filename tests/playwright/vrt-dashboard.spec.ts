@@ -144,7 +144,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
-        maxDiffPixelRatio: 0.15, // Tighter threshold after improving masking
+        maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
       })
     })
 
@@ -153,7 +153,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.25, // Higher tolerance for large layout differences in CI
+        maxDiffPixelRatio: 0.1,
       })
     })
   })

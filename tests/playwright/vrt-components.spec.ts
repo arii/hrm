@@ -7,6 +7,7 @@ import {
   resetServerState,
   getSpotifyMasks,
 } from './lib'
+import { checkAccessibility } from './lib/accessibility'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady, waitForWebSocketConnection } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
@@ -150,12 +151,12 @@ test.describe('Component-Specific VRT', () => {
     // Wait for the opacity transition to finish rendering
     await expect(menu).toHaveCSS('opacity', '1')
 
+    // Perform manual accessibility check on the specific menu element to ensure context validity
+    await checkAccessibility(menu)
+
     await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
       threshold: 0.2, // Tighter threshold for the Paper element
-      // skipA11y: portal-based components (MUI Menu) are often detached from the main DOM
-      // during the test execution, causing axe-core to fail with 'No elements found'.
-      // These components are verified for accessibility in dedicated unit tests.
-      skipA11y: true,
+      skipA11y: true, // Accessibility checked manually above
       mask: getSpotifyMasks(dashboardPage),
     })
   })

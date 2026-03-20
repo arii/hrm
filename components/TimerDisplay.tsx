@@ -171,7 +171,7 @@ const TimerDisplay = () => {
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
-            data-testid="timer-phase-label"
+            data-testid="timer-phase"
             variant="h6"
             aria-live="polite"
             sx={{
