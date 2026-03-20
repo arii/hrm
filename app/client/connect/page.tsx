@@ -152,25 +152,21 @@ export default function ConnectPage() {
 
   useEffect(() => {
     const savedDeviceId = getSavedDeviceId()
-    if (
+    const shouldAutoConnect =
       !isConnected &&
       isSupported &&
       connectionStatus === 'Connected' &&
       !connectionAttempted &&
       savedDeviceId
-    ) {
-      logger.info('WebSocket ready, attempting auto-connect...')
-      const timeoutId = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
-        })
-      }, 100)
 
-      return () => {
-        clearTimeout(timeoutId)
-      }
-    }
-    return undefined
+    if (!shouldAutoConnect) return
+    logger.info('WebSocket ready, attempting auto-connect...')
+    const tid = setTimeout(() => {
+      autoConnect().catch(() => {
+        logger.info('Auto-connect failed, user can connect manually')
+      })
+    }, 100)
+    return () => clearTimeout(tid)
   }, [
     connectionStatus,
     isConnected,
