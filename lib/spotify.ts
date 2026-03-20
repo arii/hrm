@@ -1,6 +1,5 @@
 import { env } from './env'
 import logger from '@/utils/logger'
-import { SpotifyPlaylistItem } from '@/types/core'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',
@@ -65,6 +64,6 @@ export async function refreshSpotifyToken(refreshToken: string) {
   return response.json()
 }
 
-export const getArtistNames = (artists: SpotifyPlaylistItem['artists']) => {
-  return artists ?? 'Unknown'
+export const getArtistNames = (artists: string | undefined) => {
+  return artists?.trim() || 'Unknown Artist'
 }

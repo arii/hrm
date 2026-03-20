@@ -224,7 +224,6 @@ export interface SpotifyPlaylistItem {
     images: { url: string; height: number; width: number }[]
   }
   duration_ms?: number
-  duration?: number
 }
 
 /**
