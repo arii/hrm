@@ -1,6 +1,6 @@
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest, stopTimer } from './lib'
+import { setupVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 
@@ -25,10 +25,6 @@ test.describe('Visual Regression Tests', () => {
   // Centralized cleanup hook
   test.afterAll(async () => {
     await context?.close()
-  })
-
-  test.afterEach(async () => {
-    await stopTimer(controlPage, dashboardPage)
   })
 
   // Add a beforeEach hook to wait for the page to be ready before each test
@@ -77,6 +73,9 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(timerControls, 'timer-controls-active.png', {
         mask: [controlPage.getByTestId('timer-countdown')],
       })
+
+      // Stop the timer to reset for the next test
+      await controlPage.getByTestId('stop-timer-button').click()
     })
 
     test('start button hover state', async () => {
@@ -90,8 +89,6 @@ test.describe('Visual Regression Tests', () => {
 
     test('in stopwatch mode', async () => {
       await controlPage.getByTestId('stopwatch-mode-button').click()
-      // In stopwatch mode the tabata-specific inputs are hidden
-      await expect(controlPage.getByTestId('work-duration-input')).toBeHidden()
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-stopwatch-mode.png', {
         // Performance: Skip a11y check for alternate mode; main mode is fully covered

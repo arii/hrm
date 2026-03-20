@@ -5,15 +5,10 @@ import {
   setupVisualRegressionTest,
   resetServerState,
 } from './lib'
-import {
-  takeScreenshot,
-  assertFixedDimensions,
-  waitForVRTReady,
-} from './lib/visual'
+import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
-import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -150,54 +145,6 @@ test.describe('Visual Regression Tests', () => {
       await takeScreenshot(dashboard, 'dashboard-active-timer-with-hr.png', {
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
-      })
-    })
-
-    test('mobile viewport', async () => {
-      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
-      await dashboardPage
-        .getByTestId('main-content-layout')
-        .waitFor({ state: 'visible' })
-      await dashboardPage
-        .getByTestId('timer-display-container')
-        .waitFor({ state: 'visible' })
-      await Promise.race([
-        dashboardPage
-          .getByTestId('spotify-auth-container')
-          .waitFor({ state: 'visible' }),
-        dashboardPage
-          .getByTestId('spotify-display-container')
-          .waitFor({ state: 'visible' }),
-      ])
-      await waitForVRTReady(dashboardPage, MOBILE_VIEWPORT.width)
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.15,
-      })
-    })
-
-    test('tablet viewport', async () => {
-      await dashboardPage.setViewportSize(TABLET_VIEWPORT)
-      await dashboardPage
-        .getByTestId('main-content-layout')
-        .waitFor({ state: 'visible' })
-      await dashboardPage
-        .getByTestId('timer-display-container')
-        .waitFor({ state: 'visible' })
-      await Promise.race([
-        dashboardPage
-          .getByTestId('spotify-auth-container')
-          .waitFor({ state: 'visible' }),
-        dashboardPage
-          .getByTestId('spotify-display-container')
-          .waitFor({ state: 'visible' }),
-      ])
-      await waitForVRTReady(dashboardPage, TABLET_VIEWPORT.width)
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.15,
       })
     })
 

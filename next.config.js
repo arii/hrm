@@ -18,7 +18,7 @@ const nextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_TESTING: process.env.TESTING ?? process.env.NEXT_PUBLIC_TESTING,
+    NEXT_PUBLIC_TESTING: process.env.TESTING,
   },
   async redirects() {
     return [

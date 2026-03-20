@@ -77,7 +77,8 @@ export default defineConfig({
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
 
-  retries: process.env.CI_RETRIES ? parseInt(process.env.CI_RETRIES) : 0,
+  // Retry failed tests on CI
+  retries: process.env.CI ? 2 : 0,
 
   // Test execution optimizations - Fail Fast Strategy
   expect: {
