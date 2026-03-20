@@ -17,15 +17,80 @@ async function performUIReview() {
 
   const page = await context.newPage()
 
-  const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
+  const baseUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
+  const targetUrl = new URL(baseUrl)
+  targetUrl.searchParams.set('testing', 'true')
 
   try {
-    await page.goto(targetUrl, { waitUntil: 'networkidle' })
+    await page.goto(targetUrl.toString(), { waitUntil: 'networkidle' })
 
     await page.waitForSelector('[data-testid="main-content-layout"]', {
       state: 'visible',
       timeout: 30000,
     })
+
+    // Inject mock application state so the UI review has something to analyze
+    await page.waitForFunction(() => !!(window as any).__TEST_CONTROLS__)
+    await page.evaluate(() => {
+      const dispatch = (window as any).__TEST_CONTROLS__.dispatch
+      
+      // Timer Simulation
+      dispatch({
+        type: 'TIMER_UPDATE',
+        payload: {
+          isRunning: true,
+          currentPhase: 'WORK',
+          timeRemaining: 15,
+          timeElapsed: 45,
+          caloriesBurned: 12,
+          mode: 'TABATA',
+          workDuration: 30,
+          restDuration: 10,
+          soundEventId: 0
+        }
+      })
+      
+      // HRM Simulation
+      dispatch({
+        type: 'HRM_UPDATE',
+        payload: [{
+          clientId: 'mock-1',
+          value: 155,
+          zone: 'Aerobic',
+          percentage: 85,
+          name: 'Mock Device',
+          calories: 120
+        }]
+      })
+      
+      // Spotify Simulation
+      dispatch({ type: 'SPOTIFY_SERVICE_INIT_UPDATE', payload: true })
+      dispatch({
+        type: 'SPOTIFY_UPDATE',
+        payload: {
+          devices: [],
+          playback: {
+            track: {
+              id: 'track-1',
+              name: 'UI Review Track',
+              artist: 'Gemini',
+              albumName: 'Review Album',
+              albumArtUrl: ''
+            },
+            is_playing: true,
+            volume_percent: 50,
+            isMuted: false,
+            progress_ms: 30000
+          }
+        }
+      })
+    })
+
+    // Force layout stabilization for the screenshot
+    await page.addStyleTag({
+      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
+    })
+    await page.waitForTimeout(2000)
 
     const screenshotPath = 'ui-snapshot.png'
     await page.screenshot({ path: screenshotPath, fullPage: true })
