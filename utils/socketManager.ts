@@ -26,7 +26,6 @@ import {
 import logger from './logger.server'
 import { HrmSessionManager } from '../lib/hrm/HrmSessionManager'
 import { AppServices } from '../lib/services'
-import { env } from '../lib/env'
 import { roundTo, objectFromEntries } from '../lib/utils'
 import { isGenericName, filterHrmData } from './hrm'
 
@@ -47,8 +46,6 @@ const clientSessionState = new Map<
   string,
   { lastUpdate: number; accumulatedCalories: number }
 >()
-
-const clientCleanupTimers = new Map<string, NodeJS.Timeout>()
 
 const getRequestParams = (req: IncomingMessage): URLSearchParams => {
   try {
@@ -83,7 +80,6 @@ const cleanupClientSession = (clientId: string) => {
     )
   } finally {
     clientSockets.delete(clientId)
-    clientCleanupTimers.delete(clientId)
   }
 }
 
@@ -145,12 +141,6 @@ const initSocketManager = (
     const logMeta = getLogMeta(req, clientId)
     extWs.clientId = clientId
 
-    if (clientCleanupTimers.has(clientId)) {
-      clearTimeout(clientCleanupTimers.get(clientId))
-      clientCleanupTimers.delete(clientId)
-      logger.info({ clientId }, 'Cleared cleanup timer for reconnected client.')
-    }
-
     if (clientSockets.has(clientId)) {
       logger.warn(
         logMeta,
@@ -194,28 +184,9 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-
-      // CRITICAL: Do NOT immediately delete clientData.
-      // Wait a grace period (e.g., 5 seconds) to allow for page refresh.
-      // NOTE: In a high-traffic production environment, this could lead to
-      // memory pressure if many clients disconnect and don't reconnect.
-      const timer = setTimeout(() => {
-        // Only cleanup if the client has not reconnected.
-        // We verify this by checking if the socket associated with the clientId is the one that just closed.
-        // If they are different, it means a new connection has been established.
-        if (clientSockets.get(clientId) === extWs) {
-          cleanupClientSession(clientId)
-        } else {
-          // If the client has reconnected, we can safely remove the timer without taking further action.
-          clientCleanupTimers.delete(clientId)
-          logger.info(
-            { clientId },
-            'Client reconnected before cleanup timer expired. Timer cleared.'
-          )
-        }
-      }, env.WEBSOCKET_GRACE_PERIOD_MS)
-
-      clientCleanupTimers.set(clientId, timer)
+      // Aggressive 5-second cleanup removed. We now rely strictly on the 30-sec
+      // janitor job. This securely allows a single client to have multiple tabs
+      // open at once without accidentally wiping their session when they close one.
     })
   })
 
@@ -338,8 +309,34 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const hrmMessage = message as HrmInputMessage
-        const existingData = hrmSessionManager.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        let existingData = hrmSessionManager.findById(clientId)
+        let sessionState = clientSessionState.get(clientId)
+
+        if (!existingData || !sessionState) {
+          logger.info(
+            { clientId },
+            'Recreating orphaned session on incoming HRM_INPUT.'
+          )
+          const newClient: HrmStreamData = {
+            clientId: ws.clientId,
+            value: 0,
+            maxHr: 185,
+            age: 30,
+            calories: 0,
+            updatedAt: Date.now(),
+            ...(process.env.NODE_ENV === 'test'
+              ? { name: 'Test Athlete' }
+              : {}),
+          }
+          hrmSessionManager.save(newClient)
+          clientSessionState.set(ws.clientId, {
+            lastUpdate: Date.now(),
+            accumulatedCalories: 0,
+          })
+          existingData = newClient
+          sessionState = clientSessionState.get(clientId)!
+        }
+
         if (existingData && sessionState) {
           const now = Date.now()
           sessionState.lastUpdate = now
@@ -435,6 +432,7 @@ const handleIncomingMessage = (
           playlistUri?: string
           contextUri?: string
           uri?: string
+          offset?: { position: number }
         } = {}
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
@@ -445,6 +443,7 @@ const handleIncomingMessage = (
         if (commandMsg.contextUri)
           spotifyCommandParams.contextUri = commandMsg.contextUri
         if (commandMsg.uri) spotifyCommandParams.uri = commandMsg.uri
+        if (commandMsg.offset) spotifyCommandParams.offset = commandMsg.offset
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break

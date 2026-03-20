@@ -3,18 +3,15 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useNow } from '@/hooks/useNow'
 import HrTile from '@/components/HrTile'
 import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
-  const now = useNow()
-
   const tileData = useMemo(() => {
-    return augmentHrmData(hrmData, activeAlerts, now)
-  }, [hrmData, activeAlerts, now])
+    return augmentHrmData(hrmData, activeAlerts)
+  }, [hrmData, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
