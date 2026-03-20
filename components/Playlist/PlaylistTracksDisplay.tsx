@@ -1,4 +1,3 @@
-// File: components/Playlist/PlaylistTracksDisplay.tsx
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -9,8 +8,6 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import List from '@mui/material/List'
 import Paper from '@mui/material/Paper'
-import Button from '@mui/material/Button'
-import { formatDuration } from '@/lib/utils'
 import { SpotifyPlaylistItem } from '@/types/core'
 import { TrackListItem } from '../Spotify/TrackListItem'
 
@@ -24,38 +21,29 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const [tracks, setTracks] = useState<SpotifyPlaylistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [offset, setOffset] = useState(0)
-  const [total, setTotal] = useState(0)
-  const limit = 20
 
-  const fetchTracks = useCallback(
-    async (currentOffset: number) => {
-      try {
-        setLoading(true)
-        const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-        )
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to fetch tracks')
-        }
-        const data = await response.json()
-        setTracks(data.tracks)
-        setTotal(data.total)
-        setLoading(false)
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
-        setLoading(false)
+  const fetchTracks = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(
+        `/api/spotify/playlists/${playlistId}/tracks?limit=50`
+      )
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch tracks')
       }
-    },
-    [playlistId]
-  )
+      const data = await response.json()
+      setTracks(data.tracks)
+      setLoading(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      setLoading(false)
+    }
+  }, [playlistId])
 
   useEffect(() => {
-    fetchTracks(offset)
-  }, [fetchTracks, offset])
+    fetchTracks()
+  }, [fetchTracks])
 
   const handlePlayTrack = (playlistUri: string, uri: string) => {
     executeSpotify('PLAY', {
@@ -66,18 +54,6 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
 
   const handlePause = () => {
     executeSpotify('PAUSE')
-  }
-
-  const handleNextPage = () => {
-    if (offset + limit < total) {
-      setOffset(offset + limit)
-    }
-  }
-
-  const handlePreviousPage = () => {
-    if (offset - limit >= 0) {
-      setOffset(offset - limit)
-    }
   }
 
   if (loading) {
@@ -124,34 +100,11 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     ? handlePause()
                     : handlePlayTrack(playlistUri, track.uri)
                 }
-                secondaryAction={
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'text.secondary', mr: 1 }}
-                  >
-                    {!!track.duration_ms &&
-                      formatDuration(track.duration_ms, {
-                        unit: 'milliseconds',
-                        format: 'MM:SS',
-                      })}
-                  </Typography>
-                }
               />
             )
           })}
         </List>
       </Paper>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-        <Button onClick={handlePreviousPage} disabled={offset === 0}>
-          Previous
-        </Button>
-        <Typography>
-          Showing {offset + 1}-{Math.min(offset + limit, total)} of {total}
-        </Typography>
-        <Button onClick={handleNextPage} disabled={offset + limit >= total}>
-          Next
-        </Button>
-      </Box>
     </Box>
   )
 }
