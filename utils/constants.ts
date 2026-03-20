@@ -20,4 +20,3 @@ export const TIMER_INTERVAL = 1000 // ms
 
 // --- Heart Rate Monitoring (HRM) Constants ---
 export const HRM_STALE_THRESHOLD_MS = 30000 // 30 seconds
-export const HRM_WARNING_THRESHOLD_MS = 10000 // 10 seconds

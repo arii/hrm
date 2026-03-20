@@ -162,9 +162,7 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
-    const refreshButton = dashboardPage
-      .getByRole('button', { name: 'refresh workout table' })
-      .first()
+    const refreshButton = dashboardPage.getByTestId('refresh-icon-button')
     await takeScreenshot(refreshButton, 'refresh-icon-button.png')
     await refreshButton.hover()
     await takeScreenshot(refreshButton, 'refresh-icon-button-hover.png')
