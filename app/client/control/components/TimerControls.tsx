@@ -68,15 +68,13 @@ const TimerControls = () => {
   // When the server's timer data changes, it becomes the source of truth.
   // We clear any optimistic action to ensure the UI reflects the server state.
   useEffect(() => {
-    if (optimisticAction !== null) {
+    if (optimisticAction === 'START' && timerData.isRunning === true) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOptimisticAction(null)
+    } else if (optimisticAction === 'STOP' && timerData.isRunning === false) {
       setOptimisticAction(null)
     }
-    // Disabling the lint rule because we intentionally want this effect to run
-    // ONLY when timerData changes, to synchronize the client state
-    // with the server's ground truth. Adding optimisticAction to the dependency
-    // array would cause an infinite loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerData])
+  }, [timerData.isRunning, optimisticAction])
 
   // Safety timeout to clear the optimistic action if the server doesn't
   // confirm it within a reasonable time.

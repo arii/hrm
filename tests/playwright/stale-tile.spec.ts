@@ -37,7 +37,6 @@ test('should remove tile immediately when missing from HRM_UPDATE', async ({
         name: 'test-1',
         age: 30,
         maxHr: 190,
-        restingHr: 60,
         zone: 'warmup',
         calories: 10,
       },

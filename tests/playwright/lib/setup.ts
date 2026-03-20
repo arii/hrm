@@ -117,7 +117,14 @@ export async function navigateAndWait(
   route: string = ''
 ): Promise<void> {
   const baseUrl = getBaseURL()
-  await page.goto(`${baseUrl}${route}`)
+
+  // Automatically append testing=true to ensure test controls and mocks are active
+  const hasQuery = route.includes('?')
+  const testRoute = route.includes('testing=true')
+    ? route
+    : `${route}${hasQuery ? '&' : '?'}testing=true`
+
+  await page.goto(`${baseUrl}${testRoute}`)
 
   // Wait for the window object to be available and controls to attach
   // This is a minimal wait to ensure JS has executed
