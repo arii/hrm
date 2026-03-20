@@ -21,6 +21,8 @@ import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
 } from '@/constants/spotify'
+import { useSpotifyOptimisticPlayback } from '@/hooks/useSpotifyOptimisticPlayback'
+import { useSpotifyVolume } from '@/hooks/useSpotifyVolume'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -33,20 +35,12 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const { showWarning } = useAppSnackbar()
-  const lastSentVolumeRef = useRef<string | null>(null)
-  const lastWarningTimeRef = useRef<number>(0)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [isSliding, setIsSliding] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
-  const [optimisticIsPlaying, setOptimisticIsPlaying] = useState<
-    boolean | null
-  >(null)
-  const playbackGraceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const activeDevice = devices.find((d) => d.is_active)
 
   const hrmDevice = useMemo(
     () =>
@@ -85,7 +79,6 @@ const SpotifyControls = () => {
 
   // 4. Sync selected device and volume with active device
   useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
     // Helper: determine if device should be updated to activeId
@@ -109,8 +102,6 @@ const SpotifyControls = () => {
     // to prevent local sliders from "jumping" while the user is actively adjusting them.
     const playbackVolume = spotifyData.playback.volume_percent
 
-    if (isSliding) return
-
     const timeSinceLastVolumeSend = Date.now() - lastVolumeSyncTimeRef.current
 
     // Only sync if we haven't sent a volume command recently.
@@ -133,9 +124,7 @@ const SpotifyControls = () => {
     }
 
     if (activeDevice && typeof playbackVolume === 'number') {
-      if (playbackVolume !== volume) {
-        setVolume(playbackVolume)
-      }
+      // Manual volume sync removed in favor of useSpotifyVolume hook
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,10 +151,7 @@ const SpotifyControls = () => {
   }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
-    ) => {
+    (command: SpotifyCommand, overriddenDeviceId?: string) => {
       const deviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
@@ -194,114 +180,25 @@ const SpotifyControls = () => {
     [resolveTargetDeviceId, executeSpotify]
   )
 
-  const handlePlaybackCommand = useCallback(
-    (command: SpotifyCommand) => {
-      if (
-        command === 'PLAY' ||
-        command === 'PAUSE' ||
-        command === 'NEXT' ||
-        command === 'PREVIOUS'
-      ) {
-        // Optimistic UI update for Play/Pause
-        if (command === 'PLAY') {
-          setOptimisticIsPlaying(true)
-        } else if (command === 'PAUSE') {
-          setOptimisticIsPlaying(false)
-        }
+  const { displayIsPlaying, handleCommand: handlePlaybackCommand } =
+    useSpotifyOptimisticPlayback(
+      spotifyData.playback.is_playing,
+      sendSpotifyCommand
+    )
 
-        // Clear existing timer if any
-        if (playbackGraceTimerRef.current) {
-          clearTimeout(playbackGraceTimerRef.current)
-        }
-
-        // Set a timer to clear optimistic state after a grace period (2.5s)
-        // This ensures the UI snaps back to reality if the command fails OR
-        // stays in state until the next poll cycle confirms it.
-        playbackGraceTimerRef.current = setTimeout(() => {
-          setOptimisticIsPlaying(null)
-          playbackGraceTimerRef.current = null
-        }, 2500)
-
-        sendSpotifyCommand(command)
-      }
-    },
-    [sendSpotifyCommand]
+  const {
+    volume,
+    muted,
+    handleVolumeChange,
+    handleVolumeCommit,
+    handleToggleMute,
+  } = useSpotifyVolume(
+    spotifyData.playback.volume_percent,
+    spotifyData.playback.isMuted,
+    selectedDeviceId,
+    activeDevice?.id,
+    (cmd, payload) => executeSpotify(cmd, payload)
   )
-
-  // Clear optimistic state when the actual state matches our intent
-  useEffect(() => {
-    if (optimisticIsPlaying === spotifyData.playback.is_playing) {
-      setOptimisticIsPlaying(null)
-      if (playbackGraceTimerRef.current) {
-        clearTimeout(playbackGraceTimerRef.current)
-        playbackGraceTimerRef.current = null
-      }
-    }
-  }, [spotifyData.playback.is_playing, optimisticIsPlaying])
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      if (playbackGraceTimerRef.current) {
-        clearTimeout(playbackGraceTimerRef.current)
-      }
-    }
-  }, [])
-
-  const handleVolumeChange = useCallback(
-    (val: number) => {
-      setIsSliding(true)
-      setVolume(val)
-      if (connectionStatus !== 'Connected') {
-        const now = Date.now()
-        // Throttle warning to once every 3 seconds to avoid spam during sliding
-        if (now - lastWarningTimeRef.current > 3000) {
-          showWarning('Changes not saved: Offline')
-          lastWarningTimeRef.current = now
-        }
-      }
-    },
-    [connectionStatus, showWarning, setVolume]
-  )
-
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId = resolveTargetDeviceId()
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-
-      hasPendingSendRef.current = true
-      lastVolumeSyncTimeRef.current = Date.now()
-
-      executeSpotify('SET_VOLUME', {
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      })
-
-      lastSentVolumeRef.current = messageKey
-    },
-    [connectionStatus, resolveTargetDeviceId, executeSpotify]
-  )
-
-  const handleVolumeChangeCommitted = useCallback(
-    (val: number) => {
-      setIsSliding(false)
-      sendVolumeCommand(val)
-    },
-    [sendVolumeCommand]
-  )
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
 
   return (
     <ControlCard
@@ -359,11 +256,7 @@ const SpotifyControls = () => {
             </Box>
 
             <PlaybackControls
-              isPlaying={
-                optimisticIsPlaying !== null
-                  ? optimisticIsPlaying
-                  : spotifyData.playback.is_playing
-              }
+              isPlaying={displayIsPlaying}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />
@@ -372,8 +265,8 @@ const SpotifyControls = () => {
               volume={volume}
               muted={muted}
               onVolumeChange={handleVolumeChange}
-              onVolumeChangeCommitted={handleVolumeChangeCommitted}
-              onToggleMute={toggleMute}
+              onVolumeChangeCommitted={handleVolumeCommit}
+              onToggleMute={handleToggleMute}
               showValue
               sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"
