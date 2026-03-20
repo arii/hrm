@@ -22,29 +22,24 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTracks = useCallback(
-    async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks`
-        )
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to fetch tracks')
-        }
-        const data = await response.json()
-        setTracks(data.tracks)
-        setLoading(false)
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
-        setLoading(false)
+  const fetchTracks = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(
+          `/api/spotify/playlists/${playlistId}/tracks?limit=50`
+      )
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch tracks')
       }
-    },
-    [playlistId]
-  )
+      const data = await response.json()
+      setTracks(data.tracks)
+      setLoading(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      setLoading(false)
+    }
+  }, [playlistId])
 
   useEffect(() => {
     fetchTracks()

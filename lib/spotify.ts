@@ -64,6 +64,9 @@ export async function refreshSpotifyToken(refreshToken: string) {
   return response.json()
 }
 
-export const getArtistNames = (artists: string | undefined) => {
+export const getArtistNames = (
+  artists: { name: string }[] | string | undefined
+) => {
+  if (Array.isArray(artists)) return artists.map((a) => a.name).join(', ')
   return artists?.trim() || 'Unknown Artist'
 }
