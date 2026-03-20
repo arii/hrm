@@ -88,9 +88,7 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(dashboard, 'dashboard-with-hr-data.png', {
         maxDiffPixelRatio: 0.15,
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-        ],
+        mask: [...getDynamicContentMasks(dashboardPage)],
       })
     })
 
@@ -132,9 +130,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-with-2-hr-devices.png', {
         maxDiffPixelRatio: 0.15,
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-        ],
+        mask: [...getDynamicContentMasks(dashboardPage)],
       })
     })
 
@@ -156,9 +152,7 @@ test.describe('Visual Regression Tests', () => {
         const dashboard = dashboardPage.getByTestId('dashboard')
         await takeScreenshot(dashboard, `dashboard-hr-zone-${zone}.png`, {
           maxDiffPixelRatio: 0.1,
-          mask: [
-            ...getDynamicContentMasks(dashboardPage),
-          ],
+          mask: [...getDynamicContentMasks(dashboardPage)],
         })
       })
     }
@@ -169,9 +163,7 @@ test.describe('Visual Regression Tests', () => {
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-hr-disconnected.png', {
         maxDiffPixelRatio: 0.1,
-        mask: [
-          ...getDynamicContentMasks(dashboardPage),
-        ],
+        mask: [...getDynamicContentMasks(dashboardPage)],
       })
     })
   })
