@@ -28,18 +28,16 @@ const instructions = getArg('--instructions')
 // List of models to try in order.
 // The first model in the list is the primary model, and the rest are fallbacks.
 
-// UPDATED: Aligned with latest model recommendations (Q3 2025+)
-// 1. gemini-2.5-flash: Next-gen standard workhorse.
-// 2. gemini-2.5-flash-lite: Next-gen ultra-low-cost model.
-// 3. gemini-2.0-flash: Previous generation flash model.
-// 4. gemini-2.0-flash-lite: Previous generation ultra-low-cost model.
-// 5. gemini-2.5-pro: Expensive, high-intelligence fallback.
+// UPDATED: Aligned with latest model recommendations (Q1 2026+)
+// 1. gemini-3.1-flash-lite-preview: Latest recommended preview model.
+// 2. gemini-2.5-flash: Reliable standard workhorse.
+// 3. gemini-2.5-flash-lite: Low-cost fallback.
+// 4. gemini-2.5-pro: High-intelligence fallback.
 
 const defaultFallbacks = [
+  'gemini-3.1-flash-lite-preview',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
   'gemini-2.5-pro',
 ]
 
@@ -242,6 +240,7 @@ export interface ReviewContext {
   testFiles?: string | undefined
   failedChecks: FailedCheck[]
   slopAnalysis?: string
+  thoughtSignature?: string
 }
 
 async function main() {
@@ -324,23 +323,40 @@ export async function generateContentWithFallback({
   genAI,
   prompt,
   config,
+  thoughtSignature,
 }: {
   genAI: GoogleGenerativeAI
   prompt: string
   config?: Omit<GenerateContentRequest, 'contents'>
-}) {
+  thoughtSignature?: string
+}): Promise<{ text: string; thoughtSignature?: string }> {
   let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
     console.log(`Attempting to use model: ${modelName}...`)
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
-      const result = await model.generateContent({
+      const request: any = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
-      })
+      }
+
+      // Implement thought signature circulation if provided
+      if (thoughtSignature) {
+        request.thought_signature = thoughtSignature
+      }
+
+      const result = await model.generateContent(request)
       console.log(`Successfully generated content using ${modelName}.`)
-      return result.response.text()
+
+      const response = result.response
+      const text = response.text()
+
+      // Capture thought signature from the response if present
+      const capturedSignature = (response.candidates?.[0] as any)
+        ?.thought_signature
+
+      return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {
       if (error instanceof Error) {
         lastError = error
@@ -418,7 +434,7 @@ ${contextContent}
 --- Task ---
 ${task}
 `
-  const text = await generateContentWithFallback({ genAI, prompt })
+  const { text } = await generateContentWithFallback({ genAI, prompt })
   await writeOutput(text, outputFile)
 }
 
@@ -552,6 +568,7 @@ function getReviewContextFromEnv(): ReviewContext {
     testFiles: process.env.TEST_FILES,
     failedChecks,
     slopAnalysis: process.env.SLOP_ANALYSIS || 'Not available.',
+    thoughtSignature: process.env.GEMINI_THOUGHT_SIGNATURE,
   }
 }
 
@@ -731,9 +748,10 @@ async function runReviewPreset(
     contextContent,
     instructions
   )
-  const text = await generateContentWithFallback({
+  const { text, thoughtSignature } = await generateContentWithFallback({
     genAI,
     prompt,
+    thoughtSignature: context.thoughtSignature,
     config: {
       generationConfig: {
         maxOutputTokens: 4096,
@@ -830,8 +848,12 @@ async function runReviewPreset(
       verdict?: string
       labels?: string[]
       prContext?: unknown
+      thoughtSignature?: string
     }
     reviewData.prContext = prContext
+    if (thoughtSignature) {
+      reviewData.thoughtSignature = thoughtSignature
+    }
     // It's valid JSON, but we should still check if the content is meaningful.
     if (
       !reviewData.reviewComment ||

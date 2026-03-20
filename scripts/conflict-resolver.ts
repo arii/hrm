@@ -93,7 +93,7 @@ ${JSON.stringify(fileConflicts, null, 2)}
 `
 
     try {
-      const text = await generateContentWithFallback({
+      const { text } = await generateContentWithFallback({
         genAI,
         prompt,
         config: {

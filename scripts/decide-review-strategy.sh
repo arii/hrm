@@ -131,6 +131,13 @@ else
     NEEDS_REVIEW="true"
     SKIP_REASON=""
   else
+    # Extract thought signature if present
+    THOUGHT_SIG=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=<!-- thought_signature: ).*?(?= -->)' | head -n 1 || echo "")
+    if [ -n "$THOUGHT_SIG" ]; then
+      echo "::info::Extracted thought signature from last review."
+      echo "thought-signature=$THOUGHT_SIG" >> "$GITHUB_OUTPUT"
+    fi
+
     # Extract the commit SHA from the last review comment to see if it's outdated.
     # Updated regex to handle "Reviewed commit: `sha`", "Reviewed at commit: `sha`", etc.
     LAST_REVIEWED_SHA=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=> Failed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed commit: `)[a-f0-9]{7,40}(?=`)|(?<=Reviewed at commit: `)[a-f0-9]{7,40}(?=`)|(?<=commit: `)[a-f0-9]{7,40}(?=`)|(?<=`)[a-f0-9]{7,40}(?=` commit)' | head -n 1)
