@@ -34,10 +34,11 @@ jest.mock('@/hooks/useBluetoothHRM', () =>
     deviceStatus: 'disconnected',
     batteryLevel: null,
     isConnected: false,
-    isDataStale: false,
     isSupported: true,
-    disconnectionReason: null,
     connectionAttempted: false,
+    signalPeriodMs: 0,
+    lastPeriodMs: 0,
+    consecutiveSlowPackets: 0,
   }))
 )
 
@@ -224,10 +225,11 @@ describe('ConnectPage', () => {
       deviceStatus: 'connected',
       batteryLevel: 90,
       isConnected: true,
-      isDataStale: false,
       isSupported: true,
-      disconnectionReason: null,
       connectionAttempted: true,
+      signalPeriodMs: 0,
+      lastPeriodMs: 0,
+      consecutiveSlowPackets: 0,
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })

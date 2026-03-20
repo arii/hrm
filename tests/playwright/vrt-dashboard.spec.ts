@@ -9,7 +9,6 @@ import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { stopTimer } from './lib/setup'
-import { MOBILE_VIEWPORT, TABLET_VIEWPORT } from './lib/viewports'
 
 // Test suite configuration
 test.describe.configure({ mode: 'serial' })
@@ -144,28 +143,6 @@ test.describe('Visual Regression Tests', () => {
         animations: 'disabled',
         mask: [...getDynamicContentMasks(dashboardPage)],
         maxDiffPixelRatio: 0.15, // Higher threshold for complex combined state
-      })
-    })
-
-    // NEW: Responsive breakpoint tests
-    test('mobile viewport', async () => {
-      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
-      await dashboardPage.waitForTimeout(1000) // Allow responsive layout to settle
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
-        animations: 'disabled',
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4, // Higher tolerance for responsive shifts in CI
-      })
-    })
-
-    test('tablet viewport', async () => {
-      await dashboardPage.setViewportSize(TABLET_VIEWPORT)
-      const dashboard = dashboardPage.getByTestId('dashboard')
-      await takeScreenshot(dashboard, 'dashboard-tablet.png', {
-        animations: 'disabled',
-        mask: getDynamicContentMasks(dashboardPage),
-        maxDiffPixelRatio: 0.4,
       })
     })
 

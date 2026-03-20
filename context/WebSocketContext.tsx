@@ -193,6 +193,7 @@ export const WebSocketProvider = ({
     wsRef.current = ws
 
     ws.onopen = () => {
+      if (ws !== wsRef.current) return
       logger.info('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
@@ -228,6 +229,7 @@ export const WebSocketProvider = ({
     }
 
     ws.onclose = (event) => {
+      if (ws !== wsRef.current) return
       logger.info(
         `[WebSocketProvider] Disconnected from server. Code: ${event.code}, Reason: ${event.reason}`
       )
@@ -271,11 +273,13 @@ export const WebSocketProvider = ({
     }
 
     ws.onerror = (err) => {
+      if (ws !== wsRef.current) return
       logger.warn('[WebSocketProvider] Connection error', err)
       setConnectionStatus('Error')
     }
 
     ws.onmessage = (event) => {
+      if (ws !== wsRef.current) return
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
@@ -328,13 +332,54 @@ export const WebSocketProvider = ({
       }
     }
 
-    return () => {
-      if (typeof window !== 'undefined' && window.__TEST_CONTROLS__) {
-        if (window.__TEST_CONTROLS__.disconnect === disconnect) {
-          delete window.__TEST_CONTROLS__.disconnect
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const ws = wsRef.current
+        if (
+          !ws ||
+          ws.readyState === WebSocket.CLOSED ||
+          ws.readyState === WebSocket.CLOSING
+        ) {
+          logger.info('[WebSocketProvider] Page visible again. Reconnecting...')
+          connectRef.current()
+        } else if (ws.readyState === WebSocket.OPEN) {
+          // Send an immediate ping to verify the connection is still alive
+          // after the device wakes up
+          ws.send(JSON.stringify({ type: 'PING' }))
         }
-        if (window.__TEST_CONTROLS__.connect === connect) {
-          delete window.__TEST_CONTROLS__.connect
+      }
+    }
+
+    const handleOnline = () => {
+      logger.info(
+        '[WebSocketProvider] Browser came online. Checking connection...'
+      )
+      const ws = wsRef.current
+      if (
+        !ws ||
+        ws.readyState === WebSocket.CLOSED ||
+        ws.readyState === WebSocket.CLOSING
+      ) {
+        connectRef.current()
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+      window.addEventListener('online', handleOnline)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        window.removeEventListener('online', handleOnline)
+        if (window.__TEST_CONTROLS__) {
+          if (window.__TEST_CONTROLS__.disconnect === disconnect) {
+            delete window.__TEST_CONTROLS__.disconnect
+          }
+          if (window.__TEST_CONTROLS__.connect === connect) {
+            delete window.__TEST_CONTROLS__.connect
+          }
         }
       }
       disconnect()
