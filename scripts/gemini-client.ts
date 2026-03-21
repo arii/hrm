@@ -29,11 +29,6 @@ const instructions = getArg('--instructions')
 // The first model in the list is the primary model, and the rest are fallbacks.
 
 // UPDATED: Aligned with latest model recommendations (Q1 2026+)
-// 1. gemini-3.1-flash-lite-preview: Latest recommended preview model.
-// 2. gemini-2.5-flash: Reliable standard workhorse.
-// 3. gemini-2.5-flash-lite: Low-cost fallback.
-// 4. gemini-2.5-pro: High-intelligence fallback.
-
 const defaultFallbacks = [
   'gemini-3.1-flash-lite-preview',
   'gemini-2.5-flash',
@@ -333,7 +328,6 @@ export async function generateContentWithFallback({
   let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
-    console.log(`Attempting to use model: ${modelName}...`)
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
       const request: any = {
@@ -349,12 +343,14 @@ export async function generateContentWithFallback({
       const result = await model.generateContent(request)
       console.log(`Successfully generated content using ${modelName}.`)
 
-      const response = result.response
-      const text = response.text()
+      const text = result.response.text()
 
       // Capture thought signature from the response if present
-      const capturedSignature = (response.candidates?.[0] as any)
-        ?.thought_signature
+      const candidate = result.response.candidates?.[0]
+      const capturedSignature =
+        candidate && 'thought_signature' in candidate
+          ? (candidate as any).thought_signature
+          : undefined
 
       return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {
@@ -851,9 +847,7 @@ async function runReviewPreset(
       thoughtSignature?: string
     }
     reviewData.prContext = prContext
-    if (thoughtSignature) {
-      reviewData.thoughtSignature = thoughtSignature
-    }
+    reviewData.thoughtSignature ??= thoughtSignature
     // It's valid JSON, but we should still check if the content is meaningful.
     if (
       !reviewData.reviewComment ||

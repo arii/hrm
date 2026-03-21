@@ -132,7 +132,7 @@ else
     SKIP_REASON=""
   else
     # Extract thought signature if present
-    THOUGHT_SIG=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=<!-- thought_signature: ).*?(?= -->)' | head -n 1 || echo "")
+    THOUGHT_SIG=$(echo "$LAST_COMMENT_BODY" | grep -oP '(?<=<!-- thought_signature: )[a-zA-Z0-9+/=]+(?= -->)' | head -n 1 || echo "")
     if [ -n "$THOUGHT_SIG" ]; then
       echo "::info::Extracted thought signature from last review."
       echo "thought-signature=$THOUGHT_SIG" >> "$GITHUB_OUTPUT"
