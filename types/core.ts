@@ -261,25 +261,3 @@ export interface SpotifyTokenResponse {
   expires_in: number
   refresh_token?: string
 }
-
-/**
- * State of SpotifyControls reducer
- */
-export interface SpotifyControlsState {
-  displayVolume: number
-  isSliding: boolean
-  lastVolume: number
-  lastActionTime: number
-}
-
-/**
- * Actions for SpotifyControls reducer
- */
-export type SpotifyControlsAction =
-  | { type: 'SET_VOLUME'; payload: number }
-  | { type: 'SET_SLIDING'; payload: boolean }
-  | { type: 'TOGGLE_MUTE' }
-  | {
-      type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volume?: number; isMuted?: boolean }
-    }
