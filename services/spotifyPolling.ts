@@ -263,8 +263,8 @@ export class SpotifyPolling implements SpotifyService {
 
       await this.playerManager!.executeSpotifyCommand(command, params)
 
-      // Revert to 500ms delay to avoid race conditions with sluggish Spotify API
-      setTimeout(() => this.getCurrentlyPlaying(), 500)
+      // Slight delay to allow Spotify API to update before we re-poll
+      setTimeout(() => this.getCurrentlyPlaying(), 1000)
     } catch (error) {
       await logSpotifyCommandError(command, error)
       await this.getCurrentlyPlaying()
