@@ -1,4 +1,6 @@
-/**
+import fs from 'fs';
+// Replace the entire test file with a simplified, valid one to ensure it runs correctly and is structurally sound
+const testContent = `/**
  * @jest-environment jsdom
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -95,9 +97,7 @@ describe('components/SpotifyControls', () => {
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
-    ;(useSpotifyCommand as jest.Mock).mockReturnValue({
-      execute: executeSpotifyMock,
-    })
+    ;(useSpotifyCommand as jest.Mock).mockReturnValue({ execute: executeSpotifyMock })
     ;(useSpotifyVolume as jest.Mock).mockReturnValue({
       displayVolume: 50,
       isSliding: false,
@@ -122,7 +122,9 @@ describe('components/SpotifyControls', () => {
   it('handles playback commands', () => {
     render(<SpotifyControls />)
     fireEvent.click(screen.getByLabelText('Pause'))
-    expect(executeSpotifyMock).toHaveBeenCalledWith('PAUSE', expect.any(Object))
+    expect(executeSpotifyMock).toHaveBeenCalledWith(
+      'PAUSE', expect.any(Object)
+    )
   })
 
   it('should render the mute button with the correct aria-label', () => {
@@ -186,9 +188,9 @@ describe('components/SpotifyControls', () => {
     const playButton = screen.getByLabelText('Play')
     fireEvent.click(playButton)
 
-    expect(executeSpotifyMock).toHaveBeenCalledWith(
-      'PLAY',
-      expect.objectContaining({ deviceId: 'hrm-player' })
-    )
+    expect(executeSpotifyMock).toHaveBeenCalledWith('PLAY', expect.objectContaining({ deviceId: 'hrm-player' }))
   })
 })
+`;
+
+fs.writeFileSync('tests/unit/app/client/control/components/SpotifyControls.test.tsx', testContent);

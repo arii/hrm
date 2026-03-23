@@ -26,15 +26,15 @@ interface VolumeSliderProps {
 }
 
 const StyledSlider = styled(Slider, {
-  shouldForwardProp: (prop) => prop !== 'sliderColor' && prop !== 'scaleFactor',
-})<{ sliderColor?: string; scaleFactor: number }>(
-  ({ theme, sliderColor, scaleFactor }) => ({
+  shouldForwardProp: (prop) => prop !== 'sliderColor' && prop !== 'size',
+})<{ sliderColor?: string; size?: 'small' | 'medium' }>(
+  ({ theme, sliderColor, size }) => ({
     color: sliderColor || theme.palette.primary.main,
-    height: 8 * scaleFactor,
+    height: theme.spacing(size === 'small' ? 0.75 : 1),
     '& .MuiSlider-thumb': {
       backgroundColor: 'white',
-      width: 28 * scaleFactor,
-      height: 28 * scaleFactor,
+      width: theme.spacing(size === 'small' ? 2.5 : 3.5),
+      height: theme.spacing(size === 'small' ? 2.5 : 3.5),
       boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
       '&:hover, &.Mui-focusVisible': {
         boxShadow: sliderColor
@@ -51,7 +51,9 @@ const StyledSlider = styled(Slider, {
         transform: 'translate(-50%, -50%)',
       },
     },
-    '& .MuiSlider-track, .MuiSlider-rail': { height: 8 * scaleFactor },
+    '& .MuiSlider-track, .MuiSlider-rail': {
+      height: theme.spacing(size === 'small' ? 0.75 : 1),
+    },
     '& .MuiSlider-rail': { opacity: 0.3 },
   })
 )
@@ -84,8 +86,6 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
     [onVolumeChangeCommitted]
   )
 
-  const SCALE_FACTOR = size === 'small' ? 0.75 : 1
-
   return (
     <Stack
       direction="row"
@@ -107,7 +107,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
-          padding: `${12 * SCALE_FACTOR}px`,
+          padding: (theme) => theme.spacing(size === 'small' ? 1 : 1.5),
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
         data-testid="volume-slider-mute-button"
@@ -123,7 +123,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         onChangeCommitted={handleVolumeChangeCommitted}
-        scaleFactor={SCALE_FACTOR}
+        size={size}
         disabled={disabled}
         sliderColor={sliderColor}
         aria-label="Volume control"
