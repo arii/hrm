@@ -21,7 +21,7 @@ import { ConnectedHrmData as HrmData } from '../types/websocket'
 export type { HrmData }
 
 export interface WebSocketContextType extends WebSocketState {
-  onEvent?: (event: string, callback: (data: any) => void) => () => void;
+  onEvent?: (event: string, callback: (data: unknown) => void) => () => void
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
@@ -294,7 +294,11 @@ export const WebSocketProvider = ({
 
         if (message.type === 'SPOTIFY_OPTIMISTIC_FAILURE') {
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('SPOTIFY_OPTIMISTIC_FAILURE', { detail: message.payload }))
+            window.dispatchEvent(
+              new CustomEvent('SPOTIFY_OPTIMISTIC_FAILURE', {
+                detail: message.payload,
+              })
+            )
           }
           return
         }
@@ -413,15 +417,18 @@ export const WebSocketProvider = ({
     [throttledConnectionWarning]
   )
 
-  const onEvent = useCallback((event: string, callback: (data: any) => void) => {
-    const handleEvent = (e: CustomEvent) => {
-      callback(e.detail)
-    }
-    window.addEventListener(event, handleEvent as EventListener)
-    return () => {
-      window.removeEventListener(event, handleEvent as EventListener)
-    }
-  }, [])
+  const onEvent = useCallback(
+    (event: string, callback: (data: unknown) => void) => {
+      const handleEvent = (e: CustomEvent) => {
+        callback(e.detail)
+      }
+      window.addEventListener(event, handleEvent as EventListener)
+      return () => {
+        window.removeEventListener(event, handleEvent as EventListener)
+      }
+    },
+    []
+  )
 
   const contextValue = {
     ...appState,
