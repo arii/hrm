@@ -50,6 +50,7 @@ export const TrackListItem: React.FC<TrackListItemProps> = ({
           <Avatar
             variant="rounded"
             src={albumThumbnail}
+            alt={track.name}
             sx={{ width: 32, height: 32 }}
           >
             <MusicNoteIcon fontSize="small" />
