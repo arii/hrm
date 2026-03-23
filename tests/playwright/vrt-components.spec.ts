@@ -3,8 +3,6 @@ import { test } from './fixtures'
 import {
   setupMinimalVisualRegressionTest,
   mockSpotifyPlaybackState,
-  mockLoggedInSession,
-  resetServerState,
   getSpotifyMasks,
 } from './lib'
 import { checkAccessibility } from './lib/accessibility'
@@ -13,22 +11,20 @@ import { waitForPageReady, waitForWebSocketConnection } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test.beforeEach(async ({ dashboardPage, request }) => {
-    await resetServerState(request)
-    await setupMinimalVisualRegressionTest(dashboardPage, '/')
-  })
-
   test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/')
     const bottomNav = dashboardPage.getByTestId('bottom-nav-bar')
     await takeScreenshot(bottomNav, 'bottom-nav-bar.png')
   })
 
   test('Footer rendering', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/')
     const footer = dashboardPage.getByTestId('footer')
     await takeScreenshot(footer, 'footer.png')
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/')
     // Force visibility and pause animation for VRT
     await dashboardPage.evaluate(() => {
       const el = document.querySelector(
@@ -87,11 +83,8 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(tableHeader, 'workout-table-header.png')
   })
 
-  test('SpotifyDeviceSelector menu', async ({ dashboardPage, context }) => {
-    // Mock session to appear logged in
-    await mockLoggedInSession(context)
-    await dashboardPage.reload()
-    await waitForPageReady(dashboardPage)
+  test('SpotifyDeviceSelector menu', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/')
 
     // Wait for the WebSocket to fully reconnect after the reload
     // before applying mocks, otherwise the server's initial STATE_SYNC
@@ -161,6 +154,7 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage, '/')
     const refreshButton = dashboardPage.getByTestId('refresh-icon-button')
     await takeScreenshot(refreshButton, 'refresh-icon-button.png')
     await refreshButton.hover()

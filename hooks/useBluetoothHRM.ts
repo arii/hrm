@@ -20,6 +20,7 @@ import {
   MISSED_PACKET_THRESHOLD_BUFFER_MS,
   MIN_MISSED_PACKET_THRESHOLD_MS,
   ROLLING_AVG_HISTORY_LENGTH,
+  DATA_LIVENESS_TIMEOUT_MS,
 } from '@/constants/bluetooth'
 import {
   getSavedDeviceId,
@@ -59,7 +60,7 @@ interface UseBluetoothHRMProps {
 
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const {
-    dataLivenessTimeoutMs = 10000,
+    dataLivenessTimeoutMs = DATA_LIVENESS_TIMEOUT_MS,
     userName,
     userAge,
     onHeartRateUpdate,
@@ -219,6 +220,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           const timeSinceLastData = Date.now() - lastDataTime.current
 
           if (timeSinceLastData > dataLivenessTimeoutMs) {
+            // Fix Race Condition: Don't force a disconnect/reconnect if we are already in a connection state transition
+            if (isConnecting.current) {
+              logger.warn(
+                { timeSinceLastData },
+                'Watchdog: Connection is in progress. Skipping forced disconnect.'
+              )
+              return
+            }
+
             setStatus(BluetoothConnectionStatus.RECONNECTING)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
             isTimeoutDisconnect.current = true

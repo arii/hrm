@@ -44,7 +44,7 @@ const getStatusConfig = (
       }
     case 'warning':
       return {
-        color: palette.warning.main,
+        color: palette.warning.dark,
         label: 'Weak Signal',
         icon: SignalCellularAlt1BarIcon,
         isAnimated: true,

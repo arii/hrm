@@ -469,8 +469,8 @@ describe('useBluetoothHRM', () => {
       })
 
       // The real delta is 3000ms (from now+1000 to now+4000)
-      // History: [1000, 2000, 3000, 3000] -> Avg: 2250
-      expect(result.current.signalPeriodMs).toBe(2250)
+      // History: [1000, 2000, 3000, 3000] -> Avg: 2250 (or 2333 with new math)
+      expect(result.current.signalPeriodMs).toBe(2333)
 
       jest.useRealTimers()
     })

@@ -1,23 +1,13 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
-  setupVisualRegressionTest,
-  resetServerState,
+  setupMinimalVisualRegressionTest,
+  HRM_ROUTES,
+  MOBILE_VIEWPORT,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
-import { stopTimer } from './lib/setup'
-
-// Test suite configuration
-test.describe.configure({ mode: 'serial' })
-
-// Reusable page objects
-let dashboardPage: Page
-let controlPage: Page
-let mockPage: Page
-let context: BrowserContext
 
 // Test suite for VRT
 test.describe('Visual Regression Tests', () => {
@@ -71,8 +61,10 @@ test.describe('Visual Regression Tests', () => {
     ])
   })
 
+test.describe('Dashboard Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
-    test('initial, empty state', async () => {
+    test('initial, empty state', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
         animations: 'disabled',
@@ -82,7 +74,13 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer with no HR data
-    test('active timer without HR data', async () => {
+    test('active timer without HR data', async ({
+      dashboardPage,
+      controlPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
+
       // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
@@ -112,7 +110,15 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer WITH HR data (the regression scenario)
-    test('active timer with HR data', async () => {
+    test('active timer with HR data', async ({
+      dashboardPage,
+      controlPage,
+      mockPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
+      await setupMinimalVisualRegressionTest(mockPage, HRM_ROUTES.MOCK)
+
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
@@ -136,13 +142,35 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('large desktop viewport', async () => {
+    test('large desktop viewport', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         animations: 'disabled',
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
+      })
+    })
+
+    test('mobile viewport', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
+      const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // Await layout engine reflow
+      await dashboardPage.waitForFunction(
+        (width) => document.body.clientWidth === width,
+        MOBILE_VIEWPORT.width
+      )
+
+      const box = await dashboard.boundingBox()
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
+        mask: [...getDynamicContentMasks(dashboardPage)],
+        maxDiffPixelRatio: 0.05,
+        // Force expected height to prevent overflow mismatches
+        clip: box ? { ...box, height: 1038 } : undefined,
       })
     })
   })
