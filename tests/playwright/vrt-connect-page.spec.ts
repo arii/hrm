@@ -44,15 +44,19 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   })
 
   test('connected state', async ({ connectPage }) => {
-    await connectPage
-      .getByRole('button', { name: 'Connect Bluetooth HRM' })
-      .click()
+    await connectPage.evaluate((status) => {
+      window.__TEST_CONTROLS__!.setHrmStatus!(status)
+      window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(
+        'Connected to: Mock HRM'
+      )
+    }, BluetoothConnectionStatus.CONNECTED)
+
     await connectPage.evaluate(() =>
       window.bluetoothTestHelpers.simulateHeartRate(78)
     )
 
     await expect(
-      connectPage.getByText('Connected! Heart rate data is being streamed')
+      connectPage.getByText('Connected! Heart rate data is being streamed.')
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
       mask: [connectPage.getByTestId('hr-tile')],
