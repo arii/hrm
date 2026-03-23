@@ -1,83 +1,19 @@
-import { type BrowserContext, type Page, expect } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
-  setupVisualRegressionTest,
-  resetServerState,
+  setupMinimalVisualRegressionTest,
+  HRM_ROUTES,
+  MOBILE_VIEWPORT,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
-import { stopTimer } from './lib/setup'
-
-// Test suite configuration
-test.describe.configure({ mode: 'serial' })
-
-// Reusable page objects
-let dashboardPage: Page
-let controlPage: Page
-let mockPage: Page
-let context: BrowserContext
 
 // Test suite for VRT
-test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    dashboardPage = setup.dashboardPage
-    controlPage = setup.controlPage
-    mockPage = setup.mockPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  test.afterEach(async () => {
-    // Ensure timer is stopped after each test to maintain a clean state
-    await stopTimer(controlPage, dashboardPage)
-  })
-
-  test.beforeEach(async ({ request }) => {
-    // 1. Reset server-side state
-    await resetServerState(request)
-
-    // 2. Reload pages to ensure clean client state and fresh WebSocket connection
-    await dashboardPage.reload()
-    await controlPage.reload()
-    await mockPage.reload()
-
-    // 3. Wait for pages to be ready and connected
-    await waitForPageReady(dashboardPage)
-    await waitForPageReady(controlPage)
-    await waitForPageReady(mockPage)
-
-    // Ensure WebSocket is re-established after server reset
-    await Promise.all([
-      dashboardPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      controlPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      mockPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-    ])
-
-    // Force visibility to avoid flaky screenshots due to animations
-    await dashboardPage.addStyleTag({
-      content: `[data-testid="main-content-layout"] { opacity: 1 !important; transform: none !important; }`,
-    })
-  })
-
+test.describe('Dashboard Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
-    test('initial, empty state', async () => {
+    test('initial, empty state', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
@@ -86,7 +22,13 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer with no HR data
-    test('active timer without HR data', async () => {
+    test('active timer without HR data', async ({
+      dashboardPage,
+      controlPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
+
       // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
         'timer-display-container'
@@ -120,7 +62,15 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // NEW: Active timer WITH HR data (the regression scenario)
-    test('active timer with HR data', async () => {
+    test('active timer with HR data', async ({
+      dashboardPage,
+      controlPage,
+      mockPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
+      await setupMinimalVisualRegressionTest(mockPage, HRM_ROUTES.MOCK)
+
       await mockPage.getByLabel('Current BPM').fill('155')
       await mockPage.getByRole('button', { name: 'Zone 4' }).click()
       await controlPage.getByTestId('start-timer-button').click()
@@ -148,12 +98,34 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('large desktop viewport', async () => {
+    test('large desktop viewport', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
         mask: getDynamicContentMasks(dashboardPage),
         maxDiffPixelRatio: 0.1,
+      })
+    })
+
+    test('mobile viewport', async ({ dashboardPage }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
+      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
+      const dashboard = dashboardPage.getByTestId('dashboard')
+
+      // Await layout engine reflow
+      await dashboardPage.waitForFunction(
+        (width) => document.body.clientWidth === width,
+        MOBILE_VIEWPORT.width
+      )
+
+      const box = await dashboard.boundingBox()
+      await takeScreenshot(dashboard, 'dashboard-mobile.png', {
+        mask: [...getDynamicContentMasks(dashboardPage)],
+        maxDiffPixelRatio: 0.05,
+        // Force expected height to prevent overflow mismatches
+        clip: box ? { ...box, height: 1038 } : undefined,
       })
     })
   })

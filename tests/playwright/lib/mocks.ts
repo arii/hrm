@@ -11,12 +11,7 @@ import type {
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
 
-/**
- * A consistent, offline-safe 1x1 transparent PNG image for VRT.
- * Prevents flaky tests caused by external placeholder services.
- */
-const MOCK_IMAGE =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
+import { MOCK_IMAGE } from './setup'
 
 const STABLE_WORKOUT_HTML = `
   <!DOCTYPE html>
@@ -139,35 +134,6 @@ export async function mockSpotifyPlaybackState(
 }
 
 /**
- * Mocks the NextAuth session to simulate a logged-in user.
- *
- * @param context - The Playwright BrowserContext object.
- */
-export async function mockLoggedInSession(
-  context: BrowserContext
-): Promise<void> {
-  // Mock the session endpoint
-  await context.route('**/api/auth/session', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        user: {
-          name: 'Test User',
-          email: 'test@example.com',
-          image: MOCK_IMAGE,
-        },
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        accessToken: 'mock-access-token',
-      }),
-    })
-  })
-
-  // Mock the Spotify access token endpoint as it's required for the control panel
-  await mockSpotifyAccessToken(context)
-}
-
-/**
  * Mocks the Spotify playlists endpoint.
  *
  * @param context - The Playwright BrowserContext or Page object.
@@ -218,27 +184,6 @@ export async function mockSpotifyPlaylists(
             artists: [{ name: 'Artist 1' }],
           },
         ],
-      }),
-    })
-  })
-}
-
-/**
- * Mocks the Spotify access token endpoint.
- *
- * @param context - The Playwright BrowserContext object.
- * @param accessToken - The mock access token to return.
- */
-export async function mockSpotifyAccessToken(
-  context: BrowserContext,
-  accessToken: string = 'mock-spotify-access-token'
-): Promise<void> {
-  await context.route('**/api/spotify/access-token', (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        accessToken,
       }),
     })
   })
