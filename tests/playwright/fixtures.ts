@@ -4,6 +4,12 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
+import {
+  mockLoggedInSession,
+  resetServerState,
+  freezeUIForVRT,
+  stopTimer,
+} from './lib'
 
 type PageFixtures = {
   dashboardPage: Page
@@ -13,8 +19,13 @@ type PageFixtures = {
 }
 
 export const test = base.extend<PageFixtures>({
-  dashboardPage: async ({ context }, applyFixture) => {
+  dashboardPage: async ({ context, request }, use) => {
     const page = await context.newPage()
+
+    await mockLoggedInSession(context)
+    await resetServerState(request)
+    await freezeUIForVRT(page)
+
     page.on('console', (msg) => {
       const text = msg.text()
       // Filter out expected noise
@@ -27,22 +38,44 @@ export const test = base.extend<PageFixtures>({
 
       console.log(`Console ${msg.type()}: ${text}`)
     })
-    await applyFixture(page)
+
+    await use(page)
   },
 
-  controlPage: async ({ context }, applyFixture) => {
+  controlPage: async ({ context }, use) => {
     const page = await context.newPage()
-    await applyFixture(page)
+
+    await mockLoggedInSession(context)
+    await freezeUIForVRT(page)
+
+    await use(page)
+
+    try {
+      await stopTimer(page)
+    } catch (error) {
+      console.warn(
+        'Failed to stop timer during teardown, WS state may linger:',
+        error
+      )
+    }
   },
 
-  mockPage: async ({ context }, applyFixture) => {
+  mockPage: async ({ context }, use) => {
     const page = await context.newPage()
-    await applyFixture(page)
+
+    await mockLoggedInSession(context)
+    await freezeUIForVRT(page)
+
+    await use(page)
   },
 
-  connectPage: async ({ context }, applyFixture) => {
+  connectPage: async ({ context }, use) => {
     const page = await context.newPage()
-    await applyFixture(page)
+
+    await mockLoggedInSession(context)
+    await freezeUIForVRT(page)
+
+    await use(page)
   },
 })
 

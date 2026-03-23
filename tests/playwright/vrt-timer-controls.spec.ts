@@ -1,49 +1,18 @@
-import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { setupVisualRegressionTest, stopTimer } from './lib'
+import { setupMinimalVisualRegressionTest, HRM_ROUTES } from './lib'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
-
-// Test suite configuration
-test.describe.configure({ mode: 'serial' })
-
-// Reusable page objects
-let controlPage: Page
-let dashboardPage: Page
-let context: BrowserContext
 
 // Test suite for VRT
-test.describe('Visual Regression Tests', () => {
-  // Centralized setup hook
-  test.beforeAll(async ({ browser }) => {
-    const setup = await setupVisualRegressionTest(browser)
-    context = setup.context
-    controlPage = setup.controlPage
-    dashboardPage = setup.dashboardPage
-  })
-
-  // Centralized cleanup hook
-  test.afterAll(async () => {
-    await context?.close()
-  })
-
-  test.afterEach(async () => {
-    await stopTimer(controlPage, dashboardPage)
-  })
-
-  // Add a beforeEach hook to wait for the page to be ready before each test
-  test.beforeEach(async () => {
-    await waitForPageReady(controlPage)
-    await waitForPageReady(dashboardPage)
-  })
-
+test.describe('TimerControls Visual Regression Tests', () => {
   test.describe('TimerControls Component', () => {
-    test('initial state', async () => {
+    test('initial state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
       const timerControls = controlPage.getByTestId('timer-controls')
       await takeScreenshot(timerControls, 'timer-controls-idle.png')
     })
 
-    test('with configured inputs', async () => {
+    test('with configured inputs', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
       // Ensure Tabata mode is active to see inputs
       await controlPage.getByTestId('tabata-mode-button').click()
 
@@ -69,7 +38,8 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('in active state', async () => {
+    test('in active state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
       await controlPage.getByTestId('start-timer-button').click()
       await expect(controlPage.getByTestId('stop-timer-button')).toBeVisible()
 
@@ -82,7 +52,8 @@ test.describe('Visual Regression Tests', () => {
       await controlPage.getByTestId('stop-timer-button').click()
     })
 
-    test('start button hover state', async () => {
+    test('start button hover state', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
       const startButton = controlPage.getByTestId('start-timer-button')
       await startButton.hover()
       await takeScreenshot(startButton, 'start-button-hover.png', {
@@ -91,7 +62,8 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
-    test('in stopwatch mode', async () => {
+    test('in stopwatch mode', async ({ controlPage }) => {
+      await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
       await controlPage.getByTestId('stopwatch-mode-button').click()
       // In stopwatch mode the tabata-specific inputs are hidden
       await expect(controlPage.getByTestId('work-duration-input')).toBeHidden()
