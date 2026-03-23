@@ -120,7 +120,7 @@ export const useSpotifyVolume = (
 
   useEffect(() => {
     if (!onEvent) return
-    return onEvent('SPOTIFY_OPTIMISTIC_FAILURE', (data) => {
+    return onEvent('SPOTIFY_OPTIMISTIC_FAILURE', (data: any) => {
       if (data.command === 'SET_VOLUME') {
         unlock()
       }

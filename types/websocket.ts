@@ -93,6 +93,7 @@ export type ServerMessage = (
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
+  | { type: 'SPOTIFY_OPTIMISTIC_FAILURE'; payload: { command: string } }
 ) & { serverTimestamp?: number }
 
 /**
