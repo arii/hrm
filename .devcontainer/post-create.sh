@@ -3,6 +3,9 @@ set -e
 
 echo "Starting post-create setup..."
 
+echo "Installing jq..."
+sudo apt-get update && sudo apt-get install -y jq
+
 # Run the main setup script
 bash scripts/setup.sh
 
