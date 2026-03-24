@@ -25,10 +25,6 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 const instructions = getArg('--instructions')
 
-// List of models to try in order.
-// The first model in the list is the primary model, and the rest are fallbacks.
-
-// UPDATED: Aligned with latest model recommendations (Q1 2026+)
 const defaultFallbacks = [
   'gemini-3.1-flash-lite-preview',
   'gemini-2.5-flash',
@@ -314,6 +310,8 @@ async function main() {
   }
 }
 
+type ExtendedGenerateContentRequest = GenerateContentRequest & { thought_signature?: string };
+
 export async function generateContentWithFallback({
   genAI,
   prompt,
@@ -330,14 +328,10 @@ export async function generateContentWithFallback({
   for (const modelName of MODEL_FALLBACKS) {
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
-      const request: any = {
+      const request: ExtendedGenerateContentRequest = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
-      }
-
-      // Implement thought signature circulation if provided
-      if (thoughtSignature) {
-        request.thought_signature = thoughtSignature
+        ...(thoughtSignature && { thought_signature: thoughtSignature })
       }
 
       const result = await model.generateContent(request)
@@ -346,11 +340,7 @@ export async function generateContentWithFallback({
       const text = result.response.text()
 
       // Capture thought signature from the response if present
-      const candidate = result.response.candidates?.[0]
-      const capturedSignature =
-        candidate && 'thought_signature' in candidate
-          ? (candidate as any).thought_signature
-          : undefined
+      const capturedSignature = (result.response.candidates?.[0] as any)?.thought_signature
 
       return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {

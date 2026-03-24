@@ -433,9 +433,9 @@ jobs:
               FOOTER="\n\n---\n#### 🤖 [Gemini Manual Trigger Guide](${{ github.server_url }}/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
 
               # Extract the new thought signature if present
-              NEW_THOUGHT_SIG=$(jq -r '.thoughtSignature // empty' review_result.json)
+              NEW_THOUGHT_SIG=$(jq -r '.thoughtSignature // ""' review_result.json)
               SIG_MARKER=""
-              if [ -n "$NEW_THOUGHT_SIG" ]; then
+              if [[ -n "$NEW_THOUGHT_SIG" && "$NEW_THOUGHT_SIG" != "null" ]]; then
                 SIG_MARKER="\n\n<!-- thought_signature: ${NEW_THOUGHT_SIG} -->"
               fi
 
