@@ -4,6 +4,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
@@ -27,6 +28,12 @@ import VolumeSlider from '@/components/shared/VolumeSlider'
 import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
+
+const INVALID_TRACK_NAMES = new Set([
+  'Awaiting Login...',
+  '',
+  'No Track Playing',
+])
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -64,12 +71,11 @@ const SpotifyControls = () => {
     router.push('/client/spotify-selection')
   }
 
-  const hasSpotifyData =
-    spotifyData.playback.track.name !== 'Awaiting Login...' &&
-    spotifyData.playback.track.name !== '' &&
-    spotifyData.playback.track.name !== 'No Track Playing'
+  const shouldShowControls =
+    spotifyServiceInitialized &&
+    (!INVALID_TRACK_NAMES.has(spotifyData.playback.track.name) ||
+      devices.some((d) => d.is_active))
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
       sendData({
@@ -79,7 +85,30 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData, spotifyServiceInitialized])
 
-  // 4. Sync selected device and volume with active device
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+    const handleFocus = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+
+      timeoutId = setTimeout(() => {
+        if (connectionStatus === 'Connected' && spotifyServiceInitialized) {
+          sendData({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+        }
+      }, 300)
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [connectionStatus, spotifyServiceInitialized, sendData])
+
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
@@ -286,7 +315,7 @@ const SpotifyControls = () => {
           <SpotifySearchInput onTrackSelect={handleTrackSelect} />
         </Box>
 
-        {hasSpotifyData ? (
+        {shouldShowControls ? (
           <>
             <Box
               sx={{
@@ -387,8 +416,35 @@ const SpotifyControls = () => {
           <Button
             onClick={handleBrowseClick}
             data-testid="spotify-select-music-button"
+            disabled={!spotifyServiceInitialized}
+            startIcon={
+              !spotifyServiceInitialized ? (
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  data-visualtest-hide="true"
+                />
+              ) : null
+            }
+            sx={{
+              width: '100%',
+              mt: 2,
+              backgroundColor: spotifyServiceInitialized
+                ? SPOTIFY_BRAND_COLOR
+                : 'rgba(29, 185, 84, 0.5)',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#1ed760',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'rgba(29, 185, 84, 0.3)',
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
+            }}
           >
-            Select Music
+            {spotifyServiceInitialized
+              ? 'Connect to HRM Web Player'
+              : 'Searching for Web Player...'}
           </Button>
         )}
       </CardContent>
