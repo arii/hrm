@@ -99,7 +99,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@commitlint/cli": "^20.4.2",
-    "@commitlint/config-conventional": "^20.3.1",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.2",
     "@google/generative-ai": "0.24.1",
     "@jest/globals": "^30.2.0",
