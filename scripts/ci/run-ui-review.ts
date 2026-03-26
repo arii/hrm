@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import fs from 'fs'
-import { execFileSync } from 'child_process'
+import { Octokit } from '@octokit/rest'
+import type { ServerMessage } from '../../types/websocket'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -11,12 +11,11 @@ async function performUIReview() {
     viewport: { width: 1280, height: 720 },
   })
 
-  const targetUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
+  const baseUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
 
-  await context.addCookies([{ name: 'session-id', value: 'mock', url: targetUrl }])
+  await context.addCookies([{ name: 'session-id', value: 'mock', url: baseUrl }])
 
   const page = await context.newPage()
-  const baseUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
   const targetUrl = new URL(baseUrl)
   targetUrl.searchParams.set('testing', 'true')
 
@@ -30,59 +29,72 @@ async function performUIReview() {
 
     // Inject mock application state so the UI review has something to analyze
     await page.waitForFunction(() => !!(window as any).__TEST_CONTROLS__)
-    await page.evaluate(() => {
+
+    // Build type-safe messages outside evaluate to ensure types are correct at compile time
+    const timerMessage: ServerMessage = {
+      type: 'TIMER_UPDATE',
+      payload: {
+        isRunning: true,
+        currentPhase: 'WORK',
+        timeRemaining: 15,
+        timeElapsed: 45,
+        caloriesBurned: 12,
+        mode: 'TABATA',
+        workDuration: 30,
+        restDuration: 10,
+        soundEventId: 0
+      }
+    }
+
+    const hrmMessage: ServerMessage = {
+      type: 'HRM_UPDATE',
+      payload: [{
+        clientId: 'mock-1',
+        value: 155,
+        maxHr: 185,
+        zone: 'ZONE_3',
+        percentage: 85,
+        name: 'Mock Device',
+        calories: 120
+      }]
+    }
+
+    const spotifyInitMessage: ServerMessage = {
+      type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+      payload: true
+    }
+
+    const spotifyMessage: ServerMessage = {
+      type: 'SPOTIFY_UPDATE',
+      payload: {
+        devices: [],
+        playback: {
+          track: {
+            id: 'track-1',
+            name: 'UI Review Track',
+            artist: 'Gemini',
+            albumName: 'Review Album',
+            albumArtUrl: ''
+          },
+          is_playing: true,
+          volume_percent: 50,
+          isMuted: false,
+          progress_ms: 30000
+        }
+      }
+    }
+
+    await page.evaluate(({ timerMsg, hrmMsg, spotifyInitMsg, spotifyMsg }) => {
       const dispatch = (window as any).__TEST_CONTROLS__.dispatch
-      
-      // Timer Simulation
-      dispatch({
-        type: 'TIMER_UPDATE',
-        payload: {
-          isRunning: true,
-          currentPhase: 'WORK',
-          timeRemaining: 15,
-          timeElapsed: 45,
-          caloriesBurned: 12,
-          mode: 'TABATA',
-          workDuration: 30,
-          restDuration: 10,
-          soundEventId: 0
-        }
-      })
-      
-      // HRM Simulation
-      dispatch({
-        type: 'HRM_UPDATE',
-        payload: [{
-          clientId: 'mock-1',
-          value: 155,
-          zone: 'Aerobic',
-          percentage: 85,
-          name: 'Mock Device',
-          calories: 120
-        }]
-      })
-      
-      // Spotify Simulation
-      dispatch({ type: 'SPOTIFY_SERVICE_INIT_UPDATE', payload: true })
-      dispatch({
-        type: 'SPOTIFY_UPDATE',
-        payload: {
-          devices: [],
-          playback: {
-            track: {
-              id: 'track-1',
-              name: 'UI Review Track',
-              artist: 'Gemini',
-              albumName: 'Review Album',
-              albumArtUrl: ''
-            },
-            is_playing: true,
-            volume_percent: 50,
-            isMuted: false,
-            progress_ms: 30000
-          }
-        }
-      })
+      dispatch(timerMsg)
+      dispatch(hrmMsg)
+      dispatch(spotifyInitMsg)
+      dispatch(spotifyMsg)
+    }, {
+      timerMsg: timerMessage,
+      hrmMsg: hrmMessage,
+      spotifyInitMsg: spotifyInitMessage,
+      spotifyMsg: spotifyMessage
     })
 
     // Force layout stabilization for the screenshot
@@ -91,8 +103,7 @@ async function performUIReview() {
     })
     await page.waitForTimeout(2000)
 
-    const screenshotPath = 'ui-snapshot.png'
-    await page.screenshot({ path: screenshotPath, fullPage: true })
+    const screenshotBuffer = await page.screenshot({ fullPage: true })
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-pro',
@@ -116,21 +127,31 @@ async function performUIReview() {
       prompt,
       {
         inlineData: {
-          data: Buffer.from(fs.readFileSync(screenshotPath)).toString('base64'),
+          data: screenshotBuffer.toString('base64'),
           mimeType: 'image/png',
         },
       },
     ])
 
-    const feedback = result.response.text()
+    const response = await result.response
+    const feedback = response.candidates?.[0]?.content?.parts?.[0]?.text || "No feedback generated."
 
     const prNumber = process.env.PR_NUMBER
-    if (prNumber) {
-      const body = `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`
+    const githubToken = process.env.GITHUB_TOKEN
+    const repoFullName = process.env.GITHUB_REPOSITORY
 
-      execFileSync('gh', ['pr', 'comment', prNumber, '--body', body], {
-        stdio: 'inherit',
+    if (prNumber && githubToken && repoFullName) {
+      const body = `### 🤖 Gemini UI Review\n\n${feedback}\n\n---\n*This review was triggered by the @gemini-ui-review command.*`
+      const [owner, repo] = (repoFullName as string).split('/')
+
+      const octokit = new Octokit({ auth: githubToken })
+      await octokit.rest.issues.createComment({
+        owner: owner as string,
+        repo: repo as string,
+        issue_number: parseInt(prNumber as string, 10),
+        body,
       })
+      console.log(`✅ Successfully posted UI review to PR #${prNumber}`)
     } else {
       console.log(feedback)
     }
@@ -138,8 +159,7 @@ async function performUIReview() {
     console.error('❌ UI review execution failed:', error)
     process.exit(1)
   } finally {
-    await browser.close()
-    fs.rmSync('ui-snapshot.png', { force: true })
+    await browser.close().catch(console.error)
   }
 }
 
