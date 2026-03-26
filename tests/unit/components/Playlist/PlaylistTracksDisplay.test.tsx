@@ -102,9 +102,9 @@ describe('PlaylistTracksDisplay', () => {
           id: 't1',
           name: 'Track 1',
           artists: 'Artist 1',
-          duration: 180000,
+          duration_ms: 180000,
           uri: 'spotify:track:t1',
-          albumArt: null,
+          album: { name: 'Album 1', images: [] },
         },
       ],
       total: 1,
@@ -122,14 +122,14 @@ describe('PlaylistTracksDisplay', () => {
       </WebSocketContext.Provider>
     )
 
-    const playButton = await screen.findByRole('button', { name: /play/i })
-    fireEvent.click(playButton)
+    const trackButton = await screen.findByText('Track 1')
+    fireEvent.click(trackButton)
 
     expect(executeMock).toHaveBeenCalledWith(
       'PLAY',
       expect.objectContaining({
         contextUri: 'spotify:playlist:123',
-        offset: { position: 0 },
+        offset: { uri: 'spotify:track:t1' },
       })
     )
   })
@@ -141,9 +141,9 @@ describe('PlaylistTracksDisplay', () => {
           id: 't1',
           name: 'Track 1',
           artists: 'Artist 1',
-          duration: 180000,
+          duration_ms: 180000,
           uri: 'spotify:track:t1',
-          albumArt: null,
+          album: { name: 'Album 1', images: [] },
         },
       ],
       total: 1,
@@ -173,8 +173,8 @@ describe('PlaylistTracksDisplay', () => {
       </WebSocketContext.Provider>
     )
 
-    const pauseButton = await screen.findByRole('button', { name: /pause/i })
-    fireEvent.click(pauseButton)
+    const trackButton = await screen.findByText('Track 1')
+    fireEvent.click(trackButton)
 
     expect(executeMock).toHaveBeenCalledWith('PAUSE')
   })

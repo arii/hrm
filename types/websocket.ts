@@ -11,6 +11,7 @@ import type {
   SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
   TimerMode,
   SpotifyCommand,
+  SpotifyCommandParameters,
 } from './core'
 
 // --- WebSocket Connection & Augmentation ---
@@ -153,17 +154,9 @@ export interface TimerConfigMessage {
   restDuration: number
 }
 
-export interface SpotifyCommandMessage {
+export interface SpotifyCommandMessage extends SpotifyCommandParameters {
   type: 'SPOTIFY_COMMAND'
   command: SpotifyCommand
-  deviceId?: string
-  volume?: number
-  playlistUri?: string // Added to support your incoming message
-  contextUri?: string // Generic support for albums/artists
-  uri?: string
-  offset?: {
-    position: number
-  }
 }
 
 interface GetStateMessage {
@@ -255,7 +248,8 @@ const SpotifyCommandMessageSchema = z.object({
   uri: z.string().optional(),
   offset: z
     .object({
-      position: z.number(),
+      position: z.number().optional(),
+      uri: z.string().optional(),
     })
     .optional(),
 })
