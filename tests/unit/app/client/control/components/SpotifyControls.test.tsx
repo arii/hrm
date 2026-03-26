@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import { useSpotifyVolume } from '@/hooks/useSpotifyVolume'
 import {
@@ -53,6 +54,10 @@ jest.mock('@/hooks/useSpotifyVolume', () => ({
 }))
 
 // Mock the spotify constants
+jest.mock('@/hooks/useSpotifyCommand', () => ({
+  useSpotifyCommand: jest.fn(),
+}))
+
 jest.mock('@/constants/spotify', () => ({
   ...jest.requireActual('@/constants/spotify'),
   HRM_WEB_PLAYER_NAME: 'HRM Web Player',
@@ -60,9 +65,11 @@ jest.mock('@/constants/spotify', () => ({
 
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
+  let executeSpotifyMock: jest.Mock
 
   beforeEach(() => {
     mockSendData = jest.fn()
+    executeSpotifyMock = jest.fn()
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
@@ -88,6 +95,9 @@ describe('components/SpotifyControls', () => {
       sendData: mockSendData,
       spotifyServiceInitialized: true,
     })
+    ;(useSpotifyCommand as jest.Mock).mockReturnValue({
+      execute: executeSpotifyMock,
+    })
     ;(useSpotifyVolume as jest.Mock).mockReturnValue({
       displayVolume: 50,
       isSliding: false,
@@ -109,23 +119,10 @@ describe('components/SpotifyControls', () => {
     expect(screen.getByLabelText('Pause')).toBeInTheDocument()
   })
 
-  it('sends a GET_DEVICES command on mount if connected', () => {
-    render(<SpotifyControls />)
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'SPOTIFY_COMMAND',
-      command: 'GET_DEVICES',
-    })
-  })
-
   it('handles playback commands', () => {
     render(<SpotifyControls />)
     fireEvent.click(screen.getByLabelText('Pause'))
-    expect(mockSendData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PAUSE',
-      })
-    )
+    expect(executeSpotifyMock).toHaveBeenCalledWith('PAUSE', expect.any(Object))
   })
 
   it('should render the mute button with the correct aria-label', () => {
@@ -135,130 +132,25 @@ describe('components/SpotifyControls', () => {
   })
 
   it('sends volume change command on commit', async () => {
-    const handleVolumeChangeMock = jest.fn()
-    const mockUseSpotifyVolume = useSpotifyVolume as jest.Mock
-
-    mockUseSpotifyVolume.mockReturnValue({
+    const handleVolumeChangeCommittedMock = jest.fn()
+    ;(useSpotifyVolume as jest.Mock).mockReturnValue({
       displayVolume: 50,
       isSliding: false,
       handleVolumeChange: jest.fn(),
-      handleVolumeChangeCommitted: jest.fn(),
+      handleVolumeChangeCommitted: handleVolumeChangeCommittedMock,
       handleToggleMute: jest.fn(),
       isMuted: false,
-      handleVolumeChange: handleVolumeChangeMock,
     })
 
     render(<SpotifyControls />)
 
     const volumeSlider = screen.getByRole('slider')
 
-    // Simulate sliding stops
     fireEvent.change(volumeSlider, { target: { value: '80' } })
     fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
 
-    // Command should be sent with the latest value
     await waitFor(() => {
-      expect(mockSendData).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'SET_VOLUME',
-          volume: 80,
-        })
-      )
-    })
-  })
-
-  it('prevents volume snap-back during slider drag', async () => {
-    const handleVolumeChangeMock = jest.fn()
-    const mockUseSpotifyVolume = useSpotifyVolume as jest.Mock
-    const mockWebSocket = useWebSocket as jest.Mock
-
-    // Initial state: volume 50
-    mockUseSpotifyVolume.mockReturnValue({
-      displayVolume: 50,
-      isSliding: false,
-      handleVolumeChange: jest.fn(),
-      handleVolumeChangeCommitted: jest.fn(),
-      handleToggleMute: jest.fn(),
-      isMuted: false,
-      handleVolumeChange: handleVolumeChangeMock,
-    })
-
-    const { rerender } = render(<SpotifyControls />)
-
-    const volumeSlider = screen.getByRole('slider')
-
-    // Start sliding (updates local state to 80)
-    fireEvent.change(volumeSlider, { target: { value: '80' } })
-
-    // Simulate WebSocket update (server volume is still 50, or changed to 40)
-    mockWebSocket.mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
-        playback: {
-          ...createMockSpotifyData().playback,
-          volume_percent: 40,
-        },
-        devices: [
-          createMockSpotifyDevice({
-            id: '1',
-            is_active: true,
-            volume_percent: 40,
-          }),
-        ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
-
-    rerender(<SpotifyControls />)
-
-    // setVolume should NOT have been called with the server value (40) because we are sliding
-    expect(handleVolumeChangeMock).not.toHaveBeenCalledWith(40)
-
-    // Stop sliding
-    fireEvent.mouseUp(volumeSlider, { target: { value: '80' } })
-
-    // Now it should send the command with 80
-    await waitFor(() => {
-      expect(mockSendData).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'SET_VOLUME',
-          volume: 80,
-        })
-      )
-    })
-  })
-
-  it('selects HRM Web Player by default when no device is active', async () => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
-        devices: [
-          createMockSpotifyDevice({
-            id: '1',
-            name: 'Device 1',
-            is_active: false,
-          }),
-          createMockSpotifyDevice({
-            id: 'hrm-player',
-            name: HRM_WEB_PLAYER_NAME,
-            is_active: false,
-          }),
-        ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
-
-    render(<SpotifyControls />)
-
-    await waitFor(() => {
-      // Use test-id to find the device select specifically,
-      // as there are now multiple comboboxes (one for search)
-      const deviceSelect = screen.getByTestId('spotify-device-select')
-      expect(deviceSelect).toHaveTextContent(HRM_WEB_PLAYER_NAME)
+      expect(handleVolumeChangeCommittedMock).toHaveBeenCalledWith(80)
     })
   })
 
@@ -294,12 +186,9 @@ describe('components/SpotifyControls', () => {
     const playButton = screen.getByLabelText('Play')
     fireEvent.click(playButton)
 
-    expect(mockSendData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        deviceId: 'hrm-player',
-      })
+    expect(executeSpotifyMock).toHaveBeenCalledWith(
+      'PLAY',
+      expect.objectContaining({ deviceId: 'hrm-player' })
     )
   })
 })

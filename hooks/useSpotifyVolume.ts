@@ -1,5 +1,6 @@
 import { useReducer, useEffect, useCallback } from 'react'
 import { useOptimisticSync } from '@/hooks/useOptimisticSync'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SYNC_LOCK_DURATION } from '@/constants/spotify'
 
 // 1. State Shape
@@ -69,6 +70,7 @@ export const useSpotifyVolume = (
   initialMuted: boolean | undefined,
   sendVolumeCommand: (volume: number) => void
 ) => {
+  const { onEvent } = useWebSocket()
   const [state, dispatch] = useReducer(spotifyVolumeReducer, {
     displayVolume: initialVolume ?? 70,
     isMuted: initialMuted ?? false,
@@ -76,7 +78,8 @@ export const useSpotifyVolume = (
     lastVolume: initialVolume && initialVolume > 0 ? initialVolume : 70,
   })
 
-  const { isLocked, markInteraction } = useOptimisticSync(SYNC_LOCK_DURATION)
+  const { isLocked, markInteraction, unlock } =
+    useOptimisticSync(SYNC_LOCK_DURATION)
 
   useEffect(() => {
     if (state.isSliding || isLocked()) return
@@ -114,6 +117,15 @@ export const useSpotifyVolume = (
     dispatch({ type: 'TOGGLE_MUTE' })
     sendVolumeCommand(newVolume)
   }, [state.isMuted, state.lastVolume, sendVolumeCommand])
+
+  useEffect(() => {
+    if (!onEvent) return
+    return onEvent('SPOTIFY_OPTIMISTIC_FAILURE', (data: unknown) => {
+      if ((data as { command: string })?.command === 'SET_VOLUME') {
+        unlock()
+      }
+    })
+  }, [onEvent, unlock])
 
   return {
     displayVolume: state.displayVolume,

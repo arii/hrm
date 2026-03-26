@@ -11,5 +11,9 @@ export const useOptimisticSync = (lockDuration: number) => {
     return Date.now() - lastInteractionRef.current < lockDuration
   }, [lockDuration])
 
-  return { isLocked, markInteraction }
+  const unlock = useCallback(() => {
+    lastInteractionRef.current = 0
+  }, [])
+
+  return { isLocked, markInteraction, unlock }
 }

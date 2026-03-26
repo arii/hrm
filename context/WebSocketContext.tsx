@@ -21,6 +21,7 @@ import { ConnectedHrmData as HrmData } from '../types/websocket'
 export type { HrmData }
 
 export interface WebSocketContextType extends WebSocketState {
+  onEvent?: (event: string, callback: (data: unknown) => void) => () => void
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
@@ -291,6 +292,17 @@ export const WebSocketProvider = ({
           return // Pong message is handled, no state dispatch needed
         }
 
+        if (message.type === 'SPOTIFY_OPTIMISTIC_FAILURE') {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('SPOTIFY_OPTIMISTIC_FAILURE', {
+                detail: message.payload,
+              })
+            )
+          }
+          return
+        }
+
         // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
@@ -405,12 +417,26 @@ export const WebSocketProvider = ({
     [throttledConnectionWarning]
   )
 
+  const onEvent = useCallback(
+    (event: string, callback: (data: unknown) => void) => {
+      const handleEvent = (e: CustomEvent) => {
+        callback(e.detail)
+      }
+      window.addEventListener(event, handleEvent as EventListener)
+      return () => {
+        window.removeEventListener(event, handleEvent as EventListener)
+      }
+    },
+    []
+  )
+
   const contextValue = {
     ...appState,
     connectionStatus,
     sendData,
     connect,
     disconnect,
+    onEvent,
   }
 
   return (

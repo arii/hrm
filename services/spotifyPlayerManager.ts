@@ -116,10 +116,7 @@ export class SpotifyPlayerManager {
     optimisticUpdate: () => void,
     execute: () => Promise<unknown>
   ) {
-    const previousState = {
-      ...this.getState(),
-      playback: { ...this.getState().playback },
-    }
+    const previousPlayback = { ...this.getState().playback }
     optimisticUpdate()
     this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
 
@@ -132,8 +129,13 @@ export class SpotifyPlayerManager {
           'Optimistic Spotify command failed, reverting state.'
         )
       }
-      this.setState(previousState)
+      this.setState((prev) => ({ ...prev, playback: previousPlayback }))
       this.broadcastUpdate({ type: 'SPOTIFY_UPDATE', payload: this.getState() })
+      // Notify client to unlock early so UI isn't stuck for 2s
+      this.broadcastUpdate({
+        type: 'SPOTIFY_OPTIMISTIC_FAILURE',
+        payload: { command: commandName },
+      })
       throw error
     }
   }
