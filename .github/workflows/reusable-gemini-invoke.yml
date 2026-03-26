@@ -25,6 +25,6 @@ jobs:
       - name: Run Gemini Client
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_BODY: ${{ inputs.comment_body }}
         run: pnpm tsx scripts/gemini-client.ts --comment-body "$COMMENT_BODY"
