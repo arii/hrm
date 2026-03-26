@@ -195,9 +195,10 @@ const SpotifyControls = () => {
     if (devices.length === 0) return
 
     if (resolvedId && selectedDeviceId !== resolvedId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedDeviceId(resolvedId)
     }
-  }, [devices, selectedDeviceId, resolvedId, setSelectedDeviceId])
+  }, [devices, selectedDeviceId, resolvedId])
 
   const sendSpotifyCommand = useCallback(
     (
