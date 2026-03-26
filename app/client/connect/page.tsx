@@ -16,7 +16,6 @@ import throttle from 'lodash.throttle'
 import { HrmInputMessage } from '@/types/websocket'
 import logger from '@/utils/logger'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { getSavedDeviceId } from '@/utils/bluetoothStorage'
 
 export default function ConnectPage() {
   const userProfile = useConnectUserProfile()
@@ -151,13 +150,11 @@ export default function ConnectPage() {
   ])
 
   useEffect(() => {
-    const savedDeviceId = getSavedDeviceId()
     const shouldAutoConnect =
       !isConnected &&
       isSupported &&
       connectionStatus === 'Connected' &&
-      !connectionAttempted &&
-      savedDeviceId
+      !connectionAttempted
 
     if (!shouldAutoConnect) return
     logger.info('WebSocket ready, attempting auto-connect...')

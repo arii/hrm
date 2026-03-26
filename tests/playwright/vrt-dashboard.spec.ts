@@ -3,14 +3,26 @@ import { test } from './fixtures'
 import {
   getDynamicContentMasks,
   setupMinimalVisualRegressionTest,
+  setupVisualRegressionTest,
   HRM_ROUTES,
   MOBILE_VIEWPORT,
+  waitForWebSocketConnection,
+  stopTimer,
+  resetServerState,
+  waitForPageReady,
 } from './lib'
 import { takeScreenshot, assertFixedDimensions } from './lib/visual'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
+import { BrowserContext, Page } from '@playwright/test'
+
 // Test suite for VRT
-test.describe('Visual Regression Tests', () => {
+test.describe('Dashboard Visual Regression Tests', () => {
+  let context: BrowserContext
+  let dashboardPage: Page
+  let controlPage: Page
+  let mockPage: Page
+
   // Centralized setup hook
   test.beforeAll(async ({ browser }) => {
     const setup = await setupVisualRegressionTest(browser)
@@ -46,22 +58,12 @@ test.describe('Visual Regression Tests', () => {
 
     // Ensure WebSocket is re-established after server reset
     await Promise.all([
-      dashboardPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      controlPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
-      mockPage.waitForFunction(
-        () => document.body.dataset.connectionStatus === 'connected',
-        { timeout: 5000 }
-      ),
+      waitForWebSocketConnection(dashboardPage, { timeout: 5000 }),
+      waitForWebSocketConnection(controlPage, { timeout: 5000 }),
+      waitForWebSocketConnection(mockPage, { timeout: 5000 }),
     ])
   })
 
-test.describe('Dashboard Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
     test('initial, empty state', async ({ dashboardPage }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')

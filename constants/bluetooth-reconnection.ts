@@ -19,12 +19,7 @@ export const RECONNECT_RANDOM_DELAY_MS = 1000
 export const FAST_RECONNECT_DELAY_MS = 1000
 export const FAST_RECONNECT_MAX_ATTEMPTS = 3
 
-const HEARTBEAT_INTERVAL_MS_test = 500
-const HEARTBEAT_INTERVAL_MS_prod = 1000
-export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_test
-    : HEARTBEAT_INTERVAL_MS_prod
+export const HEARTBEAT_INTERVAL_MS = 1000
 
 /**
  * @param attempt - The current attempt number (starting from 1).
