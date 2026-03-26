@@ -32,7 +32,7 @@ jobs:
           fi
 
       - name: Rebase PRs
-        uses: peter-evans/rebase@v4
+        uses: peter-evans/rebase@v5
         with:
           token: ${{ secrets.PAT_TOKEN }} # A PAT with 'repo' scope is required to allow the action to push to protected branches and trigger CI.
           base: leader

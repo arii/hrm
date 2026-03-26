@@ -55,7 +55,7 @@ jobs:
         id: pr_context
         if: env.COMMAND == 'new'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
           # Fetch basic PR data
@@ -103,7 +103,7 @@ jobs:
         id: find_session_id
         if: env.COMMAND == 'delete'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.issue_number }}
         run: |
           SESSION_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments | .[] | .body' | grep -oP '(?<=<!-- JULES_SESSION_ID=)\S+(?= *-->)' | tail -n 1)
@@ -193,7 +193,7 @@ jobs:
         if: success() && env.COMMAND == 'new'
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const sessionId = "${{ steps.jules_op_new.outputs.session_id }}";
             if (sessionId) {
@@ -209,7 +209,7 @@ jobs:
         if: success()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
@@ -221,7 +221,7 @@ jobs:
         if: failure()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const errorMessageNew = `${{ steps.jules_op_new.outputs.error_message || '' }}`;
             const errorMessageDelete = `${{ steps.jules_op_delete.outputs.error_message || '' }}`;
