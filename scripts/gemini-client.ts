@@ -25,21 +25,10 @@ const outputFile = getArg('--output')
 const preset = getArg('--preset')
 const instructions = getArg('--instructions')
 
-// List of models to try in order.
-// The first model in the list is the primary model, and the rest are fallbacks.
-
-// UPDATED: Aligned with latest model recommendations (Q3 2025+)
-// 1. gemini-2.5-flash: Next-gen standard workhorse.
-// 2. gemini-2.5-flash-lite: Next-gen ultra-low-cost model.
-// 3. gemini-2.0-flash: Previous generation flash model.
-// 4. gemini-2.0-flash-lite: Previous generation ultra-low-cost model.
-// 5. gemini-2.5-pro: Expensive, high-intelligence fallback.
-
 const defaultFallbacks = [
+  'gemini-3.1-flash-lite-preview',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
   'gemini-2.5-pro',
 ]
 
@@ -242,6 +231,7 @@ export interface ReviewContext {
   testFiles?: string | undefined
   failedChecks: FailedCheck[]
   slopAnalysis?: string
+  thoughtSignature?: string
 }
 
 async function main() {
@@ -320,27 +310,45 @@ async function main() {
   }
 }
 
+type ExtendedGenerateContentRequest = GenerateContentRequest & { thought_signature?: string };
+
 export async function generateContentWithFallback({
   genAI,
   prompt,
   config,
+  thoughtSignature,
 }: {
   genAI: GoogleGenerativeAI
   prompt: string
   config?: Omit<GenerateContentRequest, 'contents'>
-}) {
+  thoughtSignature?: string
+}): Promise<{ text: string; thoughtSignature?: string }> {
   let lastError: Error | null = null
 
   for (const modelName of MODEL_FALLBACKS) {
-    console.log(`Attempting to use model: ${modelName}...`)
     try {
       const model = genAI.getGenerativeModel({ model: modelName })
-      const result = await model.generateContent({
+      const request: ExtendedGenerateContentRequest = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
-      })
+        ...(thoughtSignature && { thought_signature: thoughtSignature })
+      }
+
+      const result = await model.generateContent(request)
       console.log(`Successfully generated content using ${modelName}.`)
-      return result.response.text()
+
+      const text = result.response.text()
+
+      // Capture thought signature from the response if present
+      const capturedSignature = (
+        result.response.candidates?.[0] as NonNullable<
+          typeof result.response.candidates
+        >[number] & {
+          thought_signature?: string
+        }
+      )?.thought_signature
+
+      return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {
       if (error instanceof Error) {
         lastError = error
@@ -350,22 +358,25 @@ export async function generateContentWithFallback({
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
 
-      const isNotFound = errorMessage.includes('404') || errorStatus === 404
-      const isBadRequest = errorMessage.includes('400') || errorStatus === 400 // Sometimes invalid model is 400
-      const isRateLimited = errorMessage.includes('429') || errorStatus === 429
+      const RETRIABLE_MAP: Record<number, string> = {
+        400: 'Invalid Request',
+        404: 'Not Found',
+        429: 'Rate Limited',
+        500: 'Infrastructure Issue',
+        503: 'Infrastructure Issue',
+      }
 
-      if (isNotFound || isBadRequest || isRateLimited) {
-        let reason = 'Unknown Error'
-        if (isRateLimited) {
-          reason = 'Rate Limited'
-        } else if (isNotFound) {
-          reason = 'Not Found'
-        } else if (isBadRequest) {
-          reason = 'Invalid Request'
-        }
-        const details = reason === 'Unknown Error' ? `: ${errorMessage}` : ''
+      const retriableCode =
+        Object.keys(RETRIABLE_MAP)
+          .map(Number)
+          .find(
+            (code) => errorStatus === code || errorMessage.includes(String(code))
+          )
+
+      if (retriableCode) {
+        const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
         console.warn(
-          `Model ${modelName} failed (${reason}${details}). Trying next model...`
+          `Model ${modelName} failed (${reason}: ${errorMessage}). Trying next model...`
         )
         continue
       }
@@ -415,7 +426,7 @@ ${contextContent}
 --- Task ---
 ${task}
 `
-  const text = await generateContentWithFallback({ genAI, prompt })
+  const { text } = await generateContentWithFallback({ genAI, prompt })
   await writeOutput(text, outputFile)
 }
 
@@ -549,6 +560,7 @@ function getReviewContextFromEnv(): ReviewContext {
     testFiles: process.env.TEST_FILES,
     failedChecks,
     slopAnalysis: process.env.SLOP_ANALYSIS || 'Not available.',
+    thoughtSignature: process.env.GEMINI_THOUGHT_SIGNATURE,
   }
 }
 
@@ -728,9 +740,10 @@ async function runReviewPreset(
     contextContent,
     instructions
   )
-  const text = await generateContentWithFallback({
+  const { text, thoughtSignature } = await generateContentWithFallback({
     genAI,
     prompt,
+    thoughtSignature: context.thoughtSignature,
     config: {
       generationConfig: {
         maxOutputTokens: 4096,
@@ -827,8 +840,10 @@ async function runReviewPreset(
       verdict?: string
       labels?: string[]
       prContext?: unknown
+      thoughtSignature?: string
     }
     reviewData.prContext = prContext
+    reviewData.thoughtSignature ??= thoughtSignature
     // It's valid JSON, but we should still check if the content is meaningful.
     if (
       !reviewData.reviewComment ||

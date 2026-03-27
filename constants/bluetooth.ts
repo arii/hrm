@@ -21,7 +21,12 @@ export const MISSED_PACKET_THRESHOLD_BUFFER_MS = 500
 /**
  * Minimum threshold for the watchdog to trigger a missed packet update.
  */
-export const MIN_MISSED_PACKET_THRESHOLD_MS = 1500
+export const MIN_MISSED_PACKET_THRESHOLD_MS = 2000
+
+/**
+ * Total time with no data (in ms) before forcing a reconnect.
+ */
+export const DATA_LIVENESS_TIMEOUT_MS = 30000
 
 /**
  * How many packets to keep in the rolling average history.

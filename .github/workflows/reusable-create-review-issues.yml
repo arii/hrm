@@ -99,7 +99,7 @@ jobs:
           name: review-result
           run-id: ${{ inputs.run_id }}
           path: .
-          github-token: ${{ secrets.gh_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Artifact
         id: verify_artifact
@@ -117,7 +117,7 @@ jobs:
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
           BASE_SHA: ${{ inputs.base_sha }}
-          GH_TOKEN: ${{ secrets.gh_token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           pnpm tsx scripts/ci/run-create-review-issues.ts

@@ -79,10 +79,15 @@ export async function takeScreenshot(
     await checkAccessibility(target)
   }
 
+  // Automatically mask variable text containers globally to ensure stability
+  const page = isLocator ? (target as Locator).page() : (target as Page)
+  const existingMasks = [screenshotOptions.mask].flat().filter(Boolean)
+
   const finalOptions = {
     scale: 'css', // Prevent high-DPI (Retina) scaling mismatches in CI
     ...SCREENSHOT_OPTIONS,
     ...screenshotOptions,
+    mask: [...existingMasks, page.locator('.variable-text-container')],
   }
 
   // Remove fullPage option if the target is a Locator, as it's only valid for Page screenshots.
