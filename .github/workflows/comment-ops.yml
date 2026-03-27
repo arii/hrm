@@ -36,7 +36,7 @@ jobs:
           BODY: ${{ github.event.comment.body }}
         run: |
           COMMANDS=(
-            "gemini-bot:review"
+            "(gemini-bot|gemini-review):review"
             "pr-squash:squash"
             "conflict-resolve:resolve"
             "gemini-triage:triage"
