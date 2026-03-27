@@ -93,7 +93,7 @@ export async function main() {
 
     const prompt = promptTemplate.replace('{{diff}}', processedDiff)
 
-    const rawResponse = await generateContentWithFallback({
+    const { text: rawResponse } = await generateContentWithFallback({
       genAI,
       prompt,
       config: {

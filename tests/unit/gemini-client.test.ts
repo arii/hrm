@@ -64,10 +64,9 @@ describe('getModelFallbacks', () => {
     delete process.env.GEMINI_MODEL_FALLBACKS
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-3.1-flash-lite-preview',
       'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
       'gemini-2.5-pro',
     ])
   })
@@ -107,10 +106,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = ''
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-3.1-flash-lite-preview',
       'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
       'gemini-2.5-pro',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -126,10 +124,9 @@ describe('getModelFallbacks', () => {
     process.env.GEMINI_MODEL_FALLBACKS = 'invalid1, invalid2'
     const fallbacks = getModelFallbacks()
     expect(fallbacks).toEqual([
+      'gemini-3.1-flash-lite-preview',
       'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
       'gemini-2.5-pro',
     ])
     expect(consoleWarnSpy).toHaveBeenCalledWith(
