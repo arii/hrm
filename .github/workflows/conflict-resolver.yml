@@ -57,7 +57,7 @@ jobs:
         with:
           ref: ${{ env.SOURCE }}
           fetch-depth: 0
-          token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Validate branches
         id: validate_branches
@@ -118,11 +118,11 @@ jobs:
       - name: Trigger Gemini Orchestrator
         if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ steps.commit_push.outputs.resolved_sha }}
           BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
         run: |
-          gh workflow run "Gemini Orchestrator" --ref "$SOURCE" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET"
+          gh workflow run "pr-orchestrator.yml" --ref "$SOURCE" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET"
 
       - name: Update comment on success
         if: steps.validate_branches.outputs.skipped != 'true' && success() && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'

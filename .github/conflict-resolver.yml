@@ -16,3 +16,7 @@ rules:
     strategy: 'ours'
   - paths: '*.generated.js'
     strategy: 'ours'
+
+  # For Playwright VRT snapshots, prefer the incoming version from the feature branch
+  - paths: '**/*.spec.ts-snapshots/*.png'
+    strategy: 'theirs'
