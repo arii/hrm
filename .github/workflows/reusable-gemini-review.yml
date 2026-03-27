@@ -425,7 +425,7 @@ jobs:
             REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
 
             # Check if there's a comment to post
-            if [ -n "$REVIEW_COMMENT" ]; then
+            if [[ -n "$REVIEW_COMMENT" && "$REVIEW_COMMENT" != "null" ]]; then
               # Create the commit hash line
               COMMIT_HASH_MSG="> Reviewed commit: \`${HEAD_SHA}\`"
 

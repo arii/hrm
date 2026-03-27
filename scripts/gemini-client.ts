@@ -340,7 +340,13 @@ export async function generateContentWithFallback({
       const text = result.response.text()
 
       // Capture thought signature from the response if present
-      const capturedSignature = (result.response.candidates?.[0] as any)?.thought_signature
+      const capturedSignature = (
+        result.response.candidates?.[0] as NonNullable<
+          typeof result.response.candidates
+        >[number] & {
+          thought_signature?: string
+        }
+      )?.thought_signature
 
       return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {
