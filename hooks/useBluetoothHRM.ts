@@ -220,7 +220,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           const timeSinceLastData = Date.now() - lastDataTime.current
 
           if (timeSinceLastData > dataLivenessTimeoutMs) {
-            // Fix Race Condition: Don't force a disconnect/reconnect if we are already in a connection state transition
+            // Don't force a disconnect/reconnect during connection state transition
             if (connectionLock.current) {
               logger.warn(
                 { timeSinceLastData },
