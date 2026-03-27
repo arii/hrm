@@ -1,40 +1,41 @@
 import { useReducer, useEffect, useCallback } from 'react'
-import { useOptimisticSync } from '@/hooks/useOptimisticSync'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SYNC_LOCK_DURATION } from '@/constants/spotify'
 
-// 1. State Shape
 interface SpotifyVolumeState {
   displayVolume: number
-  isMuted: boolean
   isSliding: boolean
   lastVolume: number
+  lastActionTime: number
 }
 
-// 2. Actions
 type SpotifyVolumeAction =
-  | { type: 'SET_VOLUME'; payload: number }
+  | { type: 'SET_VOLUME'; payload: number; timestamp: number }
   | { type: 'SET_SLIDING'; payload: boolean }
-  | { type: 'TOGGLE_MUTE' }
+  | { type: 'TOGGLE_MUTE'; timestamp: number }
   | {
       type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volume?: number; isMuted?: boolean }
+      payload: { volume?: number }
+      timestamp: number
     }
+  | { type: 'UNLOCK' }
 
-// 3. Reducer
 const spotifyVolumeReducer = (
   state: SpotifyVolumeState,
   action: SpotifyVolumeAction
 ): SpotifyVolumeState => {
   switch (action.type) {
     case 'SYNC_WITH_WEBSOCKET': {
-      if (state.isSliding) return state
-      const { volume, isMuted } = action.payload
-      const newVolume = volume ?? state.displayVolume
+      if (
+        state.isSliding ||
+        action.timestamp - state.lastActionTime < SYNC_LOCK_DURATION
+      ) {
+        return state
+      }
+      const newVolume = action.payload.volume ?? state.displayVolume
       return {
         ...state,
         displayVolume: newVolume,
-        isMuted: isMuted ?? state.isMuted,
         lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
       }
     }
@@ -45,21 +46,23 @@ const spotifyVolumeReducer = (
         ...state,
         isSliding: true,
         displayVolume: action.payload,
-        isMuted: action.payload === 0,
         lastVolume: action.payload > 0 ? action.payload : state.lastVolume,
+        lastActionTime: action.timestamp,
       }
     case 'TOGGLE_MUTE': {
-      const newMutedState = !state.isMuted
+      const newMutedState = state.displayVolume !== 0
       if (newMutedState) {
-        return { ...state, isMuted: true, displayVolume: 0 }
+        return { ...state, displayVolume: 0, lastActionTime: action.timestamp }
       } else {
         return {
           ...state,
-          isMuted: false,
           displayVolume: state.lastVolume > 0 ? state.lastVolume : 50,
+          lastActionTime: action.timestamp,
         }
       }
     }
+    case 'UNLOCK':
+      return { ...state, lastActionTime: 0 }
     default:
       return state
   }
@@ -67,69 +70,61 @@ const spotifyVolumeReducer = (
 
 export const useSpotifyVolume = (
   initialVolume: number | undefined,
-  initialMuted: boolean | undefined,
+
   sendVolumeCommand: (volume: number) => void
 ) => {
   const { onEvent } = useWebSocket()
   const [state, dispatch] = useReducer(spotifyVolumeReducer, {
     displayVolume: initialVolume ?? 70,
-    isMuted: initialMuted ?? false,
     isSliding: false,
     lastVolume: initialVolume && initialVolume > 0 ? initialVolume : 70,
+    lastActionTime: 0,
   })
 
-  const { isLocked, markInteraction, unlock } =
-    useOptimisticSync(SYNC_LOCK_DURATION)
-
   useEffect(() => {
-    if (state.isSliding || isLocked()) return
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volume: initialVolume, isMuted: initialMuted },
+      payload: { volume: initialVolume },
+      timestamp: Date.now(),
     })
-  }, [initialVolume, initialMuted, state.isSliding, isLocked])
+  }, [initialVolume])
 
-  const handleVolumeChange = useCallback(
-    (newVolume: number) => {
-      markInteraction()
-      dispatch({ type: 'SET_VOLUME', payload: newVolume })
-    },
-    [markInteraction]
-  )
+  const handleVolumeChange = useCallback((newVolume: number) => {
+    dispatch({ type: 'SET_VOLUME', payload: newVolume, timestamp: Date.now() })
+  }, [])
 
   const handleVolumeChangeCommitted = useCallback(
     (newVolume: number) => {
-      markInteraction()
       sendVolumeCommand(newVolume)
       dispatch({ type: 'SET_SLIDING', payload: false })
     },
-    [markInteraction, sendVolumeCommand]
+    [sendVolumeCommand]
   )
 
   const handleToggleMute = useCallback(() => {
-    const newMutedState = !state.isMuted
-    const newVolume = newMutedState
-      ? 0
-      : state.lastVolume > 0
+    const isCurrentlyMuted = state.displayVolume === 0
+    const newVolume = isCurrentlyMuted
+      ? state.lastVolume > 0
         ? state.lastVolume
         : 50
+      : 0
 
-    dispatch({ type: 'TOGGLE_MUTE' })
+    dispatch({ type: 'TOGGLE_MUTE', timestamp: Date.now() })
     sendVolumeCommand(newVolume)
-  }, [state.isMuted, state.lastVolume, sendVolumeCommand])
+  }, [state.displayVolume, state.lastVolume, sendVolumeCommand])
 
   useEffect(() => {
     if (!onEvent) return
     return onEvent('SPOTIFY_OPTIMISTIC_FAILURE', (data: unknown) => {
       if ((data as { command: string })?.command === 'SET_VOLUME') {
-        unlock()
+        dispatch({ type: 'UNLOCK' })
       }
     })
-  }, [onEvent, unlock])
+  }, [onEvent])
 
   return {
     displayVolume: state.displayVolume,
-    isMuted: state.isMuted,
+    isMuted: state.displayVolume === 0,
     isSliding: state.isSliding,
     handleVolumeChange,
     handleVolumeChangeCommitted,
