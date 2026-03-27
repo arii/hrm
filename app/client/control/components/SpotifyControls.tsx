@@ -134,7 +134,6 @@ const SpotifyControls = () => {
   })
   const { displayVolume } = state
   const isMuted = displayVolume === 0
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
 
   const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
@@ -188,17 +187,7 @@ const SpotifyControls = () => {
 
   const activeDeviceId = devices.find((device) => device.is_active)?.id
   const hrmDeviceId = hrmDevice?.id
-  const resolvedId =
-    activeDeviceId || (!selectedDeviceId ? hrmDeviceId || '' : selectedDeviceId)
-
-  useEffect(() => {
-    if (devices.length === 0) return
-
-    if (resolvedId && selectedDeviceId !== resolvedId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedDeviceId(resolvedId)
-    }
-  }, [devices, selectedDeviceId, resolvedId])
+  const resolvedId = activeDeviceId || hrmDeviceId || ''
 
   const sendSpotifyCommand = useCallback(
     (
@@ -411,10 +400,9 @@ const SpotifyControls = () => {
                 </Typography>
                 <FormControl fullWidth size="small">
                   <Select
-                    value={selectedDeviceId}
+                    value={resolvedId}
                     onChange={(e) => {
                       const deviceId = e.target.value as string
-                      setSelectedDeviceId(deviceId)
                       if (deviceId) {
                         sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                       }
