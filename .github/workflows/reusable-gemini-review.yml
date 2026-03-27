@@ -398,7 +398,6 @@ jobs:
           PR_DIFF_FILE: pr.diff
           FAILED_CHECKS_JSON: ${{ env.FAILED_CHECKS_JSON }}
           # Pass other context vars
-        env:
           GEMINI_THOUGHT_SIGNATURE: ${{ needs.analyze-changes.outputs.thought-signature }}
         run: |
           pnpm tsx scripts/gemini-client.ts \
