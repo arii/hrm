@@ -13,7 +13,9 @@ async function performUIReview() {
 
   const baseUrl = process.env.DEPLOYMENT_URL || 'http://localhost:3000'
 
-  await context.addCookies([{ name: 'session-id', value: 'mock', url: baseUrl }])
+  await context.addCookies([
+    { name: 'session-id', value: 'mock', url: baseUrl },
+  ])
 
   const page = await context.newPage()
   const targetUrl = new URL(baseUrl)
@@ -28,7 +30,11 @@ async function performUIReview() {
     })
 
     // Inject mock application state so the UI review has something to analyze
-    await page.waitForFunction(() => !!(window as any).__TEST_CONTROLS__)
+    await page.waitForFunction(
+      () =>
+        !!(window as unknown as { __TEST_CONTROLS__: boolean })
+          .__TEST_CONTROLS__
+    )
 
     // Build type-safe messages outside evaluate to ensure types are correct at compile time
     const timerMessage: ServerMessage = {
@@ -42,26 +48,28 @@ async function performUIReview() {
         mode: 'TABATA',
         workDuration: 30,
         restDuration: 10,
-        soundEventId: 0
-      }
+        soundEventId: 0,
+      },
     }
 
     const hrmMessage: ServerMessage = {
       type: 'HRM_UPDATE',
-      payload: [{
-        clientId: 'mock-1',
-        value: 155,
-        maxHr: 185,
-        zone: 'ZONE_3',
-        percentage: 85,
-        name: 'Mock Device',
-        calories: 120
-      }]
+      payload: [
+        {
+          clientId: 'mock-1',
+          value: 155,
+          maxHr: 185,
+          zone: 'ZONE_3',
+          percentage: 85,
+          name: 'Mock Device',
+          calories: 120,
+        },
+      ],
     }
 
     const spotifyInitMessage: ServerMessage = {
       type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-      payload: true
+      payload: true,
     }
 
     const spotifyMessage: ServerMessage = {
@@ -74,28 +82,35 @@ async function performUIReview() {
             name: 'UI Review Track',
             artist: 'Gemini',
             albumName: 'Review Album',
-            albumArtUrl: ''
+            albumArtUrl: '',
           },
           is_playing: true,
           volume_percent: 50,
           isMuted: false,
-          progress_ms: 30000
-        }
-      }
+          progress_ms: 30000,
+        },
+      },
     }
 
-    await page.evaluate(({ timerMsg, hrmMsg, spotifyInitMsg, spotifyMsg }) => {
-      const dispatch = (window as any).__TEST_CONTROLS__.dispatch
-      dispatch(timerMsg)
-      dispatch(hrmMsg)
-      dispatch(spotifyInitMsg)
-      dispatch(spotifyMsg)
-    }, {
-      timerMsg: timerMessage,
-      hrmMsg: hrmMessage,
-      spotifyInitMsg: spotifyInitMessage,
-      spotifyMsg: spotifyMessage
-    })
+    await page.evaluate(
+      ({ timerMsg, hrmMsg, spotifyInitMsg, spotifyMsg }) => {
+        const dispatch = (
+          window as unknown as {
+            __TEST_CONTROLS__: { dispatch: (msg: ServerMessage) => void }
+          }
+        ).__TEST_CONTROLS__.dispatch
+        dispatch(timerMsg)
+        dispatch(hrmMsg)
+        dispatch(spotifyInitMsg)
+        dispatch(spotifyMsg)
+      },
+      {
+        timerMsg: timerMessage,
+        hrmMsg: hrmMessage,
+        spotifyInitMsg: spotifyInitMessage,
+        spotifyMsg: spotifyMessage,
+      }
+    )
 
     // Force layout stabilization for the screenshot
     await page.addStyleTag({
@@ -134,7 +149,9 @@ async function performUIReview() {
     ])
 
     const response = await result.response
-    const feedback = response.candidates?.[0]?.content?.parts?.[0]?.text || "No feedback generated."
+    const feedback =
+      response.candidates?.[0]?.content?.parts?.[0]?.text ||
+      'No feedback generated.'
 
     const prNumber = process.env.PR_NUMBER
     const githubToken = process.env.GITHUB_TOKEN
