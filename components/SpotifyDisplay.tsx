@@ -1,4 +1,5 @@
 'use client'
+// File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
@@ -25,7 +26,6 @@ const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
-
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -42,6 +42,7 @@ const SpotifyDisplay = () => {
 
   const { player, isReady, deviceId } = useSpotifyWebPlayback()
 
+  // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
   const sendVolumeCommand = useCallback(
@@ -69,12 +70,9 @@ const SpotifyDisplay = () => {
     handleVolumeChange,
     handleVolumeChangeCommitted,
     handleToggleMute,
-  } = useSpotifyVolume(
-    spotifyData.playback.volume_percent,
-    spotifyData.playback.isMuted,
-    sendVolumeCommand
-  )
+  } = useSpotifyVolume(spotifyData.playback.volume_percent, sendVolumeCommand)
 
+  // Effect to auto-select the active device
   useEffect(() => {
     const devices = spotifyData.devices || []
     if (devices.length === 0) {
