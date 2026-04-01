@@ -75,7 +75,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         if: github.event_name == 'pull_request'
         id: changes-pr
         with:
@@ -107,7 +107,7 @@ jobs:
               - 'ecosystem.config.cjs'
               - 'verify_empty_dashboard.py'
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         if: github.event_name == 'workflow_dispatch'
         id: changes-dispatch
         with:
