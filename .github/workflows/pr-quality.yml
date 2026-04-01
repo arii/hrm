@@ -488,7 +488,7 @@ jobs:
           ./scripts/ci/run-infra-tests.sh prod
 
       - name: Publish Infrastructure Tests Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always() && steps.infra-tests.outcome != 'skipped'
         with:
           name: Infrastructure (Prod)
@@ -557,7 +557,7 @@ jobs:
           ./scripts/ci/run-unit-tests.sh
 
       - name: Publish Unit Tests Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always() && steps.unit-tests.outcome != 'skipped'
         with:
           name: Unit Tests
@@ -626,7 +626,7 @@ jobs:
           ./scripts/ci/run-component-tests.sh
 
       - name: Publish Component Tests Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always() && steps.component-tests.outcome != 'skipped'
         with:
           name: Component Tests
@@ -699,7 +699,7 @@ jobs:
           ./scripts/ci/run-perf-tests.sh
 
       - name: Publish Performance Test Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always() && steps.perf-tests.outcome != 'skipped'
         with:
           name: Performance Tests Report
@@ -786,7 +786,7 @@ jobs:
           ./scripts/ci/run-visual-tests.sh
 
       - name: Publish Visual Tests Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         if: always() && steps.visual-tests.outcome != 'skipped'
         with:
           name: Visual Tests Report
