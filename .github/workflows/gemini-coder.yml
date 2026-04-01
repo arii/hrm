@@ -329,7 +329,7 @@ jobs:
           PROMPTEOF
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
 
       - name: 'Gemini: Setup Node.js'
         if: env.AGENT_PROVIDER == 'gemini'
