@@ -123,7 +123,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run "pr-quality.yml" --ref "$SOURCE" -f force_ai=true
+          gh workflow run "pr-quality.yml" --ref "$SOURCE" -f force_ai=true -f pr_number="$PR_NUMBER" -f head_sha="${{ steps.commit_push.outputs.resolved_sha }}" -f base_sha="${{ steps.validate_branches.outputs.base_sha }}"
 
       - name: Update comment on success
         if: steps.validate_branches.outputs.skipped != 'true' && success() && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'

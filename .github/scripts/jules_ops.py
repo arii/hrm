@@ -89,7 +89,7 @@ def main():
     parser.add_argument("--mode", choices=['audit', 'direct'], default='audit', help="The operation mode.")
     parser.add_argument("--direct", action="store_true", help="Alias for --mode direct.")
     parser.add_argument("--allow-risk-paths", action="store_true", help="Allow direct mode on high-risk paths.")
-    parser.add_argument("--deterministic-passed", default="true", help="Whether deterministic checks passed.")
+    parser.add_argument("--deterministic-passed", default="false", help="Whether deterministic checks passed.")
     parser.add_argument("--changed-files", help="Comma-separated list of changed files.")
 
     args = parser.parse_args()
@@ -105,8 +105,15 @@ def main():
 
         # Safety gates for direct mode
         if mode == 'direct':
-            if args.deterministic_passed != "true":
+            deterministic_passed = str(args.deterministic_passed).strip().lower() == "true"
+            if not deterministic_passed:
                 sys.stderr.write("Error: Direct mode blocked on deterministic failure.\n")
+                sys.exit(1)
+
+            if not args.changed_files and not args.allow_risk_paths:
+                sys.stderr.write(
+                    "Error: Direct mode blocked. --changed-files is required unless --allow-risk-paths is provided.\n"
+                )
                 sys.exit(1)
 
             # High-risk path detection
