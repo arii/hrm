@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/jules-session-manager.yml
 name: Jules Session Manager
 
@@ -141,6 +144,12 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
           set +e
+          # Detect if direct mode is requested via comment
+          MODE="audit"
+          if [[ "${{ github.event.comment.body }}" == *"--direct"* ]]; then
+            MODE="direct"
+          fi
+
           OUTPUT=$(python3 .github/scripts/jules_ops.py \
             --command "new" \
             --prompt "$PROMPT" \
@@ -148,6 +157,7 @@ jobs:
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
             --repo-name "$REPO_NAME" \
+            --mode "$MODE" \
             --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1)
           EXIT_CODE=$?
 

@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/reusable-gemini-tasks.yml
 name: Reusable Gemini Tasks
 

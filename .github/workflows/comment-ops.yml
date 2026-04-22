@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: Bot Command Orchestrator
 
 on:
@@ -145,9 +148,9 @@ jobs:
           # Find the branch name of the PR
           BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)
 
-          # Find the most recent successful run of 'Gemini Orchestrator' (pr-orchestrator.yml) for this branch.
+          # Find the most recent successful run of 'PR Quality' (pr-quality.yml) for this branch.
           # This workflow produces the 'review-result' artifact.
-          RUN_ID=$(gh run list --workflow pr-orchestrator.yml --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          RUN_ID=$(gh run list --workflow pr-quality.yml --branch "$BRANCH" --status success --limit 1 --json databaseId -q '.[0].databaseId')
 
           # Fallback: check 'Bot Command Orchestrator' if manual review was triggered
           if [ -z "$RUN_ID" ]; then

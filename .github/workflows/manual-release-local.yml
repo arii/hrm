@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: Manual Release (Local Deployment)
 
 on:

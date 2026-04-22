@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/gemini-coder.yml
 #
 # AI-Powered Automated Code Generation and Patching

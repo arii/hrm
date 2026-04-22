@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/pr-enrichment.yml
 # Enriches pull request titles and descriptions with contextual information
 # based on the files changed, scope of changes, and related issues/PRs.
@@ -74,7 +77,7 @@ jobs:
           fi
 
           # 3. Automatically disable for E2E tests to prevent interfering with test expectations
-          # Consistent with pr-orchestrator.yml bypass logic.
+          # Consistent with pr-quality.yml bypass logic.
           if [[ "$PR_TITLE_EVENT" == *"E2E Test PR"* ]] || [[ "$HEAD_REF_EVENT" == "e2e-test-"* ]]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
             echo "::notice::PR enrichment is disabled for E2E Test PR (Title: '$PR_TITLE_EVENT', Branch: '$HEAD_REF_EVENT')"

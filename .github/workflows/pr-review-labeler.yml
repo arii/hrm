@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: PR Review Labeler
 on:
   pull_request_review:

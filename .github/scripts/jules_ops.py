@@ -4,7 +4,7 @@ import sys
 import requests
 import argparse
 
-def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url):
+def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url, mode="audit"):
     """
     Creates a new Jules session via the API and returns the session ID.
     """
@@ -24,6 +24,7 @@ def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url)
         "title": title,
         "owner": owner,
         "repo_name": repo_name,
+        "mode": mode,
     }
 
     try:
@@ -85,20 +86,53 @@ def main():
     parser.add_argument("--owner", help="The owner of the repository.")
     parser.add_argument("--repo-name", help="The name of the repository.")
     parser.add_argument("--jules-api-url", default="https://api.jules.ai/v1/sessions", help="The URL of the Jules API.")
+    parser.add_argument("--mode", choices=['audit', 'direct'], default='audit', help="The operation mode.")
+    parser.add_argument("--direct", action="store_true", help="Alias for --mode direct.")
+    parser.add_argument("--allow-risk-paths", action="store_true", help="Allow direct mode on high-risk paths.")
+    parser.add_argument("--deterministic-passed", default="true", help="Whether deterministic checks passed.")
+    parser.add_argument("--changed-files", help="Comma-separated list of changed files.")
 
     args = parser.parse_args()
+
+    mode = args.mode
+    if args.direct:
+        mode = 'direct'
 
     if args.command == 'new':
         if not all([args.prompt, args.branch, args.title, args.owner, args.repo_name]):
             sys.stderr.write("Error: --prompt, --branch, --title, --owner, and --repo-name are required for the 'new' command.\n")
             sys.exit(1)
+
+        # Safety gates for direct mode
+        if mode == 'direct':
+            if args.deterministic_passed != "true":
+                sys.stderr.write("Error: Direct mode blocked on deterministic failure.\n")
+                sys.exit(1)
+
+            # High-risk path detection
+            if args.changed_files and not args.allow_risk_paths:
+                risk_paths = [
+                    "server.ts", "middleware.ts",
+                    "context/WebSocketContext.tsx", "context/webSocketReducer.ts",
+                    "hooks/useBluetoothHRM.ts", ".github/workflows/",
+                    "package.json", "pnpm-lock.yaml"
+                ]
+                changed_files = args.changed_files.split(',')
+                for cf in changed_files:
+                    cf = cf.strip()
+                    for rp in risk_paths:
+                        if cf == rp or (rp.endswith('/') and cf.startswith(rp)):
+                            sys.stderr.write(f"Error: Direct mode blocked. Risk path touched: {cf}. Use --allow-risk-paths to override.\n")
+                            sys.exit(1)
+
         session_id = create_jules_session(
             prompt=args.prompt,
             branch=args.branch,
             title=args.title,
             owner=args.owner,
             repo_name=args.repo_name,
-            jules_api_url=args.jules_api_url
+            jules_api_url=args.jules_api_url,
+            mode=mode
         )
         if 'GITHUB_OUTPUT' in os.environ:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:

@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: Reusable Gemini Invoke
 
 on:

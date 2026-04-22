@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/reusable-gemini-review.yml
 # This workflow is responsible for generating code reviews and posting them as PR comments.
 # It does not create GitHub issues, so 'issues: write' permission is not required.

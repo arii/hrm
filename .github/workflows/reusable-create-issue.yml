@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 # .github/workflows/reusable-create-issue.yml
 name: Reusable Create Issue
 

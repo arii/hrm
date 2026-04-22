@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: Auto-merge Dependencies
 
 on:

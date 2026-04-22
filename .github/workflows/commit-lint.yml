@@ -1,3 +1,6 @@
+# owner: @team-devex
+# purpose: Standard automation workflow
+
 name: Lint Commit Messages
 on: [pull_request]
 
