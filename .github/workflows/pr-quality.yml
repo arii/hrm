@@ -11,14 +11,38 @@ on:
   workflow_dispatch:
     inputs:
       force_ai:
-        description: "Force Gemini review"
+        description: 'Force Gemini review'
         required: false
-        default: "false"
+        default: 'false'
+      pr_number:
+        description: 'PR number for dispatch-triggered runs'
+        required: false
+        default: ''
+      head_sha:
+        description: 'Optional head SHA override for dispatch-triggered runs'
+        required: false
+        default: ''
+      base_sha:
+        description: 'Optional base SHA override for dispatch-triggered runs'
+        required: false
+        default: ''
   workflow_call:
     inputs:
       force_ai:
         type: string
-        default: "false"
+        default: 'false'
+      pr_number:
+        type: string
+        required: false
+        default: ''
+      head_sha:
+        type: string
+        required: false
+        default: ''
+      base_sha:
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -69,7 +93,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -279,9 +303,11 @@ jobs:
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
       pr_quality_result: ${{ needs.deterministic.result }}
-      trigger_event: 'pull_request'
-      pr_number: ${{ github.event.pull_request.number }}
-      last_non_empty_commit: ${{ github.event.pull_request.head.sha }}
+      trigger_event: ${{ github.event_name }}
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
+      last_non_empty_commit: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
     secrets: inherit
 
   create_review_issues:
@@ -293,8 +319,8 @@ jobs:
       needs.gemini_review.outputs.review_performed == 'true'
     uses: ./.github/workflows/reusable-create-review-issues.yml
     with:
-      pr_number: ${{ github.event.pull_request.number }}
-      base_sha: ${{ github.event.pull_request.base.sha }}
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
       run_id: ${{ github.run_id }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
