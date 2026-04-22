@@ -80,7 +80,7 @@ export default defineConfig([
 
   // 6. Architectural Boundaries
   {
-    files: ['app/components/**', 'app/(frontend)/**', 'components/**', 'hooks/**', 'context/**'],
+    files: ['app/components/**', 'app/(frontend)/**', 'components/**', 'hooks/**'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -94,12 +94,12 @@ export default defineConfig([
             {
               name: 'ws',
               message:
-                'Direct use of "ws" is forbidden in components/hooks. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
+                'Direct use of "ws" is forbidden in the component tree. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
             },
             {
               name: 'socket.io-client',
               message:
-                'Direct use of "socket.io-client" is forbidden in components/hooks. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
+                'Direct use of "socket.io-client" is forbidden in the component tree. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
             },
           ],
         },

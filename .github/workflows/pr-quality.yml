@@ -1,8 +1,10 @@
-# owner: @team-devex
+# owner: @arii
 # purpose: Deterministic PR quality gate and conditional AI review
-# triggers: pull_request(opened,reopened,ready_for_review,synchronize,labeled), workflow_dispatch
-# sla: P1 failures acknowledged within 1 business day
-# runbook: docs/runbooks/pr-quality.md
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
 
 name: PR Quality
 on:
@@ -223,6 +225,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_ACTION: ${{ github.event.action }}
           IS_DRAFT: ${{ github.event.pull_request.draft }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           run_ai=false
@@ -242,6 +246,20 @@ jobs:
             exit 0
           fi
 
+          # Label-driven allowlist (High Priority)
+          if echo "$PR_LABELS" | grep -Eiq '"ai:required"|"risk:high"|"security:review"'; then
+            echo "run_ai=true" >> "$GITHUB_OUTPUT"
+            echo "reason=label_trigger" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Risk file trigger (High Priority)
+          if [[ "$RISK_CHANGED" == "true" ]]; then
+            echo "run_ai=true" >> "$GITHUB_OUTPUT"
+            echo "reason=risk_file_changed" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # Skip draft updates
           if [[ "$IS_DRAFT" == "true" ]]; then
             echo "run_ai=false" >> "$GITHUB_OUTPUT"
@@ -256,20 +274,6 @@ jobs:
             exit 0
           fi
 
-          # Label-driven allowlist
-          if echo "$PR_LABELS" | grep -Eiq '"ai:required"|"risk:high"|"security:review"'; then
-            echo "run_ai=true" >> "$GITHUB_OUTPUT"
-            echo "reason=label_trigger" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Risk file trigger
-          if [[ "$RISK_CHANGED" == "true" ]]; then
-            echo "run_ai=true" >> "$GITHUB_OUTPUT"
-            echo "reason=risk_file_changed" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           # Reduce synchronize events
           if [[ "$EVENT_ACTION" == "synchronize" ]]; then
              echo "run_ai=false" >> "$GITHUB_OUTPUT"
@@ -277,12 +281,25 @@ jobs:
              exit 0
           fi
 
+          # Check AI invocation count (count actual reviews, not gate decisions)
+          INVOCATION_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments | .[] | select(.body | contains("Reviewed commit:"))] | length')
+          MAX_INVOCATIONS=1
+          if echo "$PR_LABELS" | grep -iq "ai:required"; then
+            MAX_INVOCATIONS=2
+          fi
+
+          if [[ "$INVOCATION_COUNT" -ge "$MAX_INVOCATIONS" ]]; then
+            echo "run_ai=false" >> "$GITHUB_OUTPUT"
+            echo "reason=max_invocations_reached" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # Default: skip if no risk or label trigger hit
           echo "run_ai=false" >> "$GITHUB_OUTPUT"
           echo "reason=low_risk_skip" >> "$GITHUB_OUTPUT"
 
       - name: Post gate summary
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && (steps.decide.outputs.run_ai == 'true' || github.event.action == 'opened')
         uses: actions/github-script@v7
         with:
           script: |
