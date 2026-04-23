@@ -54,7 +54,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: pr-quality-${{ github.event.pull_request.number || github.ref }}
+  group: pr-quality-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -91,6 +91,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.sha }}
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -145,17 +147,18 @@ jobs:
           fi
 
       - name: Post diagnostic PR comment
-        if: steps.set_result.outputs.passed == 'false' && github.event_name == 'pull_request'
+        if: steps.set_result.outputs.passed == 'false' && (github.event_name == 'pull_request' || inputs.pr_number != '')
         uses: actions/github-script@v7
         env:
           FAILED_STEP: ${{ env.FAILED_STEP }}
           FAILED_COMMAND: ${{ env.FAILED_COMMAND }}
           REMEDIATION: ${{ env.REMEDIATION }}
           LOG_FILE: ${{ env.LOG_FILE }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         with:
           script: |
             const fs = require('fs');
-            const { FAILED_STEP, FAILED_COMMAND, REMEDIATION, LOG_FILE } = process.env;
+            const { FAILED_STEP, FAILED_COMMAND, REMEDIATION, LOG_FILE, PR_NUMBER } = process.env;
 
             let logs = "No logs available.";
             if (LOG_FILE && fs.existsSync(LOG_FILE)) {
@@ -173,7 +176,7 @@ jobs:
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: parseInt(PR_NUMBER),
               body
             });
 
@@ -193,11 +196,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Gather changed files
         id: changed
         uses: tj-actions/changed-files@v45
         with:
+          base_sha: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
           files_yaml: |
             risk:
               - server.ts
@@ -218,13 +223,13 @@ jobs:
         env:
           DETERMINISTIC_PASSED: ${{ needs.deterministic.outputs.passed }}
           FORCE_AI: ${{ inputs.force_ai || 'false' }}
-          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name || '[]') }}
           ANY_CHANGED: ${{ steps.changed.outputs.any_changed }}
           RISK_CHANGED: ${{ steps.changed.outputs.risk_any_changed }}
           DOCS_ONLY: ${{ steps.changed.outputs.only_changed == 'true' && steps.changed.outputs.docs_only_any_changed == 'true' }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_ACTION: ${{ github.event.action }}
-          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || 'false' }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -282,16 +287,18 @@ jobs:
           fi
 
           # Check AI invocation count (count actual reviews, not gate decisions)
-          INVOCATION_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments | .[] | select(.body | contains("Reviewed commit:"))] | length')
-          MAX_INVOCATIONS=1
-          if echo "$PR_LABELS" | grep -iq "ai:required"; then
-            MAX_INVOCATIONS=2
-          fi
+          if [[ -n "$PR_NUMBER" ]]; then
+            INVOCATION_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments | .[] | select(.body | contains("Reviewed commit:"))] | length' 2>/dev/null || echo 0)
+            MAX_INVOCATIONS=1
+            if echo "$PR_LABELS" | grep -iq "ai:required"; then
+              MAX_INVOCATIONS=2
+            fi
 
-          if [[ "$INVOCATION_COUNT" -ge "$MAX_INVOCATIONS" ]]; then
-            echo "run_ai=false" >> "$GITHUB_OUTPUT"
-            echo "reason=max_invocations_reached" >> "$GITHUB_OUTPUT"
-            exit 0
+            if [[ "$INVOCATION_COUNT" -ge "$MAX_INVOCATIONS" ]]; then
+              echo "run_ai=false" >> "$GITHUB_OUTPUT"
+              echo "reason=max_invocations_reached" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           # Default: skip if no risk or label trigger hit
@@ -299,17 +306,22 @@ jobs:
           echo "reason=low_risk_skip" >> "$GITHUB_OUTPUT"
 
       - name: Post gate summary
-        if: github.event_name == 'pull_request' && (steps.decide.outputs.run_ai == 'true' || github.event.action == 'opened')
+        if: (github.event_name == 'pull_request' || inputs.pr_number != '') && (steps.decide.outputs.run_ai == 'true' || github.event.action == 'opened')
         uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         with:
           script: |
             const runAi = "${{ steps.decide.outputs.run_ai }}";
             const reason = "${{ steps.decide.outputs.reason }}";
+            const prNumber = process.env.PR_NUMBER;
+            if (!prNumber) return;
+
             const body = `### AI Gate Decision\n- run_ai: **${runAi}**\n- reason: \`${reason}\`\n\n#### Telemetry\n- deterministic_fail: **${{ needs.deterministic.outputs.passed != 'true' }}**\n- ai_skipped: **${runAi != 'true'}**\n- ai_invoked: **${runAi == 'true'}**\n- tokens_used: \`N/A\``;
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: parseInt(prNumber),
               body
             });
 
@@ -319,7 +331,7 @@ jobs:
     if: ${{ needs.ai_gate_decision.outputs.run_ai == 'true' }}
     uses: ./.github/workflows/reusable-gemini-review.yml
     with:
-      pr_quality_result: ${{ needs.deterministic.result }}
+      pr_quality_result: ${{ needs.deterministic.outputs.passed == 'true' && 'success' || 'failure' }}
       trigger_event: ${{ github.event_name }}
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       base_sha: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
