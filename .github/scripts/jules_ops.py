@@ -4,7 +4,22 @@ import sys
 import requests
 import argparse
 
-def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url):
+def print_summary(summary):
+    """
+    Prints a structured summary to GITHUB_STEP_SUMMARY.
+    """
+    if 'GITHUB_STEP_SUMMARY' in os.environ:
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+            f.write("### 🤖 Jules Operation Summary\n")
+            f.write(f"- **Mode:** `{summary['mode']}`\n")
+            f.write(f"- **Issue Created:** {'✅' if summary['issue_created'] else '❌'}\n")
+            f.write(f"- **PR Created:** {'✅' if summary['pr_created'] else '❌'}\n")
+            if summary['skipped_reason']:
+                f.write(f"- **Skipped Reason:** `{summary['skipped_reason']}`\n")
+    else:
+        print(f"Summary: {summary}")
+
+def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url, mode="audit"):
     """
     Creates a new Jules session via the API and returns the session ID.
     """
@@ -24,6 +39,7 @@ def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url)
         "title": title,
         "owner": owner,
         "repo_name": repo_name,
+        "mode": mode,
     }
 
     try:
@@ -85,21 +101,77 @@ def main():
     parser.add_argument("--owner", help="The owner of the repository.")
     parser.add_argument("--repo-name", help="The name of the repository.")
     parser.add_argument("--jules-api-url", default="https://api.jules.ai/v1/sessions", help="The URL of the Jules API.")
+    parser.add_argument("--mode", choices=['audit', 'direct'], default='audit', help="The operation mode.")
+    parser.add_argument("--direct", action="store_true", help="Alias for --mode direct.")
+    parser.add_argument("--allow-risk-paths", action="store_true", help="Allow direct mode on high-risk paths.")
+    parser.add_argument("--deterministic-passed", default="false", help="Whether deterministic checks passed.")
+    parser.add_argument("--changed-files", help="Comma-separated list of changed files.")
 
     args = parser.parse_args()
+
+    mode = args.mode
+    if args.direct:
+        mode = 'direct'
 
     if args.command == 'new':
         if not all([args.prompt, args.branch, args.title, args.owner, args.repo_name]):
             sys.stderr.write("Error: --prompt, --branch, --title, --owner, and --repo-name are required for the 'new' command.\n")
             sys.exit(1)
+
+        summary = {
+            "mode": mode,
+            "issue_created": mode == "audit",
+            "pr_created": mode == "direct",
+            "skipped_reason": None
+        }
+
+        # Safety gates for direct mode
+        if mode == 'direct':
+            deterministic_passed = str(args.deterministic_passed).strip().lower() == "true"
+            if not deterministic_passed:
+                summary["skipped_reason"] = "deterministic_failed"
+                print_summary(summary)
+                sys.stderr.write("Error: Direct mode blocked on deterministic failure.\n")
+                sys.exit(1)
+
+            if not args.changed_files and not args.allow_risk_paths:
+                summary["skipped_reason"] = "missing_changed_files"
+                print_summary(summary)
+                sys.stderr.write(
+                    "Error: Direct mode blocked. --changed-files is required unless --allow-risk-paths is provided.\n"
+                )
+                sys.exit(1)
+
+            # High-risk path detection
+            if args.changed_files and not args.allow_risk_paths:
+                risk_paths = [
+                    "server.ts", "middleware.ts",
+                    "context/WebSocketContext.tsx", "context/webSocketReducer.ts",
+                    "hooks/useBluetoothHRM.ts", ".github/workflows/",
+                    "package.json", "pnpm-lock.yaml"
+                ]
+                changed_files = args.changed_files.split(',')
+                for cf in changed_files:
+                    cf = cf.strip()
+                    for rp in risk_paths:
+                        if cf == rp or (rp.endswith('/') and cf.startswith(rp)):
+                            summary["skipped_reason"] = "risk_path_touched"
+                            print_summary(summary)
+                            sys.stderr.write(f"Error: Direct mode blocked. Risk path touched: {cf}. Use --allow-risk-paths to override.\n")
+                            sys.exit(1)
+
         session_id = create_jules_session(
             prompt=args.prompt,
             branch=args.branch,
             title=args.title,
             owner=args.owner,
             repo_name=args.repo_name,
-            jules_api_url=args.jules_api_url
+            jules_api_url=args.jules_api_url,
+            mode=mode
         )
+
+        print_summary(summary)
+
         if 'GITHUB_OUTPUT' in os.environ:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                 f.write(f"session_id={session_id}\n")

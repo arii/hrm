@@ -1,3 +1,11 @@
+# owner: @arii
+# purpose: Standard automation workflow
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
+
 name: 'Auto Conflict Resolver'
 
 on:
@@ -115,14 +123,12 @@ jobs:
           echo "resolved_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
         id: commit_push
 
-      - name: Trigger Gemini Orchestrator
+      - name: Trigger PR Quality Gate
         if: steps.validate_branches.outputs.skipped != 'true' && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.commit_push.outputs.resolved_sha }}
-          BASE_SHA: ${{ steps.validate_branches.outputs.base_sha }}
         run: |
-          gh workflow run "pr-orchestrator.yml" --ref "$SOURCE" -f pr_number="$PR_NUMBER" -f base_ref="$BASE_SHA" -f head_ref="$HEAD_SHA" -f base_branch="$TARGET"
+          gh workflow run "pr-quality.yml" --ref "$SOURCE" -f force_ai=true -f pr_number="$PR_NUMBER" -f head_sha="${{ steps.commit_push.outputs.resolved_sha }}" -f base_sha="${{ steps.validate_branches.outputs.base_sha }}"
 
       - name: Update comment on success
         if: steps.validate_branches.outputs.skipped != 'true' && success() && steps.resolve.outputs.unresolved-files == '' && env.PR_NUMBER && env.PR_NUMBER != '0'
