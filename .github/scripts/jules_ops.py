@@ -4,6 +4,21 @@ import sys
 import requests
 import argparse
 
+def print_summary(summary):
+    """
+    Prints a structured summary to GITHUB_STEP_SUMMARY.
+    """
+    if 'GITHUB_STEP_SUMMARY' in os.environ:
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+            f.write("### 🤖 Jules Operation Summary\n")
+            f.write(f"- **Mode:** `{summary['mode']}`\n")
+            f.write(f"- **Issue Created:** {'✅' if summary['issue_created'] else '❌'}\n")
+            f.write(f"- **PR Created:** {'✅' if summary['pr_created'] else '❌'}\n")
+            if summary['skipped_reason']:
+                f.write(f"- **Skipped Reason:** `{summary['skipped_reason']}`\n")
+    else:
+        print(f"Summary: {summary}")
+
 def create_jules_session(prompt, branch, title, owner, repo_name, jules_api_url, mode="audit"):
     """
     Creates a new Jules session via the API and returns the session ID.
@@ -103,14 +118,25 @@ def main():
             sys.stderr.write("Error: --prompt, --branch, --title, --owner, and --repo-name are required for the 'new' command.\n")
             sys.exit(1)
 
+        summary = {
+            "mode": mode,
+            "issue_created": mode == "audit",
+            "pr_created": mode == "direct",
+            "skipped_reason": None
+        }
+
         # Safety gates for direct mode
         if mode == 'direct':
             deterministic_passed = str(args.deterministic_passed).strip().lower() == "true"
             if not deterministic_passed:
+                summary["skipped_reason"] = "deterministic_failed"
+                print_summary(summary)
                 sys.stderr.write("Error: Direct mode blocked on deterministic failure.\n")
                 sys.exit(1)
 
             if not args.changed_files and not args.allow_risk_paths:
+                summary["skipped_reason"] = "missing_changed_files"
+                print_summary(summary)
                 sys.stderr.write(
                     "Error: Direct mode blocked. --changed-files is required unless --allow-risk-paths is provided.\n"
                 )
@@ -129,6 +155,8 @@ def main():
                     cf = cf.strip()
                     for rp in risk_paths:
                         if cf == rp or (rp.endswith('/') and cf.startswith(rp)):
+                            summary["skipped_reason"] = "risk_path_touched"
+                            print_summary(summary)
                             sys.stderr.write(f"Error: Direct mode blocked. Risk path touched: {cf}. Use --allow-risk-paths to override.\n")
                             sys.exit(1)
 
@@ -141,6 +169,9 @@ def main():
             jules_api_url=args.jules_api_url,
             mode=mode
         )
+
+        print_summary(summary)
+
         if 'GITHUB_OUTPUT' in os.environ:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                 f.write(f"session_id={session_id}\n")

@@ -1,5 +1,10 @@
-# owner: @team-devex
+# owner: @arii
 # purpose: Standard automation workflow
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
 
 name: Auto-merge Dependencies
 
