@@ -148,7 +148,7 @@
     "jest-mock": "^30.2.0",
     "jsdom": "^28.1.0",
     "knip": "^5.80.2",
-    "lint-staged": "^16.3.1",
+    "lint-staged": "^17.0.4",
     "msw": "^2.12.10",
     "msw-storybook-addon": "^2.0.6",
     "pino-pretty": "^13.1.3",
