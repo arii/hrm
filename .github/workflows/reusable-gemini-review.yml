@@ -1,3 +1,11 @@
+# owner: @arii
+# purpose: Standard automation workflow
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
+
 # .github/workflows/reusable-gemini-review.yml
 # This workflow is responsible for generating code reviews and posting them as PR comments.
 # It does not create GitHub issues, so 'issues: write' permission is not required.

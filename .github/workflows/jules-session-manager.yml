@@ -1,3 +1,11 @@
+# owner: @arii
+# purpose: Standard automation workflow
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
+
 # .github/workflows/jules-session-manager.yml
 name: Jules Session Manager
 
@@ -87,6 +95,25 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
           echo "TITLE=$TITLE" >> $GITHUB_ENV
 
+      - name: 'Get PR State for Safety Gates'
+        id: pr_state
+        if: env.COMMAND == 'new'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Fetch changed files
+          CHANGED_FILES=$(gh pr view "$PR_NUMBER" --json files --jq '.files | map(.path) | join(",")')
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
+
+          # Fetch latest Quality Gate status
+          QUALITY_STATUS=$(gh run list --workflow pr-quality.yml --branch "$BRANCH" --limit 1 --json conclusion -q '.[0].conclusion' || echo "unknown")
+          PASSED="false"
+          if [[ "$QUALITY_STATUS" == "success" ]]; then
+            PASSED="true"
+          fi
+          echo "DETERMINISTIC_PASSED=$PASSED" >> $GITHUB_ENV
+
       - name: 'Find Jules Session ID'
         id: find_session_id
         if: env.COMMAND == 'delete'
@@ -139,24 +166,34 @@ jobs:
           PROMPT: ${{ env.PROMPT }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
+          CHANGED_FILES: ${{ env.CHANGED_FILES }}
+          DETERMINISTIC_PASSED: ${{ env.DETERMINISTIC_PASSED }}
         run: |
           set +e
-          OUTPUT=$(python3 .github/scripts/jules_ops.py \
+          # Detect if direct mode is requested via comment
+          MODE="audit"
+          if [[ "${{ github.event.comment.body }}" == *"--direct"* ]]; then
+            MODE="direct"
+          fi
+
+          python3 .github/scripts/jules_ops.py \
             --command "new" \
             --prompt "$PROMPT" \
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
             --repo-name "$REPO_NAME" \
-            --jules-api-url "${{ secrets.JULES_API_URL }}" 2>&1)
+            --mode "$MODE" \
+            --changed-files "$CHANGED_FILES" \
+            --deterministic-passed "$DETERMINISTIC_PASSED" \
+            --jules-api-url "${{ secrets.JULES_API_URL }}"
           EXIT_CODE=$?
 
+          # Note: jules_ops.py now writes session_id to $GITHUB_OUTPUT directly on success
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "error_message=$OUTPUT" >> $GITHUB_OUTPUT
-            exit $EXIT_CODE
+             echo "::error::Jules operation failed with exit code $EXIT_CODE"
+             exit $EXIT_CODE
           fi
-
-          echo "session_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: 'Run Jules Operation: Delete'
         if: env.COMMAND == 'delete'

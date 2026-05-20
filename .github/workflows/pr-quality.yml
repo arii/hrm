@@ -1,1138 +1,355 @@
-name: PR Quality Gate
+# owner: @arii
+# purpose: Deterministic PR quality gate and conditional AI review
+# metrics:
+# - median_duration
+# - failure_rate
+# - ai_invocation_rate
+# - deterministic_fail_rate
 
+name: PR Quality
 on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize, labeled]
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to check'
-        required: true
-        default: 'leader'
+      force_ai:
+        description: 'Force Gemini review'
+        required: false
+        default: 'false'
       pr_number:
-        description: 'PR number to post comments to (optional)'
+        description: 'PR number for dispatch-triggered runs'
         required: false
-        type: string
-      enable_pr_comment:
-        description: 'Whether to post a detailed quality report as a PR comment'
+        default: ''
+      head_sha:
+        description: 'Optional head SHA override for dispatch-triggered runs'
         required: false
-        type: boolean
-        default: false
-
+        default: ''
+      base_sha:
+        description: 'Optional base SHA override for dispatch-triggered runs'
+        required: false
+        default: ''
   workflow_call:
     inputs:
-      branch:
-        description: 'Branch to check'
-        required: false
+      force_ai:
         type: string
-        default: 'leader'
+        default: 'false'
       pr_number:
-        description: 'PR number to post comments to (optional)'
-        required: false
         type: string
-      enable_pr_comment:
-        description: 'Whether to post a detailed quality report as a PR comment'
         required: false
-        type: boolean
-        default: false
+        default: ''
+      head_sha:
+        type: string
+        required: false
+        default: ''
+      base_sha:
+        type: string
+        required: false
+        default: ''
 
-    secrets:
-      GH_TOKEN:
-        description: 'GitHub token (optional, uses github.token by default)'
-        required: false
-      GEMINI_API_KEY:
-        description: 'Gemini API Key'
-        required: false
 permissions:
   contents: read
-  checks: write
-  actions: read
   pull-requests: write
   issues: write
+  checks: write
+  actions: read
 
 concurrency:
-  group: pr-quality-${{ inputs.pr_number || github.event.pull_request.number || github.ref || github.run_id }}
+  group: pr-quality-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
   cancel-in-progress: true
 
-env:
-  FORCE_COLOR: 1
-
 jobs:
-  prepare-env:
-    name: 📝 Prepare Environment
+  welcome:
+    name: 👋 PR Welcome
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Welcome Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = '## 👋 Welcome to HRM!\n\n' +
+              'Thanks for your contribution. This repository uses Gemini AI for automated triage, code review, and generation.\n\n' +
+              '#### 🤖 Gemini Manual Trigger Quick Reference\n' +
+              '| Command | Action |\n' +
+              '| :--- | :--- |\n' +
+              '| `@gemini-bot` | Run AI Code Review (PR only) |\n\n' +
+              'For more details, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
+
+  deterministic:
+    name: Deterministic checks
     runs-on: ubuntu-latest
     outputs:
-      session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
-      pr_number: ${{ steps.determine-context.outputs.pr_number }}
-      sha: ${{ steps.determine-context.outputs.sha }}
+      passed: ${{ steps.set_result.outputs.passed }}
     steps:
-      - name: Determine Context
-        id: determine-context
-        shell: bash
-        env:
-          RAW_PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || '' }}
-          RAW_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          # Sanitize PR_NUMBER to include only digits
-          SAFE_PR_NUMBER=$(echo "$RAW_PR_NUMBER" | tr -cd '0-9')
-          echo "pr_number=$SAFE_PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "sha=$RAW_SHA" >> "$GITHUB_OUTPUT"
-          echo "Determined Context: PR=$SAFE_PR_NUMBER, SHA=$RAW_SHA"
-
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Sanitize SESSION_ID
-        id: sanitize_id
-        uses: ./.github/actions/sanitize-string
-        with:
-          value: ${{ steps.determine-context.outputs.pr_number || github.ref_name || github.run_id }}
-
-  script-tests:
-    name: 🧪 Script Tests
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Run Throttling Logic Integration Test
-        id: script-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p logs
-          # Run the bats tests and tee output to a log file
-          ./node_modules/bats/bin/bats tests/unit/decide-review-strategy.bats > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
-
-      - name: Upload Script Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: script-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/script-output.log
-          if-no-files-found: ignore
-          retention-days: 2
-
-  knip-check:
-    name: 🎒 Knip Check
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Run Knip
-        id: knip
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm run knip 2>&1 | tee knip-output.txt
-
-      - name: Upload Knip Report
-        if: failure() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
-        uses: actions/upload-artifact@v7
-        with:
-          name: knip-report
-          path: knip-output.txt
-          retention-days: 2
-
-  lint-check:
-    name: 🔍 Lint Check
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Lint Code
-        id: lint
-        shell: bash
-        run: |
-          ./scripts/ci/run-linter.sh
-        continue-on-error: true
-
-      - name: Report Lint Failure
-        if: steps.lint.outcome == 'failure'
-        run: |
-          echo "### ❌ Lint Check Failed" >> $GITHUB_STEP_SUMMARY
-          echo "Detailed annotations are available in the **Files Changed** tab. See the summary above for key issues." >> $GITHUB_STEP_SUMMARY
-          exit 1
-
-      - name: Upload Lint Report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: lint-report
-          path: logs/lint-output.log
-          retention-days: 2
-          if-no-files-found: ignore
-
-  slop-check:
-    name: 🧹 Slop Check
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Run Slop Check
-        id: slop
-        shell: bash
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_ENABLE_SLOP_CHECK: ${{ vars.GEMINI_ENABLE_SLOP_CHECK }}
-        run: |
-          chmod +x ./scripts/ci-check-slop.sh
-          ./scripts/ci-check-slop.sh
-
-      - name: Report Slop Failure
-        if: failure() && steps.slop.outcome == 'failure'
-        run: |
-          echo "### 🧹 AI Slop Detection Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          cat logs/slop-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Slop Report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: slop-report
-          path: logs/slop-output.log
-          retention-days: 2
-          if-no-files-found: ignore
-
-  type-check:
-    name: ⌨️ Type Check
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-        with:
-          use-build-cache: true
-          cache-type: type-check
-
-      - name: Register TypeScript Matcher
-        run: echo "::add-matcher::.github/tsc-error-matcher.json"
-
-      - name: Run Type Check
-        id: type-check
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p logs
-          # In CI, we use --pretty false to ensure the problem matcher can parse the output reliably
-          pnpm run type-check --pretty false 2>&1 | tee logs/type-check-output.log
-
-      - name: Report Type Check Failure
-        if: failure() && steps.type-check.outcome == 'failure'
-        run: |
-          echo "### ❌ Type Check Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          # Show the first 20 lines of errors
-          head -n 20 logs/type-check-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Type Check Report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: type-check-report
-          path: logs/type-check-output.log
-          retention-days: 2
-          if-no-files-found: ignore
-
-  build-check:
-    name: 🏗️ Build Check
-    needs: [prepare-env]
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-        with:
-          use-build-cache: true
-          cache-type: next-build
-
-      - name: Register TypeScript Matcher
-        run: echo "::add-matcher::.github/tsc-error-matcher.json"
-
-      - name: Verify Build
-        id: build
-        env:
-          NODE_ENV: production
-          SKIP_CLEAN: true
-          IGNORE_BUILD_ERRORS: true
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-        shell: bash
-        run: |
-          set -o pipefail
-          # Ensure build script doesn't use --pretty for tsc
-          ./scripts/ci/run-build.sh
-
-      - name: Verify Artifacts
-        if: always() && steps.build.outcome == 'success'
-        run: |
-          if [ ! -d ".next_prod" ] || [ ! -d "dist" ]; then
-            echo "::error::Build artifacts were not created successfully."
-            exit 1
-          fi
-          echo "Build artifacts verified."
-
-      - name: Report Build Failure
-        if: failure() && steps.build.outcome == 'failure'
-        run: |
-          echo "### ❌ Build Failure Report" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          tail -n 50 logs/build-output.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Build Report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-report
-          path: logs/build-output.log
-          retention-days: 2
-          if-no-files-found: ignore
-
-      - name: 🔍 Pre-archive Inspection
-        if: always() && steps.build.outcome == 'success'
-        shell: bash
-        run: |
-          echo "=== Checking .next_prod directory structure ==="
-          if [ ! -d ".next_prod" ]; then
-            echo "❌ ERROR: .next_prod directory not found!"
-            exit 1
-          fi
-
-          echo "📁 .next_prod directory contents:"
-          ls -la .next_prod/
-
-          echo ""
-          echo "🔎 Checking critical files:"
-          if [ ! -f ".next_prod/BUILD_ID" ]; then
-            echo "❌ ERROR: BUILD_ID not found!"
-            exit 1
-          fi
-          echo "✅ BUILD_ID: $(cat .next_prod/BUILD_ID)"
-
-          if [ ! -d ".next_prod/server" ]; then
-            echo "❌ ERROR: server directory not found!"
-            exit 1
-          fi
-          echo "✅ server/ directory exists"
-
-          if [ ! -d ".next_prod/static" ]; then
-            echo "⚠️  WARNING: static directory not found"
-          else
-            echo "✅ static/ directory exists"
-          fi
-
-          echo ""
-          echo "📊 .next_prod directory size:"
-          du -sh .next_prod/
-
-          echo ""
-          echo "📋 Directory structure (truncated):"
-          (ls -R .next_prod/ || true) | head -50
-
-      - name: 📦 Create Release Archive
-        if: always() && steps.build.outcome == 'success'
-        shell: bash
-        run: |
-          echo "📦 Creating release archive with complete .next_prod directory..."
-
-          # Use explicit directory names (not wildcards) to preserve all files
-          # tar -c: create archive
-          # -z: gzip compression
-          # -f: output file
-          tar -czf release.tar.gz \
-            .next_prod \
-            dist \
-            scripts/start-production.sh \
-            scripts/deploy-artifact.sh \
-            scripts/verify-deployment.sh \
-            ecosystem.config.cjs \
-            package.json \
-            pnpm-lock.yaml \
-            .env.local \
-            server.ts \
-            middleware.ts \
-            public \
-            next.config.js
-
-          echo "✅ Release archive created:"
-          ls -lh release.tar.gz
-
-          echo ""
-          echo "📊 Archive contents verification:"
-          (tar -tzf release.tar.gz | grep -E "BUILD_ID|\.next_prod/server" || true) | head -10
-
-      - name: Upload Build Artifacts
-        if: always() && steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: release.tar.gz
-          retention-days: 2
-
-  infra-tests:
-    name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      NEXTAUTH_URL: http://localhost:3006
-      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-      PORT: 3006
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Run Infra Tests
-        id: infra-tests
-        shell: bash
-        env:
-          NODE_ENV: production
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-infra-tests.sh prod
-
-      - name: Publish Infrastructure Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.infra-tests.outcome != 'skipped'
-        with:
-          name: Infrastructure (Prod)
-          path: test-results/infra-prod-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Infra Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: infra-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/infra-prod-output.log
-            test-results/infra-prod-results.xml
-          if-no-files-found: ignore
-          retention-days: 2
-
-  unit-tests:
-    name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Run Unit Tests
-        id: unit-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-unit-tests.sh
-
-      - name: Publish Unit Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.unit-tests.outcome != 'skipped'
-        with:
-          name: Unit Tests
-          path: test-results/unit-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Unit Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: unit-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/unit-output.log
-            test-results/unit-results.xml
-          if-no-files-found: ignore
-          retention-days: 2
-
-  component-tests:
-    name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Run Component Tests
-        id: component-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-component-tests.sh
-
-      - name: Publish Component Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.component-tests.outcome != 'skipped'
-        with:
-          name: Component Tests
-          path: test-results/component-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Component Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: component-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/component-output.log
-            test-results/component-results.xml
-          if-no-files-found: ignore
-          retention-days: 2
-
-  perf-tests:
-    name: 🧪 Performance Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      NEXTAUTH_URL: http://localhost:3007
-      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-      PORT: 3007
-      SKIP_BUILD: 'true'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Run Performance Test
-        id: perf-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-perf-tests.sh
-
-      - name: Publish Performance Test Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.perf-tests.outcome != 'skipped'
-        with:
-          name: Performance Tests Report
-          path: test-results/perf-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Performance Metrics
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: performance-metrics-${{ env.SESSION_ID }}
-          path: test-results/performance-metrics.json
-          if-no-files-found: ignore
-
-      - name: Upload Perf Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: perf-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/perf-output.log
-            test-results/perf-results.xml
-          if-no-files-found: ignore
-          retention-days: 2
-
-      - name: Stop Application
-        if: always()
-        run: pnpm run kill-all || true
-
-  visual-tests:
-    name: 🧪 Visual Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-      SKIP_BUILD: 'true'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Check for Orphaned Snapshots
-        run: pnpm run test:vrt:check-orphans
-
-      - name: Run Visual Tests (Playwright)
-        id: visual-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-visual-tests.sh
-
-      - name: Publish Visual Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.visual-tests.outcome != 'skipped'
-        with:
-          name: Visual Tests Report
-          path: test-results/results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Merge Playwright Reports
-        if: always() && steps.visual-tests.outcome != 'skipped'
-        shell: bash
-        run: |
-          if [ -d "blob-report" ]; then
-            echo "📊 Merging Playwright blob reports..."
-            npx playwright merge-reports --reporter html ./blob-report || true
-          else
-            echo "⚠️ No blob-report directory found, skipping merge"
-          fi
-        continue-on-error: true
-
-      - name: Upload Visual Test Artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: visual-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/visual-output.log
-            test-results/
-            playwright-report/
-          if-no-files-found: warn
-          retention-days: 2
-
-  integration-tests:
-    name: 📊 Integration Tests Summary
-    if: always()
-    needs:
-      [
-        prepare-env,
-        script-tests,
-        infra-tests,
-        unit-tests,
-        component-tests,
-        perf-tests,
-        visual-tests,
-      ]
-    runs-on: ubuntu-latest
-    outputs:
-      script-tests-outcome: ${{ needs.script-tests.result }}
-      infra-tests-outcome: ${{ needs.infra-tests.result }}
-      unit-tests-outcome: ${{ needs.unit-tests.result }}
-      component-tests-outcome: ${{ needs.component-tests.result }}
-      perf-tests-outcome: ${{ needs.perf-tests.result }}
-      visual-tests-outcome: ${{ needs.visual-tests.result }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Generate Summary Report
-        shell: bash
-        run: |
-          # Debug: list files to ensure script existence
-          ls -R scripts/ci/
-          bash ./scripts/ci/generate-test-summary.sh \
-            "${{ needs.script-tests.result }}" \
-            "${{ needs.infra-tests.result }}" \
-            "${{ needs.unit-tests.result }}" \
-            "${{ needs.component-tests.result }}" \
-            "${{ needs.perf-tests.result }}" \
-            "${{ needs.visual-tests.result }}"
-
-      - name: Determine Overall Status
-        shell: bash
-        run: |
-          # Fail if any test failed
-          if [ "${{ needs.script-tests.result }}" = "failure" ] || \
-             [ "${{ needs.infra-tests.result }}" = "failure" ] || \
-             [ "${{ needs.unit-tests.result }}" = "failure" ] || \
-             [ "${{ needs.component-tests.result }}" = "failure" ] || \
-             [ "${{ needs.perf-tests.result }}" = "failure" ] || \
-             [ "${{ needs.visual-tests.result }}" = "failure" ]; then
-            echo "❌ Some integration tests failed"
-            exit 1
-          fi
-
-          echo "✅ All integration tests passed"
-
-  quality-report:
-    name: 📊 Quality Report
-    if: always() && needs.knip-check.result != 'cancelled' && needs.lint-check.result != 'cancelled' && needs.slop-check.result != 'cancelled' && needs.type-check.result != 'cancelled' && needs.build-check.result != 'cancelled' && needs.integration-tests.result != 'cancelled'
-    needs:
-      [
-        prepare-env,
-        knip-check,
-        lint-check,
-        slop-check,
-        type-check,
-        build-check,
-        script-tests,
-        integration-tests,
-      ]
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
-    outputs:
-      failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
-    steps:
-      - name: Install jq
-        run: |
-          if ! command -v jq &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y jq
-          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.sha }}
 
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v8
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          path: artifacts/
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        id: eslint
+        run: pnpm run lint 2>&1 | tee eslint-output.txt
         continue-on-error: true
 
-      - name: Inspect Downloaded Artifacts
-        if: always()
-        run: |
-          echo "🔍 Listing all files in artifacts/ directory:"
-          ls -R artifacts/ || echo "artifacts/ directory not found or empty"
+      - name: Typecheck
+        id: tsc
+        if: steps.eslint.outcome == 'success'
+        run: pnpm run type-check 2>&1 | tee tsc-output.txt
+        continue-on-error: true
 
-      - name: Create test-results directory
-        run: mkdir -p test-results
+      - name: Knip
+        id: knip
+        if: steps.eslint.outcome == 'success' && steps.tsc.outcome == 'success'
+        run: pnpm run knip 2>&1 | tee knip-output.txt
+        continue-on-error: true
 
-      - name: Aggregate Check Results
-        id: aggregate-results
+      - name: Set deterministic result
+        id: set_result
         shell: bash
-        env:
-          NEEDS_CONTEXT: ${{ toJSON(needs) }}
         run: |
-          FINAL_RESULT="success" # Default to success
-          HAS_FAILURE=false
-          HAS_CANCELLATION=false
-
-          # Check all job results from the `needs` context
-          for job_name in $(echo "$NEEDS_CONTEXT" | jq -r 'keys[]'); do
-            # Skip the prepare-env job as it's just setup
-            if [[ "$job_name" == "prepare-env" ]]; then
-              continue
-            fi
-
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job_name" '.[$jname].result')
-
-            if [[ "$result" == "failure" ]]; then
-              HAS_FAILURE=true
-            elif [[ "$result" == "cancelled" ]]; then
-              HAS_CANCELLATION=true
-            fi
-          done
-
-          if [[ "$HAS_FAILURE" == true ]]; then
-            FINAL_RESULT="failure"
-          elif [[ "$HAS_CANCELLATION" == true ]]; then
-            FINAL_RESULT="cancelled"
-          fi
-
-          echo "final_result=${FINAL_RESULT}" >> $GITHUB_OUTPUT
-
-      - name: Generate Failure Report
-        id: generate-failure-report
-        if: always()
-        env:
-          NEEDS_CONTEXT: ${{ toJSON(needs) }}
-          SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-        run: |
-          FAILURE_REPORT_JSON="[]"
-
-          # Function to add a failure to the JSON report
-          add_failure() {
-            local name=$1
-            local conclusion=$2
-            local log_file=$3
-            local log_content
-            # Ensure log_content is a valid JSON string even if log file is missing or empty
-            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R . || echo '""')
-            FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
-              --arg name "$name" \
-              --arg conclusion "$conclusion" \
-              --argjson logs "$log_content" \
-              '. + [{ "name": $name, "conclusion": $conclusion, "logs": $logs }]')
-          }
-
-          # Check standalone jobs
-          for job in "knip-check" "lint-check" "slop-check" "type-check" "build-check"; do
-            # Safely get job result, default to "skipped" if not found
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg jname "$job" '.[$jname].result // "skipped"')
-            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              log_file=""
-              case $job in
-                "knip-check") log_file="artifacts/knip-report/knip-output.txt" ;;
-                "lint-check") log_file="artifacts/lint-report/lint-output.log" ;;
-                "slop-check") log_file="artifacts/slop-report/slop-output.log" ;;
-                "type-check") log_file="artifacts/type-check-report/type-check-output.log" ;;
-                "build-check") log_file="artifacts/build-report/build-output.log" ;;
-              esac
-              add_failure "$job" "$result" "$log_file"
-            fi
-          done
-
-          # Check integration test suites from the outputs
-          for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
-            # Safely get test suite result from nested object, default to "skipped"
-            result=$(echo "$NEEDS_CONTEXT" | jq -r --arg tname "$test_suite_outcome" '."integration-tests".outputs.[$tname] // "skipped"')
-            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              test_suite_name=${test_suite_outcome%-outcome}
-              log_file=""
-              case $test_suite_name in
-                "infra-tests") log_file="artifacts/infra-test-logs-${SESSION_ID}/logs/infra-prod-output.log" ;;
-                "unit-tests") log_file="artifacts/unit-test-logs-${SESSION_ID}/logs/unit-output.log" ;;
-                "component-tests") log_file="artifacts/component-test-logs-${SESSION_ID}/logs/component-output.log" ;;
-                "perf-tests") log_file="artifacts/perf-test-logs-${SESSION_ID}/logs/perf-output.log" ;;
-                "visual-tests") log_file="artifacts/visual-test-logs-${SESSION_ID}/logs/visual-output.log" ;;
-              esac
-              add_failure "$test_suite_name" "$result" "$log_file"
-            fi
-          done
-
-          # Use a block to safely append to GITHUB_OUTPUT
-          {
-            echo "failure_report_json<<EOF"
-            echo "$FAILURE_REPORT_JSON"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Post Quality Summary with Details
-        if: always() && needs.prepare-env.outputs.pr_number != ''
-        env:
-          KNIP_RESULT: ${{ needs.knip-check.result }}
-          LINT_RESULT: ${{ needs.lint-check.result }}
-          BUILD_RESULT: ${{ needs.build-check.result }}
-          INFRA_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.infra-tests-outcome }}
-          UNIT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.unit-tests-outcome }}
-          COMPONENT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.component-tests-outcome }}
-          PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
-          VISUAL_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.visual-tests-outcome }}
-          FINAL_RESULT: ${{ steps.aggregate-results.outputs.final_result }}
-          PR_NUMBER: ${{ needs.prepare-env.outputs.pr_number }}
-          SHA: ${{ needs.prepare-env.outputs.sha }}
-          ENABLE_PR_COMMENT: ${{ inputs.enable_pr_comment }}
-        run: |
-          set +e
-
-          # Function to add log details to the comment body
-          add_log_details() {
-            local title="$1"
-            local log_file="$2"
-            local max_lines="$3"
-
-            if [ -f "$log_file" ]; then
-              echo ""
-              echo "### ❌ $title"
-              echo '```text'
-              # Use sed to clean ANSI color codes
-              tail -n "$max_lines" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g'
-              echo '```'
-            else
-              echo ""
-              echo "### ❌ $title"
-              echo '```text'
-              echo "Log file not found."
-              echo '```'
-            fi
-          }
-
-          # Prepare the main comment body
-          COMMENT_BODY="## 📋 Quality Gate Results\n\n"
-          COMMENT_BODY+="| Check | Status |\n"
-          COMMENT_BODY+="|-------|--------|\n"
-          COMMENT_BODY+="| Knip | $([ "$KNIP_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$KNIP_RESULT) |\n"
-          COMMENT_BODY+="| Lint | $([ "$LINT_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$LINT_RESULT) |\n"
-          COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
-          COMMENT_BODY+="| Type Check | $([ "${{ needs.type-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.type-check.result }}) |\n"
-          COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
-          COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Component Tests | $([ "$COMPONENT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$COMPONENT_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |\n"
-          COMMENT_BODY+="| Visual Tests | $([ "$VISUAL_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_OUTCOME) |\n"
-
-          # Append log details for failed checks
-          LOG_DETAILS=""
-          if [ "$KNIP_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Knip Failure Details" "artifacts/knip-report/knip-output.txt" 50)
-          fi
-          if [ "$LINT_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Lint Failure Details" "artifacts/lint-report/lint-output.log" 50)
-          fi
-          if [ "${{ needs.slop-check.result }}" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Slop Failure Details" "artifacts/slop-report/slop-output.log" 50)
-          fi
-          if [ "${{ needs.type-check.result }}" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Type Check Failure Details" "artifacts/type-check-report/type-check-output.log" 50)
-          fi
-          if [ "$BUILD_RESULT" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
-          fi
-          if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" 50)
-          fi
-          if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" 50)
-          fi
-          if [ "$COMPONENT_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Component Test Failure Details" "artifacts/component-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/component-output.log" 50)
-          fi
-          if [ "$VISUAL_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Visual Test Failure Details" "artifacts/visual-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/visual-output.log" 50)
-            LOG_DETAILS+="\n> 💡 **Tip:** Download the \`visual-test-logs-${{ needs.prepare-env.outputs.session_id }}\` artifact to view the full interactive Playwright report.\n"
-          fi
-          if [ "$PERF_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Performance Test Failure Details" "artifacts/perf-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/perf-output.log" 50)
-          fi
-
-          # Combine main body and log details
-          if [ -n "$LOG_DETAILS" ]; then
-            COMMENT_BODY+="\n${LOG_DETAILS}"
-          fi
-
-          # Determine summary message
-          if [ "$FINAL_RESULT" = "success" ]; then
-            SUMMARY_MSG="✅ **All quality checks passed!**"
+          if [[ "${{ steps.eslint.outcome }}" == "success" && "${{ steps.tsc.outcome }}" == "success" && "${{ steps.knip.outcome }}" == "success" ]]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
           else
-            SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+
+            if [[ "${{ steps.eslint.outcome }}" == "failure" ]]; then
+              echo "FAILED_STEP=ESLint" >> $GITHUB_ENV
+              echo "FAILED_COMMAND=pnpm run lint" >> $GITHUB_ENV
+              echo "LOG_FILE=eslint-output.txt" >> $GITHUB_ENV
+              echo "REMEDIATION=Run \`pnpm lint:fix\` locally to resolve auto-fixable issues." >> $GITHUB_ENV
+            elif [[ "${{ steps.tsc.outcome }}" == "failure" ]]; then
+              echo "FAILED_STEP=Typecheck" >> $GITHUB_ENV
+              echo "FAILED_COMMAND=pnpm run type-check" >> $GITHUB_ENV
+              echo "LOG_FILE=tsc-output.txt" >> $GITHUB_ENV
+              echo "REMEDIATION=Fix TypeScript errors in the reported files." >> $GITHUB_ENV
+            elif [[ "${{ steps.knip.outcome }}" == "failure" ]]; then
+              echo "FAILED_STEP=Knip" >> $GITHUB_ENV
+              echo "FAILED_COMMAND=pnpm run knip" >> $GITHUB_ENV
+              echo "LOG_FILE=knip-output.txt" >> $GITHUB_ENV
+              echo "REMEDIATION=Remove unused exports, files, or dependencies reported by Knip." >> $GITHUB_ENV
+            fi
           fi
 
-          # Create manual trigger footer
-          FOOTER="\n\n---\n#### 🤖 [Gemini Manual Trigger Guide](https://github.com/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
+      - name: Post diagnostic PR comment
+        if: steps.set_result.outputs.passed == 'false' && (github.event_name == 'pull_request' || inputs.pr_number != '')
+        uses: actions/github-script@v7
+        env:
+          FAILED_STEP: ${{ env.FAILED_STEP }}
+          FAILED_COMMAND: ${{ env.FAILED_COMMAND }}
+          REMEDIATION: ${{ env.REMEDIATION }}
+          LOG_FILE: ${{ env.LOG_FILE }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const { FAILED_STEP, FAILED_COMMAND, REMEDIATION, LOG_FILE, PR_NUMBER } = process.env;
 
-          COMMENT_BODY+="\n${SUMMARY_MSG}${FOOTER}\n\n---\n> Report generated for commit: \`${SHA}\`"
-
-          # Write the final comment to a file
-          echo -e "$COMMENT_BODY" > test-results/pr-comment.md
-
-          # Always add the detailed report to the step summary
-          echo -e "$COMMENT_BODY" >> $GITHUB_STEP_SUMMARY
-
-          # Only post comment to PR if there are genuine failures AND enabled
-          if [ "$FINAL_RESULT" == "failure" ] && [ "$ENABLE_PR_COMMENT" == "true" ]; then
-            gh pr comment "$PR_NUMBER" --body-file test-results/pr-comment.md || {
-              echo "::warning::Failed to post PR comment."
+            let logs = "No logs available.";
+            if (LOG_FILE && fs.existsSync(LOG_FILE)) {
+              logs = fs.readFileSync(LOG_FILE, 'utf8').split('\n').slice(0, 20).join('\n');
             }
-          else
-            echo "Skipping PR comment (Result: $FINAL_RESULT, Enabled: $ENABLE_PR_COMMENT)."
+
+            const body = `### ❌ Deterministic Quality Gate Failed\n\n` +
+              `- **Failed Step:** ${FAILED_STEP}\n` +
+              `- **Command:** \`${FAILED_COMMAND}\`\n\n` +
+              `#### 📝 Top 20 Errors (truncated)\n\`\`\`text\n${logs}\n\`\`\`\n\n` +
+              `#### 💡 Remediation\n${REMEDIATION}\n\n` +
+              `> [!IMPORTANT]\n` +
+              `> Gemini AI review is blocked until deterministic checks pass.`;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(PR_NUMBER),
+              body
+            });
+
+      - name: Fail the job if checks failed
+        if: steps.set_result.outputs.passed == 'false'
+        run: exit 1
+
+  ai_gate_decision:
+    name: AI gate decision
+    runs-on: ubuntu-latest
+    needs: deterministic
+    if: always()
+    outputs:
+      run_ai: ${{ steps.decide.outputs.run_ai }}
+      reason: ${{ steps.decide.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.head_sha || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Gather changed files
+        id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          base_sha: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
+          files_yaml: |
+            risk:
+              - server.ts
+              - middleware.ts
+              - context/WebSocketContext.tsx
+              - context/webSocketReducer.ts
+              - hooks/useBluetoothHRM.ts
+              - .github/workflows/**
+              - package.json
+              - pnpm-lock.yaml
+            docs_only:
+              - "**/*.md"
+              - "**/*.mdx"
+              - "docs/**"
+
+      - name: Decide whether to run AI
+        id: decide
+        env:
+          DETERMINISTIC_PASSED: ${{ needs.deterministic.outputs.passed }}
+          FORCE_AI: ${{ inputs.force_ai || 'false' }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name || '[]') }}
+          ANY_CHANGED: ${{ steps.changed.outputs.any_changed }}
+          RISK_CHANGED: ${{ steps.changed.outputs.risk_any_changed }}
+          DOCS_ONLY: ${{ steps.changed.outputs.only_changed == 'true' && steps.changed.outputs.docs_only_any_changed == 'true' }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || 'false' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          run_ai=false
+          reason=""
+
+          # Hard stop: deterministic fail
+          if [[ "$DETERMINISTIC_PASSED" != "true" ]]; then
+            echo "run_ai=false" >> "$GITHUB_OUTPUT"
+            echo "reason=deterministic_failed" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          # Force override
+          if [[ "$FORCE_AI" == "true" ]]; then
+            echo "run_ai=true" >> "$GITHUB_OUTPUT"
+            echo "reason=manual_force" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Label-driven allowlist (High Priority)
+          if echo "$PR_LABELS" | grep -Eiq '"ai:required"|"risk:high"|"security:review"'; then
+            echo "run_ai=true" >> "$GITHUB_OUTPUT"
+            echo "reason=label_trigger" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Risk file trigger (High Priority)
+          if [[ "$RISK_CHANGED" == "true" ]]; then
+            echo "run_ai=true" >> "$GITHUB_OUTPUT"
+            echo "reason=risk_file_changed" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Skip draft updates
+          if [[ "$IS_DRAFT" == "true" ]]; then
+            echo "run_ai=false" >> "$GITHUB_OUTPUT"
+            echo "reason=draft_skip" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Docs-only skip
+          if [[ "$DOCS_ONLY" == "true" ]]; then
+            echo "run_ai=false" >> "$GITHUB_OUTPUT"
+            echo "reason=docs_only" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Reduce synchronize events
+          if [[ "$EVENT_ACTION" == "synchronize" ]]; then
+             echo "run_ai=false" >> "$GITHUB_OUTPUT"
+             echo "reason=sync_skip" >> "$GITHUB_OUTPUT"
+             exit 0
+          fi
+
+          # Check AI invocation count (count actual reviews, not gate decisions)
+          if [[ -n "$PR_NUMBER" ]]; then
+            INVOCATION_COUNT=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments | .[] | select(.body | contains("Reviewed commit:"))] | length' 2>/dev/null || echo 0)
+            MAX_INVOCATIONS=1
+            if echo "$PR_LABELS" | grep -iq "ai:required"; then
+              MAX_INVOCATIONS=2
+            fi
+
+            if [[ "$INVOCATION_COUNT" -ge "$MAX_INVOCATIONS" ]]; then
+              echo "run_ai=false" >> "$GITHUB_OUTPUT"
+              echo "reason=max_invocations_reached" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # Default: skip if no risk or label trigger hit
+          echo "run_ai=false" >> "$GITHUB_OUTPUT"
+          echo "reason=low_risk_skip" >> "$GITHUB_OUTPUT"
+
+      - name: Post gate summary
+        if: (github.event_name == 'pull_request' || inputs.pr_number != '') && (steps.decide.outputs.run_ai == 'true' || github.event.action == 'opened')
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        with:
+          script: |
+            const runAi = "${{ steps.decide.outputs.run_ai }}";
+            const reason = "${{ steps.decide.outputs.reason }}";
+            const prNumber = process.env.PR_NUMBER;
+            if (!prNumber) return;
+
+            const body = `### AI Gate Decision\n- run_ai: **${runAi}**\n- reason: \`${reason}\`\n\n#### Telemetry\n- deterministic_fail: **${{ needs.deterministic.outputs.passed != 'true' }}**\n- ai_skipped: **${runAi != 'true'}**\n- ai_invoked: **${runAi == 'true'}**\n- tokens_used: \`N/A\``;
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(prNumber),
+              body
+            });
+
+  gemini_review:
+    name: Gemini review
+    needs: [deterministic, ai_gate_decision]
+    if: ${{ needs.ai_gate_decision.outputs.run_ai == 'true' }}
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    with:
+      pr_quality_result: ${{ needs.deterministic.outputs.passed == 'true' && 'success' || 'failure' }}
+      trigger_event: ${{ github.event_name }}
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+      head_sha: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
+      last_non_empty_commit: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
+    secrets: inherit
+
+  create_review_issues:
+    name: Create review issues
+    needs: [gemini_review]
+    if: |
+      always() &&
+      needs.gemini_review.result == 'success' &&
+      needs.gemini_review.outputs.review_performed == 'true'
+    uses: ./.github/workflows/reusable-create-review-issues.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}

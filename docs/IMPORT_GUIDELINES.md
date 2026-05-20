@@ -1,26 +1,38 @@
-## Import Path Conventions
+# Architectural Boundary & Import Guidelines
 
-To maintain consistency and use the centralized barrel exports, please follow these import patterns:
+To maintain a clean, scalable, and secure codebase, HRM enforces strict architectural boundaries. These boundaries are verified via automated linting and CI gates.
 
-### 1. From Barrel Exports (Recommended for common components, hooks, utils):
+## 1. Transport Boundaries
 
-```typescript
-import { HrTile, BottomNavBar } from '@/components'
-import { useAudio, usePersistentStorage } from '@/hooks'
-import { logger } from '@/utils'
-```
+**Goal:** Isolate infrastructure-level transport logic (WebSockets, Socket.io) from the UI component tree.
 
-### 2. Direct Imports (For specific modules not in barrel exports):
+### Forbidden Patterns
+- Directly importing `ws` or `socket.io-client` in React components, hooks, or pages.
+- Constructing `WebSocket` instances directly inside component files.
 
-```typescript
-import { ToastProvider } from '@/context/ToastContext' // Correct path for ToastContext
-import theme from '@/lib/theme' // Correct path for theme configuration
-```
+### Recommended Pattern
+Move transport logic to dedicated services or context adapters:
+1. **Services:** Define transport handling in `services/`.
+2. **Context Adapters:** Wrap transport state in a Context Provider (e.g., `context/WebSocketContext.tsx`).
+3. **Hooks:** Use clean abstraction hooks (e.g., `hooks/useWebSocket.ts`) that interact with the context rather than the library directly.
 
-### 3. Avoid (Incorrect/Deprecated Patterns):
+---
 
-```typescript
-import { ToastContainer } from '@/components/Toast' // ❌ This component does not exist
-import { theme } from '@/styles/theme' // ❌ Incorrect path, use '@/lib/theme'
-import HrTile from '../../components/HrTile' // ❌ Avoid relative paths for top-level components
-```
+## 2. Client-Server Boundaries
+
+**Goal:** Prevent server-side logic and environment-specific utilities from leaking into the browser bundle.
+
+### Forbidden Patterns
+- Importing `@/utils/logger.server` in any file under `app/`, `components/`, or `hooks/`.
+
+### Recommended Pattern
+- Use the isomorphic `@/utils/logger` for all client-side and shared code.
+- Keep server-only logic strictly within `server.ts`, `middleware.ts`, or Next.js Server Actions/API Routes.
+
+---
+
+## 3. Enforcement
+
+These rules are enforced via ESLint's `no-restricted-imports`. Violation of these rules will block CI.
+
+For exceptions, use `// eslint-disable-next-line` with a clear justification and request approval from the architecture leads.

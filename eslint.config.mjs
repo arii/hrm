@@ -78,7 +78,36 @@ export default defineConfig([
     },
   },
 
-  // 6. TypeScript Specific Settings
+  // 6. Architectural Boundaries
+  {
+    files: ['app/components/**', 'app/(frontend)/**', 'components/**', 'hooks/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/utils/logger.server',
+              message:
+                'Server-only logger cannot be imported in client code. Use "@/utils/logger" instead. See: docs/IMPORT_GUIDELINES.md#client-server-boundaries',
+            },
+            {
+              name: 'ws',
+              message:
+                'Direct use of "ws" is forbidden in the component tree. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
+            },
+            {
+              name: 'socket.io-client',
+              message:
+                'Direct use of "socket.io-client" is forbidden in the component tree. Move transport logic to services/ or context/ adapters. See: docs/IMPORT_GUIDELINES.md#transport-boundaries',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // 7. TypeScript Specific Settings
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
