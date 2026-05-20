@@ -19,7 +19,10 @@ describe('GET /api/spotify/playlists/[playlistId]/tracks', () => {
             id: 't1',
             name: 'Track 1',
             artists: [{ name: 'Artist 1' }],
-            album: { images: [{ url: 'http://example.com/art1.jpg' }] },
+            album: {
+              name: 'Album 1',
+              images: [{ url: 'http://example.com/art1.jpg' }],
+            },
             duration_ms: 180000,
             uri: 'spotify:track:t1',
             type: 'track',
@@ -51,8 +54,11 @@ describe('GET /api/spotify/playlists/[playlistId]/tracks', () => {
       id: 't1',
       name: 'Track 1',
       artists: 'Artist 1',
-      albumArt: 'http://example.com/art1.jpg',
-      duration: 180000,
+      album: {
+        images: [{ url: 'http://example.com/art1.jpg' }],
+        name: 'Album 1',
+      },
+      duration_ms: 180000,
       uri: 'spotify:track:t1',
     })
   })

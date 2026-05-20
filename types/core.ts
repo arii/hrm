@@ -218,9 +218,12 @@ export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
-  artists?: { name: string }[] | string
-  album?: { name: string }
-  imageUrl?: string | null
+  artists?: string
+  album?: {
+    name: string
+    images: { url: string; height: number; width: number }[]
+  }
+  duration_ms?: number
 }
 
 /**
@@ -232,7 +235,7 @@ export interface SpotifyCommandParameters {
   playlistUri?: string
   contextUri?: string
   uri?: string
-  offset?: { position: number }
+  offset?: { position?: number; uri?: string }
 }
 
 /**

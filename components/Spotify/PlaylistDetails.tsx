@@ -1,20 +1,16 @@
-// components/Spotify/PlaylistDetails.tsx
-import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { SpotifyPlaylistItem as Track } from '../../types/core'
+import { TrackListItem } from './TrackListItem'
 
 interface PlaylistDetailsProps {
   playlistId: string
-  onTrackPlay: (index: number) => void
+  onTrackPlay: (uri: string) => void
 }
 
 const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
@@ -101,19 +97,13 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
           }
           scrollableTarget="scrollable-playlist"
         >
-          <List dense>
+          <List dense sx={{ width: '100%', bgcolor: 'background.paper', p: 0 }}>
             {tracks.map((track, index) => (
-              <ListItem key={`${track.id}-${index}`} divider disablePadding>
-                <ListItemButton onClick={() => onTrackPlay(index)}>
-                  <MusicNote
-                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-                  />
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
-                  />
-                </ListItemButton>
-              </ListItem>
+              <TrackListItem
+                key={`${track.id}-${index}`}
+                track={track}
+                onClick={() => onTrackPlay(track.uri)}
+              />
             ))}
           </List>
         </InfiniteScroll>
