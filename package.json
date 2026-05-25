@@ -128,7 +128,7 @@
     "@types/uuid": "^9.0.8",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
-    "babel-jest": "^30.2.0",
+    "babel-jest": "^30.4.1",
     "babel-plugin-react-compiler": "1.0.0",
     "bats": "^1.13.0",
     "core-js": "^3.48.0",
