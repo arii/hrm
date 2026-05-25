@@ -163,7 +163,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "uuid": "^9.0.1",
-    "wait-on": "^9.0.4"
+    "wait-on": "^9.0.10"
   },
   "engines": {
     "node": ">=20.0.0",
