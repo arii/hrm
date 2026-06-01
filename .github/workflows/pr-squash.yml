@@ -50,7 +50,7 @@ jobs:
             sudo apt-get update && sudo apt-get install -y jq
           fi
       - name: Acknowledge command
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -63,7 +63,7 @@ jobs:
 
       - name: Get PR data
         id: pr_data
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const response = await github.rest.pulls.get({
@@ -78,7 +78,7 @@ jobs:
 
       - name: Determine command
         id: command
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             try {
@@ -149,7 +149,7 @@ jobs:
 
       - name: Handle Rebase Failure
         if: steps.squash_rebase.outcome == 'failure'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
@@ -170,7 +170,7 @@ jobs:
 
       - name: Success
         if: steps.squash_rebase.outcome == 'success'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9
         with:
           script: |
             const command = '${{ steps.command.outputs.command }}';

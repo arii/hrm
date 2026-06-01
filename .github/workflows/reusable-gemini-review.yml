@@ -497,7 +497,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post Guidance Comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const body = '### ℹ️ Gemini Review Disabled\n\n' +
@@ -527,7 +527,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create skip check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -546,7 +546,7 @@ jobs:
             });
 
       - name: Post Skip Comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';

@@ -274,7 +274,7 @@ jobs:
 
       - name: Update PR Description
         if: steps.check-disabled.outputs.disabled == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ env.PR_NUMBER }}
         with:

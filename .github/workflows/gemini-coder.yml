@@ -674,7 +674,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post Guidance Comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const body = '### ℹ️ Gemini Coder Disabled\n\n' +
