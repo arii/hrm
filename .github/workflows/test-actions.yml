@@ -57,7 +57,7 @@ jobs:
             expected: 'test-branch'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run Sanitize Action
         id: sanitize

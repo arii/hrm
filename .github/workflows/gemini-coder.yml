@@ -93,7 +93,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ (github.event.issue.pull_request || github.event.pull_request) && format('refs/pull/{0}/head', github.event.issue.number || github.event.pull_request.number) || github.sha }}
 

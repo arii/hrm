@@ -71,7 +71,7 @@ jobs:
     outputs:
       should_review: ${{ steps.changes.outputs.src }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -159,7 +159,7 @@ jobs:
       is_meaningful: ${{ steps.diff_check.outputs.is_meaningful }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

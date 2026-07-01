@@ -83,7 +83,7 @@ jobs:
             sudo apt-get update && sudo apt-get install -y jq
           fi
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Sanitize SESSION_ID
         id: sanitize_id
@@ -100,7 +100,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -135,7 +135,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -166,7 +166,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -205,7 +205,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -248,7 +248,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -299,7 +299,7 @@ jobs:
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -445,7 +445,7 @@ jobs:
       PORT: 3006
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -516,7 +516,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -585,7 +585,7 @@ jobs:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -658,7 +658,7 @@ jobs:
       SKIP_BUILD: 'true'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -742,7 +742,7 @@ jobs:
       SKIP_BUILD: 'true'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -841,7 +841,7 @@ jobs:
       visual-tests-outcome: ${{ needs.visual-tests.result }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Generate Summary Report
         shell: bash
@@ -897,7 +897,7 @@ jobs:
           if ! command -v jq &> /dev/null; then
             sudo apt-get update && sudo apt-get install -y jq
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

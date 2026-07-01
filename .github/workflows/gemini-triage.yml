@@ -41,7 +41,7 @@ jobs:
       (vars.GEMINI_ENABLE_TRIAGE != 'false' && github.event_name == 'issues' && github.actor != 'ari-party-bot')
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ (github.event.issue.pull_request || github.event.pull_request) && format('refs/pull/{0}/head', inputs.issue_number || github.event.inputs.issue_number || github.event.issue.number || github.event.pull_request.number) || github.sha }}
       - uses: pnpm/action-setup@v4
