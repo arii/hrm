@@ -1,16 +1,16 @@
 {
   "github_repo": "arii/hrm",
-  "base_branch": "origin/leader",
+  "base_branch": "origin/main",
   "core_dirs": [
-    "app/",
-    "components/",
-    "hooks/",
-    "context/"
+    "src/components/",
+    "src/features/",
+    "src/pages/"
   ],
   "audit_check_dirs": [
-    "components",
-    "app",
-    "server.ts"
+    "src/components",
+    "src/pages",
+    "src/layouts",
+    "src/App.tsx"
   ],
   "vite_base_path": "/hrm/",
   "ai_token_input_limit": 800000,
