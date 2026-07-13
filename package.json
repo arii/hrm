@@ -91,7 +91,7 @@
     "pino-http": "^11.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-infinite-scroll-component": "^6.1.1",
+    "react-infinite-scroll-component": "^7.2.1",
     "recharts": "^3.7.0",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
