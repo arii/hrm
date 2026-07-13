@@ -1,0 +1,2 @@
+#!/bin/bash
+td-cli context-warm --force
