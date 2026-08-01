@@ -46,7 +46,7 @@ jobs:
           ref: ${{ (github.event.issue.pull_request || github.event.pull_request) && format('refs/pull/{0}/head', inputs.issue_number || github.event.inputs.issue_number || github.event.issue.number || github.event.pull_request.number) || github.sha }}
       - uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
 
