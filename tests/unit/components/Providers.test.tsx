@@ -5,12 +5,6 @@
 import { render, waitFor } from '@testing-library/react'
 import Providers from '@/components/Providers'
 
-jest.mock('@/context/AudioContext', () => ({
-  AudioProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-}))
-
 jest.mock('@/context/WebSocketContext', () => ({
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>

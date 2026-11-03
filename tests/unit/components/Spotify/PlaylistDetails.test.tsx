@@ -2,36 +2,34 @@
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PlaylistDetails from '../../../../components/Spotify/PlaylistDetails'
-import { SpotifyPlaylistItem as Track } from '../../../../types/core'
 
 // Mock the fetch API
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
 describe('PlaylistDetails', () => {
-  const mockTracksAsArray: Track[] = [
+  // Mirrors the real GET /api/spotify/playlists/[playlistId]/tracks payload:
+  // artists/album are flattened strings, art arrives as albumArt.
+  const mockTracks = [
     {
       id: '1',
       name: 'Track 1',
       uri: 'spotify:track:1',
-      artists: [{ name: 'Artist 1' }],
-      album: { name: 'Album 1' },
-      imageUrl: '',
+      artists: 'Artist 1',
+      album: 'Album 1',
+      albumArt: 'http://example.com/art1.jpg',
+      duration: 180000,
     },
     {
       id: '2',
       name: 'Track 2',
       uri: 'spotify:track:2',
-      artists: [{ name: 'Artist 2' }],
-      album: { name: 'Album 2' },
-      imageUrl: '',
+      artists: 'Artist 2',
+      album: null,
+      albumArt: null,
+      duration: 200000,
     },
   ]
-
-  const mockTracksAsString = mockTracksAsArray.map((track) => ({
-    ...track,
-    artists: track.artists.map((a) => a.name).join(', '),
-  })) as unknown as Track[]
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -45,7 +43,7 @@ describe('PlaylistDetails', () => {
             () =>
               resolve({
                 ok: true,
-                json: () => Promise.resolve({ tracks: mockTracksAsArray }),
+                json: () => Promise.resolve({ tracks: mockTracks }),
               }),
             100
           )
@@ -59,10 +57,10 @@ describe('PlaylistDetails', () => {
     await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull())
   })
 
-  it('displays the track list and handles play clicks when artists is an array', async () => {
+  it('displays the track list and handles play clicks', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ tracks: mockTracksAsArray }),
+      json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
     })
     const onTrackPlay = jest.fn()
 
@@ -81,40 +79,48 @@ describe('PlaylistDetails', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Track 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
+      screen.getByText('Artist 2 - Unknown Album', { exact: false })
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Track 1'))
     expect(onTrackPlay).toHaveBeenCalledWith(0)
   })
 
-  it('displays the track list and handles play clicks when artists is a string', async () => {
+  it('renders album art when available', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ tracks: mockTracksAsString, total: 2 }),
+      json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
     })
-    const onTrackPlay = jest.fn()
 
-    render(
-      <PlaylistDetails
-        playlistId="test-playlist-id"
-        onTrackPlay={onTrackPlay}
-      />
+    const { container } = render(
+      <PlaylistDetails playlistId="test-playlist-id" onTrackPlay={jest.fn()} />
     )
 
     await waitFor(() => {
       expect(screen.getByText('Track 1')).toBeInTheDocument()
     })
-    expect(
-      screen.getByText('Artist 1 - Album 1', { exact: false })
-    ).toBeInTheDocument()
-    expect(screen.getByText('Track 2')).toBeInTheDocument()
-    expect(
-      screen.getByText('Artist 2 - Album 2', { exact: false })
-    ).toBeInTheDocument()
+    // Decorative art (alt="") is hidden from the a11y tree by design.
+    const art = container.querySelector('img')
+    expect(art).toHaveAttribute('src', 'http://example.com/art1.jpg')
+  })
 
-    fireEvent.click(screen.getByText('Track 1'))
-    expect(onTrackPlay).toHaveBeenCalledWith(0)
+  it('passes an abort signal so navigation cancels in-flight fetches', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ tracks: mockTracks, total: 2 }),
+    })
+
+    render(
+      <PlaylistDetails playlistId="test-playlist-id" onTrackPlay={jest.fn()} />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Track 1')).toBeInTheDocument()
+    })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
   })
 
   it('displays an error message when the API call fails', async () => {

@@ -100,7 +100,9 @@ async function getPlaylistTracks(
         id: track.id,
         name: track.name,
         artists: track.artists.map((artist) => artist.name).join(', '),
-        albumArt: firstImageUrl(track.album.images),
+        // Local/unlinked tracks can arrive without album metadata.
+        album: track.album?.name ?? null,
+        albumArt: firstImageUrl(track.album?.images),
         duration: track.duration_ms,
         uri: track.uri,
       }

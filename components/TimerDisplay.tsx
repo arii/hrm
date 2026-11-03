@@ -6,22 +6,16 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import Slider from '@mui/material/Slider'
-import Stack from '@mui/material/Stack'
-import VolumeDown from '@mui/icons-material/VolumeDown'
-import VolumeUp from '@mui/icons-material/VolumeUp'
-import VolumeOff from '@mui/icons-material/VolumeOff'
-import IconButton from '@mui/material/IconButton'
 import SideLabel from './SideLabel'
-import { useAudioContext } from '@/context/AudioContext'
 import { formatDuration } from '@/lib/utils'
+import { useTheme } from '@mui/material/styles'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
-  const { volume, setVolume, muted, toggleMuteAndPersist } = useAudioContext()
+  const theme = useTheme()
   const {
     currentPhase,
     timeRemaining,
@@ -31,7 +25,8 @@ const TimerDisplay = () => {
     restDuration = 10,
   } = timerData
 
-  // Determine what to display based on mode and phase
+  // Phase colors resolve through the MUI theme so the timer shares the
+  // single palette with the rest of the dashboard (no private hex values).
   let displayTime: string
   let phaseColor: string
   let phaseLabel: string
@@ -39,7 +34,7 @@ const TimerDisplay = () => {
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = theme.palette.warning.dark
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
@@ -47,7 +42,7 @@ const TimerDisplay = () => {
       unit: 'seconds',
       format: 'MM:SS',
     })
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = theme.palette.info.main
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -62,35 +57,42 @@ const TimerDisplay = () => {
     })
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = theme.palette.error.main
       phaseLabel = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = theme.palette.success.main
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = theme.palette.info.main
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = formatDuration(0, { unit: 'seconds', format: 'MM:SS' })
-    phaseColor = '#6B7280' // Gray
+    phaseColor = theme.palette.text.secondary
     phaseLabel = 'READY'
   }
+
+  const wsDotColor =
+    connectionStatus === 'Connected'
+      ? theme.palette.success.main
+      : connectionStatus === 'Reconnecting...'
+        ? theme.palette.warning.dark
+        : theme.palette.error.main
 
   return (
     <Card
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000',
+        backgroundColor: theme.palette.common.black,
         color: phaseColor, // Dynamic color based on phase
         // Ensure the card fills the grid cell height
         height: '100%',
         minHeight: { xs: 200, sm: 250, md: 300 },
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a',
+        border: `2px solid ${theme.palette.grey[900]}`,
         position: 'relative',
         overflow: 'hidden',
         animation:
@@ -112,7 +114,7 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: theme.palette.common.white }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
@@ -122,12 +124,7 @@ const TimerDisplay = () => {
             width: 12,
             height: 12,
             borderRadius: '50%',
-            backgroundColor:
-              connectionStatus === 'Connected'
-                ? '#10B981'
-                : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+            backgroundColor: wsDotColor,
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
@@ -207,61 +204,29 @@ const TimerDisplay = () => {
           {displayTime}
         </Typography>
 
-        {/* Volume Control */}
-        <Stack
-          spacing={{ xs: 1, sm: 2 }}
-          direction="row"
-          sx={{
-            mt: 2,
-            mb: 1,
-            width: { xs: '90%', md: '80%' },
-            maxWidth: 300,
-          }}
-          alignItems="center"
-        >
-          <IconButton
-            onClick={toggleMuteAndPersist}
-            sx={{ color: 'white' }}
-            data-testid="timer-volume-mute-button"
-          >
-            {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
-          </IconButton>
-          <Slider
-            aria-label="Volume"
-            value={muted ? 0 : volume}
-            onChange={(_, newValue) => setVolume(newValue as number)}
-            data-testid="timer-volume-slider"
-            sx={{
-              color: 'white',
-              '& .MuiSlider-thumb': {
-                color: phaseColor,
-              },
-            }}
-          />
-          <VolumeUp sx={{ color: 'white' }} />
-        </Stack>
-      </CardContent>
-      {/* Right Column: Tabata Durations */}
-      <Box
-        sx={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: SIDE_COLUMN_WIDTH,
-        }}
-      >
+        {/* WORK/REST badge: horizontal pill replacing the rotated rail */}
         {mode === 'TABATA' && (
-          <SideLabel
-            text={`WORK:${workDuration}s REST:${restDuration}s`}
-            ariaLabel={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
-            rotation="right"
-          />
+          <Box
+            data-testid="timer-work-rest-badge"
+            aria-label={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
+            sx={{
+              mt: 2,
+              px: 2.5,
+              py: 0.75,
+              borderRadius: 999,
+              border: `1px solid ${theme.palette.grey[800]}`,
+              backgroundColor: theme.palette.grey[900],
+              color: theme.palette.common.white,
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {`WORK:${workDuration}s REST:${restDuration}s`}
+          </Box>
         )}
-      </Box>
+      </CardContent>
     </Card>
   )
 }

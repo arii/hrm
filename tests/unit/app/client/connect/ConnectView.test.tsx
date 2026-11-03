@@ -159,4 +159,66 @@ describe('ConnectView', () => {
     expect(hydrationErrors).toHaveLength(0)
     consoleSpy.mockRestore()
   })
+
+  describe('status banner mutual exclusion', () => {
+    const banners = () => screen.queryAllByTestId('connection-status-alert')
+
+    it('shows nothing when idle and disconnected', () => {
+      render(<ConnectView {...mockProps} />)
+      expect(banners()).toHaveLength(0)
+    })
+
+    it('shows progress info while connecting', () => {
+      render(<ConnectView {...mockProps} deviceStatus="Connecting..." />)
+      const [banner] = banners()
+      expect(banners()).toHaveLength(1)
+      // (The Connect button shows its own "Connecting..." label.)
+      expect(banner).toHaveTextContent('Connecting...')
+    })
+
+    it('shows success when streaming', () => {
+      render(
+        <ConnectView
+          {...mockProps}
+          isConnected={true}
+          bluetoothConnected={true}
+        />
+      )
+      expect(banners()).toHaveLength(1)
+      expect(
+        screen.getByText('Connected! Heart rate data is being streamed.')
+      ).toBeInTheDocument()
+    })
+
+    it('shows the paused warning after a mid-workout disconnect', () => {
+      render(
+        <ConnectView
+          {...mockProps}
+          hasStarted={true}
+          deviceStatus="Disconnected"
+        />
+      )
+      expect(banners()).toHaveLength(1)
+      expect(
+        screen.getByText('Device Disconnected - Workout Paused')
+      ).toBeInTheDocument()
+    })
+
+    it('prefers the named failure over the paused warning', () => {
+      render(
+        <ConnectView
+          {...mockProps}
+          hasStarted={true}
+          deviceStatus="Failed: Connection failed. Device might be too far."
+        />
+      )
+      expect(banners()).toHaveLength(1)
+      expect(
+        screen.getByText('Failed: Connection failed. Device might be too far.')
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByText('Device Disconnected - Workout Paused')
+      ).not.toBeInTheDocument()
+    })
+  })
 })

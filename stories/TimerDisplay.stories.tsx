@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import TimerDisplay from '@/components/TimerDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { AudioProvider } from '@/context/AudioContext'
 import {
   mockWebSocketContext,
   mockTimerData,
@@ -20,9 +19,7 @@ const meta: Meta<typeof TimerDisplay> = {
           timerData: args.timerData || mockWebSocketContext.timerData,
         }}
       >
-        <AudioProvider>
-          <Story />
-        </AudioProvider>
+        <Story />
       </WebSocketContext.Provider>
     ),
   ],

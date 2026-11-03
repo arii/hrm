@@ -139,6 +139,27 @@ describe('components/SpotifyControls', () => {
     )
   })
 
+  it('drops rapid repeats of the same playback command', () => {
+    render(<SpotifyControls />)
+    const nextButton = screen.getByLabelText('Next Track')
+    fireEvent.click(nextButton)
+    fireEvent.click(nextButton)
+    fireEvent.click(nextButton)
+    const nextCalls = mockSendData.mock.calls.filter(
+      ([message]) => message.command === 'NEXT'
+    )
+    expect(nextCalls).toHaveLength(1)
+  })
+
+  it('allows a different command during the cooldown window', () => {
+    render(<SpotifyControls />)
+    fireEvent.click(screen.getByLabelText('Next Track'))
+    fireEvent.click(screen.getByLabelText('Previous Track'))
+    const commands = mockSendData.mock.calls.map(([message]) => message.command)
+    expect(commands).toContain('NEXT')
+    expect(commands).toContain('PREVIOUS')
+  })
+
   it('should render the mute button with the correct aria-label', () => {
     render(<SpotifyControls />)
     const muteButton = screen.getByLabelText(/mute/i)

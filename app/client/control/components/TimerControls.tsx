@@ -8,47 +8,20 @@ import {
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
-import FitnessCenter from '@mui/icons-material/FitnessCenter'
-import PlayArrow from '@mui/icons-material/PlayArrow'
-import Stop from '@mui/icons-material/Stop'
-import Timer from '@mui/icons-material/Timer'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
   OPTIMISTIC_ACTION_TIMEOUT,
 } from '../constants'
-import DurationStepper from './DurationStepper'
+import TimerCommandPanel from './TimerCommandPanel'
+import TimerDurationConfig from './TimerDurationConfig'
+import TimerModeSelector, { TimerMode } from './TimerModeSelector'
 
-import { useTheme, alpha, Theme } from '@mui/material/styles'
-
-const actionButtonBaseSx = {
-  flex: 1,
-  width: '100%',
-  fontWeight: 'bold',
-  py: 1,
-  minHeight: '48px',
-  color: 'common.white',
-  borderRadius: 2,
-}
-
-const startButtonSx = (theme: Theme) => ({
-  ...actionButtonBaseSx,
-  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-  boxShadow: `0 8px 24px ${alpha(theme.palette.success.main, 0.4)}`,
-})
-
-const stopButtonSx = (theme: Theme) => ({
-  ...actionButtonBaseSx,
-  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
-  boxShadow: `0 8px 24px ${alpha(theme.palette.error.main, 0.4)}`,
-})
+import { useTheme, alpha } from '@mui/material/styles'
 
 const TimerControls = () => {
   const theme = useTheme()
@@ -134,7 +107,7 @@ const TimerControls = () => {
     [sendData, executeSpotify, connectionStatus, workTime, restTime]
   )
 
-  const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
+  const sendModeCommand = (mode: TimerMode) => {
     if (connectionStatus !== 'Connected') return
     const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
     sendData(message)
@@ -149,7 +122,6 @@ const TimerControls = () => {
         : timerData.isRunning
 
   const controlsDisabled = isRunning || connectionStatus !== 'Connected'
-  const modes = ['TABATA', 'STOPWATCH']
 
   return (
     <Card
@@ -167,67 +139,11 @@ const TimerControls = () => {
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box sx={{ mb: 1.5 }}>
-          <Typography
-            variant="subtitle1"
-            data-testid="timer-mode-heading"
-            sx={{
-              color: 'common.white',
-              fontWeight: 'medium',
-              mb: 1,
-              textAlign: 'center',
-            }}
-          >
-            Timer Mode
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              position: 'relative',
-              backgroundColor: alpha(theme.palette.common.white, 0.1),
-              borderRadius: '24px',
-              p: '4px',
-            }}
-          >
-            {modes.map((mode) => (
-              <Button
-                key={mode}
-                data-testid={
-                  mode === 'TABATA'
-                    ? 'tabata-mode-button'
-                    : 'stopwatch-mode-button'
-                }
-                onClick={() => sendModeCommand(mode as 'TABATA' | 'STOPWATCH')}
-                disabled={controlsDisabled}
-                startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
-                sx={{
-                  color: 'common.white',
-                  zIndex: 1,
-                  transition: 'color 0.3s',
-                  borderRadius: '20px',
-                  py: 1,
-                }}
-              >
-                {mode.charAt(0) + mode.slice(1).toLowerCase()}
-              </Button>
-            ))}
-            <motion.div
-              layoutId="pill-switch"
-              transition={{ type: 'spring', duration: 0.4 }}
-              style={{
-                position: 'absolute',
-                top: '4px',
-                left: timerData.mode === 'TABATA' ? '4px' : 'calc(50% - 4px)',
-                width: 'calc(50% - 4px)',
-                height: 'calc(100% - 8px)',
-                background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
-                borderRadius: '20px',
-                zIndex: 0,
-              }}
-            />
-          </Box>
-        </Box>
+        <TimerModeSelector
+          mode={timerData.mode}
+          disabled={controlsDisabled}
+          onSelectMode={sendModeCommand}
+        />
 
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography
@@ -243,116 +159,21 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={3} sx={{ mb: 2 }}>
-            <Box>
-              <Typography
-                sx={{
-                  color: 'common.white',
-                  fontWeight: 'medium',
-                  mb: 1,
-                  fontSize: '0.95rem',
-                  textAlign: 'center',
-                }}
-              >
-                Timer Presets
-              </Typography>
-              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setWorkTime(20)
-                    setRestTime(10)
-                  }}
-                  disabled={controlsDisabled}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: 'secondary.dark',
-                    '&:hover': { backgroundColor: 'secondary.main' },
-                  }}
-                  data-testid="timer-preset-tabata-button"
-                >
-                  Tabata (20/10)
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setWorkTime(60)
-                    setRestTime(60)
-                  }}
-                  disabled={controlsDisabled}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: 'secondary.dark',
-                    '&:hover': { backgroundColor: 'secondary.main' },
-                  }}
-                  data-testid="timer-preset-emom-button"
-                >
-                  EMOM (60/60)
-                </Button>
-              </Stack>
-            </Box>
-            <Card
-              variant="outlined"
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                background: alpha(theme.palette.common.white, 0.05),
-                borderColor: alpha(theme.palette.common.white, 0.1),
-              }}
-            >
-              <Stack spacing={2}>
-                <DurationStepper
-                  label="Work Duration (s)"
-                  value={workTime}
-                  onChange={setWorkTime}
-                  disabled={controlsDisabled}
-                  color={theme.palette.error.main}
-                  data-testid="work-duration-input"
-                />
-                <DurationStepper
-                  label="Rest Duration (s)"
-                  value={restTime}
-                  onChange={setRestTime}
-                  disabled={controlsDisabled}
-                  color={theme.palette.success.main}
-                  data-testid="rest-duration-input"
-                />
-              </Stack>
-            </Card>
-          </Stack>
+          <TimerDurationConfig
+            workTime={workTime}
+            restTime={restTime}
+            onWorkChange={setWorkTime}
+            onRestChange={setRestTime}
+            disabled={controlsDisabled}
+          />
         )}
 
-        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <motion.div
-            style={{ flex: 1 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            {!isRunning ? (
-              <Button
-                data-testid="start-timer-button"
-                variant="contained"
-                onClick={() => sendTimerCommand('START')}
-                disabled={connectionStatus !== 'Connected'}
-                sx={startButtonSx(theme)}
-                startIcon={<PlayArrow fontSize="large" />}
-              >
-                START
-              </Button>
-            ) : (
-              <Button
-                data-testid="stop-timer-button"
-                variant="contained"
-                onClick={() => sendTimerCommand('STOP')}
-                disabled={connectionStatus !== 'Connected'}
-                sx={stopButtonSx(theme)}
-                startIcon={<Stop fontSize="large" />}
-              >
-                STOP
-              </Button>
-            )}
-          </motion.div>
-        </Stack>
+        <TimerCommandPanel
+          isRunning={isRunning}
+          disabled={connectionStatus !== 'Connected'}
+          onStart={() => sendTimerCommand('START')}
+          onStop={() => sendTimerCommand('STOP')}
+        />
       </CardContent>
     </Card>
   )

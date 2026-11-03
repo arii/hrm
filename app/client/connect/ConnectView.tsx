@@ -11,7 +11,6 @@ import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -113,7 +112,6 @@ export default function ConnectView({
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
         <CircularProgress data-testid="connect-loading" />
-        <BottomNavBar />
       </Container>
     )
   }
@@ -132,12 +130,43 @@ export default function ConnectView({
           Edge, or Bluefy (on iOS).
         </Alert>
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
-        <BottomNavBar />
       </Container>
     )
   }
 
   const showUserDetails = hasStarted || isConnected
+
+  // Exactly one status banner at a time, highest priority first: a named
+  // failure beats the workout-paused notice (pause state is also visible in
+  // the workout controls), which beats the connected confirmation, which
+  // beats transient progress info.
+  const banner = (() => {
+    const failed =
+      deviceStatus && !isConnected && deviceStatus.includes('Failed')
+    if (failed) {
+      return { severity: 'error' as const, text: deviceStatus }
+    }
+    if (hasStarted && !isConnected) {
+      return {
+        severity: 'warning' as const,
+        text: 'Device Disconnected - Workout Paused',
+      }
+    }
+    if (isConnected && bluetoothConnected) {
+      return {
+        severity: 'success' as const,
+        text: 'Connected! Heart rate data is being streamed.',
+      }
+    }
+    if (
+      deviceStatus &&
+      !isConnected &&
+      !deviceStatus.includes('Disconnected')
+    ) {
+      return { severity: 'info' as const, text: deviceStatus }
+    }
+    return null
+  })()
 
   return (
     <>
@@ -171,17 +200,15 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        {banner && (
+          <Alert
+            data-testid="connection-status-alert"
+            severity={banner.severity}
+            sx={{ mb: 2 }}
+          >
+            {banner.text}
+          </Alert>
+        )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -250,18 +277,6 @@ export default function ConnectView({
           )}
         </Box>
 
-        {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
-        )}
-
-        {hasStarted && !isConnected && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Device Disconnected - Workout Paused
-          </Alert>
-        )}
-
         {isConnected && (
           <Box sx={{ mt: 2 }} data-testid="hr-tile">
             <HrTile
@@ -299,7 +314,6 @@ export default function ConnectView({
 
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
       </Container>
-      <BottomNavBar />
     </>
   )
 }

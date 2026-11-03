@@ -58,7 +58,7 @@ describe('HrmConnectionPanel', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders a loading placeholder when connection is pending', () => {
+  it('renders a loading indicator when connection is pending', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connecting...',
@@ -69,7 +69,8 @@ describe('HrmConnectionPanel', () => {
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect the placeholder grid item to be present
-    expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
+    expect(screen.getByTestId('hrm-connection-loading')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+    expect(screen.queryByText('No Heart Rate Data')).not.toBeInTheDocument()
   })
 })

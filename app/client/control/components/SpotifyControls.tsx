@@ -17,6 +17,10 @@ import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { resolveTargetDeviceId as resolveDeviceId } from '@/lib/spotify/deviceResolution'
+import {
+  setOptimisticPlaying,
+  useSyncedPlaying,
+} from '@/lib/spotify/optimisticPlayback'
 import { SpotifyCommand } from '@/types/websocket'
 import {
   HRM_WEB_PLAYER_NAME,
@@ -28,6 +32,9 @@ import VolumeSlider from '@/components/shared/VolumeSlider'
 import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 const VOLUME_SLIDER_SX = { mt: 3, mb: 1 }
+
+// Repeats of the same playback command within this window are dropped.
+const PLAYBACK_COMMAND_COOLDOWN_MS = 800
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -45,10 +52,15 @@ const SpotifyControls = () => {
   const prevActiveIdRef = useRef<string | undefined>(undefined)
   const lastVolumeSyncTimeRef = useRef<number>(0)
   const hasPendingSendRef = useRef<boolean>(false)
-  const [optimisticIsPlaying, setOptimisticIsPlaying] = useState<
-    boolean | null
-  >(null)
-  const playbackGraceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Shared with the dashboard so both surfaces flip instantly and in sync.
+  const displayPlaying = useSyncedPlaying(spotifyData.playback.is_playing)
+  // Guards against accidental double-taps skipping two tracks: repeats of
+  // the SAME command within the window are dropped, but a change of mind
+  // (PLAY followed by PAUSE) always goes through.
+  const lastPlaybackCommandRef = useRef<{
+    command: SpotifyCommand
+    at: number
+  } | null>(null)
 
   const hrmDevice = useMemo(
     () =>
@@ -200,37 +212,28 @@ const SpotifyControls = () => {
         command === 'NEXT' ||
         command === 'PREVIOUS'
       ) {
-        // Optimistic UI update for Play/Pause
+        const now = Date.now()
+        const last = lastPlaybackCommandRef.current
+        if (
+          last?.command === command &&
+          now - last.at < PLAYBACK_COMMAND_COOLDOWN_MS
+        ) {
+          return
+        }
+        lastPlaybackCommandRef.current = { command, at: now }
+
+        // Optimistic UI update for Play/Pause (shared with all surfaces)
         if (command === 'PLAY') {
-          setOptimisticIsPlaying(true)
+          setOptimisticPlaying(true)
         } else if (command === 'PAUSE') {
-          setOptimisticIsPlaying(false)
+          setOptimisticPlaying(false)
         }
-
-        // Clear existing timer if any
-        if (playbackGraceTimerRef.current) {
-          clearTimeout(playbackGraceTimerRef.current)
-        }
-
-        playbackGraceTimerRef.current = setTimeout(() => {
-          setOptimisticIsPlaying(null)
-          playbackGraceTimerRef.current = null
-        }, 2500)
 
         sendSpotifyCommand(command)
       }
     },
     [sendSpotifyCommand]
   )
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      if (playbackGraceTimerRef.current) {
-        clearTimeout(playbackGraceTimerRef.current)
-      }
-    }
-  }, [])
 
   const handleVolumeChange = useCallback(
     (val: number) => {
@@ -343,11 +346,7 @@ const SpotifyControls = () => {
             </Box>
 
             <PlaybackControls
-              isPlaying={
-                optimisticIsPlaying !== null
-                  ? optimisticIsPlaying
-                  : spotifyData.playback.is_playing
-              }
+              isPlaying={displayPlaying}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />
