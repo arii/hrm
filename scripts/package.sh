@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "📦 Packaging HRM (Hybrid Standalone + Custom Server)..."
 

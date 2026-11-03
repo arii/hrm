@@ -538,7 +538,7 @@ MIT
 
 1.  **Run Deployment Script**: Ensure `.env.production` exists. Then, on the production host, run the automated deployment script:
     ```bash
-    ./deploy.sh
+    ./scripts/deploy.sh
     ```
     This script automatically syncs the `leader` branch, installs dependencies, builds the project, and reloads the application using PM2.
 2.  **Initial Server Setup**: For the first deployment, you will need to:
@@ -649,7 +649,7 @@ Deployment is automated via a script that syncs the `leader` branch and reloads 
 1.  **Commit Changes**: Ensure all your changes are committed and pushed.
 2.  **Run Deploy Script**: On the production host, run the deployment script:
     `bash
-./deploy.sh
+./scripts/deploy.sh
 `
     This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
 

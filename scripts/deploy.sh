@@ -1,7 +1,7 @@
 #!/bin/bash
 # deploy.sh - Production deployment for HRM (Leader Branch)
 
-set -e # Exit immediately on error
+set -euo pipefail # Exit on error/unset var/pipe failure
 
 # Configuration
 BRANCH="leader"
@@ -30,7 +30,7 @@ fi
 # 3. Git Sync (Leader Branch)
 echo "🔄 Syncing with origin/$BRANCH..."
 git fetch origin
-git reset --hard origin/$BRANCH
+git reset --hard "origin/$BRANCH"
 
 # 4. Install Dependencies & Build
 echo "📦 Installing dependencies and building application..."

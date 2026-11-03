@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/verify-deployment.sh
-set -e
+set -euo pipefail
 
 APP_NAME="hrm-server"
 PORT="${PORT:-3000}" # Default to 3000 if not set

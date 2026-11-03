@@ -2,6 +2,7 @@
 # Production server startup script
 # Used by PM2, Docker, or manual deployment
 # Ensures the process runs from the project root regardless of where script is called from
+set -euo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -20,7 +21,7 @@ echo "🚀 Starting production server from $(pwd)..."
 export NODE_ENV=production
 
 # Load secrets strictly for the process scope (skip in test mode to respect Playwright vars)
-if [ -f .env.production ] && [ "$TESTING" != "true" ]; then
+if [ -f .env.production ] && [ "${TESTING:-}" != "true" ]; then
   echo "📄 Loading .env.production..."
   set -a
   source .env.production
@@ -52,5 +53,5 @@ fi
 echo "✅ All critical files verified"
 
 # Explicitly run the compiled server entry point from project root
-# The dist/server.js file expects to find .next in the same directory
+# The dist/server.js file expects to find .next_prod in the same directory
 exec node "$PROJECT_ROOT/dist/server.js"

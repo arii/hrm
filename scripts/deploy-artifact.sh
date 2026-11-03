@@ -1,8 +1,10 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Define Deployment Root
-DEPLOY_DIR="$HOME/hrm"
+# Define Deployment Root. Honors PROD_PATH when the caller provides it
+# (deploy.yml extracts the tarball there first); falls back to the
+# historical $HOME/hrm default otherwise.
+DEPLOY_DIR="${PROD_PATH:-"$HOME/hrm"}"
 mkdir -p "$DEPLOY_DIR"
 cd "$DEPLOY_DIR" || { echo "❌ Directory $DEPLOY_DIR not found"; exit 1; }
 
@@ -54,13 +56,15 @@ chmod +x ./scripts/deploy-artifact.sh
 chmod +x ./scripts/verify-deployment.sh
 
 echo "📦 Hydrating production dependencies..."
-# Use the dynamic command (pnpm or npx pnpm)
-# Suppress WARN messages about missing bin symlinks (non-fatal in production)
+# Use the dynamic command (pnpm or npx pnpm). Intentionally unquoted:
+# word-splitting is required for the two-word "npx pnpm" fallback.
+# Suppress WARN messages about missing bin symlinks (non-fatal in production).
 $PNPM_CMD install --prod --ignore-scripts 2>&1 | grep -v "WARN.*Failed to create bin" || true
 
 echo "🛑 Stopping current PM2 processes..."
 # Stop and delete all running processes to ensure a clean start.
 # Use '|| true' to prevent errors if no processes exist.
+# ($PNPM_CMD stays unquoted: word-splitting for the "npx pnpm" fallback.)
 $PNPM_CMD exec pm2 stop all || true
 $PNPM_CMD exec pm2 delete all || true
 
