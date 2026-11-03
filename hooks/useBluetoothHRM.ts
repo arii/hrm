@@ -539,10 +539,32 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             })
             break
           } catch (error) {
+            // Adopt slow links: our 20s timer can fire while the radio is
+            // still coming up (sleeping strap, BlueZ scan+connect). If the
+            // link is up, adopt it instead of failing — gatt.connect()
+            // resolves immediately with the live server when connected.
+            // Without this we severed a good link and wiped the saved
+            // device for a strap that was just slow.
+            const errorText = String(error)
+            if (
+              errorText.includes('timeout') &&
+              device.gatt?.connected &&
+              !abortControllerRef.current?.signal.aborted
+            ) {
+              logger.info(
+                { device: device.name },
+                'GATT link came up after our timeout; adopting it.'
+              )
+              server = await cancellablePromise(device.gatt.connect(), {
+                timeoutMs: 5000,
+                errorMessage: 'GATT connection timeout',
+                signal: abortControllerRef.current.signal,
+              })
+              break
+            }
             // Fast-retry only a busy radio. "No longer in range" fails fast:
             // hammering gatt.connect() cannot summon an absent device and the
             // extra radio ops risk wedging the adapter (self-inflicted busy).
-            const errorText = String(error)
             const isBusy =
               !errorText.includes('no longer in range') &&
               (errorText.includes('busy') || errorText.includes('NetworkError'))
@@ -692,31 +714,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         if (errorMsg.includes('timeout')) {
-          logger.error(
+          // Timeout is NOT revoked permissions: the strap was likely asleep
+          // or the adapter slow. Keep the saved device and cookie so a
+          // one-touch retry works; only explicit denial (NotFoundError /
+          // SecurityError) touches permissions. Previously this branch
+          // wiped the cookie and blamed revoked permissions, forcing a
+          // full re-pair for a strap that was just slow.
+          logger.warn(
             { device: device.name },
-            'Connection timeout detected. Resetting device and permissions.'
+            'GATT connection timed out; keeping saved device for retry.'
           )
           setStatus(BluetoothConnectionStatus.ERROR)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeoutReset)
+          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeout)
           reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
           connectedDeviceRef.current = null
-
-          if (reconnectTimeoutRef.current)
-            clearTimeout(reconnectTimeoutRef.current)
-          reconnectTimeoutRef.current = setTimeout(() => {
-            isManualDisconnect.current = true
-            isTimeoutDisconnect.current = false
-            if (abortControllerRef.current) {
-              abortControllerRef.current.abort()
-            }
-            Cookies.remove('hrm_device_id')
-            setStatus(BluetoothConnectionStatus.DISCONNECTED)
-            setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-            setSavedDevice(null)
-            setBatteryLevel(null)
-            connectedDeviceRef.current = null
-            reconnectAttempts.current = 0
-          }, 2000)
         } else if (isGattDisconnected) {
           logger.warn(
             { device: device.name },
