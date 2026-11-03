@@ -1,6 +1,7 @@
 // utils/fit-export.ts
 import { Encoder } from '@garmin/fitsdk'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import { HeartRateZone } from '@/lib/shared/hr-zones'
 
 // Garmin Epoch: December 31, 1989 00:00:00 UTC
 const GARMIN_EPOCH_MS = 631065600000
@@ -26,6 +27,20 @@ const FIT_CONSTANTS = {
 function toGarminTime(timestamp: number): number {
   return Math.floor((timestamp - GARMIN_EPOCH_MS) / 1000)
 }
+
+// App buckets ZONE_0..ZONE_6 map positionally onto FIT's 7-slot
+// timeInHrZone array (index 0 = lowest-intensity bucket on both sides).
+// Buckets already reflect the user's max-HR personalization: they are
+// accumulated from calculateZoneFromMaxHr(hr, userMaxHr) (#9078 req 4).
+const ZONE_KEYS: readonly HeartRateZone[] = [
+  'ZONE_0',
+  'ZONE_1',
+  'ZONE_2',
+  'ZONE_3',
+  'ZONE_4',
+  'ZONE_5',
+  'ZONE_6',
+]
 
 export function generateFitFile(
   session: WorkoutSessionData,
@@ -62,6 +77,9 @@ export function generateFitFile(
     totalCalories: Math.round(session.totalCaloriesBurned),
     avgHeartRate: Math.round(session.averageHr),
     maxHeartRate: Math.round(session.maxHr),
+    timeInHrZone: ZONE_KEYS.map((zone) =>
+      Math.round(session.timeInZones[zone] ?? 0)
+    ),
     event: FIT_CONSTANTS.EVENT_SESSION,
     eventType: FIT_CONSTANTS.EVENT_TYPE_STOP,
     sport: FIT_CONSTANTS.SPORT_GENERIC,
