@@ -4,8 +4,6 @@ import logger from '../utils/logger.server.js'
 import { isEmptyResponseError } from './spotifyUtils.js'
 import { Track, Episode, SpotifyApi } from '@spotify/web-api-ts-sdk'
 
-const NOT_PLAYING_MESSAGE = 'Nothing is currently playing.'
-
 export interface ParsedPlaybackState {
   trackId: string
   trackName: string
@@ -45,21 +43,15 @@ export class SpotifyPlayerManager {
     const currentState = this.getState()
 
     if (!playbackState) {
-      if (
-        currentState.playback.is_playing ||
-        currentState.playback.track.name !== NOT_PLAYING_MESSAGE
-      ) {
+      // Empty poll (no content, or paused with no item metadata): keep the
+      // last-known track so stopping/pausing never wipes the now-playing
+      // label — only the playing state flips. Broadcasts solely on the
+      // playing→paused transition; repeats stay silent.
+      if (currentState.playback.is_playing) {
         this.setState((prev: SpotifyData) => ({
           ...prev,
           playback: {
             ...prev.playback,
-            track: {
-              id: null,
-              name: NOT_PLAYING_MESSAGE,
-              artist: '',
-              albumName: '',
-              albumArtUrl: '',
-            },
             is_playing: false,
           },
         }))
@@ -114,8 +106,33 @@ export class SpotifyPlayerManager {
   private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
     const playbackState = await this.sdk.player.getPlaybackState()
 
-    if (!playbackState || !playbackState.item) {
+    if (!playbackState) {
       return null
+    }
+
+    // Spotify can report is_playing with a null item (podcast episodes in
+    // odd states, ads, unknown content). Trust is_playing and label the
+    // content unknown — returning null here told the UI "nothing is
+    // playing" while audio played, and it never self-healed. A null item
+    // while NOT playing returns null, and the caller keeps the last-known
+    // track while marking paused.
+    if (!playbackState.item) {
+      if (!playbackState.is_playing) return null
+      const volume_percent = playbackState.device?.volume_percent ?? 0
+      return {
+        trackId: '',
+        trackName:
+          playbackState.currently_playing_type === 'episode'
+            ? 'Podcast episode'
+            : 'Unknown track',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+        isPlaying: playbackState.is_playing,
+        is_playing: playbackState.is_playing,
+        volume_percent,
+        progress_ms: playbackState.progress_ms ?? 0,
+      }
     }
 
     const item = playbackState.item

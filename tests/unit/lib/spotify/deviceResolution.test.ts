@@ -42,6 +42,15 @@ describe('spotify deviceResolution', () => {
       expect(resolveTargetDeviceId('sel', devices, 'hrm')).toBe('sel')
     })
 
+    it('passes explicit ids through even when absent from the snapshot', () => {
+      // The device list is a 10s-stale snapshot: an unknown id may be a
+      // live SDK session the poll hasn't seen. Substituting another
+      // device would be worse than an honest API failure.
+      expect(resolveTargetDeviceId('fresh-session', devices, 'hrm')).toBe(
+        'fresh-session'
+      )
+    })
+
     it('falls back to the active device', () => {
       expect(resolveTargetDeviceId(undefined, devices, 'hrm')).toBe('b')
       expect(resolveTargetDeviceId('', devices, 'hrm')).toBe('b')

@@ -103,8 +103,62 @@ describe('SpotifyPlayerManager', () => {
       })
     })
 
-    it('should update state and broadcast when playback stops', async () => {
-      // Arrange: Current state shows playing, SDK returns null
+    it('trusts is_playing when the item is null (playing unknown content)', async () => {
+      // Arrange: Spotify reports playing with no item (observed live:
+      // episode with item:null). Must NOT collapse to "nothing playing".
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 49 },
+        is_playing: true,
+        progress_ms: 223094,
+        currently_playing_type: 'episode',
+        item: null,
+      })
+
+      // Act
+      await playerManager.refreshPlaybackState()
+
+      // Assert
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'SPOTIFY_UPDATE',
+        payload: expect.objectContaining({
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              name: 'Podcast episode',
+            }),
+            is_playing: true,
+          }),
+        }),
+      })
+    })
+
+    it('labels unknown non-episode content honestly', async () => {
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 49 },
+        is_playing: true,
+        progress_ms: 1000,
+        currently_playing_type: 'unknown',
+        item: null,
+      })
+
+      await playerManager.refreshPlaybackState()
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'SPOTIFY_UPDATE',
+        payload: expect.objectContaining({
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              name: 'Unknown track',
+            }),
+            is_playing: true,
+          }),
+        }),
+      })
+    })
+
+    it('should keep last track and broadcast paused when playback stops', async () => {
+      // Arrange: Current state shows playing, SDK returns null.
+      // Stopping must flip only the playing state, never wipe the
+      // now-playing label (refreshing must still show the last song).
       currentState = {
         ...currentState,
         playback: {
@@ -129,13 +183,37 @@ describe('SpotifyPlayerManager', () => {
         payload: expect.objectContaining({
           playback: expect.objectContaining({
             track: expect.objectContaining({
-              id: null,
-              name: NOT_PLAYING_MESSAGE,
+              id: 'track1',
+              name: 'Some Song',
             }),
             is_playing: false,
           }),
         }),
       })
+    })
+
+    it('should stay silent on repeated empty polls with a kept track', async () => {
+      // Arrange: already paused with a kept track, SDK still null.
+      currentState = {
+        ...currentState,
+        playback: {
+          ...currentState.playback,
+          track: {
+            ...currentState.playback.track,
+            id: 'track1',
+            name: 'Some Song',
+          },
+          is_playing: false,
+        },
+      }
+      mockPlayer.getPlaybackState.mockResolvedValue(null)
+
+      // Act
+      await playerManager.refreshPlaybackState()
+
+      // Assert
+      expect(setStateMock).not.toHaveBeenCalled()
+      expect(broadcastMock).not.toHaveBeenCalled()
     })
 
     it('should NOT update or broadcast if state is unchanged (playing same song)', async () => {
@@ -236,8 +314,9 @@ describe('SpotifyPlayerManager', () => {
       })
     })
 
-    it('should handle null/missing item safely', async () => {
-      // Arrange: SDK returns response with null item
+    it('should keep previous track when item is null and paused', async () => {
+      // Arrange: SDK returns response with null item (paused episode with
+      // no item metadata, observed live). The kept label must survive.
       mockPlayer.getPlaybackState.mockResolvedValue({
         device: { volume_percent: 70 },
         item: null,
@@ -266,8 +345,7 @@ describe('SpotifyPlayerManager', () => {
         payload: expect.objectContaining({
           playback: expect.objectContaining({
             track: expect.objectContaining({
-              id: null,
-              name: NOT_PLAYING_MESSAGE,
+              name: 'Previous Song',
             }),
             is_playing: false,
           }),
