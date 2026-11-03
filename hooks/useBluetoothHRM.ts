@@ -19,6 +19,7 @@ import {
   getBackoffDelay,
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
+  QUIET_STRAP_RETRY_DELAYS_MS,
 } from '@/constants/bluetooth-reconnection'
 import {
   STABILITY_THRESHOLD_MS,
@@ -151,6 +152,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const reconnectAttempts = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
+  // Set once by the unmount cleanup below; quiet-retry sleeps check it so
+  // a resolved timer never fires radio ops into an unmounted hook.
+  const isUnmountedRef = useRef(false)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
@@ -469,6 +473,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
 
     return () => {
+      isUnmountedRef.current = true
       if (connectedDeviceRef.current && activeDisconnectListenerRef.current) {
         connectedDeviceRef.current.removeEventListener(
           'gattserverdisconnected',
@@ -500,7 +505,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [])
 
   const connectToGatt = useCallback(
-    async (device: BluetoothDevice, isReconnect = false) => {
+    async (
+      device: BluetoothDevice,
+      isReconnect = false,
+      retryQuietStrap = false
+    ) => {
       if (isConnecting.current) {
         logger.warn(
           { device: device.name },
@@ -508,6 +517,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         return false
       }
+
+      // Capture, don't claim: quiet-retries below yield to newer ops.
+      const connectAttemptToken = connectionAttemptRef.current
 
       // Reaching here means no attempt is in flight (guard above) and the
       // previous controller was cleared in finally: start clean. Mid-flight
@@ -526,9 +538,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         let server: BluetoothRemoteGATTServer | undefined
+        let quietRetries = 0
+        let lastError: unknown = null
+        // Busy fast-retries (≤3) plus quiet-strap retries (≤3) share this
+        // loop; each path is bounded by its own counter below.
         for (
           let attempt = 1;
-          attempt <= FAST_RECONNECT_MAX_ATTEMPTS;
+          attempt <=
+          FAST_RECONNECT_MAX_ATTEMPTS + QUIET_STRAP_RETRY_DELAYS_MS.length;
           attempt++
         ) {
           try {
@@ -539,30 +556,29 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             })
             break
           } catch (error) {
-            // Adopt slow links: our 20s timer can fire while the radio is
-            // still coming up (sleeping strap, BlueZ scan+connect). If the
-            // link is up, adopt it instead of failing — gatt.connect()
-            // resolves immediately with the live server when connected.
-            // Without this we severed a good link and wiped the saved
-            // device for a strap that was just slow.
+            // Adopt live links: the radio can report failure while the OS
+            // link is already up — our 20s timer firing on a slow strap, or
+            // BlueZ raising an instant miss mid-negotiation. If the link is
+            // up, adopt the live server object directly instead of
+            // failing — device.gatt IS the connected server, so this costs
+            // zero new radio ops and cannot collide with the still-pending
+            // original connect() (a second connect() call could throw
+            // "already in progress"). Without this we severed a good link
+            // for a strap that was just slow to answer.
             const errorText = String(error)
             if (
-              errorText.includes('timeout') &&
               device.gatt?.connected &&
               !abortControllerRef.current?.signal.aborted
             ) {
               logger.info(
                 { device: device.name },
-                'GATT link came up after our timeout; adopting it.'
+                'GATT link is up despite connect error; adopting it.'
               )
-              server = await cancellablePromise(device.gatt.connect(), {
-                timeoutMs: 5000,
-                errorMessage: 'GATT connection timeout',
-                signal: abortControllerRef.current.signal,
-              })
+              server = device.gatt
               break
             }
-            // Fast-retry only a busy radio. "No longer in range" fails fast:
+            // Fast-retry only a busy radio. "No longer in range" skips this
+            // path: instant misses get the quiet-strap schedule below, since
             // hammering gatt.connect() cannot summon an absent device and the
             // extra radio ops risk wedging the adapter (self-inflicted busy).
             const isBusy =
@@ -578,8 +594,51 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               )
               continue
             }
+            // Quiet-strap retry: the first radio op often fails fast ("no
+            // longer in range") while the adapter/strap wakes; retry a few
+            // times over ~35s. Only instant misses qualify: a 20s timeout
+            // already consumed a full radio engagement (and slow-link wins
+            // are adopted above), so re-hammering a timing-out radio would
+            // risk the adapter wedging #9303 warned about. Cancelled by a
+            // manual disconnect, unmount, or any newer operation (ownership
+            // token); on cancel return false like the in-flight guard
+            // ("someone else owns the radio") instead of throwing.
+            const quietDelay = QUIET_STRAP_RETRY_DELAYS_MS[quietRetries]
+            if (
+              retryQuietStrap &&
+              quietDelay !== undefined &&
+              /no longer in range|device not found/i.test(errorText) &&
+              !isManualDisconnect.current &&
+              !isUnmountedRef.current &&
+              connectionAttemptRef.current === connectAttemptToken
+            ) {
+              quietRetries++
+              logger.info(
+                { device: device.name, attempt: quietRetries },
+                'Strap quiet, retrying shortly...'
+              )
+              await new Promise((res) => setTimeout(res, quietDelay))
+              if (
+                !isManualDisconnect.current &&
+                !isUnmountedRef.current &&
+                connectionAttemptRef.current === connectAttemptToken
+              ) {
+                continue
+              }
+              return false
+            }
+            lastError = error
             throw error
           }
+        }
+
+        // Unreachable in practice (every path above breaks, throws, or
+        // returns), but a silent fall-through with no server would crash
+        // service discovery confusingly — fail loudly instead.
+        if (!server) {
+          throw lastError instanceof Error
+            ? lastError
+            : new Error('GATT connection failed')
         }
 
         if (abortControllerRef.current?.signal.aborted) {
@@ -834,7 +893,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 { device: foundDevice.name },
                 'Found saved device, connecting'
               )
-              await connectToGatt(foundDevice)
+              if (!(await connectToGatt(foundDevice, false, true))) return false
               return true
             } else {
               logger.info(
@@ -864,7 +923,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (device) {
           logger.info({ device: device.name }, 'Connecting to device')
-          await connectToGatt(device)
+          if (!(await connectToGatt(device, false, true))) return false
           return true
         } else if (!silent) {
           logger.info('No device to connect')
