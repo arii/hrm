@@ -58,8 +58,22 @@ app.prepare().then(async () => {
             'https://sdk.scdn.co',
           ],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'blob:', 'https://*.scdn.co'],
-          mediaSrc: ["'self'", 'blob:', 'data:', 'https://*.scdn.co'],
+          // Spotify serves images from both CDN families (i.scdn.co,
+          // image-cdn-*.spotifycdn.com); audio streams likewise.
+          imgSrc: [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://*.scdn.co',
+            'https://*.spotifycdn.com',
+          ],
+          mediaSrc: [
+            "'self'",
+            'blob:',
+            'data:',
+            'https://*.scdn.co',
+            'https://*.spotifycdn.com',
+          ],
           connectSrc: [
             "'self'",
             'ws:',
