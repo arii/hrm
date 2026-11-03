@@ -10,7 +10,8 @@
  */
 const buildWebSocketUrl = (baseUrl: string): string => {
   const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
-  const host = baseUrl.replace(/^https?:\/\//, '')
+  // Preserve any subpath in baseUrl (e.g. https://host/hrm -> wss://host/hrm/ws).
+  const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
   return `${wsProtocol}//${host}/ws`
 }
 
@@ -24,6 +25,21 @@ export const getBaseURL = (): string => {
   return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
 }
 
+/**
+ * Serving subpath (e.g. '/hrm' behind a subpath proxy, '' at root).
+ * Explicit NEXT_PUBLIC_BASE_PATH wins, else derived from NEXTAUTH_URL.
+ * Keep in sync with basePath in next.config.js.
+ */
+export const getBasePath = (): string => {
+  const explicit = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/$/, '')
+  if (explicit) return explicit
+  try {
+    return new URL(process.env.NEXTAUTH_URL || '').pathname.replace(/\/$/, '')
+  } catch {
+    return ''
+  }
+}
+
 export const getWebSocketURL = (): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
   const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
@@ -34,7 +50,7 @@ export const getWebSocketURL = (): string => {
   // 2. Fallback for client-side execution, deriving from the browser's location.
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${window.location.host}/ws`
+    return `${protocol}//${window.location.host}${getBasePath()}/ws`
   }
 
   // 3. Fallback for server-side execution, deriving from the base application URL.
@@ -52,17 +68,47 @@ export const getAPIURL = (endpoint: string): string => {
 
   // 2. Fallback for client-side execution, deriving from the browser's origin.
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`
+    return `${window.location.origin}${getBasePath()}/api/${endpoint.replace(/^\//, '')}`
   }
 
-  // 3. Fallback for server-side execution, deriving from the base application URL.
-  const baseUrl = getBaseURL()
-  return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
+  // 3. Fallback for server-side execution: call ourselves directly.
+  return getInternalApiUrl(endpoint)
+}
+
+/**
+ * Direct localhost URL for server-to-server API calls.
+ * Never routes through the public base URL: behind a proxied deployment the
+ * public URL can hairpin through an auth gate that swallows the call
+ * (e.g. silently dropping Spotify token delivery).
+ */
+export const getInternalApiUrl = (endpoint: string): string => {
+  const port = process.env.PORT || '3000'
+  return `http://127.0.0.1:${port}${getBasePath()}/api/${endpoint.replace(/^\//, '')}`
+}
+
+/**
+ * Prefix a root-absolute app path with the serving basePath.
+ * Absolute URLs, protocol-relative URLs, and already-prefixed paths
+ * pass through unchanged (idempotent).
+ */
+export const withBasePath = (path: string): string => {
+  if (!path.startsWith('/') || path.startsWith('//')) return path
+  const basePath = getBasePath()
+  if (!basePath || path === basePath || path.startsWith(`${basePath}/`)) {
+    return path
+  }
+  return `${basePath}${path}`
 }
 
 export const getSpotifyCallbackURL = (): string => {
-  return (
-    process.env.SPOTIFY_CALLBACK_URL ||
-    `${getBaseURL()}/api/auth/callback/spotify`
-  )
+  if (process.env.SPOTIFY_CALLBACK_URL) return process.env.SPOTIFY_CALLBACK_URL
+  const basePath = getBasePath()
+  const origin =
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : new URL(getBaseURL()).origin
+  // Mirrors NextAuth v4: a subpath replaces (not prefixes) /api/auth.
+  return basePath
+    ? `${origin}${basePath}/callback/spotify`
+    : `${origin}/api/auth/callback/spotify`
 }

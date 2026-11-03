@@ -14,6 +14,7 @@ import {
 import { useSnackbar } from 'notistack'
 import { useEffect, useState } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { withBasePath } from '@/utils/urls'
 
 interface SpotifyTrack {
   id: string
@@ -54,7 +55,9 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
 
       try {
         const res = await fetch(
-          `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
+          withBasePath(
+            `/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}&type=track`
+          )
         )
 
         if (!res.ok) {

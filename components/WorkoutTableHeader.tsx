@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
+import { withBasePath } from '@/utils/urls'
 
 interface WorkoutTableHeaderProps {
   docId: string
@@ -41,7 +42,7 @@ export default function WorkoutTableHeader({
       try {
         setLoading(true)
         setError(null) // Reset error on re-fetch
-        const res = await fetch(`/api/workout?docId=${docId}`)
+        const res = await fetch(withBasePath(`/api/workout?docId=${docId}`))
         if (!res.ok) throw new Error('Failed to load workout data')
         const json = await res.json()
         setData(json)

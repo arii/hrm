@@ -1,4 +1,5 @@
 // utils/network.ts
+import { withBasePath } from './urls'
 
 /**
  * Standardized error schema for the application.
@@ -57,7 +58,9 @@ export const fetchWithRetry = async (
         throw options.signal.reason || new Error('Request aborted by caller')
       }
 
-      const response = await fetch(url, {
+      // Route app API calls inside the serving subpath (no-op at root,
+      // idempotent for already-prefixed or absolute URLs).
+      const response = await fetch(withBasePath(url), {
         ...options,
         signal: combinedSignal,
       })

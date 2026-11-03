@@ -8,6 +8,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
+import { withBasePath } from '@/utils/urls'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import Image from 'next/image'
@@ -52,7 +53,9 @@ const PlaylistPage = () => {
     const fetchPlaylistDetails = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/spotify/playlists/${playlistId}`)
+        const response = await fetch(
+          withBasePath(`/api/spotify/playlists/${playlistId}`)
+        )
         if (!response.ok) {
           const errorData = await response.json()
           throw new Error(

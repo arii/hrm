@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
+import { withBasePath } from '@/utils/urls'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItemText from '@mui/material/ListItemText'
@@ -44,7 +45,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch(API_SPOTIFY_PLAYLISTS)
+        const response = await fetch(withBasePath(API_SPOTIFY_PLAYLISTS))
         if (!response.ok) {
           throw new Error('Failed to fetch playlists')
         }
@@ -82,9 +83,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setSearchLoading(true)
       try {
         const response = await fetch(
-          `/api/spotify/playlists/search?q=${encodeURIComponent(
-            debouncedSearch
-          )}`
+          withBasePath(
+            `/api/spotify/playlists/search?q=${encodeURIComponent(
+              debouncedSearch
+            )}`
+          )
         )
         if (!response.ok) {
           throw new Error('Failed to search playlists')

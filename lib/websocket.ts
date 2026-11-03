@@ -3,6 +3,7 @@ import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
 import { ServerMessage } from '../types/websocket.js'
+import { getBasePath } from '../utils/urls.js'
 
 export class WebSocketManager {
   public wss: WebSocketServer
@@ -13,7 +14,13 @@ export class WebSocketManager {
 
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
     const { pathname } = parse(req.url || '')
-    if (pathname === '/ws') {
+    // Accept the subpath-prefixed upgrade (proxied, no-strip) as well as /ws.
+    const basePath = getBasePath()
+    const normalized =
+      basePath && pathname?.startsWith(`${basePath}/`)
+        ? pathname.slice(basePath.length)
+        : pathname
+    if (normalized === '/ws') {
       this.wss.handleUpgrade(req, socket, head, (ws) => {
         this.wss.emit('connection', ws, req)
       })
