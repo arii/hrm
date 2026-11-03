@@ -14,7 +14,14 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  * Default timeout values for wait operations (in milliseconds)
  */
 export const WAIT_TIMEOUTS = {
-  /** Default timeout for test readiness signal */
+  /**
+   * Default timeout for test readiness signal (#9032 budget).
+   * Covers, on a cold CI runner: webServer boot + Spotify token load and
+   * first device poll (~2-4s observed), font fetch, first content paint,
+   * and skeleton detachment after initial fetches resolve. Do not lower
+   * without measuring cold-start readiness on CI; raise only with a dated
+   * comment naming the slow step.
+   */
   TEST_READY: 8000,
   /** Default timeout for WebSocket connection */
   WEBSOCKET: 5000,
@@ -58,21 +65,23 @@ export async function waitForPageReady(
     timeout,
   })
 
-  // Wait for loading skeletons to disappear
-  // We use hidden state to ensure they are either removed or invisible.
-  // NOTE: We wrap this in a try-catch to prevent timeouts from failing the entire test.
-  // If skeletons persist (e.g. infinite loading or bug), we want VRT to capture that state
-  // rather than crashing with a generic TimeoutError.
-  // We use a shorter but safe timeout for skeletons to avoid blocking tests unnecessarily.
+  // Wait for loading skeletons to disappear.
+  // Strict enforcement (#9185): persisting skeletons mean infinite loading
+  // or a stuck fetch, so fail loudly with a diagnostic message instead of
+  // warning and snapshotting a broken state (which only surfaces later as
+  // an inscrutable pixel diff). Uses the full readiness timeout: skeleton
+  // detachment legitimately trails content paint on cold CI runners.
   try {
     await page.waitForSelector('.MuiSkeleton-root', {
       state: 'hidden',
-      timeout: Math.min(timeout, 5000),
+      timeout,
     })
   } catch (error) {
-    console.warn(
-      `[waitForPageReady] Skeletons did not disappear within ${timeout}ms. Proceeding to snapshot/test.`,
-      error
+    throw new Error(
+      `[waitForPageReady] Loading skeletons persisted past ${timeout}ms. ` +
+        'Suspect infinite loading, a stuck fetch, or a cold-runner slowdown. ' +
+        'Check for failed API calls above before raising timeouts.',
+      { cause: error }
     )
   }
 }

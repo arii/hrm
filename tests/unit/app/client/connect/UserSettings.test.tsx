@@ -46,6 +46,29 @@ describe('UserSettings', () => {
     expect(screen.getByLabelText('Male')).toBeChecked()
   })
 
+  it('exposes stable value testids for granular VRT masking (#8890)', () => {
+    render(<UserSettings profile={mockUserProfile} />)
+    expect(screen.getByTestId('user-settings-value-name')).toBeInTheDocument()
+    expect(screen.getByTestId('user-settings-value-age')).toBeInTheDocument()
+    expect(
+      screen.getByTestId('user-settings-value-height-cm')
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('user-settings-value-weight')).toBeInTheDocument()
+  })
+
+  it('exposes imperial height testids (#8890)', () => {
+    render(
+      <UserSettings
+        profile={{
+          ...mockUserProfile,
+          data: { ...mockUserProfile.data, unitSystem: 'IMPERIAL' as const },
+        }}
+      />
+    )
+    expect(screen.getByTestId('user-settings-value-feet')).toBeInTheDocument()
+    expect(screen.getByTestId('user-settings-value-inches')).toBeInTheDocument()
+  })
+
   it('calls setUserName on name change', () => {
     render(<UserSettings profile={mockUserProfile} />)
     const nameInput = screen.getByLabelText('Your Name')

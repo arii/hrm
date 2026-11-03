@@ -4,6 +4,7 @@ import { MOBILE_VIEWPORT } from './lib/viewports'
 import { takeScreenshot } from './lib/visual'
 import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
+import { getHrMasks, getUserSettingsMasks } from './lib/masks'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
 
 test.describe('Visual Regression Tests for /client/connect Page', () => {
@@ -39,7 +40,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       connectPage.getByTestId('connection-status-alert')
     ).toContainText('Checking saved devices...')
     await takeScreenshot(connectPage, 'connect-page-scanning.png', {
-      mask: [connectPage.getByTestId('user-settings-form')],
+      mask: getUserSettingsMasks(connectPage),
     })
   })
 
@@ -55,7 +56,10 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       connectPage.getByText('Connected! Heart rate data is being streamed')
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connected.png', {
-      mask: [connectPage.getByTestId('hr-tile')],
+      mask: [
+        connectPage.getByTestId('hr-tile-name'),
+        ...getHrMasks(connectPage),
+      ],
       maxDiffPixelRatio: 0.1,
     })
   })
@@ -71,7 +75,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       connectPage.getByText(/Connection Failed: GATT server not found/)
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-connection-error.png', {
-      mask: [connectPage.getByTestId('user-settings-form')],
+      mask: getUserSettingsMasks(connectPage),
       fullPage: false,
       maxDiffPixelRatio: 0.05,
       // Performance: Skip repeated a11y checks for error states as the core UI is already validated
@@ -89,7 +93,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
     ).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-no-devices-found.png', {
-      mask: [connectPage.getByTestId('user-settings-form')],
+      mask: getUserSettingsMasks(connectPage),
       // Performance: Skip redundant a11y checks for similar disconnected states
       skipA11y: true,
     })
@@ -104,7 +108,7 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     }, BluetoothConnectionStatus.DISCONNECTED)
     await expect(connectPage.getByText(/Auto-connect failed/)).toBeVisible()
     await takeScreenshot(connectPage, 'connect-page-auto-connect-failed.png', {
-      mask: [connectPage.getByTestId('user-settings-form')],
+      mask: getUserSettingsMasks(connectPage),
       fullPage: false,
       maxDiffPixelRatio: 0.05,
       // Performance: Skip a11y check for this specific error variant; primary state is covered
@@ -115,7 +119,10 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
   test('mobile viewport', async ({ connectPage }) => {
     await connectPage.setViewportSize(MOBILE_VIEWPORT)
     await takeScreenshot(connectPage, 'connect-page-mobile.png', {
-      mask: [connectPage.getByTestId('hr-tile')],
+      mask: [
+        connectPage.getByTestId('hr-tile-name'),
+        ...getHrMasks(connectPage),
+      ],
     })
   })
 })
