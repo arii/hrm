@@ -6,7 +6,10 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { VOLUME_SYNC_GRACE_PERIOD_MS } from '@/constants/spotify'
+import {
+  HRM_WEB_PLAYER_NAME,
+  VOLUME_SYNC_GRACE_PERIOD_MS,
+} from '@/constants/spotify'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -15,12 +18,22 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
+
+// Shared across tabs and reloads: the SDK mints a new device id on every
+// mount, so auto-transfer is rate-limited by time, not by id.
+export const AUTO_TRANSFER_COOLDOWN_KEY = 'hrm-spotify-auto-transfer-at'
+export const AUTO_TRANSFER_COOLDOWN_MS = 60_000
+
+// Spotify's device list flaps SDK devices in and out poll-to-poll
+// (backgrounded tabs), so latched server truth requires this many
+// consecutive negative polls before flipping false.
+export const STABLE_ACTIVE_POLLS = 3
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -109,6 +122,38 @@ const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
+
+  // Latched server truth: flips true on first sighting, requires
+  // STABLE_ACTIVE_POLLS consecutive negatives to flip false.
+  const [stable, setStable] = useState({
+    active: false,
+    hrmActive: false,
+    listed: false,
+  })
+  const negActive = useRef(0)
+  const negListed = useRef(0)
+  const lastActiveName = useRef<string | null>(null)
+  useEffect(() => {
+    const devices = spotifyData.devices
+    if (!devices) return
+    const active = devices.find((device) => device.is_active) ?? null
+    const listed = devices.some((device) => device.name === HRM_WEB_PLAYER_NAME)
+    negActive.current = active ? 0 : negActive.current + 1
+    negListed.current = listed ? 0 : negListed.current + 1
+    if (active) lastActiveName.current = active.name
+    const negA = negActive.current
+    const negL = negListed.current
+    const lastName = lastActiveName.current
+    // Convergent: derived from poll arrivals, settles between polls.
+    setStable((prev) => {
+      const nextActive = !!active || (prev.active && negA < STABLE_ACTIVE_POLLS)
+      return {
+        active: nextActive,
+        hrmActive: nextActive && lastName === HRM_WEB_PLAYER_NAME,
+        listed: listed || (prev.listed && negL < STABLE_ACTIVE_POLLS),
+      }
+    })
+  }, [spotifyData.devices])
 
   // 4. Integrate useReducer
   const [state, dispatch] = useReducer(spotifyDisplayReducer, {
@@ -253,6 +298,69 @@ const SpotifyDisplay = () => {
     }
   }, [spotifyData.devices, selectedDeviceId])
 
+  // Auto-connect: once the browser player is ready and the server device
+  // list is known, silently select it when nothing else is active. Never
+  // steals playback (skips when any device is active or anything is
+  // playing) and never transfers blind on an empty list (waits for the
+  // poll). Cooldown is shared across tabs and reloads via localStorage:
+  // the SDK mints a new device id on every mount, so a per-id guard alone
+  // refires (and flickers the status) on every reload.
+  const [autoPending, setAutoPending] = useState(false)
+  const autoPendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isPlaying = spotifyData.playback?.is_playing ?? false
+  useEffect(() => {
+    if (!isReady || !deviceId) return
+    if (connectionStatus !== 'Connected') return
+    const lastFire = Number(
+      localStorage.getItem(AUTO_TRANSFER_COOLDOWN_KEY) ?? 0
+    )
+    if (Date.now() - lastFire < AUTO_TRANSFER_COOLDOWN_MS) return
+    const devices = spotifyData.devices
+    if (!devices || devices.length === 0) return
+    // Raw check covers mount (before the latch effect has run once);
+    // the latched check covers poll-to-poll flaps.
+    if (devices.some((device) => device.is_active)) return
+    if (stable.active) return
+    if (isPlaying) return
+    localStorage.setItem(AUTO_TRANSFER_COOLDOWN_KEY, String(Date.now()))
+    // Sync display state with the fired command; the cooldown above makes
+    // this fire once, so it converges after one render, it cannot cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAutoPending(true)
+    executeSpotify('TRANSFER_PLAYBACK', { deviceId, play: false })
+    if (autoPendingTimeout.current) clearTimeout(autoPendingTimeout.current)
+    // If the server never confirms, fall back to the manual button.
+    autoPendingTimeout.current = setTimeout(() => setAutoPending(false), 15000)
+  }, [
+    isReady,
+    deviceId,
+    connectionStatus,
+    spotifyData.devices,
+    stable.active,
+    isPlaying,
+    executeSpotify,
+  ])
+
+  // A device activating ends the auto-pending display.
+  useEffect(() => {
+    if (autoPending && spotifyData.devices?.some((d) => d.is_active)) {
+      if (autoPendingTimeout.current) {
+        clearTimeout(autoPendingTimeout.current)
+        autoPendingTimeout.current = null
+      }
+      // One-shot transition keyed on external server state; convergent.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAutoPending(false)
+    }
+  }, [autoPending, spotifyData.devices])
+
+  useEffect(
+    () => () => {
+      if (autoPendingTimeout.current) clearTimeout(autoPendingTimeout.current)
+    },
+    []
+  )
+
   const handlePlayPauseToggle = () => {
     if (spotifyData.playback.is_playing) {
       executeSpotify('PAUSE')
@@ -303,6 +411,21 @@ const SpotifyDisplay = () => {
       ? ''
       : `— ${spotifyData.playback.track.artist}`
 
+    // Strict player-state display: exactly one status affordance at a time,
+    // so the badge and the button can never contradict each other. Uses the
+    // latched server truth (stable) so poll-to-poll list flaps never reach
+    // the UI, and stays silent while anything plays rather than guessing.
+    const sdkReady = isReady && !!deviceId
+    const showActiveBadge = stable.hrmActive
+    const showConnectingBadge =
+      !stable.active &&
+      !autoPending &&
+      !isPlaying &&
+      (!sdkReady || !stable.listed)
+    const showAutoPending = !stable.active && autoPending && !isPlaying
+    const showConnectButton =
+      !stable.active && !isPlaying && sdkReady && stable.listed && !autoPending
+
     return (
       <Box
         data-testid="spotify-display-container"
@@ -335,48 +458,71 @@ const SpotifyDisplay = () => {
             justifySelf: 'start',
             gap: 2,
             minHeight: '32px',
+            minWidth: 0,
           }}
         >
           <Typography
             variant="body2"
-            sx={{ fontWeight: 600 }}
+            sx={{
+              fontWeight: 600,
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
             data-testid="spotify-now-playing"
           >
             {displayTrackName} {displayArtist}
           </Typography>
-          {!isReady && (
+          {showConnectingBadge && (
             <Typography
               variant="caption"
               sx={{
-                opacity: 0.8,
                 backgroundColor: 'info.main',
-                color: 'common.white',
+                color: 'common.black',
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               🔄 Connecting Player...
             </Typography>
           )}
-          {isReady && deviceId && (
+          {showActiveBadge && (
             <Typography
               variant="caption"
               sx={{
-                opacity: 0.8,
                 backgroundColor: 'success.main',
-                color: 'common.white',
+                color: 'common.black',
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               🎵 Browser Player Active
             </Typography>
           )}
-          <DeviceRecommendation />
+          {showAutoPending && (
+            <Typography
+              variant="caption"
+              sx={{
+                backgroundColor: 'info.main',
+                color: 'common.black',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Connecting…
+            </Typography>
+          )}
+          {showConnectButton && <DeviceRecommendation />}
         </Box>
 
         <Box

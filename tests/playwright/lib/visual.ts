@@ -186,7 +186,7 @@ export async function takeDashboardScreenshot(
       ...getHrMasks(page),
       page.getByTestId('calorie-count'),
       page.getByTestId('google-doc-viewer-iframe'),
-      page.getByTestId('workout-table-header'),
+      page.getByTestId('workout-phase-grid'),
       page.locator('.MUI-Charts-root'),
       page.locator('.variable-text-container'),
     ],

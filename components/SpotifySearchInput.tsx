@@ -93,6 +93,9 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         getOptionLabel={(option) =>
           typeof option === 'string' ? option : option.name
         }
+        getOptionKey={(option) =>
+          typeof option === 'string' ? option : option.id
+        }
         filterOptions={(x) => x}
         autoComplete
         includeInputInList

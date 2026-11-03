@@ -134,4 +134,29 @@ describe('ConnectView', () => {
     rerender(<ConnectView {...propsWithWeightError} />)
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
+
+  it('hydrates without errors when server lacks bluetooth but client supports it', async () => {
+    const { renderToString } = await import('react-dom/server')
+    const { hydrateRoot } = await import('react-dom/client')
+    const { act } = await import('react')
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    // Server: navigator.bluetooth is undefined, so isSupported is false
+    const html = renderToString(
+      <ConnectView {...mockProps} isSupported={false} />
+    )
+    const container = document.createElement('div')
+    container.innerHTML = html
+
+    // Client: bluetooth exists, so isSupported flips to true on hydrate
+    await act(async () => {
+      hydrateRoot(container, <ConnectView {...mockProps} isSupported={true} />)
+    })
+
+    const hydrationErrors = consoleSpy.mock.calls.filter((args) =>
+      String(args[0]).match(/hydration|Hydration/)
+    )
+    expect(hydrationErrors).toHaveLength(0)
+    consoleSpy.mockRestore()
+  })
 })

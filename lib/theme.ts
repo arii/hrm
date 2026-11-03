@@ -226,9 +226,14 @@ const theme = createTheme({
   // Component-specific overrides
   components: {
     MuiCssBaseline: {
-      styleOverrides: {
+      styleOverrides: (theme) => ({
         ...reducedMotionStyles,
-      },
+        // Visible keyboard-focus indicator (WCAG 2.4.7): 2px brand ring.
+        '*:focus-visible': {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: '2px',
+        },
+      }),
     },
     MuiButton: {
       styleOverrides: {

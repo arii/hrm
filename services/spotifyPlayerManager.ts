@@ -158,7 +158,8 @@ export class SpotifyPlayerManager {
     command: SpotifyCommand,
     params: SpotifyCommandParameters
   ) {
-    const { deviceId, volume, playlistUri, contextUri, uri, offset } = params
+    const { deviceId, volume, playlistUri, contextUri, uri, offset, play } =
+      params
     const effectiveContextUri = contextUri || playlistUri
     const sdk = this.sdk
 
@@ -218,7 +219,8 @@ export class SpotifyPlayerManager {
         if (deviceId) {
           await this.executeSdkCommand(
             command,
-            () => sdk.player.transferPlayback([deviceId as string], true),
+            () =>
+              sdk.player.transferPlayback([deviceId as string], play ?? true),
             { deviceId }
           )
         }

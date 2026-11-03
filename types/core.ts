@@ -233,6 +233,7 @@ export interface SpotifyCommandParameters {
   contextUri?: string
   uri?: string
   offset?: { position: number }
+  play?: boolean
 }
 
 /**

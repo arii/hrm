@@ -74,7 +74,12 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { data } = userProfile
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isConnected) {
@@ -102,6 +107,15 @@ export default function ConnectView({
     } finally {
       setIsResetting(false)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+        <CircularProgress data-testid="connect-loading" />
+        <BottomNavBar />
+      </Container>
+    )
   }
 
   if (!isSupported) {

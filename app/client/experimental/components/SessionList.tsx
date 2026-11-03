@@ -89,7 +89,11 @@ const SessionList = ({
                         startTime={session.startTime}
                         endTime={session.endTime}
                       />
-                      <Typography variant="caption">
+                      <Typography
+                        variant="caption"
+                        component="span"
+                        sx={{ display: 'block' }}
+                      >
                         Calories: {getTotalCalories(session).toFixed(0)} kCal
                       </Typography>
                     </>

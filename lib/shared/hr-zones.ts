@@ -53,14 +53,16 @@ export const HR_ZONE_CONFIG: Record<
     label: 'Cardio',
     threshold: 0.8,
     color: HR_COLORS.ZONE_4_CARDIO,
-    textColor: HR_COLORS.TEXT_LIGHT,
+    // Dark text: white on amber (~1.7:1) is unreadable; black is ~12:1 (AA).
+    textColor: HR_COLORS.TEXT_DARK,
     zoneNumber: 4,
   },
   ZONE_3: {
     label: 'Fat Burn',
     threshold: 0.7,
     color: HR_COLORS.ZONE_3_FATBURN,
-    textColor: HR_COLORS.TEXT_LIGHT,
+    // Dark text: white on this green is 2.78:1 (fails even large-text AA).
+    textColor: HR_COLORS.TEXT_DARK,
     zoneNumber: 3,
   },
   ZONE_2: {
