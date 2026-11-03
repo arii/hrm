@@ -146,6 +146,8 @@ describe('useBluetoothHRM Race Conditions', () => {
     jest.clearAllMocks()
     delete (global as unknown as { mockAbortControllerSignal: AbortSignal })
       .mockAbortControllerSignal
+    // In case a fake-timer test failed mid-flight, never leak into others.
+    jest.useRealTimers()
   })
 
   it('ignores subsequent connection attempts while one is in progress', async () => {
@@ -160,9 +162,12 @@ describe('useBluetoothHRM Race Conditions', () => {
 
     await act(async () => {
       await expect(firstPromise).resolves.toBe(true)
-      // The second promise resolves to true because it either runs sequentially after the first one finishes (seeing CONNECTED)
-      // or it's just how the mock environment behaves. The critical check is that gatt.connect is called only once.
-      await expect(secondPromise).resolves.toBe(true)
+      // The second call is skipped (in-flight guard) and honestly reports
+      // false — it did not connect. (It previously fell through to true;
+      // the sibling 'second call while in flight' test asserts false for
+      // the same situation.) The critical check is that gatt.connect is
+      // called only once.
+      await expect(secondPromise).resolves.toBe(false)
     })
 
     expect(mockGattConnect).toHaveBeenCalledTimes(1)
@@ -222,24 +227,33 @@ describe('useBluetoothHRM Race Conditions', () => {
     expect(result.current.isConnected).toBe(true)
   })
 
-  it('fails fast on not-in-range without busy fast-retries', async () => {
-    mockGattConnect.mockRejectedValue(
-      new DOMException(
-        'Bluetooth Device is no longer in range.',
-        'NetworkError'
+  it('retries not-in-range on a quiet-strap schedule, not busy fast-retries', async () => {
+    jest.useFakeTimers()
+    try {
+      mockGattConnect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
       )
-    )
-    const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() => useBluetoothHRM())
 
-    await act(async () => {
-      await expect(result.current.connectAndStream()).rejects.toThrow(
-        'no longer in range'
-      )
-    })
+      let connectPromise: Promise<boolean> | undefined
+      act(() => {
+        connectPromise = result.current.connectAndStream()
+      })
+      await act(async () => {
+        // Attempts at ~0/5/15/35s, then the terminal failure surfaces.
+        await jest.advanceTimersByTimeAsync(40000)
+        await expect(connectPromise).rejects.toThrow('no longer in range')
+      })
 
-    // One radio attempt, not FAST_RECONNECT_MAX_ATTEMPTS.
-    expect(mockGattConnect).toHaveBeenCalledTimes(1)
-    expect(result.current.isConnected).toBe(false)
+      // Four patient attempts (not busy fast-retries: no 1s-cycle hammering).
+      expect(mockGattConnect).toHaveBeenCalledTimes(4)
+      expect(result.current.isConnected).toBe(false)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('still fast-retries a genuinely busy radio', async () => {
@@ -273,27 +287,38 @@ describe('useBluetoothHRM Race Conditions', () => {
   })
 
   it('does not abort a stale controller on retry after failure', async () => {
-    mockGattConnect.mockRejectedValue(
-      new DOMException(
-        'Bluetooth Device is no longer in range.',
-        'NetworkError'
+    // Fake timers: each failing call now runs the 35s quiet-retry schedule.
+    jest.useFakeTimers()
+    try {
+      mockGattConnect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
       )
-    )
-    const { result } = renderHook(() => useBluetoothHRM())
+      const { result } = renderHook(() => useBluetoothHRM())
 
-    await act(async () => {
-      await expect(result.current.connectAndStream()).rejects.toThrow()
-    })
-    await act(async () => {
-      await expect(result.current.connectAndStream()).rejects.toThrow()
-    })
+      await act(async () => {
+        const first = result.current.connectAndStream()
+        await jest.advanceTimersByTimeAsync(40000)
+        await expect(first).rejects.toThrow()
+      })
+      await act(async () => {
+        const second = result.current.connectAndStream()
+        await jest.advanceTimersByTimeAsync(40000)
+        await expect(second).rejects.toThrow()
+      })
 
-    expect(mockGattConnect).toHaveBeenCalledTimes(2)
-    expect(mockAbort).not.toHaveBeenCalled()
-    expect(warnSpy).not.toHaveBeenCalledWith(
-      expect.anything(),
-      'Aborting previous pending connection attempt'
-    )
+      // 4 quiet attempts per call, no cross-attempt abort churn.
+      expect(mockGattConnect).toHaveBeenCalledTimes(8)
+      expect(mockAbort).not.toHaveBeenCalled()
+      expect(warnSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
+        'Aborting previous pending connection attempt'
+      )
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('returns false for a second call while GATT is in flight', async () => {
@@ -343,10 +368,14 @@ describe('useBluetoothHRM Race Conditions', () => {
     // clientEnv.NEXT_PUBLIC_TESTING is set (read at effect time).
     const prevTesting = clientEnv.NEXT_PUBLIC_TESTING
     clientEnv.NEXT_PUBLIC_TESTING = 'true'
+    // Fake timers: the stale attempt runs the quiet-retry schedule (5s
+    // sleep) plus the 20s radio timer on its second hanging attempt.
+    jest.useFakeTimers()
     try {
       await runStaleInjectionScenario()
     } finally {
       clientEnv.NEXT_PUBLIC_TESTING = prevTesting
+      jest.useRealTimers()
     }
 
     async function runStaleInjectionScenario() {
@@ -377,17 +406,17 @@ describe('useBluetoothHRM Race Conditions', () => {
       })
 
       const { result, unmount } = renderHook(() => useBluetoothHRM())
-      await waitFor(() =>
-        expect(
-          window.__TEST_CONTROLS__?.setCustomHrmStatusMessage
-        ).toBeDefined()
-      )
+      await act(async () => {})
+      expect(window.__TEST_CONTROLS__?.setCustomHrmStatusMessage).toBeDefined()
 
       let autoPromise!: Promise<void>
       act(() => {
         autoPromise = result.current.autoConnect()
       })
-      await waitFor(() => expect(mockGattConnect).toHaveBeenCalledTimes(1))
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(0)
+      })
+      expect(mockGattConnect).toHaveBeenCalledTimes(1)
 
       // A newer operation (VRT state injection) claims UI ownership mid-flight.
       const injectedMessage = 'Scanning for HRM...'
@@ -396,8 +425,9 @@ describe('useBluetoothHRM Race Conditions', () => {
       })
       expect(result.current.deviceStatus).toBe(injectedMessage)
 
-      // The stale silent attempt now fails. Its completion must not overwrite
-      // the injected state with an auto-connect failure banner.
+      // The stale silent attempt now fails (not-in-range → one quiet retry
+      // that hangs into the 20s radio timer). Its completion must not
+      // overwrite the injected state with an auto-connect failure banner.
       await act(async () => {
         rejectConnect(
           new DOMException(
@@ -405,6 +435,7 @@ describe('useBluetoothHRM Race Conditions', () => {
             'NetworkError'
           )
         )
+        await jest.advanceTimersByTimeAsync(30000)
         await autoPromise
       })
 
