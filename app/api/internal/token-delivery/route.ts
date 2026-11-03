@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/errors'
+import { env } from '@/lib/env'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.NEXTAUTH_SECRET
+    const expected = env.NEXTAUTH_SECRET
     if (!expected) {
       throw new ApiError(500, 'NEXTAUTH_SECRET is not set.')
     }

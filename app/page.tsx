@@ -23,7 +23,7 @@ export default async function Dashboard({ searchParams }: DashboardProps) {
 
   // Only allow intentional errors in development or test environments.
   const isTestableEnv =
-    process.env.NODE_ENV !== 'production' ||
+    env.NODE_ENV !== 'production' ||
     env.NEXT_PUBLIC_WS_URL?.includes('localhost') ||
     env.CI === 'true' ||
     env.TESTING === 'true' ||

@@ -2,14 +2,15 @@
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
 import { debugAccessDenied } from '@/lib/debug-guard'
+import { env } from '@/lib/env'
 
 export async function GET() {
   const denied = debugAccessDenied()
   if (denied) return denied
   try {
     const tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
+      env.SPOTIFY_CLIENT_ID || '',
+      env.SPOTIFY_CLIENT_SECRET || ''
     )
 
     const currentToken = tokenManager['currentToken'] // Access private property for debugging

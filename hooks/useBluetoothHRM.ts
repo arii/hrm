@@ -1,12 +1,9 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
-import {
-  HrmMetadataUpdateMessage,
-  HrmMetadataUpdateData,
-} from '@/types/websocket'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import { calculateMaxHr } from '@/utils/hrCalculations'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useHrmMetadataSync } from '@/hooks/useHrmMetadataSync'
+import { clientEnv } from '@/lib/env-client'
 import { cancellablePromise } from '@/utils/promise'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
@@ -56,6 +53,33 @@ const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.CONNECTED]: BLUETOOTH_MESSAGES.connected,
   [BluetoothConnectionStatus.RECONNECTING]: BLUETOOTH_MESSAGES.reconnecting,
   [BluetoothConnectionStatus.ERROR]: BLUETOOTH_MESSAGES.error,
+}
+
+/**
+ * Best-effort battery subscription (#9596). The battery service is optional
+ * on HR straps: any failure resolves silently and the dashboard simply
+ * shows no battery level.
+ */
+export const setupBatteryNotifications = async (
+  server: BluetoothRemoteGATTServer,
+  onBatteryLevel: (level: number) => void
+): Promise<void> => {
+  try {
+    const batteryService = await server.getPrimaryService(BATTERY_SERVICE_UUID)
+    const batteryChar = await batteryService.getCharacteristic(
+      BATTERY_LEVEL_CHARACTERISTIC_UUID
+    )
+    const value = await batteryChar.readValue()
+    onBatteryLevel(value.getUint8(0))
+    await batteryChar.startNotifications()
+    batteryChar.addEventListener('characteristicvaluechanged', (e: unknown) => {
+      const event = e as Event
+      const target = event.target as BluetoothRemoteGATTCharacteristic
+      onBatteryLevel(target.value!.getUint8(0))
+    })
+  } catch {
+    /* Battery service optional */
+  }
 }
 
 const parseHeartRate = (value: DataView): number => {
@@ -110,8 +134,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isManualDisconnect = useRef(false)
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
-  const userDetailsRef = useRef({ name: userName || '', age: userAge || 0 })
-  const lastSentMetadataRef = useRef<HrmMetadataUpdateData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isConnecting = useRef(false)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
@@ -150,39 +172,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     sendDataRef.current = sendData
   }, [sendData])
 
-  useEffect(() => {
-    userDetailsRef.current = {
-      name: userName || '',
-      age: userAge || 0,
-    }
+  // Stable device-name reader for metadata sync (ref reads need no dep).
+  const getDeviceName = useCallback(
+    () => connectedDeviceRef.current?.name || 'Unknown',
+    []
+  )
 
-    if (status === BluetoothConnectionStatus.CONNECTED) {
-      const { name, age } = userDetailsRef.current
-      const calculatedMaxHr = calculateMaxHr(age)
-      const deviceName = connectedDeviceRef.current?.name || 'Unknown'
-
-      const metadataData: HrmMetadataUpdateData = {
-        maxHr: calculatedMaxHr,
-        name: name || `Bluetooth HRM (${deviceName})`,
-      }
-      if (typeof age === 'number') {
-        metadataData.age = age
-      }
-
-      // Prevent sending redundant metadata updates
-      if (
-        JSON.stringify(lastSentMetadataRef.current) !==
-        JSON.stringify(metadataData)
-      ) {
-        const metadata: HrmMetadataUpdateMessage = {
-          type: 'HRM_METADATA_UPDATE',
-          data: metadataData,
-        }
-        sendData(metadata)
-        lastSentMetadataRef.current = metadataData
-      }
-    }
-  }, [userName, userAge, status, sendData])
+  // User-details sync lives in its own hook; lifecycle + signal protocol stay
+  // here (see useHrmMetadataSync for the decomposition rationale).
+  const { userDetailsRef } = useHrmMetadataSync({
+    userName,
+    userAge,
+    status,
+    getDeviceName,
+    sendData,
+  })
 
   useEffect(() => {
     currentStatusRef.current = status
@@ -423,7 +427,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
     if (
       typeof window !== 'undefined' &&
-      process.env.NEXT_PUBLIC_TESTING === 'true'
+      clientEnv.NEXT_PUBLIC_TESTING === 'true'
     ) {
       window.__TEST_CONTROLS__ = {
         ...window.__TEST_CONTROLS__,
@@ -444,7 +448,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       if (
         typeof window !== 'undefined' &&
-        process.env.NEXT_PUBLIC_TESTING === 'true' &&
+        clientEnv.NEXT_PUBLIC_TESTING === 'true' &&
         window.__TEST_CONTROLS__
       ) {
         if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
@@ -557,26 +561,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           HR_CHARACTERISTIC_UUID
         )
 
-        try {
-          const batteryService =
-            await server!.getPrimaryService(BATTERY_SERVICE_UUID)
-          const batteryChar = await batteryService.getCharacteristic(
-            BATTERY_LEVEL_CHARACTERISTIC_UUID
-          )
-          const value = await batteryChar.readValue()
-          setBatteryLevel(value.getUint8(0))
-          await batteryChar.startNotifications()
-          batteryChar.addEventListener(
-            'characteristicvaluechanged',
-            (e: unknown) => {
-              const event = e as Event
-              const target = event.target as BluetoothRemoteGATTCharacteristic
-              setBatteryLevel(target.value!.getUint8(0))
-            }
-          )
-        } catch {
-          /* Battery service optional */
-        }
+        await setupBatteryNotifications(server!, setBatteryLevel)
 
         await characteristic.startNotifications()
 
@@ -639,7 +624,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setSavedDevice(device)
         Cookies.set('hrm_device_id', device.id, {
           expires: 365,
-          secure: process.env.NODE_ENV === 'production',
+          secure: clientEnv.NODE_ENV === 'production',
           sameSite: 'strict',
         })
         isManualDisconnect.current = false
@@ -862,6 +847,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       handleConnectionError,
       userName,
       userAge,
+      // Stable ref object from useHrmMetadataSync; listed for exhaustive-deps.
+      userDetailsRef,
     ]
   )
 

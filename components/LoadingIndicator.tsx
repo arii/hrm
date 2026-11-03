@@ -2,6 +2,7 @@
 
 import { useLoading } from '@/context/LoadingContext'
 import { Box, CircularProgress, useTheme } from '@mui/material'
+import { clientEnv } from '@/lib/env-client'
 
 const LoadingIndicator = () => {
   const { isLoading } = useLoading()
@@ -23,7 +24,7 @@ const LoadingIndicator = () => {
         zIndex: theme.zIndex.loadingIndicator,
         // Completely disable transitions in testing environment to prevent flakiness
         transition:
-          process.env.NEXT_PUBLIC_TESTING === 'true'
+          clientEnv.NEXT_PUBLIC_TESTING === 'true'
             ? 'none'
             : theme.transitions.create('opacity', {
                 duration: theme.transitions.duration.short,

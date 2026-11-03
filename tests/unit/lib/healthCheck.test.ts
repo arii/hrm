@@ -14,6 +14,13 @@ import TabataTimer from '../../../services/tabataTimer'
 // Mock the 'ws' module
 jest.mock('ws')
 
+// healthCheck reads the import-time env snapshot, not live process.env (#9140).
+jest.mock('@/lib/env', () => ({
+  env: {},
+}))
+import { env } from '@/lib/env'
+const mockEnv = env as unknown as Record<string, unknown>
+
 // Mock global fetch
 global.fetch = jest.fn()
 
@@ -24,6 +31,8 @@ describe('Health Check Logic', () => {
     jest.clearAllMocks()
     ;(global.fetch as jest.Mock).mockClear()
     MockedWebSocket.mockClear()
+    for (const key of Object.keys(mockEnv)) delete mockEnv[key]
+    mockEnv.PORT = 3000
   })
 
   describe('checkMemoryUsage', () => {
@@ -103,21 +112,12 @@ describe('Health Check Logic', () => {
         setTimeout(() => this.onopen && this.onopen(), 10)
         return this
       })
-      const prevWsUrl = process.env.WS_URL
-      const prevPort = process.env.PORT
-      delete process.env.WS_URL
-      process.env.PORT = '4321'
-      try {
-        const result = await checkWebSocketService()
-        expect(result.healthy).toBe(true)
-        expect(MockedWebSocket).toHaveBeenCalledWith('ws://localhost:4321/ws')
-        expect(result.details.url).toBe('ws://localhost:4321/ws')
-      } finally {
-        if (prevWsUrl === undefined) delete process.env.WS_URL
-        else process.env.WS_URL = prevWsUrl
-        if (prevPort === undefined) delete process.env.PORT
-        else process.env.PORT = prevPort
-      }
+      delete mockEnv.WS_URL
+      mockEnv.PORT = 4321
+      const result = await checkWebSocketService()
+      expect(result.healthy).toBe(true)
+      expect(MockedWebSocket).toHaveBeenCalledWith('ws://localhost:4321/ws')
+      expect(result.details.url).toBe('ws://localhost:4321/ws')
     })
 
     it('should honor the WS_URL override verbatim', async () => {
@@ -126,16 +126,10 @@ describe('Health Check Logic', () => {
         setTimeout(() => this.onopen && this.onopen(), 10)
         return this
       })
-      const prevWsUrl = process.env.WS_URL
-      process.env.WS_URL = 'ws://proxy:9000/custom'
-      try {
-        const result = await checkWebSocketService()
-        expect(result.healthy).toBe(true)
-        expect(MockedWebSocket).toHaveBeenCalledWith('ws://proxy:9000/custom')
-      } finally {
-        if (prevWsUrl === undefined) delete process.env.WS_URL
-        else process.env.WS_URL = prevWsUrl
-      }
+      mockEnv.WS_URL = 'ws://proxy:9000/custom'
+      const result = await checkWebSocketService()
+      expect(result.healthy).toBe(true)
+      expect(MockedWebSocket).toHaveBeenCalledWith('ws://proxy:9000/custom')
     })
   })
 
