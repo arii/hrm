@@ -30,6 +30,15 @@ describe('API Route: /api/workout', () => {
     })
 
     describe('when errors are expected', () => {
+      beforeEach(() => {
+        // Error-path tests intentionally log warnings; keep output clean.
+        jest.spyOn(console, 'warn').mockImplementation(() => {})
+        jest.spyOn(console, 'error').mockImplementation(() => {})
+      })
+
+      afterEach(() => {
+        jest.restoreAllMocks()
+      })
       let consoleErrorSpy: jest.SpyInstance
 
       beforeAll(() => {

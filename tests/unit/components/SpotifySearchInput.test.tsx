@@ -27,11 +27,17 @@ describe('SpotifySearchInput', () => {
     },
   ]
 
+  const consoleWarn = console.warn
   beforeEach(() => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ tracks: { items: sameNameTracks } }),
     }) as unknown as typeof fetch
+    // Silence MUI Popper's jsdom-only anchorEl warning (no layout in jsdom).
+    jest.spyOn(console, 'warn').mockImplementation((msg?: unknown) => {
+      if (typeof msg === 'string' && msg.includes('anchorEl')) return
+      consoleWarn(msg)
+    })
   })
 
   afterEach(() => {

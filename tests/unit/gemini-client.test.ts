@@ -6,6 +6,15 @@ import { getModelFallbacks, JsonProcessor } from '../../scripts/gemini-client'
 describe('JsonProcessor', () => {
   const processor = new JsonProcessor()
 
+  beforeEach(() => {
+    // Recovery-path tests intentionally log warnings; keep output clean.
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
   it('should parse a valid JSON string', () => {
     const jsonString = '{"key": "value", "number": 123}'
     const result = processor.process(jsonString)

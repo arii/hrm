@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import MockPage from '@/app/client/mock/page'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
@@ -76,7 +76,9 @@ describe('app/client/mock/page', () => {
     )
 
     // Advance time to trigger the interval
-    jest.advanceTimersByTime(2000)
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
 
     // The mock implementation fluctuates the HR, so we check that it was called again
     // The exact value is random, so we just check the type
@@ -96,7 +98,9 @@ describe('app/client/mock/page', () => {
     expect(screen.getByTestId('streaming-start-button')).toBeInTheDocument()
 
     // Advance time again to ensure no more packets are sent
-    jest.advanceTimersByTime(2000)
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
     expect(mockSendData).toHaveBeenCalledTimes(3) // No new calls
 
     jest.useRealTimers()

@@ -11,6 +11,12 @@ describe('JsonProcessor', () => {
 
   beforeEach(() => {
     processor = new JsonProcessor()
+    // Recovery-path tests intentionally log warnings; keep output clean.
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   it('should parse valid JSON and ensure labels field exists', () => {

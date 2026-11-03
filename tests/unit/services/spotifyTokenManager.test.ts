@@ -258,7 +258,8 @@ describe('SpotifyTokenManager', () => {
   })
 
   it('should handle writeTokenFileSafe errors gracefully', () => {
-    ;(fs.writeFileSync as jest.Mock).mockImplementation(() => {
+    // Once-only so the throw does not leak into later tests.
+    ;(fs.writeFileSync as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Disk full')
     })
     jest.spyOn(console, 'error').mockImplementation(() => {})

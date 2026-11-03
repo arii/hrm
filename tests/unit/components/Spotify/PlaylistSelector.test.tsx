@@ -14,6 +14,7 @@ const mockPlaylists = {
 }
 
 describe('PlaylistSelector', () => {
+  const consoleWarn = console.warn
   beforeEach(() => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -21,6 +22,18 @@ describe('PlaylistSelector', () => {
         json: () => Promise.resolve(mockPlaylists),
       })
     ) as jest.Mock
+    // Silence MUI Popper's jsdom-only anchorEl warning (elements have no
+    // layout in jsdom); forward everything else.
+    jest
+      .spyOn(console, 'warn')
+      .mockImplementation((msg?: unknown, ...rest: unknown[]) => {
+        if (typeof msg === 'string' && msg.includes('anchorEl')) return
+        consoleWarn(msg, ...rest)
+      })
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   it('should fetch and display playlists on render', async () => {
