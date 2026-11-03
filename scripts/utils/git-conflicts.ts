@@ -29,11 +29,11 @@ export interface ConflictBlock {
 const CONFLICT_REGEX =
   /^<<<<<<< (.*?)\n([\s\S]*?)(?:^\|\|\|\|\|\|\| .*?\n[\s\S]*?)?^=======\n([\s\S]*?)^>>>>>>> (.*?)$/gm
 
-export async function parseConflicts(
-  filePath: string
-): Promise<ConflictBlock[]> {
+// Security: reads the file only when small enough to parse safely.
+// Returns null (after logging) for oversized or unreadable files.
+const readFileIfSmall = async (filePath: string): Promise<string | null> => {
   try {
-    // Security: Check file size to prevent OOM/ReDoS on excessively large files.
+    // Check file size to prevent OOM/ReDoS on excessively large files.
     const stats = await stat(filePath)
     const fileSizeInMB = stats.size / (1024 * 1024)
     if (fileSizeInMB > 1) {
@@ -41,20 +41,26 @@ export async function parseConflicts(
       console.warn(
         `Skipping large file: ${filePath} (${fileSizeInMB.toFixed(2)} MB)`
       )
-      return []
+      return null
     }
-  } catch (error) {
+  } catch {
     console.error(`Failed to stat file, skipping: ${filePath}`)
-    return []
+    return null
   }
 
-  let content: string
   try {
-    content = await readFile(filePath, 'utf-8')
-  } catch (error) {
+    return await readFile(filePath, 'utf-8')
+  } catch {
     console.error(`Failed to read file for conflict parsing: ${filePath}`)
-    return []
+    return null
   }
+}
+
+export async function parseConflicts(
+  filePath: string
+): Promise<ConflictBlock[]> {
+  const content = await readFileIfSmall(filePath)
+  if (content === null) return []
 
   const conflicts: ConflictBlock[] = []
   const lines = content.split('\n')

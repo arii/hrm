@@ -3,11 +3,11 @@ import {
   SchemaType,
   GoogleGenerativeAIError,
   GenerateContentRequest,
+  Schema,
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import { execSync } from 'child_process'
 import path from 'path'
-import { runConflictResolution } from './conflict-resolver'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -280,6 +280,9 @@ async function main() {
         )
         process.exit(1)
       }
+      // Lazy: this CLI-only edge stays out of the static import graph so
+      // gemini-client (low-level) and conflict-resolver (task) don't cycle.
+      const { runConflictResolution } = await import('./conflict-resolver')
       await runConflictResolution(genAI, contextFile, outputFile)
     } else {
       // Default/Generic mode
@@ -310,7 +313,9 @@ async function main() {
   }
 }
 
-type ExtendedGenerateContentRequest = GenerateContentRequest & { thought_signature?: string };
+type ExtendedGenerateContentRequest = GenerateContentRequest & {
+  thought_signature?: string
+}
 
 export async function generateContentWithFallback({
   genAI,
@@ -331,7 +336,7 @@ export async function generateContentWithFallback({
       const request: ExtendedGenerateContentRequest = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
-        ...(thoughtSignature && { thought_signature: thoughtSignature })
+        ...(thoughtSignature && { thought_signature: thoughtSignature }),
       }
 
       const result = await model.generateContent(request)
@@ -366,12 +371,11 @@ export async function generateContentWithFallback({
         503: 'Infrastructure Issue',
       }
 
-      const retriableCode =
-        Object.keys(RETRIABLE_MAP)
-          .map(Number)
-          .find(
-            (code) => errorStatus === code || errorMessage.includes(String(code))
-          )
+      const retriableCode = Object.keys(RETRIABLE_MAP)
+        .map(Number)
+        .find(
+          (code) => errorStatus === code || errorMessage.includes(String(code))
+        )
 
       if (retriableCode) {
         const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
@@ -520,14 +524,14 @@ function getContextMetrics(baseSha: string, headSha: string) {
   }
 }
 
+const isValidReviewDepth = (depth: string | undefined): depth is ReviewDepth =>
+  ['detailed', 'standard', 'focused'].includes(depth || '')
+
+const envInt = (value: string | undefined): number => parseInt(value || '0')
+
 function getReviewContextFromEnv(): ReviewContext {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   const reviewDepth = process.env.REVIEW_DEPTH
-  const isValidReviewDepth = (
-    depth: string | undefined
-  ): depth is ReviewDepth => {
-    return ['detailed', 'standard', 'focused'].includes(depth || '')
-  }
 
   // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
   // Ensure process.env values are treated as strings to satisfy TypeScript
@@ -546,9 +550,9 @@ function getReviewContextFromEnv(): ReviewContext {
     totalLoc: metrics.totalLoc,
     reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
     changedAreas: metrics.changedAreas,
-    reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
-    resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
-    changesRequested: parseInt(process.env.CHANGES_REQUESTED || '0'),
+    reviewCount: envInt(process.env.REVIEW_COUNT),
+    resolvedCount: envInt(process.env.RESOLVED_COUNT),
+    changesRequested: envInt(process.env.CHANGES_REQUESTED),
     previousReviews: process.env.PREVIOUS_REVIEWS || '',
     linkedIssueBody: process.env.LINKED_ISSUE_BODY,
     issueNumber: process.env.ISSUE_NUMBER,
@@ -565,6 +569,44 @@ function getReviewContextFromEnv(): ReviewContext {
 }
 
 // 3. Refactored buildReviewPrompt
+const truncateText = (
+  text: string,
+  maxLength: number,
+  suffix: string,
+  atLineBoundary = false
+): string => {
+  if (text.length <= maxLength) return text
+  const cut = atLineBoundary ? text.lastIndexOf('\n', maxLength) : maxLength
+  return text.substring(0, cut) + suffix
+}
+
+const formatFailureList = (failedChecks: FailedCheck[]): string =>
+  failedChecks
+    .map((c) => {
+      const truncatedLog = c.logSnippet
+        ? truncateText(c.logSnippet, 15000, '\n... [LOGS TRUNCATED]')
+        : c.logSnippet
+      return `- **${c.name}** (${c.conclusion}) ${truncatedLog ? `\n  Error: \`\`\`\n${truncatedLog}\n\`\`\`` : ''}`
+    })
+    .join('\n')
+
+interface ParsedReview {
+  createdAt: string
+  body: string
+}
+
+const formatPreviousReviews = (previousReviews: string): string => {
+  if (!previousReviews) return 'None'
+  try {
+    const reviews = JSON.parse(previousReviews) as ParsedReview[]
+    return reviews
+      .map((r, i) => `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`)
+      .join('\n---\n')
+  } catch {
+    return previousReviews
+  }
+}
+
 export async function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
@@ -585,44 +627,12 @@ export async function buildReviewPrompt(
     : 'Initial Review'
 
   // --- Diff Section ---
-  const maxDiffLength = 30000 // Reduced from 60k to allocate more token budget for the generation output
-  const truncatedDiff =
-    diff.length > maxDiffLength
-      ? diff.substring(0, diff.lastIndexOf('\n', maxDiffLength)) +
-        '\n...[DIFF TRUNCATED]'
-      : diff
+  // Reduced from 60k to allocate more token budget for the generation output
+  const truncatedDiff = truncateText(diff, 30000, '\n...[DIFF TRUNCATED]', true)
 
-  const failureList = context.failedChecks
-    .map((c) => {
-      const maxLogSnippetLength = 15000
-      const truncatedLog =
-        c.logSnippet && c.logSnippet.length > maxLogSnippetLength
-          ? c.logSnippet.substring(0, maxLogSnippetLength) +
-            '\n... [LOGS TRUNCATED]'
-          : c.logSnippet
-      return `- **${c.name}** (${c.conclusion}) ${truncatedLog ? `\n  Error: \`\`\`\n${truncatedLog}\n\`\`\`` : ''}`
-    })
-    .join('\n')
+  const failureList = formatFailureList(context.failedChecks)
 
-  const previousReviews = context.previousReviews
-    ? (() => {
-        interface Review {
-          createdAt: string
-          body: string
-        }
-        try {
-          const reviews = JSON.parse(context.previousReviews) as Review[]
-          return reviews
-            .map(
-              (r: Review, i: number) =>
-                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
-            )
-            .join('\n---\n')
-        } catch (_e) {
-          return context.previousReviews
-        }
-      })()
-    : 'None'
+  const previousReviews = formatPreviousReviews(context.previousReviews)
 
   let testCoverageAlert = ''
   if (context.missingTests) {
@@ -631,11 +641,9 @@ export async function buildReviewPrompt(
     testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
   }
 
-  const maxSlopLength = 2000
-  const truncatedSlopAnalysis =
-    context.slopAnalysis && context.slopAnalysis.length > maxSlopLength
-      ? context.slopAnalysis.substring(0, maxSlopLength) + '\n...[TRUNCATED]'
-      : context.slopAnalysis || 'Not available.'
+  const truncatedSlopAnalysis = context.slopAnalysis
+    ? truncateText(context.slopAnalysis, 2000, '\n...[TRUNCATED]')
+    : 'Not available.'
 
   const customInstructions = instructions || ''
 
@@ -676,6 +684,87 @@ export async function buildReviewPrompt(
   return promptTemplate
 }
 
+const REVIEW_RESPONSE_SCHEMA: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    reviewComment: { type: SchemaType.STRING },
+    labels: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+    },
+    verdict: { type: SchemaType.STRING },
+    suggestedIssues: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          title: { type: SchemaType.STRING },
+          description: { type: SchemaType.STRING },
+          type: {
+            type: SchemaType.STRING,
+            enum: [
+              'bug',
+              'enhancement',
+              'refactor',
+              'chore',
+              'documentation',
+              'technical-debt',
+              'frontend-improvement',
+              'security',
+            ],
+            format: 'enum',
+          },
+          priority: {
+            type: SchemaType.STRING,
+            enum: ['high', 'medium', 'low'],
+            format: 'enum',
+          },
+          fingerprint: {
+            type: SchemaType.STRING,
+            description:
+              'A stable, unique identifier for the issue (e.g., file_path:entity_name).',
+          },
+          isPreExisting: {
+            type: SchemaType.BOOLEAN,
+            description:
+              'Whether the issue is pre-existing technical debt (true) or introduced by the PR (false).',
+          },
+          filePath: {
+            type: SchemaType.STRING,
+            description:
+              'The path to the file where the issue was found (relative to repo root).',
+          },
+          lineNumber: {
+            type: SchemaType.NUMBER,
+            description: 'The line number where the issue starts.',
+          },
+        },
+        required: [
+          'title',
+          'description',
+          'type',
+          'priority',
+          'fingerprint',
+          'isPreExisting',
+          'filePath',
+          'lineNumber',
+        ],
+      },
+    },
+  },
+  required: ['reviewComment', 'labels', 'verdict'],
+}
+
+const writeSkipResult = async (
+  outputFile: string | null | undefined,
+  labels: string[]
+): Promise<void> => {
+  await writeOutput(
+    JSON.stringify({ reviewComment: '', labels, verdict: 'comment' }),
+    outputFile
+  )
+}
+
 async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
@@ -692,24 +781,14 @@ async function runReviewPreset(
     // If it's already ai-reviewed, we don't necessarily want to label it 'not reviewed'
     // but the requirement says "always include one".
     // However, if it's already reviewed, it should already have 'approved' or 'not approved'.
-    await writeOutput(
-      JSON.stringify({ reviewComment: '', labels: [], verdict: 'comment' }),
-      outputFile
-    )
+    await writeSkipResult(outputFile, [])
     return
   }
 
   const diffFile = process.env.PR_DIFF_FILE
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
-    await writeOutput(
-      JSON.stringify({
-        reviewComment: '',
-        labels: ['not reviewed'],
-        verdict: 'comment',
-      }),
-      outputFile
-    )
+    await writeSkipResult(outputFile, ['not reviewed'])
     return
   }
 
@@ -723,14 +802,7 @@ async function runReviewPreset(
 
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
-    await writeOutput(
-      JSON.stringify({
-        reviewComment: '',
-        labels: ['not reviewed'],
-        verdict: 'comment',
-      }),
-      outputFile
-    )
+    await writeSkipResult(outputFile, ['not reviewed'])
     return
   }
 
@@ -749,76 +821,7 @@ async function runReviewPreset(
         maxOutputTokens: 4096,
         temperature: 0.2,
         responseMimeType: 'application/json',
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            reviewComment: { type: SchemaType.STRING },
-            labels: {
-              type: SchemaType.ARRAY,
-              items: { type: SchemaType.STRING },
-            },
-            verdict: { type: SchemaType.STRING },
-            suggestedIssues: {
-              type: SchemaType.ARRAY,
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  title: { type: SchemaType.STRING },
-                  description: { type: SchemaType.STRING },
-                  type: {
-                    type: SchemaType.STRING,
-                    enum: [
-                      'bug',
-                      'enhancement',
-                      'refactor',
-                      'chore',
-                      'documentation',
-                      'technical-debt',
-                      'frontend-improvement',
-                      'security',
-                    ],
-                    format: 'enum',
-                  },
-                  priority: {
-                    type: SchemaType.STRING,
-                    enum: ['high', 'medium', 'low'],
-                    format: 'enum',
-                  },
-                  fingerprint: {
-                    type: SchemaType.STRING,
-                    description:
-                      'A stable, unique identifier for the issue (e.g., file_path:entity_name).',
-                  },
-                  isPreExisting: {
-                    type: SchemaType.BOOLEAN,
-                    description:
-                      'Whether the issue is pre-existing technical debt (true) or introduced by the PR (false).',
-                  },
-                  filePath: {
-                    type: SchemaType.STRING,
-                    description:
-                      'The path to the file where the issue was found (relative to repo root).',
-                  },
-                  lineNumber: {
-                    type: SchemaType.NUMBER,
-                    description: 'The line number where the issue starts.',
-                  },
-                },
-                required: [
-                  'title',
-                  'description',
-                  'type',
-                  'priority',
-                  'fingerprint',
-                  'isPreExisting',
-                  'filePath',
-                  'lineNumber',
-                ],
-              },
-            },
-          },
-          required: ['reviewComment', 'labels', 'verdict'],
-        },
+        responseSchema: REVIEW_RESPONSE_SCHEMA,
       },
     },
   })
@@ -917,11 +920,13 @@ export async function writeOutput(
   }
 }
 
-export async function handleError(
-  error: unknown,
-  outputFile: string | null | undefined,
-  context?: ReviewContext
-) {
+interface ClassifiedError {
+  category: string
+  userMessage: string
+  technicalDetails: string
+}
+
+const classifyReviewError = (error: unknown): ClassifiedError => {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
@@ -951,6 +956,16 @@ export async function handleError(
     category = 'Configuration Issue'
     userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }
+
+  return { category, userMessage, technicalDetails }
+}
+
+export async function handleError(
+  error: unknown,
+  outputFile: string | null | undefined,
+  context?: ReviewContext
+) {
+  const { category, userMessage, technicalDetails } = classifyReviewError(error)
 
   const commitComment = context?.commitHash
     ? `\n\n> Attempted review at commit: \`${context.commitHash}\``
