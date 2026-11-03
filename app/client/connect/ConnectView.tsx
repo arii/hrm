@@ -5,6 +5,8 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import HourglassTopIcon from '@mui/icons-material/HourglassTop'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
@@ -108,10 +110,21 @@ export default function ConnectView({
     }
   }
 
+  // Reduced motion: static hourglass instead of the indeterminate spinner.
+  // Same testid/layout so waits and VRT masks are unaffected.
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+
   if (!mounted) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        <CircularProgress data-testid="connect-loading" />
+        {prefersReducedMotion ? (
+          <HourglassTopIcon
+            data-testid="connect-loading"
+            sx={{ fontSize: 40, color: 'text.secondary' }}
+          />
+        ) : (
+          <CircularProgress data-testid="connect-loading" />
+        )}
       </Container>
     )
   }
@@ -225,7 +238,11 @@ export default function ConnectView({
             >
               {isConnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
+                  {prefersReducedMotion ? (
+                    <HourglassTopIcon sx={{ fontSize: 20 }} />
+                  ) : (
+                    <CircularProgress size={20} color="inherit" />
+                  )}
                   <span>Connecting...</span>
                 </Stack>
               ) : (
