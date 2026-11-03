@@ -1,4 +1,22 @@
-/** @type {import('next').NextConfig} */
+/**
+ * Production-only Next.js config. deploy.yml copies this over the root
+ * next.config.js before the standalone build — prod is always root-served,
+ * so the divergences from the root config below are INTENTIONAL, not drift.
+ * Do not "sync" them blindly; each is load-bearing or behavior-neutral:
+ *
+ * - output: 'standalone' — the hybrid packaging strategy (package.sh) ships
+ *   the standalone server; the root config instead uses distDir '.next_prod'.
+ * - No basePath/rewrites() — prod serves at domain root with a root
+ *   NEXTAUTH_URL, so the root config's subpath logic would evaluate to ''.
+ *   The unconditional '/hrm' redirect matches the root config's root-serving
+ *   branch exactly.
+ * - env.TESTING only (no NEXT_PUBLIC_TESTING mapping) — keeps
+ *   window.__TEST_CONTROLS__ uninstalled in production builds.
+ * - No typescript.ignoreBuildErrors — deploy builds stay strict on types.
+ * - No bundleAnalyzer wrapper — ANALYZE is never set during deploy.
+ *
+ * @type {import('next').NextConfig}
+ */
 const nextConfig = {
   poweredByHeader: false,
   images: {
