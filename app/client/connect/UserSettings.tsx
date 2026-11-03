@@ -64,6 +64,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         label="Your Name"
         placeholder="e.g., Jane Doe"
         value={data.userName}
+        inputProps={{ 'data-testid': 'user-settings-value-name' }}
         onChange={(e) => handlers.setUserName(e.target.value)}
       />
       <TextField
@@ -80,7 +81,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         onBlur={handlers.onAgeBlur}
         error={!!errors.ageError}
         helperText={errors.ageError}
-        inputProps={{ min: 1, max: 120 }}
+        inputProps={{
+          min: 1,
+          max: 120,
+          'data-testid': 'user-settings-value-age',
+        }}
       />
       {data.unitSystem === 'METRIC' ? (
         <TextField
@@ -89,6 +94,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
           placeholder="e.g., 175"
           type="number"
           value={data.userHeight.cm}
+          inputProps={{ 'data-testid': 'user-settings-value-height-cm' }}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value)) {
               handlers.setUserHeight({ cm: e.target.value })
@@ -107,6 +113,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
               placeholder="e.g., 5"
               type="number"
               value={data.userHeight.feet}
+              inputProps={{ 'data-testid': 'user-settings-value-feet' }}
               onChange={(e) => {
                 if (/^\d*$/.test(e.target.value)) {
                   handlers.setUserHeight({ feet: e.target.value })
@@ -121,6 +128,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
               placeholder="e.g., 9"
               type="number"
               value={data.userHeight.inches}
+              inputProps={{ 'data-testid': 'user-settings-value-inches' }}
               onChange={(e) => {
                 if (/^\d*$/.test(e.target.value)) {
                   handlers.setUserHeight({ inches: e.target.value })
@@ -143,6 +151,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
         placeholder={data.unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={data.userWeight}
+        inputProps={{ 'data-testid': 'user-settings-value-weight' }}
         onChange={(e) => {
           if (/^\d*\.?\d*$/.test(e.target.value)) {
             handlers.setUserWeight(e.target.value)
