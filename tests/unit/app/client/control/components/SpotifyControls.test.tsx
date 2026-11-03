@@ -391,6 +391,57 @@ describe('components/SpotifyControls', () => {
     )
   })
 
+  it('shows a working device picker while idle when devices exist', async () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            ...createMockSpotifyData().playback.track,
+            id: null,
+            name: 'Awaiting Login...',
+            artist: '',
+          },
+          is_playing: false,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: 'echo',
+            name: 'Echo',
+            is_active: false,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    render(<SpotifyControls />)
+
+    // Idle empty state stays, but the device picker must be available so a
+    // target can be chosen before anything plays (dashboard parity).
+    expect(
+      screen.getByTestId('spotify-select-music-button')
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('spotify-device-select')).toBeInTheDocument()
+    expect(screen.queryByTestId('spotify-play-pause')).not.toBeInTheDocument()
+
+    // The idle picker must actually transfer when a device is chosen.
+    const select = screen.getByTestId('spotify-device-select')
+    fireEvent.mouseDown(within(select).getByRole('combobox'))
+    fireEvent.click(await screen.findByText('Echo'))
+    await waitFor(() => {
+      expect(mockSendData).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'SPOTIFY_COMMAND',
+          command: 'TRANSFER_PLAYBACK',
+          deviceId: 'echo',
+        })
+      )
+    })
+  })
+
   it('tolerates devices with null names (#9298)', async () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
