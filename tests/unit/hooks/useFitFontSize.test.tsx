@@ -2,281 +2,212 @@
  * @jest-environment jsdom
  */
 import { render, act } from '@testing-library/react'
-import { useFitFontSize } from '@/hooks/useFitFontSize'
+import { fitFontSizeToBox, useUniformFitFontSize } from '@/hooks/useFitFontSize'
 
 // jsdom has no layout engine: box measurements are mocked per test via
-// defineProperty, and the observer globals are stubbed to capture callbacks.
+// defineProperty. The hook itself uses no observers (mount, resetKey,
+// window resize, and one font-settle pass are the only triggers).
 
-describe('useFitFontSize', () => {
-  // Real observer for the write-counter below (the global is stubbed).
-  const RealMO = globalThis.MutationObserver
-  let roCallback: (() => void) | null = null
-  let moCallback: (() => void) | null = null
-  let observedEl: Element | null = null
+const proto = HTMLElement.prototype as unknown as Record<string, unknown>
 
-  const globals = globalThis as unknown as Record<string, unknown>
-
-  beforeEach(() => {
-    roCallback = null
-    moCallback = null
-    observedEl = null
-    globals.ResizeObserver = class {
-      constructor(cb: () => void) {
-        roCallback = cb
-      }
-      observe = (el: Element) => {
-        observedEl = el
-      }
-      disconnect = jest.fn()
-      unobserve = jest.fn()
+const installPrototypeBox = (box: {
+  clientHeight: number
+  scrollHeight: number
+}) => {
+  const saved = {
+    scrollHeight: Object.getOwnPropertyDescriptor(proto, 'scrollHeight'),
+    clientHeight: Object.getOwnPropertyDescriptor(proto, 'clientHeight'),
+    scrollWidth: Object.getOwnPropertyDescriptor(proto, 'scrollWidth'),
+    clientWidth: Object.getOwnPropertyDescriptor(proto, 'clientWidth'),
+  }
+  Object.defineProperty(proto, 'scrollHeight', {
+    value: box.scrollHeight,
+    configurable: true,
+  })
+  Object.defineProperty(proto, 'clientHeight', {
+    value: box.clientHeight,
+    configurable: true,
+  })
+  Object.defineProperty(proto, 'scrollWidth', { value: 0, configurable: true })
+  Object.defineProperty(proto, 'clientWidth', {
+    value: 1000,
+    configurable: true,
+  })
+  return () => {
+    for (const [key, desc] of Object.entries(saved)) {
+      if (desc) Object.defineProperty(proto, key, desc)
+      else delete proto[key]
     }
-    globals.MutationObserver = class {
-      constructor(cb: () => void) {
-        moCallback = cb
-      }
-      observe = jest.fn()
-      disconnect = jest.fn()
-    }
+  }
+}
+
+const mockBox = (
+  el: HTMLElement,
+  box: { clientHeight: number; scrollHeightOf: () => number }
+) => {
+  Object.defineProperty(el, 'clientHeight', {
+    value: box.clientHeight,
+    configurable: true,
+  })
+  Object.defineProperty(el, 'clientWidth', { value: 1000, configurable: true })
+  Object.defineProperty(el, 'scrollHeight', {
+    get: box.scrollHeightOf,
+    configurable: true,
+  })
+  Object.defineProperty(el, 'scrollWidth', { value: 0, configurable: true })
+}
+
+describe('fitFontSizeToBox', () => {
+  it('holds max size when the content already fits', () => {
+    const el = document.createElement('div')
+    mockBox(el, { clientHeight: 200, scrollHeightOf: () => 100 })
+
+    expect(fitFontSizeToBox(el, { minPx: 14, maxPx: 28 })).toBe(28)
+    expect(el.style.fontSize).toBe('28px')
   })
 
-  afterEach(() => {
-    delete globals.ResizeObserver
-    delete globals.MutationObserver
+  it('shrinks until the content fits', () => {
+    const el = document.createElement('div')
+    mockBox(el, {
+      clientHeight: 200,
+      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
+    })
+
+    // 28px -> 280 overflows; 20px -> 200 fits exactly.
+    expect(fitFontSizeToBox(el, { minPx: 14, maxPx: 28 })).toBe(20)
+    expect(el.style.fontSize).toBe('20px')
   })
 
+  it('stops at the floor when nothing fits', () => {
+    const el = document.createElement('div')
+    mockBox(el, { clientHeight: 200, scrollHeightOf: () => 9999 })
+
+    expect(fitFontSizeToBox(el, { minPx: 14, maxPx: 28 })).toBe(14)
+    expect(el.style.fontSize).toBe('14px')
+  })
+
+  it('respects a custom step size and clamps the start', () => {
+    const el = document.createElement('div')
+    mockBox(el, {
+      clientHeight: 200,
+      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
+    })
+
+    // 28 -> 280 overflow; 23 -> 230 overflow; 18 -> 180 fits.
+    expect(fitFontSizeToBox(el, { minPx: 14, maxPx: 28, stepPx: 5 })).toBe(18)
+    // Start above max clamps down; the pass still converges.
+    expect(fitFontSizeToBox(el, { minPx: 14, maxPx: 28, startPx: 99 })).toBe(20)
+  })
+})
+
+describe('useUniformFitFontSize', () => {
   const Harness = ({
-    minPx,
-    maxPx,
-    stepPx,
-    elRef,
+    resetKey,
+    dense,
   }: {
-    minPx: number
-    maxPx: number
-    stepPx?: number
-    elRef: { current: HTMLElement | null }
+    resetKey: unknown
+    dense: boolean
   }) => {
-    const ref = useFitFontSize<HTMLDivElement>({ minPx, maxPx, stepPx })
+    const ref = useUniformFitFontSize<HTMLDivElement>('[data-fit-item]', {
+      minPx: 14,
+      maxPx: 28,
+      resetKey,
+    })
     return (
-      <div
-        ref={(node) => {
-          ref.current = node
-          elRef.current = node
-        }}
-        data-testid="box"
-      />
+      <div ref={ref}>
+        <div data-fit-item="sparse">sparse</div>
+        {dense && <div data-fit-item="dense">dense</div>}
+      </div>
     )
   }
 
-  const renderHarness = (opts: {
-    minPx: number
-    maxPx: number
-    stepPx?: number
-  }) => {
-    const elRef: { current: HTMLElement | null } = { current: null }
-    render(<Harness {...opts} elRef={elRef} />)
-    const el = elRef.current
-    if (!el) throw new Error('harness element did not mount')
-    return el
-  }
+  const itemsOf = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll<HTMLElement>('[data-fit-item]'))
 
-  /** flush the rAF/setTimeout-scheduled fit pass */
-  const flushFit = async () => {
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50))
-    })
-  }
-
-  const mockBox = (
-    el: HTMLElement,
-    box: { clientHeight: number; scrollHeightOf: () => number }
-  ) => {
-    Object.defineProperty(el, 'clientHeight', {
-      value: box.clientHeight,
-      configurable: true,
-    })
-    Object.defineProperty(el, 'clientWidth', {
-      value: 1000,
-      configurable: true,
-    })
-    Object.defineProperty(el, 'scrollHeight', {
-      get: box.scrollHeightOf,
-      configurable: true,
-    })
-    Object.defineProperty(el, 'scrollWidth', { value: 0, configurable: true })
-  }
-
-  it('holds max size when the content already fits', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    mockBox(el, { clientHeight: 200, scrollHeightOf: () => 100 })
-    await flushFit()
-
-    expect(el.style.fontSize).toBe('28px')
-    expect(observedEl).toBe(el)
-  })
-
-  it('shrinks until the content fits', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    // Simulated layout: content height tracks the applied size.
-    mockBox(el, {
+  it('applies one shared size: the minimum of the fits', () => {
+    const restore = installPrototypeBox({
       clientHeight: 200,
-      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
+      scrollHeight: 100,
     })
-    await flushFit()
-
-    // 28px -> 280 overflows; 20px -> 200 fits exactly.
-    expect(el.style.fontSize).toBe('20px')
-  })
-
-  it('stops at the floor when nothing fits', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    mockBox(el, { clientHeight: 200, scrollHeightOf: () => 9999 })
-    await flushFit()
-
-    expect(el.style.fontSize).toBe('14px')
-  })
-
-  it('respects a custom step size', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28, stepPx: 5 })
-    mockBox(el, {
-      clientHeight: 200,
-      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
-    })
-    await flushFit()
-
-    // 28 -> 280 overflow; 23 -> 230 overflow; 18 -> 180 fits.
-    expect(el.style.fontSize).toBe('18px')
-  })
-
-  it('refits when the box resizes', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    let boxHeight = 200
-    mockBox(el, {
-      clientHeight: 200,
-      scrollHeightOf: () =>
-        (parseFloat(el.style.fontSize || '28') * 10 * 200) / boxHeight,
-    })
-    await flushFit()
-    expect(el.style.fontSize).toBe('20px')
-
-    // Viewport shrinks: same type now overflows a shorter box.
-    boxHeight = 100
-    act(() => {
-      roCallback?.()
-    })
-    await flushFit()
-
-    expect(el.style.fontSize).toBe('14px')
-  })
-
-  it('refits when the content mutates', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    let lines = 1
-    mockBox(el, {
-      clientHeight: 200,
-      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10 * lines,
-    })
-    await flushFit()
-    expect(el.style.fontSize).toBe('20px')
-
-    // New workout data doubles the content; box size unchanged.
-    lines = 2
-    act(() => {
-      moCallback?.()
-    })
-    await flushFit()
-
-    expect(el.style.fontSize).toBe('14px')
-  })
-
-  it('grows back when the box grows', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    let fitsAtMax = false
-    mockBox(el, {
-      clientHeight: 200,
-      scrollHeightOf: () => (fitsAtMax ? 100 : 9999),
-    })
-    await flushFit()
-    expect(el.style.fontSize).toBe('14px')
-
-    // Viewport/row grows and the content now fits large: reset to max.
-    Object.defineProperty(el, 'clientHeight', {
-      value: 10000,
-      configurable: true,
-    })
-    fitsAtMax = true
-    act(() => {
-      roCallback?.()
-    })
-    await flushFit()
-
-    expect(el.style.fontSize).toBe('28px')
-  })
-
-  it('does not rewrite size on repeated callbacks with a settled box', async () => {
-    const el = renderHarness({ minPx: 14, maxPx: 28 })
-    mockBox(el, {
-      clientHeight: 200,
-      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
-    })
-    await flushFit()
-    expect(el.style.fontSize).toBe('20px')
-
-    // Same box, same content: refits must be no-ops (no reset-to-max
-    // rewrite), otherwise resize notifications could visibly thrash.
-    let styleWrites = 0
-    const counter = new RealMO((records) => {
-      styleWrites += records.filter(
-        (r) => r.type === 'attributes' && r.attributeName === 'style'
-      ).length
-    })
-    counter.observe(el, { attributes: true })
-    act(() => {
-      roCallback?.()
-      roCallback?.()
-      roCallback?.()
-    })
-    await flushFit()
-    counter.disconnect()
-
-    expect(el.style.fontSize).toBe('20px')
-    expect(styleWrites).toBe(0)
-  })
-
-  it('runs a single synchronous pass without observers', () => {
-    delete globals.ResizeObserver
-    delete globals.MutationObserver
-    // Overflow must exist from mount: mock at the prototype level.
-    const proto = HTMLElement.prototype as unknown as Record<string, unknown>
-    const saved = {
-      scrollHeight: Object.getOwnPropertyDescriptor(proto, 'scrollHeight'),
-      clientHeight: Object.getOwnPropertyDescriptor(proto, 'clientHeight'),
-      scrollWidth: Object.getOwnPropertyDescriptor(proto, 'scrollWidth'),
-      clientWidth: Object.getOwnPropertyDescriptor(proto, 'clientWidth'),
-    }
     try {
-      Object.defineProperty(proto, 'scrollHeight', {
-        value: 9999,
-        configurable: true,
-      })
-      Object.defineProperty(proto, 'clientHeight', {
-        value: 200,
-        configurable: true,
-      })
-      Object.defineProperty(proto, 'scrollWidth', {
-        value: 0,
-        configurable: true,
-      })
-      Object.defineProperty(proto, 'clientWidth', {
-        value: 1000,
-        configurable: true,
-      })
-      const el = renderHarness({ minPx: 14, maxPx: 28 })
-      expect(el.style.fontSize).toBe('14px')
+      const { container } = render(<Harness resetKey={1} dense={false} />)
+      const [only] = itemsOf(container)
+      // Sparse box fits at max on the mount pass (layout effect, sync).
+      expect(only.style.fontSize).toBe('28px')
     } finally {
-      for (const [key, desc] of Object.entries(saved)) {
-        if (desc) Object.defineProperty(proto, key, desc)
-        else delete proto[key]
+      restore()
+    }
+  })
+
+  it('a dense item shrinks every item to its fit', () => {
+    const restore = installPrototypeBox({
+      clientHeight: 200,
+      scrollHeight: 100,
+    })
+    try {
+      const { container, rerender } = render(
+        <Harness resetKey={1} dense={true} />
+      )
+      const [sparse, dense] = itemsOf(container)
+      // Per-item overflows: sparse fits at max, dense needs 20px.
+      mockBox(sparse, { clientHeight: 200, scrollHeightOf: () => 100 })
+      mockBox(dense, {
+        clientHeight: 200,
+        scrollHeightOf: () => parseFloat(dense.style.fontSize || '28') * 10,
+      })
+      // New content generation refits; both land on the dense fit.
+      rerender(<Harness resetKey={2} dense={true} />)
+
+      expect(sparse.style.fontSize).toBe('20px')
+      expect(dense.style.fontSize).toBe('20px')
+    } finally {
+      restore()
+    }
+  })
+
+  it('refits on window resize', async () => {
+    const restore = installPrototypeBox({
+      clientHeight: 200,
+      scrollHeight: 100,
+    })
+    try {
+      const { container } = render(<Harness resetKey={1} dense={true} />)
+      const [sparse, dense] = itemsOf(container)
+      expect(sparse.style.fontSize).toBe('28px')
+
+      // Viewport shrinks the boxes: everything must step down together.
+      for (const el of [sparse, dense]) {
+        mockBox(el, { clientHeight: 200, scrollHeightOf: () => 9999 })
       }
+      await act(async () => {
+        window.dispatchEvent(new Event('resize'))
+        await new Promise((resolve) => setTimeout(resolve, 250))
+      })
+
+      expect(sparse.style.fontSize).toBe('14px')
+      expect(dense.style.fontSize).toBe('14px')
+    } finally {
+      restore()
+    }
+  })
+
+  it('renders nothing measurable without items', () => {
+    const restore = installPrototypeBox({
+      clientHeight: 200,
+      scrollHeight: 100,
+    })
+    try {
+      const Empty = () => {
+        const ref = useUniformFitFontSize<HTMLDivElement>('[data-fit-item]', {
+          minPx: 14,
+          maxPx: 28,
+          resetKey: 1,
+        })
+        return <div ref={ref} />
+      }
+      expect(() => render(<Empty />)).not.toThrow()
+    } finally {
+      restore()
     }
   })
 })

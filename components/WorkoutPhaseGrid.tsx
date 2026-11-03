@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import {
   Alert,
   Box,
@@ -15,7 +15,7 @@ import {
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { withBasePath } from '@/utils/urls'
-import { useFitFontSize } from '@/hooks/useFitFontSize'
+import { useUniformFitFontSize } from '@/hooks/useFitFontSize'
 import { FIT_TYPE_MIN_PX, CARD_TYPE_MAX_PX } from '@/constants/layout'
 
 interface WorkoutPhaseGridProps {
@@ -25,75 +25,71 @@ interface WorkoutPhaseGridProps {
 }
 
 /**
- * One workout-phase card. Owns a useFitFontSize instance (hooks can't run
- * in the header map below), so each card independently shrinks its type to
- * fit its own line count: sparse cards stay large, dense cards (up to the
- * observed 11-line max) step down to the shared floor before any scroll
- * fallback. Child type uses em units so the measured wrapper's px size
- * cascades; ratios match the old rem ceilings (header 1.3em ~= 36px,
- * exercises 1em = 28px at max).
+ * One workout-phase card. Sized by the grid-level uniform fit (see
+ * useUniformFitFontSize below): every card shares one size, the minimum
+ * of their fits, so a dense card (up to the observed 11-line max) shrinks
+ * all cards together. Child type uses em units so the measured wrapper's
+ * px size cascades; ratios match the old rem ceilings (header 1.3em ~=
+ * 36px, exercises 1em = 28px at max). Memoized: ancestor re-renders
+ * (timer ticks, HR packets) skip the card entirely.
  */
-const PhaseCard = ({
-  header,
-  exercises,
-}: {
-  header: string
-  exercises: string[]
-}) => {
-  const contentRef = useFitFontSize<HTMLDivElement>({
-    minPx: FIT_TYPE_MIN_PX,
-    maxPx: CARD_TYPE_MAX_PX,
-  })
-  return (
-    <Card
-      elevation={2}
-      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-    >
-      <CardContent sx={{ p: 3, flexGrow: 1, minHeight: 0, display: 'flex' }}>
-        <Box
-          ref={contentRef}
-          data-testid="phase-card-content"
-          sx={{
-            fontSize: CARD_TYPE_MAX_PX,
-            flexGrow: 1,
-            minHeight: 0,
-            overflow: 'auto',
-          }}
-        >
-          <Typography
-            component="h3"
+// Stable empty-columns identity so memo props stay referentially equal.
+const EMPTY_EXERCISES: string[] = []
+
+const PhaseCard = memo(
+  ({ header, exercises }: { header: string; exercises: string[] }) => {
+    return (
+      <Card
+        elevation={2}
+        sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      >
+        <CardContent sx={{ p: 3, flexGrow: 1, minHeight: 0, display: 'flex' }}>
+          <Box
+            data-testid="phase-card-content"
             sx={{
-              fontWeight: 700,
-              fontSize: '1.3em',
-              lineHeight: 1.15,
-              textAlign: 'center',
+              fontSize: CARD_TYPE_MAX_PX,
+              flexGrow: 1,
+              minHeight: 0,
+              overflow: 'auto',
             }}
           >
-            {header}
-          </Typography>
-          {exercises.length > 0 && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Stack spacing={1.5}>
-                {exercises.map((exercise, i) => (
-                  <Typography
-                    key={i}
-                    sx={{
-                      fontSize: '1em',
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {exercise}
-                  </Typography>
-                ))}
-              </Stack>
-            </>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-  )
-}
+            <Typography
+              component="h3"
+              sx={{
+                fontWeight: 700,
+                fontSize: '1.3em',
+                lineHeight: 1.15,
+                textAlign: 'center',
+              }}
+            >
+              {header}
+            </Typography>
+            {exercises.length > 0 && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Stack spacing={1.5}>
+                  {exercises.map((exercise, i) => (
+                    <Typography
+                      key={i}
+                      sx={{
+                        fontSize: '1em',
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {exercise}
+                    </Typography>
+                  ))}
+                </Stack>
+              </>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    )
+  }
+)
+
+PhaseCard.displayName = 'PhaseCard'
 
 export default function WorkoutPhaseGrid({
   docId,
@@ -101,6 +97,13 @@ export default function WorkoutPhaseGrid({
   onRefresh,
 }: WorkoutPhaseGridProps) {
   const [data, setData] = useState<WorkoutTableDto | null>(null)
+  // ONE shared size for all cards (minimum of their fits). Refit triggers
+  // are React data (new fetch) and window resizes only -- the fit never
+  // observes its own output, so it cannot oscillate.
+  const gridWrapRef = useUniformFitFontSize<HTMLDivElement>(
+    '[data-testid="phase-card-content"]',
+    { minPx: FIT_TYPE_MIN_PX, maxPx: CARD_TYPE_MAX_PX, resetKey: data }
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -172,7 +175,7 @@ export default function WorkoutPhaseGrid({
           <PhaseCard
             key={`${header}-${index}`}
             header={header}
-            exercises={columns[index] ?? []}
+            exercises={columns[index] ?? EMPTY_EXERCISES}
           />
         ))}
       </Box>
@@ -180,7 +183,7 @@ export default function WorkoutPhaseGrid({
   }
 
   return (
-    <Box sx={{ position: 'relative', height: '100%' }}>
+    <Box ref={gridWrapRef} sx={{ position: 'relative', height: '100%' }}>
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
