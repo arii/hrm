@@ -16,6 +16,15 @@ if [ -z "$GH_TOKEN" ] || [ -z "$PR_NUMBER" ]; then
   error "GH_TOKEN and PR_NUMBER environment variables are required."
 fi
 
+# Preflight: fail-soft on dead credentials. A revoked/expired token (the old
+# ARI_PAT 401s) must skip label management with a warning, not fail the
+# build. The durable fix is the GitHub App token minted by the
+# .github/actions/generate-token step wired in reusable-gemini-review.yml.
+if ! gh auth status >/dev/null 2>&1; then
+  warn "GH_TOKEN rejected by the API (expired or revoked?). Skipping label management."
+  exit 0
+fi
+
 # =================================================================
 # Ensure all managed labels exist in the repository
 # =================================================================

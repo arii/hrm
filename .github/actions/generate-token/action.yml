@@ -1,0 +1,66 @@
+name: 'Generate Token'
+description: 'Generates a GitHub App token with fallback to GITHUB_TOKEN'
+inputs:
+  app_id:
+    # security-safe: Provided by repository secrets, not untrusted user input.
+    description: 'The GitHub App ID'
+    required: false
+  app_private_key:
+    # security-safe: Provided by repository secrets, not untrusted user input.
+    description: 'The GitHub App Private Key'
+    required: false
+  github_token:
+    description: 'The GITHUB_TOKEN fallback'
+    required: true
+
+outputs:
+  token:
+    description: 'The generated GitHub App token or fallback GITHUB_TOKEN'
+    value: ${{ steps.determine_token.outputs.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate Inputs
+      id: validate_inputs
+      env:
+        APP_ID: ${{ inputs.app_id }}
+        APP_KEY: ${{ inputs.app_private_key }}
+      run: |
+        if [ -n "$APP_ID" ] && [ "$APP_ID" != "null" ]; then
+          if [[ ! "$APP_ID" =~ ^[0-9]+$ ]]; then
+             echo "::error::Invalid app_id format. Must be numeric."
+             exit 1
+          fi
+        fi
+        if [ -n "$APP_KEY" ] && [ "$APP_KEY" != "null" ]; then
+          if [[ ! "$APP_KEY" =~ ^-----BEGIN[[:space:]](RSA|OPENSSH)?[[:space:]]?PRIVATE[[:space:]]KEY-----[a-zA-Z0-9/+=[:space:]]+-----END[[:space:]](RSA|OPENSSH)?[[:space:]]?PRIVATE[[:space:]]KEY-----$ ]]; then
+             echo "::warning::The provided private key does not strictly match the expected PEM format regex."
+          fi
+        fi
+      shell: bash
+
+    - name: Create GitHub App Token
+      id: create_token
+      if: ${{ inputs.app_id != null && inputs.app_private_key != null && inputs.app_id != '' && inputs.app_private_key != '' }}
+      uses: actions/create-github-app-token@v3
+      continue-on-error: true
+      with:
+        app-id: ${{ inputs.app_id }}
+        private-key: ${{ inputs.app_private_key }}
+        owner: ${{ github.repository_owner }}
+
+    - name: Determine Final Token
+      id: determine_token
+      env:
+        CREATED_TOKEN: ${{ steps.create_token.outputs.token }}
+        FALLBACK_TOKEN: ${{ inputs.github_token }}
+      run: |
+        if [ -n "$CREATED_TOKEN" ]; then
+          echo "Using generated GitHub App token."
+          echo "token=$CREATED_TOKEN" >> "$GITHUB_OUTPUT"
+        else
+          echo "GitHub App token could not be generated. Falling back to GITHUB_TOKEN."
+          echo "token=$FALLBACK_TOKEN" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
