@@ -23,6 +23,7 @@ declare module '@garmin/fitsdk' {
     totalCalories: number
     avgHeartRate: number
     maxHeartRate: number
+    timeInHrZone?: number[]
     event: number
     eventType: number
     sport: number
