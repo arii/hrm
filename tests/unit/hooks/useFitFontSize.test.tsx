@@ -8,6 +8,8 @@ import { useFitFontSize } from '@/hooks/useFitFontSize'
 // defineProperty, and the observer globals are stubbed to capture callbacks.
 
 describe('useFitFontSize', () => {
+  // Real observer for the write-counter below (the global is stubbed).
+  const RealMO = globalThis.MutationObserver
   let roCallback: (() => void) | null = null
   let moCallback: (() => void) | null = null
   let observedEl: Element | null = null
@@ -184,6 +186,60 @@ describe('useFitFontSize', () => {
     await flushFit()
 
     expect(el.style.fontSize).toBe('14px')
+  })
+
+  it('grows back when the box grows', async () => {
+    const el = renderHarness({ minPx: 14, maxPx: 28 })
+    let fitsAtMax = false
+    mockBox(el, {
+      clientHeight: 200,
+      scrollHeightOf: () => (fitsAtMax ? 100 : 9999),
+    })
+    await flushFit()
+    expect(el.style.fontSize).toBe('14px')
+
+    // Viewport/row grows and the content now fits large: reset to max.
+    Object.defineProperty(el, 'clientHeight', {
+      value: 10000,
+      configurable: true,
+    })
+    fitsAtMax = true
+    act(() => {
+      roCallback?.()
+    })
+    await flushFit()
+
+    expect(el.style.fontSize).toBe('28px')
+  })
+
+  it('does not rewrite size on repeated callbacks with a settled box', async () => {
+    const el = renderHarness({ minPx: 14, maxPx: 28 })
+    mockBox(el, {
+      clientHeight: 200,
+      scrollHeightOf: () => parseFloat(el.style.fontSize || '28') * 10,
+    })
+    await flushFit()
+    expect(el.style.fontSize).toBe('20px')
+
+    // Same box, same content: refits must be no-ops (no reset-to-max
+    // rewrite), otherwise resize notifications could visibly thrash.
+    let styleWrites = 0
+    const counter = new RealMO((records) => {
+      styleWrites += records.filter(
+        (r) => r.type === 'attributes' && r.attributeName === 'style'
+      ).length
+    })
+    counter.observe(el, { attributes: true })
+    act(() => {
+      roCallback?.()
+      roCallback?.()
+      roCallback?.()
+    })
+    await flushFit()
+    counter.disconnect()
+
+    expect(el.style.fontSize).toBe('20px')
+    expect(styleWrites).toBe(0)
   })
 
   it('runs a single synchronous pass without observers', () => {
