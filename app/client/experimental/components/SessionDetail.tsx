@@ -11,11 +11,15 @@ import {
 import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
-import ZoneDistribution from './ZoneDistribution'
 import { generateFitFile } from '@/utils/fit-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
+
+const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })

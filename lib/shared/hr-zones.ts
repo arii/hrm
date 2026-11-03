@@ -116,7 +116,9 @@ export const calculateZoneFromMaxHr = (
       ? Math.min(100, Math.round((currentHr / maxHr) * 100))
       : 0
 
-  // Use the rounded percentage for threshold comparison to match UI display
+  // Compare thresholds against the ROUNDED percentage (not the raw float) so
+  // the zone matches what the UI displays and doesn't flicker between two
+  // zones when the true value hovers on a boundary (e.g. 69.96% vs 70%).
   const percentageDecimal = percentage / 100
 
   let zone = 0

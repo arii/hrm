@@ -648,6 +648,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         onConnectRef.current?.()
         return true
       } catch (error) {
+        // Zombie killer (#9154): sever any half-open GATT link so the next
+        // attempt meets a free radio instead of tripping over our own
+        // previous session. Safe when already down; never masks the error.
+        try {
+          device.gatt?.disconnect()
+        } catch {
+          // Link was already down - nothing to sever.
+        }
         const errorMsg = error instanceof Error ? error.message : String(error)
         const errorName = error instanceof DOMException ? error.name : 'Error'
 
