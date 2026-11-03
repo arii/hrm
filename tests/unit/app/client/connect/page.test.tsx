@@ -13,7 +13,7 @@ import { toDisplay } from '@/utils/units'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
 // Correctly mock the hooks
-const mockConnectAndStream = jest.fn()
+const mockConnectAndStream = jest.fn().mockResolvedValue(true)
 const mockAutoConnect = jest.fn().mockResolvedValue(undefined)
 const mockDisconnect = jest.fn()
 const mockForgetDevice = jest.fn()
