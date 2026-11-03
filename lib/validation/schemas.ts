@@ -5,6 +5,7 @@
  */
 
 import { z } from '../zod'
+import { GENDERS } from '@/types/core'
 
 // =================================================================
 // Data Model Schemas
@@ -38,7 +39,7 @@ export const HeartRateDataPointSchema = z.object({
 })
 
 export const MeasurementSystemSchema = z.enum(['IMPERIAL', 'METRIC'])
-export const GenderSchema = z.enum(['MALE', 'FEMALE'])
+export const GenderSchema = z.enum(GENDERS)
 
 export const UserPhysicalProfileSchema = z.object({
   userId: z.string().uuid(),

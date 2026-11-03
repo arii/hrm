@@ -10,7 +10,10 @@ import { HeartRateZone } from '@/lib/shared/hr-zones'
 // =================================================================================================
 
 export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE' | 'NEUTRAL'
+// Canonical gender values: Zod schemas derive from this tuple so the type
+// and runtime validation can never drift apart.
+export const GENDERS = ['MALE', 'FEMALE', 'NEUTRAL'] as const
+export type Gender = (typeof GENDERS)[number]
 
 /**
  * Represents a user's identity and authentication profile.

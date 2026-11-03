@@ -29,6 +29,7 @@ const basePath = (
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath,
+  poweredByHeader: false,
   distDir: process.env.NODE_ENV === 'production' ? '.next_prod' : '.next',
   images: {
     remotePatterns: [

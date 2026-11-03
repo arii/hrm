@@ -58,7 +58,7 @@ const useVolumePreference = (defaultVolume = 70) => {
     [setMutedState]
   )
 
-  const toggleMute = useCallback(() => {
+  const toggleMuteAndPersist = useCallback(() => {
     const isMuting = !muted
     setMutedState(isMuting)
     try {
@@ -112,7 +112,7 @@ const useVolumePreference = (defaultVolume = 70) => {
     }
   }, [])
 
-  return { volume, setVolume, muted, toggleMute, isLoaded }
+  return { volume, setVolume, muted, toggleMuteAndPersist, isLoaded }
 }
 
 export default useVolumePreference

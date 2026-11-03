@@ -36,12 +36,12 @@ describe('hooks/useVolumePreference', () => {
   it('should toggle mute state and adjust volume', () => {
     const { result } = renderHook(() => useVolumePreference(70))
     act(() => {
-      result.current.toggleMute()
+      result.current.toggleMuteAndPersist()
     })
     expect(result.current.muted).toBe(true)
     expect(result.current.volume).toBe(0)
     act(() => {
-      result.current.toggleMute()
+      result.current.toggleMuteAndPersist()
     })
     expect(result.current.muted).toBe(false)
     expect(result.current.volume).toBe(70)
@@ -50,7 +50,7 @@ describe('hooks/useVolumePreference', () => {
   it('should set volume and unmute if volume > 0', () => {
     const { result } = renderHook(() => useVolumePreference(70))
     act(() => {
-      result.current.toggleMute()
+      result.current.toggleMuteAndPersist()
     })
     expect(result.current.muted).toBe(true)
     act(() => {

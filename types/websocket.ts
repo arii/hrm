@@ -11,7 +11,9 @@ import type {
   SpotifyPlaybackState as SpotifyData, // Single source of truth for playback state
   TimerMode,
   SpotifyCommand,
+  Gender,
 } from './core'
+import { GenderSchema } from '@/lib/validation/schemas'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -129,7 +131,7 @@ export type HrmMetadataUpdateData = Omit<
 > & {
   weight?: number
   height?: number
-  gender?: string
+  gender?: Gender
 }
 
 export interface HrmMetadataUpdateMessage {
@@ -213,7 +215,7 @@ const HrmMetadataUpdateDataSchema = z.object({
   age: z.number().optional(),
   weight: z.number().optional(),
   height: z.number().optional(),
-  gender: z.string().optional(),
+  gender: GenderSchema.optional(),
 })
 
 const HrmMetadataUpdateMessageSchema = z.object({

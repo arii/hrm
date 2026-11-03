@@ -105,7 +105,7 @@ describe('components/SpotifyControls', () => {
       volume: 50,
       muted: false,
       setVolume: jest.fn(),
-      toggleMute: jest.fn(),
+      toggleMuteAndPersist: jest.fn(),
     })
   })
 
@@ -153,7 +153,7 @@ describe('components/SpotifyControls', () => {
       volume: 50,
       muted: false,
       setVolume: setVolumeMock,
-      toggleMute: jest.fn(),
+      toggleMuteAndPersist: jest.fn(),
     })
 
     render(<SpotifyControls />)
@@ -186,7 +186,7 @@ describe('components/SpotifyControls', () => {
       volume: 50,
       muted: false,
       setVolume: setVolumeMock,
-      toggleMute: jest.fn(),
+      toggleMuteAndPersist: jest.fn(),
     })
 
     const { rerender } = render(<SpotifyControls />)

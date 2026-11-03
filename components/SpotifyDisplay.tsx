@@ -6,6 +6,7 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { resolveTargetDeviceId } from '@/lib/spotify/deviceResolution'
 import {
   HRM_WEB_PLAYER_NAME,
   VOLUME_SYNC_GRACE_PERIOD_MS,
@@ -156,7 +157,7 @@ const SpotifyDisplay = () => {
   }, [spotifyData.devices])
 
   // 4. Integrate useReducer
-  const [state, dispatch] = useReducer(spotifyDisplayReducer, {
+  const [displayState, dispatch] = useReducer(spotifyDisplayReducer, {
     displayVolume: spotifyData.playback.volume_percent ?? 70,
     isMuted: spotifyData.playback.isMuted ?? false,
     isSliding: false,
@@ -168,7 +169,8 @@ const SpotifyDisplay = () => {
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
-  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
+  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } =
+    displayState
 
   const hasActiveDevice =
     !!selectedDeviceId ||
@@ -201,7 +203,7 @@ const SpotifyDisplay = () => {
       hasPendingSendRef.current &&
       timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
 
-    if (state.isSliding || shouldRespectGracePeriod) {
+    if (displayState.isSliding || shouldRespectGracePeriod) {
       return
     }
 
@@ -223,16 +225,17 @@ const SpotifyDisplay = () => {
   }, [
     spotifyData.playback.volume_percent,
     spotifyData.playback.isMuted,
-    state.isSliding,
+    displayState.isSliding,
   ])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        spotifyData.devices?.find((device) => device.is_active)?.id
+      const targetDeviceId = resolveTargetDeviceId(
+        selectedDeviceId,
+        spotifyData.devices
+      )
 
       // Refinement: Only attempt to send the command if a target device is identified.
       // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
@@ -268,13 +271,13 @@ const SpotifyDisplay = () => {
     const newMutedState = !isMuted
     const newVolume = newMutedState
       ? 0
-      : state.lastVolume > 0
-        ? state.lastVolume
+      : displayState.lastVolume > 0
+        ? displayState.lastVolume
         : 50
 
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
-  }, [isMuted, state.lastVolume, sendVolumeCommand])
+  }, [isMuted, displayState.lastVolume, sendVolumeCommand])
 
   // Effect to auto-select the active device
   useEffect(() => {

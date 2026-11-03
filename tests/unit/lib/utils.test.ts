@@ -1,6 +1,6 @@
 // tests/unit/lib/utils.test.ts
 import {
-  objectFromEntries,
+  objectFromNonNullishEntries,
   roundTo,
   formatDuration,
   formatDate,
@@ -8,13 +8,13 @@ import {
 } from '@/lib/utils'
 
 describe('lib/utils', () => {
-  describe('objectFromEntries', () => {
+  describe('objectFromNonNullishEntries', () => {
     it('should create an object from entries', () => {
       const entries: [string, number][] = [
         ['a', 1],
         ['b', 2],
       ]
-      expect(objectFromEntries(entries)).toEqual({ a: 1, b: 2 })
+      expect(objectFromNonNullishEntries(entries)).toEqual({ a: 1, b: 2 })
     })
 
     it('should filter out null and undefined values', () => {
@@ -24,11 +24,11 @@ describe('lib/utils', () => {
         ['c', 3],
         ['d', undefined],
       ]
-      expect(objectFromEntries(entries)).toEqual({ a: 1, c: 3 })
+      expect(objectFromNonNullishEntries(entries)).toEqual({ a: 1, c: 3 })
     })
 
     it('should return an empty object for an empty array', () => {
-      expect(objectFromEntries([])).toEqual({})
+      expect(objectFromNonNullishEntries([])).toEqual({})
     })
   })
 

@@ -157,7 +157,10 @@ describe('WebSocket Full Integration Test', () => {
     ws2.close()
   })
 
-  it('should delete session if client fails to reconnect within grace period', async () => {
+  it('should retain session shortly after disconnect (multi-tab support)', async () => {
+    // Contract from #9648: the aggressive 5s grace cleanup was removed so one
+    // client can hold multiple tabs; sessions purge via TTL, not disconnect.
+    // A session idle for 6s (under the 30s staleness threshold) must survive.
     const clientId = 'cleanup-test-client'
     const wsUrlWithId = `${wsUrl}?clientId=${clientId}`
 
@@ -179,10 +182,10 @@ describe('WebSocket Full Integration Test', () => {
     await ackPromise
     ws1.terminate()
 
-    // 2. Wait for longer than the grace period (5s) + buffer (1s)
+    // 2. Wait past the old 5s grace period + buffer (1s)
     await new Promise((resolve) => setTimeout(resolve, 6000))
 
-    // 3. Reconnect and check that the session is gone
+    // 3. Reconnect and check that the session survived
     const ws2 = new WebSocket(wsUrlWithId)
     await new Promise((resolve) => ws2.on('open', resolve))
     const statePromise = waitForMessage<ServerMessage>(
@@ -198,8 +201,8 @@ describe('WebSocket Full Integration Test', () => {
     const clientData = state.payload.hrmData.find(
       (c) => c.clientId === clientId
     )
-    expect(clientData?.name).toBeUndefined()
-    expect(clientData?.value).toBe(0)
+    expect(clientData?.name).toBe('Cleanup Test')
+    expect(clientData?.value).toBe(120)
 
     ws2.close()
   })

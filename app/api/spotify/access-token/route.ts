@@ -1,8 +1,10 @@
 import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { ApiError } from '@/lib/errors'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API route to securely provide the Spotify access token to the client.
@@ -15,54 +17,34 @@ import { NextResponse } from 'next/server'
  * @param _req The incoming Next.js API request (unused).
  * @returns A NextResponse object with the access token or an error.
  */
-export async function GET(_req: Request) {
-  try {
-    let accessToken: string | null = null
-    const session = await getServerSession(authOptions)
+async function getAccessToken(_req: NextRequest) {
+  let accessToken: string | null = null
+  const session = await getServerSession(authOptions)
 
-    if (session?.accessToken && session.error !== 'RefreshAccessTokenError') {
-      accessToken = session.accessToken
-    } else {
-      // Fallback to SpotifyTokenManager (System Token)
-      logger.info(
-        'No valid user session found, attempting system token fallback.'
-      )
-      const tokenManager = new SpotifyTokenManager(
-        process.env.SPOTIFY_CLIENT_ID || '',
-        process.env.SPOTIFY_CLIENT_SECRET || ''
-      )
-      accessToken = await tokenManager.getValidAccessToken()
-    }
-
-    if (!accessToken) {
-      if (session?.error === 'RefreshAccessTokenError') {
-        logger.error(
-          'Token refresh failed in NextAuth and no fallback available'
-        )
-        return NextResponse.json(
-          { error: 'Token refresh failed. Please re-authenticate.' },
-          { status: 401 }
-        )
-      }
-      logger.error(
-        'Not authenticated: No user session or valid system token available.'
-      )
-      return NextResponse.json(
-        { error: 'Not authenticated or token is missing.' },
-        { status: 401 }
-      )
-    }
-
-    return NextResponse.json({
-      accessToken: accessToken,
-    })
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error({ error: message }, 'Internal Server Error')
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
+  if (session?.accessToken && session.error !== 'RefreshAccessTokenError') {
+    accessToken = session.accessToken
+  } else {
+    // Fallback to SpotifyTokenManager (System Token)
+    logger.info(
+      'No valid user session found, attempting system token fallback.'
     )
+    const tokenManager = new SpotifyTokenManager(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
+    )
+    accessToken = await tokenManager.getValidAccessToken()
   }
+
+  if (!accessToken) {
+    if (session?.error === 'RefreshAccessTokenError') {
+      throw new ApiError(401, 'Token refresh failed. Please re-authenticate.')
+    }
+    throw new ApiError(401, 'Not authenticated or token is missing.')
+  }
+
+  return NextResponse.json({
+    accessToken: accessToken,
+  })
 }
+
+export const GET = withErrorHandler(getAccessToken)

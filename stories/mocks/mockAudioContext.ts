@@ -4,6 +4,6 @@ export const mockAudioContext: AudioContextType = {
   volume: 50,
   setVolume: () => {},
   muted: false,
-  toggleMute: () => {},
+  toggleMuteAndPersist: () => {},
   isLoaded: true,
 }
