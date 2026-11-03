@@ -6,15 +6,13 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { TimerConfigMessage, TimerModeCommandMessage } from '@/types/websocket'
 import { TimerMode } from '@/types/core'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
-import DurationStepper from './DurationStepper'
 import TimerModeSelector from './TimerModeSelector'
 import TimerCommandPanel from './TimerCommandPanel'
+import TimerDurationConfig from './TimerDurationConfig'
 import { useTimerCommand } from './useTimerCommand'
 
 import { useTheme, alpha } from '@mui/material/styles'
@@ -93,83 +91,13 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={3} sx={{ mb: 2 }}>
-            <Box>
-              <Typography
-                sx={{
-                  color: 'common.white',
-                  fontWeight: 'medium',
-                  mb: 1,
-                  fontSize: '0.95rem',
-                  textAlign: 'center',
-                }}
-              >
-                Timer Presets
-              </Typography>
-              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setWorkTime(20)
-                    setRestTime(10)
-                  }}
-                  disabled={controlsDisabled}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: 'secondary.dark',
-                    '&:hover': { backgroundColor: 'secondary.main' },
-                  }}
-                  data-testid="timer-preset-tabata-button"
-                >
-                  Tabata (20/10)
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setWorkTime(60)
-                    setRestTime(60)
-                  }}
-                  disabled={controlsDisabled}
-                  sx={{
-                    flex: 1,
-                    backgroundColor: 'secondary.dark',
-                    '&:hover': { backgroundColor: 'secondary.main' },
-                  }}
-                  data-testid="timer-preset-emom-button"
-                >
-                  EMOM (60/60)
-                </Button>
-              </Stack>
-            </Box>
-            <Card
-              variant="outlined"
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                background: alpha(theme.palette.common.white, 0.05),
-                borderColor: alpha(theme.palette.common.white, 0.1),
-              }}
-            >
-              <Stack spacing={2}>
-                <DurationStepper
-                  label="Work Duration (s)"
-                  value={workTime}
-                  onChange={setWorkTime}
-                  disabled={controlsDisabled}
-                  color={theme.palette.error.main}
-                  data-testid="work-duration-input"
-                />
-                <DurationStepper
-                  label="Rest Duration (s)"
-                  value={restTime}
-                  onChange={setRestTime}
-                  disabled={controlsDisabled}
-                  color={theme.palette.success.main}
-                  data-testid="rest-duration-input"
-                />
-              </Stack>
-            </Card>
-          </Stack>
+          <TimerDurationConfig
+            workTime={workTime}
+            restTime={restTime}
+            onWorkChange={setWorkTime}
+            onRestChange={setRestTime}
+            disabled={controlsDisabled}
+          />
         )}
 
         <TimerCommandPanel

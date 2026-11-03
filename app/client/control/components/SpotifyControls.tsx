@@ -59,11 +59,10 @@ const SpotifyControls = () => {
     selectDevice,
   })
 
-  const { optimisticIsPlaying, handlePlaybackCommand } = useOptimisticPlayPause(
-    {
-      sendCommand: sendSpotifyCommand,
-    }
-  )
+  const { displayPlaying, handlePlaybackCommand } = useOptimisticPlayPause({
+    sendCommand: sendSpotifyCommand,
+    serverIsPlaying: spotifyData.playback.is_playing,
+  })
 
   const hasSpotifyData =
     spotifyData.playback.track.name !== 'Awaiting Login...' &&
@@ -75,7 +74,8 @@ const SpotifyControls = () => {
       data-testid="spotify-controls"
       sx={{
         mb: 3,
-        color: 'white',
+        color: 'common.white',
+        // Deliberate translucent slate (no palette equivalent); not a token gap.
         background: 'rgba(30, 41, 59, 0.7)',
       }}
     >
@@ -90,11 +90,7 @@ const SpotifyControls = () => {
             />
 
             <PlaybackControls
-              isPlaying={
-                optimisticIsPlaying !== null
-                  ? optimisticIsPlaying
-                  : spotifyData.playback.is_playing
-              }
+              isPlaying={displayPlaying}
               onCommand={handlePlaybackCommand}
               disabled={connectionStatus !== 'Connected'}
             />

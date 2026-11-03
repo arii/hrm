@@ -6,6 +6,10 @@ import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { useSpotifyVolumeSync } from '@/hooks/useSpotifyVolumeSync'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import {
+  setOptimisticPlaying,
+  useSyncedPlaying,
+} from '@/lib/spotify/optimisticPlayback'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -170,6 +174,10 @@ const SpotifyDisplay = () => {
   const [autoPending, setAutoPending] = useState(false)
   const autoPendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPlaying = spotifyData.playback?.is_playing ?? false
+  // Displayed state: shared optimistic value while fresh so every surface
+  // (dashboard, control page) flips instantly and in sync. Guards below
+  // keep using the server value so guesses never drive transfers.
+  const displayPlaying = useSyncedPlaying(isPlaying)
   useEffect(() => {
     if (!isReady || !deviceId) return
     if (connectionStatus !== 'Connected') return
@@ -224,9 +232,11 @@ const SpotifyDisplay = () => {
   )
 
   const handlePlayPauseToggle = () => {
-    if (spotifyData.playback.is_playing) {
+    if (displayPlaying) {
+      setOptimisticPlaying(false)
       executeSpotify('PAUSE')
     } else {
+      setOptimisticPlaying(true)
       executeSpotify('PLAY')
     }
   }
@@ -282,17 +292,21 @@ const SpotifyDisplay = () => {
     const showConnectingBadge =
       !stable.active &&
       !autoPending &&
-      !isPlaying &&
+      !displayPlaying &&
       (!sdkReady || !stable.listed)
-    const showAutoPending = !stable.active && autoPending && !isPlaying
+    const showAutoPending = !stable.active && autoPending && !displayPlaying
     const showConnectButton =
-      !stable.active && !isPlaying && sdkReady && stable.listed && !autoPending
+      !stable.active &&
+      !displayPlaying &&
+      sdkReady &&
+      stable.listed &&
+      !autoPending
 
     return (
       <Box
         data-testid="spotify-display-container"
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.playback.is_playing ? 'Playing' : 'Paused'
+          displayPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
         sx={{
           backgroundColor: 'grey.900',
@@ -415,14 +429,10 @@ const SpotifyDisplay = () => {
               backgroundColor: 'grey.700',
               '&:hover': { backgroundColor: 'grey.600' },
             }}
-            aria-label={spotifyData.playback.is_playing ? 'Pause' : 'Play'}
+            aria-label={displayPlaying ? 'Pause' : 'Play'}
             data-testid="spotify-play-pause-button"
           >
-            {spotifyData.playback.is_playing ? (
-              <PauseIcon />
-            ) : (
-              <PlayArrowIcon />
-            )}
+            {displayPlaying ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
           <IconButton
             size="small"

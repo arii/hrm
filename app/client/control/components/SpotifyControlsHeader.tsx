@@ -2,6 +2,7 @@ import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
+import { SPOTIFY_BRAND_COLOR } from '@/constants/spotify'
 
 /** Card header + track search for the control page (#9298). */
 const SpotifyControlsHeader = ({
@@ -14,7 +15,7 @@ const SpotifyControlsHeader = ({
       variant="h6"
       sx={{
         mb: 2,
-        color: '#1DB954',
+        color: SPOTIFY_BRAND_COLOR,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -9,9 +9,22 @@ import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import { withBasePath } from '@/utils/urls'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { SpotifyPlaylistItem as Track } from '../../types/core'
+
+const isAbort = (err: unknown) =>
+  err instanceof DOMException && err.name === 'AbortError'
+
+// Payload shape of GET /api/spotify/playlists/[playlistId]/tracks.
+interface Track {
+  id: string
+  name: string
+  artists: string
+  album: string | null
+  albumArt: string | null
+  duration: number
+  uri: string
+}
 
 interface PlaylistDetailsProps {
   playlistId: string
@@ -27,6 +40,18 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
   const [offset, setOffset] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const limit = 20
+  // Supersedes in-flight fetches (playlist switch, fast scroll) and aborts
+  // on unmount so navigation never resolves stale state.
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => () => abortRef.current?.abort(), [])
+
+  const startFetch = useCallback(() => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    return controller.signal
+  }, [])
 
   const fetchMoreTracks = useCallback(async () => {
     if (!playlistId) return
@@ -36,7 +61,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       const response = await fetch(
         withBasePath(
           `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
-        )
+        ),
+        { signal: startFetch() }
       )
       if (!response.ok) {
         throw new Error('Failed to fetch playlist details')
@@ -47,10 +73,11 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       setOffset((prev) => prev + data.tracks.length)
       setHasMore(data.tracks.length === limit)
     } catch (err) {
+      if (isAbort(err)) return
       console.error('Failed to fetch playlist tracks:', err)
       setError(err instanceof Error ? err.message : 'An unknown error occurred')
     }
-  }, [playlistId, offset, limit])
+  }, [playlistId, offset, limit, startFetch])
 
   useEffect(() => {
     const fetchInitialTracks = async () => {
@@ -64,7 +91,8 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         const response = await fetch(
           withBasePath(
             `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=0`
-          )
+          ),
+          { signal: startFetch() }
         )
         if (!response.ok) {
           throw new Error('Failed to fetch playlist details')
@@ -74,6 +102,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         setOffset(data.tracks.length)
         setHasMore(data.tracks.length === limit)
       } catch (err) {
+        if (isAbort(err)) return
         console.error('Failed to fetch playlist tracks:', err)
         setError(
           err instanceof Error ? err.message : 'An unknown error occurred'
@@ -82,7 +111,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
     }
 
     fetchInitialTracks()
-  }, [playlistId, limit])
+  }, [playlistId, limit, startFetch])
 
   return (
     <>
@@ -110,12 +139,27 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
             {tracks.map((track, index) => (
               <ListItem key={`${track.id}-${index}`} divider disablePadding>
                 <ListItemButton onClick={() => onTrackPlay(index)}>
-                  <MusicNote
-                    sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
-                  />
+                  {track.albumArt ? (
+                    <Box
+                      component="img"
+                      src={track.albumArt}
+                      alt=""
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 1,
+                        mr: 1.5,
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <MusicNote
+                      sx={{ mr: 1.5, color: 'text.secondary', fontSize: 20 }}
+                    />
+                  )}
                   <ListItemText
                     primary={track.name}
-                    secondary={`${Array.isArray(track.artists) ? track.artists.map((a) => a.name).join(', ') : track.artists} - ${track.album?.name || 'Unknown Album'}`}
+                    secondary={`${track.artists} - ${track.album || 'Unknown Album'}`}
                   />
                 </ListItemButton>
               </ListItem>

@@ -1,7 +1,7 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
-import Skeleton from '@mui/material/Skeleton'
+import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import HrTile from '@/components/HrTile'
@@ -29,45 +29,27 @@ const HrmConnectionPanel = () => {
       }}
     >
       {isLoading ? (
-        // Transient loading state: skeleton promises imminent content and must
-        // disappear once connected. Never render it in the idle empty state:
-        // a pulsing loader that never resolves both lies to users and trips
-        // the VRT readiness gate (waits.ts treats MuiSkeleton as "loading").
-        <>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: { xs: '100%', sm: 'calc(50% - 8px)' },
-              height: '100%', // Ensure the container fills the grid cell
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              No Heart Rate Data
-            </Typography>
-            <Typography variant="body1" color="text.secondary" align="center">
-              Heart rate data will be displayed here once a monitor is connected
-              and streaming.
-            </Typography>
-          </Box>
-          <Skeleton
-            variant="rectangular"
-            data-testid="hr-tile-grid-item"
-            sx={{
-              display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
-              height: 220,
-              borderRadius: 3,
-            }}
-          />
-        </>
+        <Box
+          data-testid="hrm-connection-loading"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+            gap: 2,
+            p: 2,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <CircularProgress />
+          <Typography variant="body1" color="text.secondary" align="center">
+            Connecting to live heart rate stream...
+          </Typography>
+        </Box>
       ) : tileData.length === 0 ? (
         <Box
           sx={{

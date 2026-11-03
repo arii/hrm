@@ -5,13 +5,14 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import HourglassTopIcon from '@mui/icons-material/HourglassTop'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
 import { SignalQualityIndicator } from './SignalQualityIndicator'
@@ -109,11 +110,21 @@ export default function ConnectView({
     }
   }
 
+  // Reduced motion: static hourglass instead of the indeterminate spinner.
+  // Same testid/layout so waits and VRT masks are unaffected.
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+
   if (!mounted) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        <CircularProgress data-testid="connect-loading" />
-        <BottomNavBar />
+        {prefersReducedMotion ? (
+          <HourglassTopIcon
+            data-testid="connect-loading"
+            sx={{ fontSize: 40, color: 'text.secondary' }}
+          />
+        ) : (
+          <CircularProgress data-testid="connect-loading" />
+        )}
       </Container>
     )
   }
@@ -132,27 +143,47 @@ export default function ConnectView({
           Edge, or Bluefy (on iOS).
         </Alert>
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
-        <BottomNavBar />
       </Container>
     )
   }
 
   const showUserDetails = hasStarted || isConnected
 
-  // Flattened render conditions (#9606): each branch predicate is named once
-  // so the JSX below reads declaratively instead of nesting ternaries.
+  // Exactly one status banner at a time, highest priority first: a named
+  // failure beats the workout-paused notice (pause state is also visible in
+  // the workout controls), which beats the connected confirmation, which
+  // beats transient progress info.
+  const banner = (() => {
+    const failed =
+      deviceStatus && !isConnected && deviceStatus.includes('Failed')
+    if (failed) {
+      return { severity: 'error' as const, text: deviceStatus }
+    }
+    if (hasStarted && !isConnected) {
+      return {
+        severity: 'warning' as const,
+        text: 'Device Disconnected - Workout Paused',
+      }
+    }
+    if (isConnected && bluetoothConnected) {
+      return {
+        severity: 'success' as const,
+        text: 'Connected! Heart rate data is being streamed.',
+      }
+    }
+    if (
+      deviceStatus &&
+      !isConnected &&
+      !deviceStatus.includes('Disconnected')
+    ) {
+      return { severity: 'info' as const, text: deviceStatus }
+    }
+    return null
+  })()
+  // Flattened render conditions (#9606): kept for the non-banner branches.
   const showUserProfile = !showUserDetails
   const isConnecting = deviceStatus.includes('Connecting')
-  const showStatusAlert =
-    Boolean(deviceStatus) &&
-    !isConnected &&
-    !deviceStatus.includes('Disconnected')
-  const statusSeverity: 'error' | 'info' = deviceStatus.includes('Failed')
-    ? 'error'
-    : 'info'
   const hasProfile = Boolean(data.userName.trim() && data.userAge.trim())
-  const showSuccessAlert = isConnected && bluetoothConnected
-  const showResumeWarning = hasStarted && !isConnected
   const showStatusCaption = deviceStatus !== 'Connected'
 
   return (
@@ -187,13 +218,13 @@ export default function ConnectView({
           </Box>
         )}
 
-        {showStatusAlert && (
+        {banner && (
           <Alert
             data-testid="connection-status-alert"
-            severity={statusSeverity}
+            severity={banner.severity}
             sx={{ mb: 2 }}
           >
-            {deviceStatus}
+            {banner.text}
           </Alert>
         )}
 
@@ -207,7 +238,11 @@ export default function ConnectView({
             >
               {isConnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
+                  {prefersReducedMotion ? (
+                    <HourglassTopIcon sx={{ fontSize: 20 }} />
+                  ) : (
+                    <CircularProgress size={20} color="inherit" />
+                  )}
                   <span>Connecting...</span>
                 </Stack>
               ) : (
@@ -260,18 +295,6 @@ export default function ConnectView({
           )}
         </Box>
 
-        {showSuccessAlert && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
-        )}
-
-        {showResumeWarning && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Device Disconnected - Workout Paused
-          </Alert>
-        )}
-
         {isConnected && (
           <Box sx={{ mt: 2 }} data-testid="hr-tile">
             <HrTile
@@ -309,7 +332,6 @@ export default function ConnectView({
 
         <ResetSection onReset={handleFullReset} isResetting={isResetting} />
       </Container>
-      <BottomNavBar />
     </>
   )
 }

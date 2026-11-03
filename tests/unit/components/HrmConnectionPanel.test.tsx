@@ -58,7 +58,7 @@ describe('HrmConnectionPanel', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders a loading placeholder when connection is pending', () => {
+  it('renders a loading indicator when connection is pending', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connecting...',
@@ -69,26 +69,14 @@ describe('HrmConnectionPanel', () => {
         <HrmConnectionPanel />
       </UserSettingsProvider>
     )
-    // Expect the placeholder grid item to be present
-    expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
+    expect(screen.getByTestId('hrm-connection-loading')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+    expect(screen.queryByText('No Heart Rate Data')).not.toBeInTheDocument()
   })
 
-  it('renders a semantic Skeleton loader while connection is pending (#9024)', () => {
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
-      connectionStatus: 'Reconnecting...',
-      activeAlerts: [],
-    })
-    render(
-      <UserSettingsProvider>
-        <HrmConnectionPanel />
-      </UserSettingsProvider>
-    )
-    // Regression: the placeholder must pulse via MUI Skeleton, not a static Box.
-    const placeholder = screen.getByTestId('hr-tile-grid-item')
-    expect(placeholder).toHaveClass('MuiSkeleton-root')
-  })
-
+  // NOTE (UX branch): leader's #9024 Skeleton-loader test is intentionally
+  // dropped here — this branch's held redesign uses a CircularProgress
+  // spinner for the loading state (asserted above), not a skeleton.
   it('renders no skeleton in the idle empty state (loader is transient-only)', () => {
     mockUseWebSocket.mockReturnValue({
       hrmData: [],

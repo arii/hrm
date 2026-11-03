@@ -43,7 +43,7 @@ A 5-level system from subtle (elevation 1) to prominent (elevation 5) is used.
 
 #### **Accessibility**
 
-- **Touch targets**: Minimum 48px height/width for all interactive elements.
+- **Touch targets**: Minimum 44px height/width for all interactive elements (WCAG 2.1 AA, criterion 2.5.5). The interactive target may exceed the visual element (e.g. an expanded `::before` hit area on slider thumbs).
 - **Contrast**: WCAG AA compliant text contrast ratios.
 - **Focus indicators**: Clear, consistent focus states.
 
