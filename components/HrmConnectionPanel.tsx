@@ -28,7 +28,11 @@ const HrmConnectionPanel = () => {
         height: '100%',
       }}
     >
-      {isLoading || tileData.length === 0 ? (
+      {isLoading ? (
+        // Transient loading state: skeleton promises imminent content and must
+        // disappear once connected. Never render it in the idle empty state:
+        // a pulsing loader that never resolves both lies to users and trips
+        // the VRT readiness gate (waits.ts treats MuiSkeleton as "loading").
         <>
           <Box
             sx={{
@@ -64,6 +68,30 @@ const HrmConnectionPanel = () => {
             }}
           />
         </>
+      ) : tileData.length === 0 ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+            gap: 2,
+            p: 2,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            No Heart Rate Data
+          </Typography>
+          <Typography variant="body1" color="text.secondary" align="center">
+            Heart rate data will be displayed here once a monitor is connected
+            and streaming.
+          </Typography>
+        </Box>
       ) : (
         tileData.map((user: ClientHrmData) => {
           // Destructure to remove volatile timestamps causing re-renders
