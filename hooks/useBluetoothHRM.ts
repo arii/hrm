@@ -1,4 +1,11 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
+import {
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -119,6 +126,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [signalPeriodMs, setSignalPeriodMs] = useState(0)
   const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
   const [connectionAttempted, setConnectionAttempted] = useState(false)
+  // Monotonic ownership token for connection UI state. Every NEW operation
+  // (manual connect, disconnect, reconnect, test injection) claims it via
+  // claimConnectionAttempt; stale async completions (notably silent
+  // auto-connect finishing after newer state) must check it before writing.
+  const connectionAttemptRef = useRef(0)
+  const claimConnectionAttempt = useCallback(() => {
+    connectionAttemptRef.current += 1
+  }, [])
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -263,6 +278,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [dataLivenessTimeoutMs, updateSignalPeriod, heartbeatInterval])
 
   const disconnect = useCallback(() => {
+    claimConnectionAttempt()
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
     if (abortControllerRef.current) {
@@ -284,7 +300,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
     setSignalStatus({ last: 0, slow: 0 })
-  }, [])
+  }, [claimConnectionAttempt])
 
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
@@ -328,6 +344,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const reconnect = useCallback(
     (device: BluetoothDevice, reason = 'Connection lost') => {
+      claimConnectionAttempt()
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
@@ -383,7 +400,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }, delay)
     },
-    [forgetDevice]
+    [forgetDevice, claimConnectionAttempt]
   )
 
   const onDisconnected = useCallback(
@@ -429,10 +446,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       typeof window !== 'undefined' &&
       clientEnv.NEXT_PUBLIC_TESTING === 'true'
     ) {
+      // Test injections claim ownership like any newer operation, so a
+      // racing silent auto-connect cannot wipe injected VRT state.
+      const setTestStatus: Dispatch<
+        SetStateAction<BluetoothConnectionStatus>
+      > = (action) => {
+        claimConnectionAttempt()
+        setStatus(action)
+      }
+      const setTestMessage: Dispatch<SetStateAction<string | null>> = (
+        action
+      ) => {
+        claimConnectionAttempt()
+        setCustomStatusMessage(action)
+      }
       window.__TEST_CONTROLS__ = {
         ...window.__TEST_CONTROLS__,
-        setHrmStatus: setStatus,
-        setCustomHrmStatusMessage: setCustomStatusMessage,
+        setHrmStatus: setTestStatus,
+        setCustomHrmStatusMessage: setTestMessage,
         setSignalStatus,
       }
     }
@@ -465,6 +496,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const connectToGatt = useCallback(
@@ -740,6 +772,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         logger.info('connectAndStream skipped: connection already in progress')
         return false
       }
+
+      // Manual (non-silent) attempts that actually proceed take UI ownership
+      // from any racing silent auto-connect. Skipped attempts (above) claim
+      // nothing: they wrote no state, so the in-flight attempt still owns
+      // the UI and its completion must land. Silent attempts never claim
+      // (see autoConnect).
+      if (!silent) claimConnectionAttempt()
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
         if (!silent) handleConnectionError(err)
@@ -849,11 +888,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userAge,
       // Stable ref object from useHrmMetadataSync; listed for exhaustive-deps.
       userDetailsRef,
+      claimConnectionAttempt,
     ]
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
     if (isConnecting.current) return
+
+    // Capture, don't claim: silent attempts yield to any newer operation.
+    const attempt = connectionAttemptRef.current
 
     try {
       setConnectionAttempted(true)
@@ -867,13 +910,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       )
 
       if (!deviceFoundAndAttempted) {
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
-        setCustomStatusMessage(null)
+        // Stale-completion guard: a late silent finish must not wipe newer
+        // state (a manual connect tap, or test-injected scan state racing
+        // this attempt). Only the latest operation owns the UI.
+        if (connectionAttemptRef.current === attempt) {
+          setStatus(BluetoothConnectionStatus.DISCONNECTED)
+          setCustomStatusMessage(null)
+        }
       }
     } catch (error) {
       logger.error({ error }, 'Auto-connect failed')
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(getAutoConnectFailureMessage(error))
+      if (connectionAttemptRef.current === attempt) {
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        setCustomStatusMessage(getAutoConnectFailureMessage(error))
+      }
     }
   }, [connectAndStream])
 
