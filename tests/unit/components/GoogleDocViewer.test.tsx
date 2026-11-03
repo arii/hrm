@@ -47,23 +47,29 @@ describe('GoogleDocViewer', () => {
     )
   })
 
-  it('renders nothing if embedUrl is invalid', () => {
+  it('renders an explanatory placeholder if embedUrl is invalid (#9260)', () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     try {
-      const { container } = render(
-        <GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />
-      )
-      expect(container).toBeEmptyDOMElement()
+      render(<GoogleDocViewer title="Test Doc" embedUrl="invalid-url" />)
+      expect(
+        screen.getByTestId('google-doc-viewer-invalid')
+      ).toBeInTheDocument()
+      expect(screen.getByText('Test Doc')).toBeInTheDocument()
+      expect(screen.getByText(/document URL is invalid/)).toBeInTheDocument()
+      expect(screen.queryByTitle('Test Doc')).not.toBeInTheDocument()
       expect(errorSpy).toHaveBeenCalledWith('Invalid URL:', 'invalid-url')
     } finally {
       errorSpy.mockRestore()
     }
   })
 
-  it('renders nothing if embedUrl is empty', () => {
-    const { container } = render(
-      <GoogleDocViewer title="Test Doc" embedUrl="" />
-    )
-    expect(container).toBeEmptyDOMElement()
+  it('renders an explanatory placeholder if embedUrl is empty (#9260)', () => {
+    render(<GoogleDocViewer title="Test Doc" embedUrl="" />)
+    expect(screen.getByTestId('google-doc-viewer-invalid')).toBeInTheDocument()
+    expect(screen.getByText('Test Doc')).toBeInTheDocument()
+    expect(
+      screen.getByText(/No document URL is configured/)
+    ).toBeInTheDocument()
+    expect(screen.queryByTitle('Test Doc')).not.toBeInTheDocument()
   })
 })
