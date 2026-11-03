@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { readFile } from 'fs/promises'
 import path from 'path'
-import { parseConflicts } from './utils/git-conflicts'
+import { parseConflicts, type ConflictBlock } from './utils/git-conflicts'
 import {
   generateContentWithFallback,
   JsonProcessor,
@@ -27,6 +27,58 @@ function isResolutionArray(data: unknown): data is Resolution[] {
       typeof item.resolution === 'string'
   )
 }
+
+const buildResolverPrompt = (
+  trimmedFile: string,
+  fileConflicts: ConflictBlock[]
+): string => `
+You are an Expert Git Conflict Resolver for a TypeScript/Next.js application.
+Your task is to resolve the following merge conflicts intelligently for the file \`${trimmedFile}\`.
+
+### Instructions:
+1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
+2. **Preserve Both**: If both sides added valid, non-conflicting code (e.g., different imports, different map keys), KEEP BOTH.
+3. **Select Best**: If logic directly contradicts, choose the more modern implementation (usually Incoming if it's a refactor).
+4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
+
+### Conflicts to Resolve:
+${JSON.stringify(fileConflicts, null, 2)}
+
+### Response Format (JSON Only):
+\`\`\`json
+[
+  {
+    "id": "conflict-src/file.ts-10",
+    "resolution": "import { A } from 'a';\\nimport { B } from 'b';"
+  }
+]
+\`\`\`
+`
+
+const formatResolutionChunk = (
+  fileConflicts: ConflictBlock[],
+  data: Resolution[]
+): string => {
+  let chunk = ''
+  for (const res of data) {
+    const original = fileConflicts.find((c) => c.id === res.id)
+    if (!original) continue
+
+    chunk += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`
+    chunk += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`
+    chunk += `--- \n`
+  }
+  return chunk
+}
+
+const formatUnprocessedSection = (
+  unprocessedFiles: { file: string; error: string }[]
+): string =>
+  `---
+### ⚠️ Unprocessed Files
+The following files could not be processed due to errors:
+${unprocessedFiles.map((f) => `- \`${f.file}\` (Reason: ${f.error})`).join('\n')}
+`
 
 export async function runConflictResolution(
   genAI: GoogleGenerativeAI,
@@ -68,29 +120,7 @@ export async function runConflictResolution(
       continue
     }
 
-    const prompt = `
-You are an Expert Git Conflict Resolver for a TypeScript/Next.js application.
-Your task is to resolve the following merge conflicts intelligently for the file \`${trimmedFile}\`.
-
-### Instructions:
-1. **Analyze Semantics**: Understand what "HEAD" (Current) and the "Incoming" branch were trying to achieve.
-2. **Preserve Both**: If both sides added valid, non-conflicting code (e.g., different imports, different map keys), KEEP BOTH.
-3. **Select Best**: If logic directly contradicts, choose the more modern implementation (usually Incoming if it's a refactor).
-4. **Output Format**: Return a JSON array where each object contains the \`id\` of the conflict and the \`resolution\` string (the code to replace the conflict block with).
-
-### Conflicts to Resolve:
-${JSON.stringify(fileConflicts, null, 2)}
-
-### Response Format (JSON Only):
-\`\`\`json
-[
-  {
-    "id": "conflict-src/file.ts-10",
-    "resolution": "import { A } from 'a';\\nimport { B } from 'b';"
-  }
-]
-\`\`\`
-`
+    const prompt = buildResolverPrompt(trimmedFile, fileConflicts)
 
     try {
       const { text } = await generateContentWithFallback({
@@ -106,14 +136,7 @@ ${JSON.stringify(fileConflicts, null, 2)}
       const result = jsonProcessor.process(text)
 
       if (result.success && isResolutionArray(result.data)) {
-        for (const res of result.data) {
-          const original = fileConflicts.find((c) => c.id === res.id)
-          if (!original) continue
-
-          report += `### 📂 \`${original.file}\` (Lines ${original.startLine}-${original.endLine})\n`
-          report += `**Resolution:**\n\`\`\`typescript\n${res.resolution}\n\`\`\`\n\n`
-          report += `--- \n`
-        }
+        report += formatResolutionChunk(fileConflicts, result.data)
       } else {
         throw new Error('Failed to parse AI resolution JSON')
       }
@@ -125,13 +148,7 @@ ${JSON.stringify(fileConflicts, null, 2)}
   }
 
   if (unprocessedFiles.length > 0) {
-    report += `---
-### ⚠️ Unprocessed Files
-The following files could not be processed due to errors:
-${unprocessedFiles
-  .map((f) => `- \`${f.file}\` (Reason: ${f.error})`)
-  .join('\n')}
-`
+    report += formatUnprocessedSection(unprocessedFiles)
   }
 
   if (totalConflicts === 0 && unprocessedFiles.length === 0) {

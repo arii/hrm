@@ -21,6 +21,50 @@ class TimeoutError extends Error {
 }
 
 /**
+ * Maps a fetch failure to the standardized AppError schema.
+ * Pure classifier shared by every retry attempt.
+ */
+const classifyFetchError = (
+  error: unknown,
+  callerAborted: boolean | undefined
+): AppError => {
+  if (callerAborted) {
+    return {
+      code: 'FETCH_ABORTED',
+      message: 'Request was aborted by the caller.',
+      retryable: false,
+      originalError: error,
+    }
+  }
+  if (error instanceof TimeoutError) {
+    return {
+      code: 'NETWORK_TIMEOUT',
+      message: 'The request timed out.',
+      retryable: true,
+      originalError: error,
+    }
+  }
+  if (error instanceof Error && error.message.startsWith('HTTP Error:')) {
+    const status = (error.cause as { status: number }).status
+    return {
+      code: `HTTP_ERROR_${status}`,
+      message: `Request failed with status ${status}.`,
+      retryable: status >= 500, // Only retry on 5xx server errors
+      originalError: error,
+    }
+  }
+  return {
+    code: 'NETWORK_ERROR',
+    message:
+      error instanceof Error
+        ? error.message
+        : 'An unknown network error occurred.',
+    retryable: true,
+    originalError: error,
+  }
+}
+
+/**
  * A wrapper around the native fetch API with retry logic and error handling.
  *
  * @param url The URL to fetch.
@@ -82,52 +126,7 @@ export const fetchWithRetry = async (
       return response // Success
     } catch (error: unknown) {
       clearTimeout(timeoutId)
-
-      // Check if the caller aborted the request
-      if (options.signal?.aborted) {
-        lastError = {
-          code: 'FETCH_ABORTED',
-          message: 'Request was aborted by the caller.',
-          retryable: false,
-          originalError: error,
-        }
-        break // Break the loop immediately if aborted by caller
-      }
-
-      // Check for timeout
-      if (error instanceof TimeoutError) {
-        lastError = {
-          code: 'NETWORK_TIMEOUT',
-          message: 'The request timed out.',
-          retryable: true,
-          originalError: error,
-        }
-      }
-      // Check for HTTP errors
-      else if (
-        error instanceof Error &&
-        error.message.startsWith('HTTP Error:')
-      ) {
-        const status = (error.cause as { status: number }).status
-        lastError = {
-          code: `HTTP_ERROR_${status}`,
-          message: `Request failed with status ${status}.`,
-          retryable: status >= 500, // Only retry on 5xx server errors
-          originalError: error,
-        }
-      }
-      // Handle other generic network errors
-      else {
-        lastError = {
-          code: 'NETWORK_ERROR',
-          message:
-            error instanceof Error
-              ? error.message
-              : 'An unknown network error occurred.',
-          retryable: true,
-          originalError: error,
-        }
-      }
+      lastError = classifyFetchError(error, options.signal?.aborted)
 
       // If the error is not retryable, or we are on the last attempt, break the loop
       if (!lastError.retryable || attempt === retries) {
