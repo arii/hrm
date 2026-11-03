@@ -188,7 +188,9 @@ export interface SpotifyDevice {
   is_active: boolean
   is_private_session: boolean
   is_restricted: boolean
-  name: string
+  // Spotify usually sends a name, but the field is optional in the wild:
+  // all call sites must null-check (#9298).
+  name: string | null
   type: string
   volume_percent: number
 }
