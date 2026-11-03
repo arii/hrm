@@ -261,7 +261,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   <Chip
                     label="Preset"
                     size="small"
-                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                    sx={{ height: 20, fontSize: '0.75rem', ml: 1 }}
                   />
                 )}
                 {option.isSearchResult && !option.isPreset && (
@@ -269,7 +269,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     label="Spotify"
                     size="small"
                     color="success"
-                    sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+                    sx={{ height: 20, fontSize: '0.75rem', ml: 1 }}
                   />
                 )}
               </Box>

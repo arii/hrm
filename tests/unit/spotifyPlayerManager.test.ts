@@ -346,6 +346,28 @@ describe('SpotifyPlayerManager', () => {
       )
     })
 
+    it('should honor play:false for silent auto-connect transfers', async () => {
+      await playerManager.executeSpotifyCommand('TRANSFER_PLAYBACK', {
+        deviceId: 'new_device_id',
+        play: false,
+      })
+      expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(
+        ['new_device_id'],
+        false
+      )
+    })
+
+    it('should pass play=false through for silent auto-connect', async () => {
+      await playerManager.executeSpotifyCommand('TRANSFER_PLAYBACK', {
+        deviceId: 'new_device_id',
+        play: false,
+      })
+      expect(mockPlayer.transferPlayback).toHaveBeenCalledWith(
+        ['new_device_id'],
+        false
+      )
+    })
+
     it('should log debug on 204 No Content', async () => {
       mockPlayer.startResumePlayback.mockRejectedValue(new Error('')) // Simulate empty error often seen with 204
       // We can't easily mock the internal isEmptyResponseError utility to true without more setup,

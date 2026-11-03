@@ -7,7 +7,11 @@ import { env } from './lib/env.js' // New import
 import { httpLogger } from './utils/logger.server.js'
 import logger from './utils/logger.server.js'
 import { AppServices, createServices } from './lib/services.js' // New import
-import { WebSocketManager } from './lib/websocket.js' // New import
+import {
+  WebSocketManager,
+  createWsConnectionLimiter,
+  isAppWsUpgrade,
+} from './lib/websocket.js' // New import
 import { initSocketManager, resetSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
@@ -160,29 +164,23 @@ app.prepare().then(async () => {
 
   expressApp.use((req, res) => handle(req, res))
 
-  // Upgrade Handling
-  const wsConnections = new Map<string, number>()
+  // Upgrade Handling: only app sockets consume the per-IP budget. HMR and
+  // other upgrades pass through untracked (Next's own listener handles HMR).
+  const wsLimiter = createWsConnectionLimiter(env.WS_MAX_CONNECTIONS)
 
   server.on('upgrade', (req, socket, head) => {
-    const ip =
-      (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() ||
-      req.socket.remoteAddress
+    if (env.NODE_ENV !== 'test' && isAppWsUpgrade(req.url)) {
+      const ip =
+        (req.headers['x-forwarded-for'] as string)
+          ?.split(',')
+          .shift()
+          ?.trim() || req.socket.remoteAddress
 
-    if (env.NODE_ENV !== 'test' && ip) {
-      const count = wsConnections.get(ip) || 0
-      if (count >= env.WS_MAX_CONNECTIONS) {
+      if (ip && !wsLimiter.checkAndTrack(ip, socket as Socket)) {
         socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
         socket.destroy()
         return
       }
-      wsConnections.set(ip, count + 1)
-
-      socket.on('close', () => {
-        const currentCount = wsConnections.get(ip) || 0
-        if (currentCount > 0) {
-          wsConnections.set(ip, currentCount - 1)
-        }
-      })
     }
     wsManager.handleUpgrade(req, socket as Socket, head)
   })

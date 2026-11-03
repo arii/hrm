@@ -76,7 +76,7 @@ const MetricItem = ({
     <Typography
       component="span"
       variant="caption"
-      sx={{ fontSize: '1.2rem', opacity: 0.8 }}
+      sx={{ fontSize: '1.2rem', fontWeight: 700, opacity: 0.9 }}
     >
       {label}
     </Typography>

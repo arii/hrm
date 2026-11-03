@@ -222,9 +222,9 @@ After analyzing 24 screenshots across multiple viewports and user journeys, this
 
 ### Phase 1 (Week 1-2): Foundation
 
-- [ ] Implement enhanced typography scale
-- [ ] Update color system with accessibility compliance
-- [ ] Add basic hover/focus states
+- [x] Implement enhanced typography scale (theme h1/h2 already match spec; stragglers wired: chips/buttons to 0.75rem caption floor, control labels to 0.95rem/500)
+- [x] Update color system with accessibility compliance (Zone 3/4 dark text: 2.78:1/1.7:1 → 7.6:1/12:1; all pairs ≥3:1 large-text AA)
+- [x] Add basic hover/focus states (button hover already in theme; added global 2px `:focus-visible` brand ring)
 
 ### Phase 2 (Week 3-4): Mobile Optimization
 

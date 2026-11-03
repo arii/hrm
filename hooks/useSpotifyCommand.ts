@@ -25,6 +25,8 @@ type SpotifyVolumePayload = SpotifyBasePayload & {
 
 type SpotifyTransferPayload = {
   deviceId: string
+  /** Start playback on the target. Defaults true; silent auto-connect passes false. */
+  play?: boolean
 }
 
 type CommandPayload =

@@ -2,7 +2,12 @@
  * @jest-environment node
  */
 // tests/unit/lib/websocket.test.ts
-import { WebSocketManager } from '@/lib/websocket'
+import {
+  WebSocketManager,
+  createWsConnectionLimiter,
+  isAppWsUpgrade,
+} from '@/lib/websocket'
+import { Socket } from 'net'
 
 let savedBasePath: string | undefined
 let savedAuthUrl: string | undefined
@@ -57,5 +62,58 @@ describe('WebSocketManager.handleUpgrade', () => {
     expect(upgrade('/hrm/ws?clientId=a')).toHaveBeenCalledTimes(1)
     expect(upgrade('/ws?clientId=a')).toHaveBeenCalledTimes(1)
     expect(upgrade('/hrm/nope')).not.toHaveBeenCalled()
+  })
+})
+
+describe('isAppWsUpgrade', () => {
+  it('matches only the app socket, never HMR or pages', () => {
+    expect(isAppWsUpgrade('/ws?clientId=a')).toBe(true)
+    expect(isAppWsUpgrade('/_next/webpack-hmr')).toBe(false)
+    expect(isAppWsUpgrade('/')).toBe(false)
+    expect(isAppWsUpgrade(undefined)).toBe(false)
+  })
+
+  it('matches the prefixed path when basePath is configured', () => {
+    process.env.NEXT_PUBLIC_BASE_PATH = '/hrm'
+    expect(isAppWsUpgrade('/hrm/ws?clientId=a')).toBe(true)
+    expect(isAppWsUpgrade('/hrm/_next/webpack-hmr')).toBe(false)
+  })
+})
+
+describe('createWsConnectionLimiter', () => {
+  const fakeSocket = (destroyed = false) =>
+    ({
+      destroyed,
+      on: jest.fn(),
+    }) as unknown as Socket
+
+  it('allows upgrades under the cap and rejects at the cap', () => {
+    const limiter = createWsConnectionLimiter(2)
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(true)
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(true)
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(false)
+    // A different IP has its own budget.
+    expect(limiter.checkAndTrack('5.6.7.8', fakeSocket())).toBe(true)
+  })
+
+  it('frees the slot when the socket closes', () => {
+    const limiter = createWsConnectionLimiter(1)
+    const socket = fakeSocket()
+    expect(limiter.checkAndTrack('1.2.3.4', socket)).toBe(true)
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(false)
+    const onClose = (socket.on as jest.Mock).mock.calls.find(
+      ([event]) => event === 'close'
+    )?.[1] as () => void
+    expect(onClose).toBeDefined()
+    onClose()
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(true)
+  })
+
+  it('sweeps destroyed sockets that never emitted close', () => {
+    const limiter = createWsConnectionLimiter(1)
+    const leaked = fakeSocket()
+    expect(limiter.checkAndTrack('1.2.3.4', leaked)).toBe(true)
+    ;(leaked as { destroyed: boolean }).destroyed = true
+    expect(limiter.checkAndTrack('1.2.3.4', fakeSocket())).toBe(true)
   })
 })

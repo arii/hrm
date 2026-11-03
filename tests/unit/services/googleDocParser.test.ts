@@ -3,167 +3,111 @@ import { parseGoogleDocTable } from '@/services/googleDocParser'
 import { WorkoutTableDto } from '@/types/workout'
 
 describe('parseGoogleDocTable', () => {
-  it('should parse only the first row of an HTML table into headers', () => {
+  it('parses timing headers plus exercise columns from the stable doc format', () => {
     const html = `
-      <html>
-        <body>
-          <table>
-            <tr>
-              <td>Exercise</td>
-              <td>Sets</td>
-              <td>Reps</td>
-              <td>Notes</td>
-            </tr>
-            <tr>
-              <td>Squats</td>
-              <td>3</td>
-              <td>10</td>
-              <td>Form check</td>
-            </tr>
-          </table>
-        </body>
-      </html>
+      <table>
+        <tr>
+          <td><p>25/10/x3</p><p>Mod v up</p><p>Bikes</p></td>
+          <td><p>Tabata</p><p>Single bridge L</p><p>Single b. R</p></td>
+        </tr>
+      </table>
     `
 
     const expectedDto: WorkoutTableDto = {
-      headers: ['Exercise', 'Sets', 'Reps', 'Notes'],
+      headers: ['25/10/x3', 'Tabata'],
+      columns: [
+        ['Mod v up', 'Bikes'],
+        ['Single bridge L', 'Single b. R'],
+      ],
     }
 
-    const result = parseGoogleDocTable(html)
-    expect(result).toEqual(expectedDto)
+    expect(parseGoogleDocTable(html)).toEqual(expectedDto)
   })
 
-  it('should clean whitespace from cell contents', () => {
+  it('splits <br>-separated lines and combined exercises with reps', () => {
     const html = `
       <table>
         <tr>
-          <td>  Exercise  </td>
-          <td>Sets</td>
-          <td>\tReps</td>
-          <td>Notes</td>
+          <td>Emom<br>B. squat row 20 Floor press 15<br>Swings 20<br>Alt curl press 60 seconds</td>
         </tr>
       </table>
     `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual(['Exercise', 'Sets', 'Reps', 'Notes'])
+
+    expect(parseGoogleDocTable(html)).toEqual({
+      headers: ['Emom'],
+      columns: [
+        [
+          'B. squat row (20 reps)',
+          'Floor press (15 reps)',
+          'Swings (20 reps)',
+          'Alt curl press 60 seconds',
+        ],
+      ],
+    })
   })
 
-  it('should replace newlines with spaces in cell contents', () => {
+  it('drops empty columns and keeps ragged ones as-is', () => {
     const html = `
       <table>
         <tr>
-          <td>Line 1\nLine 2</td>
-          <td>Part A\r\nPart B</td>
-          <td>Space\rCase</td>
-          <td>Notes</td>
+          <td><p>20/10</p><p>Jumping Jacks</p><p>High Knees</p></td>
+          <td><p>3 x 10</p><p>Squats</p></td>
+          <td>   </td>
         </tr>
       </table>
     `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual([
-      'Line 1 Line 2',
-      'Part A Part B',
-      'Space Case',
-      'Notes',
-    ])
+
+    expect(parseGoogleDocTable(html)).toEqual({
+      headers: ['20/10', '3 x 10'],
+      columns: [['Jumping Jacks', 'High Knees'], ['Squats']],
+    })
   })
 
-  it('should preserve empty cells to maintain column alignment', () => {
+  it('keeps header-only phases (the UI renders them as note strips)', () => {
     const html = `
       <table>
         <tr>
-          <td>Exercise</td>
-          <td></td>
-          <td>Reps</td>
-          <td>Notes</td>
+          <td><p>20/10</p><p>Jumping Jacks</p></td>
+          <td><p>60 sec.</p></td>
         </tr>
       </table>
     `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual(['Exercise', '', 'Reps', 'Notes'])
+
+    expect(parseGoogleDocTable(html)).toEqual({
+      headers: ['20/10', '60 sec.'],
+      columns: [['Jumping Jacks'], []],
+    })
   })
 
-  it('should handle tables with 4+ columns', () => {
+  it('returns empty dto when the table has no rows or only empty cells', () => {
+    expect(parseGoogleDocTable('<table></table>')).toEqual({
+      headers: [],
+      columns: [],
+    })
+    expect(
+      parseGoogleDocTable('<table><tr><td>  </td><td></td></tr></table>')
+    ).toEqual({ headers: [], columns: [] })
+  })
+
+  it('decodes HTML entities and normalizes whitespace per line', () => {
     const html = `
       <table>
         <tr>
-          <td>Col 1</td>
-          <td>Col 2</td>
-          <td>Col 3</td>
-          <td>Col 4</td>
-          <td>Col 5</td>
+          <td><p>Sets &amp; Reps</p><p>Note&nbsp;with&nbsp;nbsp</p></td>
         </tr>
       </table>
     `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers.length).toBe(5)
-    expect(result.headers).toEqual([
-      'Col 1',
-      'Col 2',
-      'Col 3',
-      'Col 4',
-      'Col 5',
-    ])
+
+    expect(parseGoogleDocTable(html)).toEqual({
+      headers: ['Sets & Reps'],
+      columns: [['Note with nbsp']],
+    })
   })
 
-  it('should throw an error if no table is found', () => {
+  it('throws an error if no table is found', () => {
     const html = '<html><body><p>No table here</p></body></html>'
     expect(() => parseGoogleDocTable(html)).toThrow(
       'No table found in the Google Doc'
     )
-  })
-
-  it('should handle complex nested block elements and prevent text merging', () => {
-    const html = `
-      <table>
-        <tr>
-          <td>
-            <div>Block 1</div>
-            <p>Block 2</p>
-            <ul>
-              <li>Item 1</li>
-              <li>Item 2</li>
-            </ul>
-          </td>
-          <td>
-            <h1>Header</h1>
-            <blockquote>Quote</blockquote>
-          </td>
-          <td>
-            Mixed <span>inline</span> and <div>block</div> text
-          </td>
-          <td>
-            Cell with <br> break
-          </td>
-        </tr>
-      </table>
-    `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual([
-      'Block 1 Block 2 Item 1 Item 2',
-      'Header Quote',
-      'Mixed inline and block text',
-      'Cell with break',
-    ])
-  })
-
-  it('should decode HTML entities in cell contents', () => {
-    const html = `
-      <table>
-        <tr>
-          <td>&lt;Exercise&gt;</td>
-          <td>Sets &amp; Reps</td>
-          <td>Price: &pound;10</td>
-          <td>Note&nbsp;with&nbsp;nbsp</td>
-        </tr>
-      </table>
-    `
-    const result = parseGoogleDocTable(html)
-    expect(result.headers).toEqual([
-      '<Exercise>',
-      'Sets & Reps',
-      'Price: £10',
-      'Note with nbsp',
-    ])
   })
 })

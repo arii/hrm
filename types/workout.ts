@@ -2,8 +2,11 @@ export type WorkoutStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 /**
  * DTO for workout table data.
- * Contains only the first row as headers per simplified requirements.
+ * headers: timing protocol per phase (first line of each doc column).
+ * columns: exercise lists per phase; each column renders as one cell with
+ * its exercises flowing inside (no cross-column row alignment).
  */
 export interface WorkoutTableDto {
   headers: string[]
+  columns: string[][]
 }

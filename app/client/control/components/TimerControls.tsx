@@ -252,7 +252,7 @@ const TimerControls = () => {
                   color: 'common.white',
                   fontWeight: 'medium',
                   mb: 1,
-                  fontSize: '0.9rem',
+                  fontSize: '0.95rem',
                   textAlign: 'center',
                 }}
               >

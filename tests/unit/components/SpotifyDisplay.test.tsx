@@ -6,13 +6,16 @@ jest.mock('uuid', () => ({
   v4: () => 'mock-uuid-1234',
 }))
 
-import SpotifyDisplay from '@/components/SpotifyDisplay'
+import SpotifyDisplay, {
+  AUTO_TRANSFER_COOLDOWN_KEY,
+  AUTO_TRANSFER_COOLDOWN_MS,
+} from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket, WebSocketContextType } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
@@ -52,10 +55,6 @@ jest.mock('@/components/shared/VolumeSlider', () => ({
       <button aria-label={muted ? 'Unmute' : 'Mute'} onClick={onToggleMute} />
     </div>
   ),
-}))
-jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
-  __esModule: true,
-  default: () => <div data-testid="current-spotify-item-display" />,
 }))
 jest.mock('@/context/WebSocketContext')
 jest.mock('@/hooks/useSpotifyCommand')
@@ -323,6 +322,277 @@ describe('SpotifyDisplay', () => {
 
       const sliderContainer = screen.getByTestId('volume-slider')
       expect(sliderContainer.getAttribute('data-disabled')).toBe('true')
+    })
+  })
+
+  describe('auto-connect', () => {
+    const hrmDevice = {
+      id: 'hrm-device-id',
+      name: 'HRM Web Player',
+      is_active: false,
+      is_private_session: false,
+      is_restricted: false,
+      type: 'Computer',
+      volume_percent: 50,
+    }
+
+    const idlePlayback = {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+      },
+      is_playing: false,
+      isMuted: false,
+      volume_percent: 50,
+      progress_ms: 0,
+    }
+
+    const setupAutoConnect = (devices: (typeof hrmDevice)[]) => {
+      localStorage.removeItem(AUTO_TRANSFER_COOLDOWN_KEY)
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: true,
+        deviceId: 'hrm-device-id',
+        player: null,
+        isAuthenticated: true,
+      })
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: { devices, playback: idlePlayback },
+        sendData: jest.fn(),
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      } as unknown as WebSocketContextType)
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockHookValue,
+        activeDevice: devices.find((d) => d.is_active) ?? null,
+        hrmPlayer: devices.find((d) => d.name === 'HRM Web Player') ?? null,
+        playback: idlePlayback,
+      })
+    }
+
+    it('silently transfers to the browser player when nothing is active', () => {
+      setupAutoConnect([hrmDevice])
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).toHaveBeenCalledWith('TRANSFER_PLAYBACK', {
+        deviceId: 'hrm-device-id',
+        play: false,
+      })
+    })
+
+    it('never steals playback when another device is active', () => {
+      setupAutoConnect([
+        hrmDevice,
+        { ...hrmDevice, id: 'other-device', name: 'Speaker', is_active: true },
+      ])
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).not.toHaveBeenCalled()
+    })
+
+    it('waits for the device list instead of transferring blind', () => {
+      setupAutoConnect([])
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).not.toHaveBeenCalled()
+    })
+
+    it('does nothing until the player is ready', () => {
+      setupAutoConnect([hrmDevice])
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: false,
+        deviceId: null,
+        player: null,
+        isAuthenticated: true,
+      })
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).not.toHaveBeenCalled()
+    })
+
+    it('fires once per device id', () => {
+      setupAutoConnect([hrmDevice])
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
+      rerender(<SpotifyDisplay />)
+      expect(executeMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not refire within the cooldown for a new device id', () => {
+      setupAutoConnect([hrmDevice])
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).toHaveBeenCalledTimes(1)
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: true,
+        deviceId: 'hrm-device-id-2',
+        player: null,
+        isAuthenticated: true,
+      })
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('refires after the cooldown expires', () => {
+      jest.useFakeTimers()
+      try {
+        setupAutoConnect([hrmDevice])
+        renderWithProviders(<SpotifyDisplay />)
+        expect(executeMock).toHaveBeenCalledTimes(1)
+        act(() => {
+          jest.advanceTimersByTime(AUTO_TRANSFER_COOLDOWN_MS + 1000)
+        })
+        mockedUseSpotifyWebPlayback.mockReturnValue({
+          isReady: true,
+          deviceId: 'hrm-device-id-2',
+          player: null,
+          isAuthenticated: true,
+        })
+        renderWithProviders(<SpotifyDisplay />)
+        expect(executeMock).toHaveBeenCalledTimes(2)
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('does nothing while disconnected', () => {
+      setupAutoConnect([hrmDevice])
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        connectionStatus: 'Disconnected',
+      } as unknown as WebSocketContextType)
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).not.toHaveBeenCalled()
+    })
+
+    it('never steals audible playback', () => {
+      setupAutoConnect([hrmDevice])
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: {
+          devices: [hrmDevice],
+          playback: { ...idlePlayback, is_playing: true },
+        },
+      } as unknown as WebSocketContextType)
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).not.toHaveBeenCalled()
+    })
+
+    it('shows only the active badge when the HRM player is active', () => {
+      const activeHrm = { ...hrmDevice, is_active: true }
+      setupAutoConnect([activeHrm])
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockHookValue,
+        activeDevice: activeHrm,
+        isHrmPlayerActive: true,
+      })
+      renderWithProviders(<SpotifyDisplay />)
+      expect(screen.getByText(/Browser Player Active/)).toBeInTheDocument()
+      expect(
+        screen.queryByText(/Connect to HRM Web Player/)
+      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/Connecting/)).not.toBeInTheDocument()
+    })
+
+    it('shows the pending chip (not the button) right after auto-fire', () => {
+      setupAutoConnect([hrmDevice])
+      renderWithProviders(<SpotifyDisplay />)
+      expect(executeMock).toHaveBeenCalledTimes(1)
+      expect(screen.getByText('Connecting…')).toBeInTheDocument()
+      expect(
+        screen.queryByText(/Connect to HRM Web Player/)
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(/Browser Player Active/)
+      ).not.toBeInTheDocument()
+    })
+
+    it('falls back to the button 15s after an unconfirmed auto-fire', () => {
+      jest.useFakeTimers()
+      try {
+        setupAutoConnect([hrmDevice])
+        renderWithProviders(<SpotifyDisplay />)
+        expect(screen.getByText('Connecting…')).toBeInTheDocument()
+        act(() => {
+          jest.advanceTimersByTime(15000)
+        })
+        expect(
+          screen.getByText(/Connect to HRM Web Player/)
+        ).toBeInTheDocument()
+        expect(screen.queryByText('Connecting…')).not.toBeInTheDocument()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it('shows the connecting badge while the SDK is not ready', () => {
+      setupAutoConnect([hrmDevice])
+      mockedUseSpotifyWebPlayback.mockReturnValue({
+        isReady: false,
+        deviceId: null,
+        player: null,
+        isAuthenticated: true,
+      })
+      renderWithProviders(<SpotifyDisplay />)
+      expect(screen.getByText(/Connecting Player/)).toBeInTheDocument()
+      expect(
+        screen.queryByText(/Connect to HRM Web Player/)
+      ).not.toBeInTheDocument()
+    })
+
+    it('keeps the badge across brief list flaps, drops after 3 negatives', () => {
+      const activeHrm = { ...hrmDevice, is_active: true }
+      const idleHrm = { ...hrmDevice, is_active: false }
+      setupAutoConnect([activeHrm])
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockHookValue,
+        activeDevice: activeHrm,
+        isHrmPlayerActive: true,
+      })
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
+      expect(screen.getByText(/Browser Player Active/)).toBeInTheDocument()
+
+      // Two consecutive polls without active: badge holds (flap).
+      for (let i = 0; i < 2; i++) {
+        mockedUseWebSocket.mockReturnValue({
+          ...mockedUseWebSocket(),
+          spotifyData: { devices: [{ ...idleHrm }], playback: idlePlayback },
+        } as unknown as WebSocketContextType)
+        rerender(<SpotifyDisplay />)
+        expect(screen.getByText(/Browser Player Active/)).toBeInTheDocument()
+      }
+
+      // Third consecutive negative: latch releases.
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: { devices: [{ ...idleHrm }], playback: idlePlayback },
+      } as unknown as WebSocketContextType)
+      rerender(<SpotifyDisplay />)
+      expect(
+        screen.queryByText(/Browser Player Active/)
+      ).not.toBeInTheDocument()
+    })
+
+    it('stays silent while playing even with auto-pending set', () => {
+      setupAutoConnect([hrmDevice])
+      const { rerender } = renderWithProviders(<SpotifyDisplay />)
+      expect(screen.getByText('Connecting…')).toBeInTheDocument()
+
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: {
+          devices: [{ ...hrmDevice }],
+          playback: { ...idlePlayback, is_playing: true },
+        },
+      } as unknown as WebSocketContextType)
+      rerender(<SpotifyDisplay />)
+      expect(screen.queryByText('Connecting…')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(/Connect to HRM Web Player/)
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByText(/Browser Player Active/)
+      ).not.toBeInTheDocument()
     })
   })
 })

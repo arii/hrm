@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import DeviceRecommendation from '@/components/Spotify/DeviceRecommendation'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { jest } from '@jest/globals'
@@ -62,6 +62,54 @@ describe('DeviceRecommendation', () => {
     })
   })
 
+  it('shows pending state and disables while transferring', () => {
+    render(<DeviceRecommendation />)
+    fireEvent.click(screen.getByText(/Connect to HRM Web Player/i))
+    expect(executeMock).toHaveBeenCalledWith('TRANSFER_PLAYBACK', {
+      deviceId: 'hrm-1',
+    })
+    const button = screen.getByRole('button')
+    expect(button).toBeDisabled()
+    expect(screen.getByText('Connecting…')).toBeInTheDocument()
+  })
+
+  it('re-enables after the safety timeout when the server never confirms', () => {
+    jest.useFakeTimers()
+    try {
+      render(<DeviceRecommendation />)
+      fireEvent.click(screen.getByText(/Connect to HRM Web Player/i))
+      expect(screen.getByRole('button')).toBeDisabled()
+      act(() => {
+        jest.advanceTimersByTime(10000)
+      })
+      const button = screen.getByRole('button')
+      expect(button).toBeEnabled()
+      expect(screen.getByText(/Connect to HRM Web Player/i)).toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('clears pending state when the transfer lands', () => {
+    const { container, rerender } = render(<DeviceRecommendation />)
+    fireEvent.click(screen.getByText(/Connect to HRM Web Player/i))
+    expect(screen.getByText('Connecting…')).toBeInTheDocument()
+    mockedUseSpotifyCommand.mockReturnValue({
+      ...mockHookValue,
+      activeDevice: {
+        id: 'hrm-1',
+        name: 'HRM Web Player',
+        is_active: true,
+        is_private_session: false,
+        is_restricted: false,
+        type: 'Computer',
+        volume_percent: 50,
+      },
+    })
+    rerender(<DeviceRecommendation />)
+    expect(container.firstChild).toBeNull()
+  })
+
   it('renders nothing when active device exists', () => {
     mockedUseSpotifyCommand.mockReturnValue({
       ...mockHookValue,
@@ -80,6 +128,16 @@ describe('DeviceRecommendation', () => {
     expect(container.firstChild).toBeNull()
   })
 
+  it('renders nothing while anything is playing', () => {
+    mockedUseSpotifyCommand.mockReturnValue({
+      ...mockHookValue,
+      playback: { ...mockHookValue.playback, is_playing: true },
+    })
+
+    const { container } = render(<DeviceRecommendation />)
+    expect(container.firstChild).toBeNull()
+  })
+
   it('renders nothing when HRM player does not exist', () => {
     mockedUseSpotifyCommand.mockReturnValue({
       ...mockHookValue,
@@ -88,5 +146,43 @@ describe('DeviceRecommendation', () => {
 
     const { container } = render(<DeviceRecommendation />)
     expect(container.firstChild).toBeNull()
+  })
+
+  it('shows a pending state after click until a device activates', () => {
+    jest.useFakeTimers()
+    try {
+      const { rerender } = render(<DeviceRecommendation />)
+      fireEvent.click(screen.getByText(/Connect to HRM Web Player/i))
+
+      const pending = screen.getByText(/Connecting…/i)
+      expect(pending).toBeInTheDocument()
+      expect(pending.closest('button')).toBeDisabled()
+
+      // Transfer landing hides the button entirely.
+      mockedUseSpotifyCommand.mockReturnValue({
+        ...mockHookValue,
+        activeDevice: { ...mockHookValue.hrmPlayer, is_active: true },
+      })
+      rerender(<DeviceRecommendation />)
+      expect(screen.queryByText(/Connecting…/i)).not.toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('re-enables after a timeout when the server never confirms', () => {
+    jest.useFakeTimers()
+    try {
+      render(<DeviceRecommendation />)
+      fireEvent.click(screen.getByText(/Connect to HRM Web Player/i))
+      expect(screen.getByText(/Connecting…/i)).toBeInTheDocument()
+
+      act(() => {
+        jest.advanceTimersByTime(10000)
+      })
+      expect(screen.getByText(/Connect to HRM Web Player/i)).toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

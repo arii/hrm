@@ -3,20 +3,20 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import DashboardClient from '@/components/DashboardClient'
 
 // Mock child components to isolate the DashboardClient component
-jest.mock('@/components/WorkoutTableHeader', () => {
-  const WorkoutTableHeader = ({
+jest.mock('@/components/WorkoutPhaseGrid', () => {
+  const WorkoutPhaseGrid = ({
     refreshKey,
     onRefresh,
   }: {
     refreshKey: number
     onRefresh?: () => void
   }) => (
-    <div data-testid="workout-table-header" data-refresh-key={refreshKey}>
+    <div data-testid="workout-phase-grid" data-refresh-key={refreshKey}>
       <button aria-label="refresh workout table" onClick={onRefresh} />
     </div>
   )
-  WorkoutTableHeader.displayName = 'WorkoutTableHeader'
-  return WorkoutTableHeader
+  WorkoutPhaseGrid.displayName = 'WorkoutPhaseGrid'
+  return WorkoutPhaseGrid
 })
 jest.mock('@/components/GoogleDocViewer', () => {
   const GoogleDocViewer = ({
@@ -64,21 +64,19 @@ describe('DashboardClient', () => {
   it('renders GoogleDocViewer when useNativeTable is false', async () => {
     render(<DashboardClient useNativeTable={false} {...mockProps} />)
     expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('workout-phase-grid')).not.toBeInTheDocument()
   })
 
-  it('renders WorkoutTableHeader when useNativeTable is true', async () => {
+  it('renders WorkoutPhaseGrid when useNativeTable is true', async () => {
     render(<DashboardClient useNativeTable={true} {...mockProps} />)
-    expect(
-      await screen.findByTestId('workout-table-header')
-    ).toBeInTheDocument()
+    expect(await screen.findByTestId('workout-phase-grid')).toBeInTheDocument()
     expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
   })
 
   it('passes a new refreshKey to child components when refresh button is clicked', async () => {
     render(<DashboardClient useNativeTable={true} {...mockProps} />)
 
-    const workoutTableHeader = await screen.findByTestId('workout-table-header')
+    const workoutTableHeader = await screen.findByTestId('workout-phase-grid')
     const initialRefreshKey =
       workoutTableHeader.getAttribute('data-refresh-key')
 
@@ -87,11 +85,10 @@ describe('DashboardClient', () => {
     })
     fireEvent.click(refreshButton)
 
-    const updatedWorkoutTableHeader = await screen.findByTestId(
-      'workout-table-header'
-    )
+    const updatedWorkoutPhaseGrid =
+      await screen.findByTestId('workout-phase-grid')
     const updatedRefreshKey =
-      updatedWorkoutTableHeader.getAttribute('data-refresh-key')
+      updatedWorkoutPhaseGrid.getAttribute('data-refresh-key')
 
     expect(updatedRefreshKey).not.toBe(initialRefreshKey)
     expect(parseInt(updatedRefreshKey as string)).toBe(
@@ -143,6 +140,6 @@ describe('DashboardClient', () => {
     expect(alert).toHaveTextContent(
       'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
     )
-    expect(screen.queryByTestId('workout-table-header')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('workout-phase-grid')).not.toBeInTheDocument()
   })
 })

@@ -35,8 +35,8 @@ const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
   ssr: false,
 })
 
-const WorkoutTableHeader = dynamic(
-  () => import('@/components/WorkoutTableHeader'),
+const WorkoutPhaseGrid = dynamic(
+  () => import('@/components/WorkoutPhaseGrid'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
@@ -115,7 +115,7 @@ const DashboardClient = ({
               {missingConfigMsg}
             </Alert>
           ) : useNativeTable ? (
-            <WorkoutTableHeader
+            <WorkoutPhaseGrid
               docId={docId || ''}
               refreshKey={refreshKey}
               onRefresh={handleRefresh}

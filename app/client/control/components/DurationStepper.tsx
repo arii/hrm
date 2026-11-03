@@ -57,7 +57,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
           color: 'white',
           fontWeight: 'medium',
           mb: 0.5,
-          fontSize: '0.9rem',
+          fontSize: '0.95rem',
           textAlign: 'center',
         }}
       >

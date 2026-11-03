@@ -19,7 +19,11 @@ export async function GET(request: Request) {
     process.env.NEXT_PUBLIC_TESTING === 'true'
   ) {
     return NextResponse.json({
-      headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
+      headers: ['20/10', '3 x 10'],
+      columns: [
+        ['Jumping Jacks', 'High Knees'],
+        ['Squats (10 reps)', 'Plank'],
+      ],
     })
   }
 

@@ -64,12 +64,16 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
   })
 
-  test('WorkoutTableHeader rendering', async ({ dashboardPage }) => {
+  test('WorkoutPhaseGrid rendering', async ({ dashboardPage }) => {
     // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
       await route.fulfill({
         json: {
-          headers: ['Exercise', 'Sets', 'Reps'],
+          headers: ['20/10', '3 x 10'],
+          columns: [
+            ['Jumping Jacks', 'High Knees'],
+            ['Squats (10 reps)', 'Plank'],
+          ],
         },
       })
     })
@@ -78,9 +82,9 @@ test.describe('Component-Specific VRT', () => {
     await dashboardPage.goto('/?native=true&testing=true')
     await waitForPageReady(dashboardPage)
 
-    const tableHeader = dashboardPage.getByTestId('workout-table-header')
+    const tableHeader = dashboardPage.getByTestId('workout-phase-grid')
     await expect(tableHeader).toBeVisible()
-    await takeScreenshot(tableHeader, 'workout-table-header.png')
+    await takeScreenshot(tableHeader, 'workout-phase-grid.png')
   })
 
   test('SpotifyDeviceSelector menu', async ({ dashboardPage }) => {
