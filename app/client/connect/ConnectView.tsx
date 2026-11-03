@@ -139,6 +139,22 @@ export default function ConnectView({
 
   const showUserDetails = hasStarted || isConnected
 
+  // Flattened render conditions (#9606): each branch predicate is named once
+  // so the JSX below reads declaratively instead of nesting ternaries.
+  const showUserProfile = !showUserDetails
+  const isConnecting = deviceStatus.includes('Connecting')
+  const showStatusAlert =
+    Boolean(deviceStatus) &&
+    !isConnected &&
+    !deviceStatus.includes('Disconnected')
+  const statusSeverity: 'error' | 'info' = deviceStatus.includes('Failed')
+    ? 'error'
+    : 'info'
+  const hasProfile = Boolean(data.userName.trim() && data.userAge.trim())
+  const showSuccessAlert = isConnected && bluetoothConnected
+  const showResumeWarning = hasStarted && !isConnected
+  const showStatusCaption = deviceStatus !== 'Connected'
+
   return (
     <>
       <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
@@ -146,7 +162,7 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
-        {!showUserDetails ? (
+        {showUserProfile ? (
           <UserSettings profile={userProfile} />
         ) : (
           <Box
@@ -171,17 +187,15 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              data-testid="connection-status-alert"
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        {showStatusAlert && (
+          <Alert
+            data-testid="connection-status-alert"
+            severity={statusSeverity}
+            sx={{ mb: 2 }}
+          >
+            {deviceStatus}
+          </Alert>
+        )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
@@ -189,13 +203,9 @@ export default function ConnectView({
               variant="contained"
               size="large"
               onClick={onConnect}
-              disabled={
-                !data.userName.trim() ||
-                !data.userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
+              disabled={!hasProfile || isConnecting}
             >
-              {deviceStatus.includes('Connecting') ? (
+              {isConnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
@@ -241,7 +251,7 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {deviceStatus !== 'Connected' && (
+              {showStatusCaption && (
                 <Typography variant="caption" color="text.secondary">
                   Status: {deviceStatus}
                 </Typography>
@@ -250,13 +260,13 @@ export default function ConnectView({
           )}
         </Box>
 
-        {isConnected && bluetoothConnected && (
+        {showSuccessAlert && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
           </Alert>
         )}
 
-        {hasStarted && !isConnected && (
+        {showResumeWarning && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             Device Disconnected - Workout Paused
           </Alert>

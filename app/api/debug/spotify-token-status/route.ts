@@ -1,8 +1,11 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { debugAccessDenied } from '@/lib/debug-guard'
 
 export async function GET() {
+  const denied = debugAccessDenied()
+  if (denied) return denied
   try {
     const tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',

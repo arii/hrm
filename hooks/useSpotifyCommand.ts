@@ -39,7 +39,7 @@ type CommandPayload =
 /**
  * Interface for the execute function with overloads for stricter type safety.
  */
-interface ExecuteSpotify {
+export interface ExecuteSpotify {
   (command: 'PLAY', payload?: SpotifyPlayPayload): void
   (command: 'SET_VOLUME', payload: SpotifyVolumePayload): void
   (command: 'TRANSFER_PLAYBACK', payload: SpotifyTransferPayload): void

@@ -6,6 +6,8 @@ import { resetSocketManager } from '@/utils/socketManager'
 import { env } from '@/lib/env'
 
 export async function POST() {
+  // Deliberately stricter than lib/debug-guard: this route is destructive
+  // (deletes tokens, resets sockets), so TESTING alone must not open it.
   if (env.NODE_ENV === 'production' && !env.ALLOW_DEBUG_RESET) {
     return NextResponse.json(
       { message: 'This feature is only available in development mode.' },

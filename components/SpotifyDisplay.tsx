@@ -3,14 +3,10 @@
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
-import { clampVolume } from '@/hooks/useVolumePreference'
+import { useSpotifyVolumeSync } from '@/hooks/useSpotifyVolumeSync'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { resolveTargetDeviceId } from '@/lib/spotify/deviceResolution'
-import {
-  HRM_WEB_PLAYER_NAME,
-  VOLUME_SYNC_GRACE_PERIOD_MS,
-} from '@/constants/spotify'
+import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -19,7 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
@@ -36,74 +32,24 @@ export const AUTO_TRANSFER_COOLDOWN_MS = 60_000
 // consecutive negative polls before flipping false.
 export const STABLE_ACTIVE_POLLS = 3
 
-// 1. State Shape
-interface SpotifyDisplayState {
-  displayVolume: number
-  isMuted: boolean
-  isSliding: boolean
-  lastVolume: number // Last non-zero volume
+// 1. State Shape (volume state lives in useSpotifyVolumeSync)
+interface SpotifyDeviceState {
   selectedDeviceId: string
   deviceMenuAnchor: null | HTMLElement
 }
 
 // 2. Actions
-type SpotifyDisplayAction =
-  | { type: 'SET_VOLUME'; payload: number }
-  | { type: 'SET_SLIDING'; payload: boolean }
-  | { type: 'TOGGLE_MUTE' }
+type SpotifyDeviceAction =
   | { type: 'SELECT_DEVICE'; payload: string }
   | { type: 'OPEN_DEVICE_MENU'; payload: HTMLElement }
   | { type: 'CLOSE_DEVICE_MENU' }
-  | {
-      type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volume?: number; isMuted?: boolean }
-    }
 
 // 3. Reducer Logic
-const spotifyDisplayReducer = (
-  state: SpotifyDisplayState,
-  action: SpotifyDisplayAction
-): SpotifyDisplayState => {
+const spotifyDeviceReducer = (
+  state: SpotifyDeviceState,
+  action: SpotifyDeviceAction
+): SpotifyDeviceState => {
   switch (action.type) {
-    case 'SYNC_WITH_WEBSOCKET': {
-      if (state.isSliding) return state
-      const { volume, isMuted } = action.payload
-      const newVolume = volume ?? state.displayVolume
-      return {
-        ...state,
-        displayVolume: newVolume,
-        isMuted: isMuted ?? state.isMuted,
-        lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
-      }
-    }
-    case 'SET_SLIDING':
-      return { ...state, isSliding: action.payload }
-    case 'SET_VOLUME':
-      return {
-        ...state,
-        isSliding: true,
-        displayVolume: action.payload,
-        isMuted: action.payload === 0,
-        lastVolume: action.payload > 0 ? action.payload : state.lastVolume,
-      }
-    case 'TOGGLE_MUTE': {
-      const newMutedState = !state.isMuted
-      if (newMutedState) {
-        // Muting: set volume to 0
-        return {
-          ...state,
-          isMuted: true,
-          displayVolume: 0,
-        }
-      } else {
-        // Unmuting: restore to last known volume
-        return {
-          ...state,
-          isMuted: false,
-          displayVolume: state.lastVolume > 0 ? state.lastVolume : 50, // fallback
-        }
-      }
-    }
     case 'SELECT_DEVICE':
       return {
         ...state,
@@ -156,29 +102,31 @@ const SpotifyDisplay = () => {
     })
   }, [spotifyData.devices])
 
-  // 4. Integrate useReducer
-  const [displayState, dispatch] = useReducer(spotifyDisplayReducer, {
-    displayVolume: spotifyData.playback.volume_percent ?? 70,
-    isMuted: spotifyData.playback.isMuted ?? false,
-    isSliding: false,
-    lastVolume:
-      spotifyData.playback.volume_percent &&
-      spotifyData.playback.volume_percent > 0
-        ? spotifyData.playback.volume_percent
-        : 70,
+  // 4. Device selection state (volume state lives in useSpotifyVolumeSync)
+  const [deviceState, deviceDispatch] = useReducer(spotifyDeviceReducer, {
     selectedDeviceId: '',
     deviceMenuAnchor: null,
   })
-  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } =
-    displayState
+  const { selectedDeviceId, deviceMenuAnchor } = deviceState
+
+  const {
+    displayVolume,
+    isMuted,
+    handleVolumeChange,
+    handleVolumeChangeCommitted,
+    handleToggleMute,
+  } = useSpotifyVolumeSync({
+    serverVolume: spotifyData.playback.volume_percent,
+    serverMuted: spotifyData.playback.isMuted,
+    connectionStatus,
+    selectedDeviceId,
+    devices: spotifyData.devices,
+    executeSpotify,
+  })
 
   const hasActiveDevice =
     !!selectedDeviceId ||
     spotifyData.devices?.some((device) => device.is_active)
-
-  // Track the last time volume command was sent to prevent sync race conditions
-  const lastVolumeSendTimeRef = useRef<number>(0)
-  const hasPendingSendRef = useRef<boolean>(false)
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -190,114 +138,25 @@ const SpotifyDisplay = () => {
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
-  // Synchronize with WebSocket data whenever it changes.
-  // We rely on the server as the source of truth for volume, but use a grace period
-  // to prevent local sliders from "jumping" while the user is actively adjusting them.
-  useEffect(() => {
-    const timeSinceLastSend = Date.now() - lastVolumeSendTimeRef.current
-
-    // Only apply grace period if a send is pending and within the window.
-    // The server broadcasts a SPOTIFY_UPDATE immediately after a SET_VOLUME command,
-    // confirming the new state to all clients.
-    const shouldRespectGracePeriod =
-      hasPendingSendRef.current &&
-      timeSinceLastSend < VOLUME_SYNC_GRACE_PERIOD_MS
-
-    if (displayState.isSliding || shouldRespectGracePeriod) {
-      return
-    }
-
-    // Once grace period has elapsed, clear the pending send flag
-    if (
-      hasPendingSendRef.current &&
-      timeSinceLastSend >= VOLUME_SYNC_GRACE_PERIOD_MS
-    ) {
-      hasPendingSendRef.current = false
-    }
-
-    dispatch({
-      type: 'SYNC_WITH_WEBSOCKET',
-      payload: {
-        volume: spotifyData.playback.volume_percent,
-        isMuted: spotifyData.playback.isMuted,
-      },
-    })
-  }, [
-    spotifyData.playback.volume_percent,
-    spotifyData.playback.isMuted,
-    displayState.isSliding,
-  ])
-
-  // Centralized command sender for volume changes
-  const sendVolumeCommand = useCallback(
-    (volume: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId = resolveTargetDeviceId(
-        selectedDeviceId,
-        spotifyData.devices
-      )
-
-      // Refinement: Only attempt to send the command if a target device is identified.
-      // The VolumeSlider is already disabled in the UI if !hasActiveDevice.
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(volume)
-
-      lastVolumeSendTimeRef.current = Date.now()
-      hasPendingSendRef.current = true
-
-      executeSpotify('SET_VOLUME', {
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      })
-    },
-    [connectionStatus, selectedDeviceId, executeSpotify, spotifyData.devices]
-  )
-
-  // Handler for immediate UI update while sliding
-  const handleVolumeChange = (newVolume: number) => {
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
-  }
-
-  // Handler for sending the final volume value after sliding stops
-  const handleVolumeChangeCommitted = (newVolume: number) => {
-    sendVolumeCommand(newVolume)
-    dispatch({ type: 'SET_SLIDING', payload: false }) // Reset sliding state
-  }
-
-  // Handler for the VolumeSlider's mute button
-  const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
-    const newMutedState = !isMuted
-    const newVolume = newMutedState
-      ? 0
-      : displayState.lastVolume > 0
-        ? displayState.lastVolume
-        : 50
-
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
-    sendVolumeCommand(newVolume) // Send command with the new volume
-  }, [isMuted, displayState.lastVolume, sendVolumeCommand])
-
   // Effect to auto-select the active device
   useEffect(() => {
     const devices = spotifyData.devices || []
     if (devices.length === 0) {
       if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
+        deviceDispatch({ type: 'SELECT_DEVICE', payload: '' })
       }
       return
     }
     const activeDevice = devices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      deviceDispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
       return
     }
     if (
       selectedDeviceId &&
       !devices.some((device) => device.id === selectedDeviceId)
     ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
+      deviceDispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
     }
   }, [spotifyData.devices, selectedDeviceId])
 
@@ -373,7 +232,7 @@ const SpotifyDisplay = () => {
   }
 
   const handleDeviceSelect = (deviceId: string) => {
-    dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+    deviceDispatch({ type: 'SELECT_DEVICE', payload: deviceId })
     executeSpotify('TRANSFER_PLAYBACK', { deviceId })
   }
 
@@ -601,9 +460,12 @@ const SpotifyDisplay = () => {
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
             onMenuOpen={(e) =>
-              dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
+              deviceDispatch({
+                type: 'OPEN_DEVICE_MENU',
+                payload: e.currentTarget,
+              })
             }
-            onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
+            onMenuClose={() => deviceDispatch({ type: 'CLOSE_DEVICE_MENU' })}
           />
           <Button
             variant="outlined"
