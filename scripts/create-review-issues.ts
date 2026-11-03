@@ -9,7 +9,7 @@ import { z } from 'zod'
 const MIN_DESCRIPTION_LENGTH = process.env.MIN_DESCRIPTION_LENGTH
   ? parseInt(process.env.MIN_DESCRIPTION_LENGTH, 10)
   : 50
-export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
+const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
 // --- Label Configuration ---
 
@@ -116,7 +116,7 @@ const ExistingIssuesSchema = z.array(ExistingIssueSchema)
 // --- Types inferred from Zod ---
 
 export type SuggestedIssue = z.infer<typeof SuggestedIssueSchema>
-export type ReviewResult = z.infer<typeof ReviewResultSchema>
+type ReviewResult = z.infer<typeof ReviewResultSchema>
 export type ExistingIssue = z.infer<typeof ExistingIssueSchema>
 
 export interface PreparedExistingIssue extends ExistingIssue {
@@ -364,12 +364,12 @@ const GENERIC_TITLES = [
   'enhance readability',
 ]
 
-export interface QualityResult {
+interface QualityResult {
   isLowQuality: boolean
   reason?: string
 }
 
-export function checkIssueQuality(
+function checkIssueQuality(
   issue: SuggestedIssue,
   slopPattern: RegExp | null
 ): QualityResult {
@@ -416,13 +416,13 @@ export function isLowQualityIssue(
   return checkIssueQuality(issue, slopPattern).isLowQuality
 }
 
-export interface DuplicateResult {
+interface DuplicateResult {
   isDuplicate: boolean
   reason?: string
   matchingIssueNumber?: number
 }
 
-export function checkDuplicate(
+function checkDuplicate(
   newIssue: SuggestedIssue,
   existingIssues: PreparedExistingIssue[]
 ): DuplicateResult {
