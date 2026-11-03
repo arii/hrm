@@ -365,7 +365,10 @@ describe('SpotifyPolling Service', () => {
       expect(lastState?.playback.track.name).toBe('Test Track')
     })
 
-    it('should handle 204 No Content response', async () => {
+    it('should stay silent on 204 with no prior playback', async () => {
+      // Fresh idle service: an empty poll changes nothing, so no broadcast
+      // (clients already hold this state via INITIAL_STATE).
+      const before = broadcastedStates.length
       mockPlayer.getPlaybackState.mockImplementation(() =>
         Promise.resolve(null)
       )
@@ -375,10 +378,9 @@ describe('SpotifyPolling Service', () => {
       await flushPromises()
       spotifyService.stopPolling()
 
-      // Only check the last broadcasted state
-      const lastState = broadcastedStates.at(-1)
-      expect(lastState?.playback.track.name).toBe(
-        'Nothing is currently playing.'
+      expect(broadcastedStates.length).toBe(before)
+      expect(spotifyService.getState().playback.track.name).toBe(
+        'Awaiting Login...'
       )
     })
 
@@ -400,7 +402,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.stopPolling()
     }
 
-    it('should broadcast update when transitioning from playing to stopped', async () => {
+    it('should keep last track when transitioning from playing to paused', async () => {
       await runPollingScenario(
         {
           playback: {
@@ -417,29 +419,27 @@ describe('SpotifyPolling Service', () => {
 
       const lastState = broadcastedStates.at(-1)
       expect(lastState?.playback.is_playing).toBe(false)
-      expect(lastState?.playback.track.name).toBe(
-        'Nothing is currently playing.'
-      )
+      expect(lastState?.playback.track.name).toBe('Some Song')
     })
 
-    it('should broadcast update when transitioning from non-default track name to stopped', async () => {
+    it('should NOT broadcast when paused with kept track and API returns null', async () => {
+      const before = broadcastedStates.length
       await runPollingScenario(
         {
           playback: {
             ...spotifyService.getState().playback,
+            is_playing: false,
             track: {
               ...spotifyService.getState().playback.track,
-              name: 'Awaiting Login...',
+              name: 'Some Song',
             },
           },
         },
         null
       )
 
-      const lastState = broadcastedStates.at(-1)
-      expect(lastState?.playback.track.name).toBe(
-        'Nothing is currently playing.'
-      )
+      expect(broadcastedStates.length).toBe(before)
+      expect(spotifyService.getState().playback.track.name).toBe('Some Song')
     })
 
     it('should NOT broadcast if already stopped and API returns null', async () => {
