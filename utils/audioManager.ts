@@ -7,7 +7,7 @@
 
 import { getBasePath } from './urls'
 
-export class AudioManager {
+class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false
