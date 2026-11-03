@@ -114,8 +114,32 @@ export class SpotifyPlayerManager {
   private async fetchPlaybackState(): Promise<ParsedPlaybackState | null> {
     const playbackState = await this.sdk.player.getPlaybackState()
 
-    if (!playbackState || !playbackState.item) {
+    if (!playbackState) {
       return null
+    }
+
+    // Spotify can report is_playing with a null item (podcast episodes in
+    // odd states, ads, unknown content). Trust is_playing and label the
+    // content unknown — returning null here told the UI "nothing is
+    // playing" while audio played, and it never self-healed. A null item
+    // while NOT playing keeps the idle collapse below.
+    if (!playbackState.item) {
+      if (!playbackState.is_playing) return null
+      const volume_percent = playbackState.device?.volume_percent ?? 0
+      return {
+        trackId: '',
+        trackName:
+          playbackState.currently_playing_type === 'episode'
+            ? 'Podcast episode'
+            : 'Unknown track',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+        isPlaying: playbackState.is_playing,
+        is_playing: playbackState.is_playing,
+        volume_percent,
+        progress_ms: playbackState.progress_ms ?? 0,
+      }
     }
 
     const item = playbackState.item

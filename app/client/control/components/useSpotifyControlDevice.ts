@@ -37,20 +37,20 @@ export const useSpotifyControlDevice = ({
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
+    const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
 
-    // Helper: determine if device should be updated to activeId
-    const shouldUpdateToActive = () => {
-      // Initial sync or active device changed externally
-      if (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current) {
-        return Boolean(activeId)
-      }
-      // Selected device no longer exists or no device selected
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      return (!selectedDeviceId || !selectedStillExists) && Boolean(activeId)
-    }
-
-    if (shouldUpdateToActive()) {
-      setSelectedDeviceId(activeId!)
+    if (selectedDeviceId && !selectedStillExists) {
+      // Stale selection (dead SDK session id after a reload): follow the
+      // live active device, else clear so the dropdown renders empty
+      // instead of an out-of-range error. Checked first: the poll gap with
+      // no active device is exactly when staleness bites.
+      setSelectedDeviceId(activeId ?? '')
+    } else if (
+      activeId &&
+      (!prevActiveIdRef.current || activeId !== prevActiveIdRef.current)
+    ) {
+      // Initial sync or active device changed externally.
+      setSelectedDeviceId(activeId)
     }
     prevActiveIdRef.current = activeId
 
