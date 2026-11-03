@@ -122,4 +122,72 @@ describe('generateFitFile', () => {
       })
     )
   })
+
+  it('writes positional timeInHrZone seconds from the zone buckets (#9078)', () => {
+    const session: WorkoutSessionData = {
+      sessionId: 'test-session-zones',
+      startTime: 1700000000000,
+      endTime: 1700000060000,
+      status: 'finished',
+      hrHistory: [],
+      timeInZones: {
+        ZONE_0: 5.6,
+        ZONE_1: 10.2,
+        ZONE_2: 20,
+        ZONE_3: 15,
+        ZONE_4: 7,
+        ZONE_5: 2,
+        ZONE_6: 0.4,
+      },
+      averageHr: 90,
+      maxHr: 120,
+      calorieHistory: [],
+      totalCaloriesBurned: 100,
+      userSettings: { age: 30, weight: 70, maxHr: 190 },
+      lastSyncTime: 0,
+      syncStatus: 'synced',
+    }
+
+    generateFitFile(session, 1700000060000)
+
+    const lastCallArg =
+      writeMesgMock.mock.calls[writeMesgMock.mock.calls.length - 1][0]
+    // Positional ZONE_0..ZONE_6 mapping, rounded to whole seconds.
+    expect(lastCallArg).toEqual(
+      expect.objectContaining({
+        mesgNum: 18,
+        timeInHrZone: [6, 10, 20, 15, 7, 2, 0],
+      })
+    )
+  })
+
+  it('defaults missing zone buckets to zero (#9078)', () => {
+    const session: WorkoutSessionData = {
+      sessionId: 'test-session-partial-zones',
+      startTime: 1700000000000,
+      endTime: 1700000060000,
+      status: 'finished',
+      hrHistory: [],
+      // Legacy/partial records may lack string zone keys entirely.
+      timeInZones: {} as WorkoutSessionData['timeInZones'],
+      averageHr: 90,
+      maxHr: 120,
+      calorieHistory: [],
+      totalCaloriesBurned: 100,
+      userSettings: { age: 30, weight: 70, maxHr: 190 },
+      lastSyncTime: 0,
+      syncStatus: 'synced',
+    }
+
+    generateFitFile(session, 1700000060000)
+
+    const lastCallArg =
+      writeMesgMock.mock.calls[writeMesgMock.mock.calls.length - 1][0]
+    expect(lastCallArg).toEqual(
+      expect.objectContaining({
+        mesgNum: 18,
+        timeInHrZone: [0, 0, 0, 0, 0, 0, 0],
+      })
+    )
+  })
 })
