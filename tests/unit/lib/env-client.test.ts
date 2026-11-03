@@ -15,6 +15,7 @@ describe('clientEnv', () => {
 
   it('defaults NODE_ENV to development when unset', async () => {
     delete process.env.NODE_ENV
+    delete process.env.NEXT_PUBLIC_TESTING
     const { clientEnv } = await import('@/lib/env-client')
     expect(clientEnv.NODE_ENV).toBe('development')
     expect(clientEnv.NEXT_PUBLIC_TESTING).toBeUndefined()
@@ -26,10 +27,5 @@ describe('clientEnv', () => {
     const { clientEnv } = await import('@/lib/env-client')
     expect(clientEnv.NODE_ENV).toBe('production')
     expect(clientEnv.NEXT_PUBLIC_TESTING).toBe('true')
-  })
-
-  it('rejects garbage NODE_ENV', async () => {
-    process.env.NODE_ENV = 'staging'
-    await expect(import('@/lib/env-client')).rejects.toThrow()
   })
 })

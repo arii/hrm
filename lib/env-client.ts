@@ -1,21 +1,16 @@
-import { z } from 'zod'
-
 /**
  * Client-safe environment access (#9140).
  *
  * `lib/env.ts` requires server-only secrets (NEXTAUTH_SECRET) and throws in
- * the browser, so client code cannot import it. This module validates only
- * the variables available in the browser bundle: NODE_ENV plus the
- * NEXT_PUBLIC_* values used by client code. Server code must keep using
- * `lib/env.ts`, never this module.
+ * the browser, so client code cannot import it. This module centralizes the
+ * variables available in the browser bundle.
+ *
+ * NOTE: reads use direct `process.env.X` member access, exactly like the
+ * call sites they replace. A bare `process.env` object read (e.g. for
+ * schema parsing) has different bundler semantics and must not be used
+ * here — member access is what the bundler inlines per key.
  */
-const clientEnvSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
-  NEXT_PUBLIC_TESTING: z.string().optional(),
-})
-
-export const clientEnv = clientEnvSchema.parse(process.env)
-
-export type ClientEnv = z.infer<typeof clientEnvSchema>
+export const clientEnv = {
+  NODE_ENV: process.env.NODE_ENV ?? 'development',
+  NEXT_PUBLIC_TESTING: process.env.NEXT_PUBLIC_TESTING,
+} as const
