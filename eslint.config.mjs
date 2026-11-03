@@ -155,6 +155,51 @@ export default defineConfig([
     },
   },
 
+  // 8.5 Architectural Boundaries (#9707 A3). Transport and server-only
+  // modules must never be imported by UI components. Each message states
+  // why, where the logic belongs, and the doc section. Exceptions require
+  // an inline eslint-disable justification plus the PR approval label.
+  {
+    files: ['components/**', '**/components/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'ws',
+              message:
+                'Forbidden: raw socket transport in components crashes/bloats the client bundle. Move socket I/O to WebSocketContext/context adapters or hooks/ and subscribe via useWebSocket(). See docs/ARCHITECTURE_DECISIONS.md "Client/Server Module Boundaries".',
+            },
+            {
+              name: '@/utils/socketManager',
+              message:
+                'Forbidden: server socket manager in components. Use useWebSocket() from @/context/WebSocketContext instead. See docs/ARCHITECTURE_DECISIONS.md "Client/Server Module Boundaries".',
+            },
+            {
+              name: '@/utils/websocketUtils',
+              message:
+                'Forbidden: socket helpers in components. Move transport logic to context adapters or hooks/. See docs/ARCHITECTURE_DECISIONS.md "Client/Server Module Boundaries".',
+            },
+            {
+              name: '@/utils/logger.server',
+              message:
+                'Forbidden: server-only logger (pino/filesystem) in components. Use @/utils/logger instead. See docs/ARCHITECTURE_DECISIONS.md "Client/Server Module Boundaries".',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "NewExpression[callee.name='WebSocket']",
+          message:
+            'Forbidden: direct WebSocket construction in components bypasses reconnect/watchdog ownership. Use useWebSocket() from @/context/WebSocketContext instead. See docs/ARCHITECTURE_DECISIONS.md "Client/Server Module Boundaries".',
+        },
+      ],
+    },
+  },
+
   // 9. Prettier Config (Must be last to override conflicting rules)
   // This disables ESLint's stylistic rules in favor of Prettier.
   // Code formatting is enforced via a pre-commit hook using lint-staged.
