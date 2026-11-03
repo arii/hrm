@@ -5,7 +5,9 @@
  * @public
  */
 
-export class AudioManager {
+import { getBasePath } from './urls'
+
+class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false
@@ -19,8 +21,9 @@ export class AudioManager {
   }
 
   private initializeAudio() {
-    this.shortBeep = new Audio('/assets/beep-07.wav')
-    this.longBeep = new Audio('/assets/beep-01a.wav')
+    const basePath = getBasePath()
+    this.shortBeep = new Audio(`${basePath}/assets/beep-07.wav`)
+    this.longBeep = new Audio(`${basePath}/assets/beep-01a.wav`)
 
     this.shortBeep.volume = this.volume
     this.longBeep.volume = this.volume

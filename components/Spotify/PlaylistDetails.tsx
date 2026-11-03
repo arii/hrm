@@ -7,6 +7,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
+import { withBasePath } from '@/utils/urls'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -33,7 +34,9 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
 
     try {
       const response = await fetch(
-        `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
+        withBasePath(
+          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
+        )
       )
       if (!response.ok) {
         throw new Error('Failed to fetch playlist details')
@@ -59,7 +62,9 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
 
       try {
         const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=0`
+          withBasePath(
+            `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=0`
+          )
         )
         if (!response.ok) {
           throw new Error('Failed to fetch playlist details')

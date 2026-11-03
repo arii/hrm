@@ -10,6 +10,17 @@ jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
+// Mock SpotifyTokenManager so these tests are hermetic: the real manager
+// reads logs/spotify_tokens.json, and a cached token on disk flips the
+// no-session assertions from 401 to 200 depending on the machine.
+const mockGetValidAccessToken = jest.fn()
+jest.mock('@/services/spotifyTokenManager', () => ({
+  SpotifyTokenManager: jest.fn().mockImplementation(() => ({
+    getValidAccessToken: (...args: unknown[]) =>
+      mockGetValidAccessToken(...args),
+  })),
+}))
+
 // Type assertion for mocked function
 const mockedGetServerSession = getServerSession as jest.Mock
 
@@ -17,6 +28,7 @@ describe('API Route: /api/spotify/access-token', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     jest.spyOn(console, 'info').mockImplementation(() => {})
+    mockGetValidAccessToken.mockResolvedValue(null)
   })
 
   afterEach(() => {
@@ -50,6 +62,19 @@ describe('API Route: /api/spotify/access-token', () => {
 
     expect(response.status).toBe(401)
     expect(data.error).toBe('Token refresh failed. Please re-authenticate.')
+  })
+
+  it('should return 200 with the system token when no session but fallback succeeds', async () => {
+    mockedGetServerSession.mockResolvedValue(null)
+    mockGetValidAccessToken.mockResolvedValueOnce('system-token')
+
+    const response = await GET(
+      new Request('http://localhost/api/spotify/access-token')
+    )
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.accessToken).toBe('system-token')
   })
 
   it('should return the access token on success', async () => {

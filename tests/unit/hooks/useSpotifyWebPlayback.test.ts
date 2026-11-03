@@ -132,4 +132,40 @@ describe('useSpotifyWebPlayback', () => {
 
     expect(window.Spotify.Player).not.toHaveBeenCalled()
   })
+
+  it.each(['authentication_error', 'initialization_error', 'account_error'])(
+    'should clear ready state on fatal %s after ready',
+    async (event) => {
+      mockFetchWithRetry.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ accessToken: 'fake-token' }),
+      })
+
+      const { result } = renderHook(() => useSpotifyWebPlayback())
+
+      await waitFor(() => {
+        expect(window.Spotify.Player).toHaveBeenCalled()
+      })
+
+      const fireEvent = (name: string, data: unknown) => {
+        const call = mockPlayer.addListener.mock.calls.find(
+          ([eventName]: [string]) => eventName === name
+        )
+        const callback = call[1] as (d: unknown) => void
+        callback(data)
+      }
+
+      fireEvent('ready', { device_id: 'device-123' })
+      await waitFor(() => {
+        expect(result.current.isReady).toBe(true)
+        expect(result.current.deviceId).toBe('device-123')
+      })
+
+      fireEvent(event, { message: 'boom' })
+      await waitFor(() => {
+        expect(result.current.isReady).toBe(false)
+        expect(result.current.deviceId).toBeNull()
+      })
+    }
+  )
 })

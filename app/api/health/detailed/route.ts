@@ -1,6 +1,7 @@
 // app/api/health/detailed/route.ts
 import { NextResponse } from 'next/server'
 import { checkMemoryUsage, checkSpotifyAPI } from '../../../../lib/healthCheck'
+import { getInternalApiUrl } from '@/utils/urls'
 
 async function checkStatefulServices(): Promise<{
   healthy: boolean
@@ -17,7 +18,7 @@ async function checkStatefulServices(): Promise<{
     }
   }
   try {
-    const internalUrl = `${baseUrl}/api/internal/health/services`
+    const internalUrl = getInternalApiUrl('internal/health/services')
     const response = await fetch(internalUrl, { cache: 'no-store' }) // Ensure fresh data
     if (!response.ok) {
       return {

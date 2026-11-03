@@ -162,21 +162,29 @@ const useSpotifyWebPlayback = () => {
         setDeviceId(null)
       })
 
+      // Fatal player errors must clear ready state like 'not_ready' does,
+      // otherwise the UI keeps showing the player as active while dead.
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
         isInitializing.current = false
+        setIsReady(false)
+        setDeviceId(null)
         addError(`Initialization failed: ${message}`, { persist: true })
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
         isInitializing.current = false
+        setIsReady(false)
+        setDeviceId(null)
         addError(`Authentication failed: ${message}`, { persist: true })
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
         isInitializing.current = false
+        setIsReady(false)
+        setDeviceId(null)
         addError(`Account error: ${message}. A Premium account is required.`, {
           persist: true,
         })

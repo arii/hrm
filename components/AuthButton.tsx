@@ -4,6 +4,7 @@
 import Button from '@mui/material/Button'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { getBasePath } from '@/utils/urls'
 
 interface AuthButtonProps {
   providerId: string
@@ -19,8 +20,10 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
       console.log(
         `[AuthButton] Clicking login for ${providerName}, calling signIn()...`
       )
+      const basePath = getBasePath()
       const result = await signIn(providerId, {
-        callbackUrl: '/',
+        // Land back inside the served subpath (proxied) or site root (direct/prod).
+        callbackUrl: basePath === '' ? '/' : basePath,
         redirect: true,
       })
       console.log(`[AuthButton] signIn() result for ${providerName}:`, result)

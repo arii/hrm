@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import IconButton from '@mui/material/IconButton'
+import { withBasePath } from '@/utils/urls'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import PauseIcon from '@mui/icons-material/Pause'
 import Table from '@mui/material/Table'
@@ -49,7 +50,9 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
       try {
         setLoading(true)
         const response = await fetch(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
+          withBasePath(
+            `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
+          )
         )
         if (!response.ok) {
           const errorData = await response.json()
