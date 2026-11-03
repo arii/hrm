@@ -197,7 +197,9 @@ export default function ConnectPage() {
   }, [consecutiveSlowPackets, showWarning])
 
   const handleConnect = () => {
-    connectAndStream(userName, userAge || 0)
+    // The failure is already surfaced via handleConnectionError; catch here
+    // only to avoid an unhandled promise rejection.
+    connectAndStream(userName, userAge || 0).catch(() => {})
   }
 
   return (

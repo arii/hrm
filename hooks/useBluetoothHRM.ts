@@ -31,6 +31,25 @@ const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
 export const HEARTBEAT_INTERVAL_MS = 1000
 
+/**
+ * Maps a silent auto-connect failure to the banner message, or null to stay
+ * silent (no saved device yet, or a superseded attempt). Mirrors the manual
+ * path's NetworkError mapping so both surfaces name the cause.
+ */
+export const getAutoConnectFailureMessage = (error: unknown): string | null => {
+  const errorMsg = error instanceof Error ? error.message : String(error)
+  if (errorMsg.includes('No saved device ID')) return null
+  if (error instanceof DOMException && error.name === 'AbortError') return null
+  if (
+    (error instanceof DOMException && error.name === 'NetworkError') ||
+    /no longer in range|device not found/i.test(errorMsg)
+  ) {
+    return BLUETOOTH_MESSAGES.connectionFailed
+  }
+  if (/timeout/i.test(errorMsg)) return BLUETOOTH_MESSAGES.connectionTimeout
+  return BLUETOOTH_MESSAGES.autoConnectFailed
+}
+
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,
   [BluetoothConnectionStatus.CONNECTING]: BLUETOOTH_MESSAGES.connecting,
@@ -686,8 +705,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       } finally {
         isConnecting.current = false
-        // Clear the controller so a later fresh attempt never "aborts" a
-        // stale one (the guard above is the only overlap protection needed).
+        // Clear the settled controller so a later fresh attempt never
+        // "aborts" a stale one (the isConnecting guard above is the only
+        // overlap protection needed).
         abortControllerRef.current = null
       }
     },
@@ -856,14 +876,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomStatusMessage(null)
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
       logger.error({ error }, 'Auto-connect failed')
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      if (errorMsg.includes('No saved device ID')) {
-        setCustomStatusMessage(null)
-      } else {
-        setCustomStatusMessage(BLUETOOTH_MESSAGES.autoConnectFailed)
-      }
+      setCustomStatusMessage(getAutoConnectFailureMessage(error))
     }
   }, [connectAndStream])
 

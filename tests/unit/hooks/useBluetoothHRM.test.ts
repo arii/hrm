@@ -2,7 +2,12 @@
  * @jest-environment jsdom
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
-import useBluetoothHRM, { HEARTBEAT_INTERVAL_MS } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM, {
+  HEARTBEAT_INTERVAL_MS,
+  getAutoConnectFailureMessage,
+} from '@/hooks/useBluetoothHRM'
+import logger from '@/utils/logger'
+import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import Cookies from 'js-cookie'
 import { env } from '@/lib/env'
@@ -739,6 +744,78 @@ describe('useBluetoothHRM', () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { env } = require('@/lib/env')
       expect(env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS).toBe(10)
+    })
+  })
+
+  describe('getAutoConnectFailureMessage', () => {
+    it.each([
+      [new Error('No saved device ID for silent connection.'), null],
+      [new DOMException('Aborted', 'AbortError'), null],
+      [
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        ),
+        BLUETOOTH_MESSAGES.connectionFailed,
+      ],
+      [
+        new Error('Bluetooth Device is no longer in range.'),
+        BLUETOOTH_MESSAGES.connectionFailed,
+      ],
+      [
+        new Error('GATT connection timeout'),
+        BLUETOOTH_MESSAGES.connectionTimeout,
+      ],
+      [new Error('Connection failed'), BLUETOOTH_MESSAGES.autoConnectFailed],
+    ])('maps %p to %p', (error, expected) => {
+      expect(getAutoConnectFailureMessage(error)).toBe(expected)
+    })
+  })
+
+  describe('auto-connect failure surfacing', () => {
+    it('shows the specific range message when GATT reports out of range', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
+      )
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let autoPromise: Promise<void> | undefined
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(5000)
+        await autoPromise
+      })
+
+      expect(mockGatt.connect).toHaveBeenCalledTimes(3)
+      expect(result.current.deviceStatus).toBe(
+        BLUETOOTH_MESSAGES.connectionFailed
+      )
+    })
+
+    it('does not log a stale abort warning across sequential attempts', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.autoConnect()
+      })
+      await act(async () => {
+        await result.current.autoConnect()
+      })
+
+      const abortWarns = (logger.warn as jest.Mock).mock.calls.filter(
+        (call) => call[1] === 'Aborting previous pending connection attempt'
+      )
+      expect(abortWarns).toHaveLength(0)
     })
   })
 })
