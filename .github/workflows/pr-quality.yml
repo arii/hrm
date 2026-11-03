@@ -102,10 +102,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          install-playwright: 'false'
 
       - name: Run Throttling Logic Integration Test
         id: script-tests
@@ -137,10 +139,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          install-playwright: 'false'
 
       - name: Run Knip
         id: knip
@@ -168,10 +172,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          install-playwright: 'false'
 
       - name: Lint Code
         id: lint
@@ -207,10 +213,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
+        with:
+          install-playwright: 'false'
 
       - name: Run Slop Check
         id: slop
@@ -250,11 +258,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
+          install-playwright: 'false'
           use-build-cache: true
           cache-type: type-check
 
@@ -301,11 +310,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
+          install-playwright: 'false'
           use-build-cache: true
           cache-type: next-build
 
@@ -447,7 +457,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -509,7 +519,7 @@ jobs:
 
   unit-tests:
     name: 🧪 Unit Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
+    needs: [prepare-env]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -518,36 +528,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
+          install-playwright: 'false'
 
       - name: Run Unit Tests
         id: unit-tests
@@ -578,7 +564,7 @@ jobs:
 
   component-tests:
     name: 🧪 Component Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
+    needs: [prepare-env]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -587,36 +573,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
         with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
+          install-playwright: 'false'
 
       - name: Run Component Tests
         id: component-tests
@@ -660,7 +622,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -744,7 +706,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Environment
         uses: ./.github/actions/setup-env
@@ -899,7 +861,7 @@ jobs:
           fi
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v8
