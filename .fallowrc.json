@@ -18,6 +18,7 @@
   ],
   "ignorePatterns": [".next/**", ".next_prod/**", "public/**"],
   "ignoreDependencies": ["@types/web-bluetooth", "bats"],
+  "circularDependencies": { "ignoreLazyImports": true },
   "rules": {
     "unused-exports": "warn",
     "complexity-cyclomatic": "warn",

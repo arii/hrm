@@ -14,7 +14,7 @@ import {
   type ScreenshotOptions,
 } from '@playwright/test'
 import { checkAccessibility } from './accessibility'
-import { getHrMasks, getTimerMasks } from '.'
+import { getHrMasks, getTimerMasks } from './masks'
 
 /**
  * Default options for `toHaveScreenshot` to ensure consistency.
