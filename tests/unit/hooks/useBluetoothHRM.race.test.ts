@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import Cookies from 'js-cookie'
 
@@ -216,6 +216,122 @@ describe('useBluetoothHRM Race Conditions', () => {
     })
 
     expect(mockGattConnect).toHaveBeenCalledTimes(1)
+    expect(result.current.isConnected).toBe(true)
+  })
+
+  it('fails fast on not-in-range without busy fast-retries', async () => {
+    mockGattConnect.mockRejectedValue(
+      new DOMException(
+        'Bluetooth Device is no longer in range.',
+        'NetworkError'
+      )
+    )
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      await expect(result.current.connectAndStream()).rejects.toThrow(
+        'no longer in range'
+      )
+    })
+
+    // One radio attempt, not FAST_RECONNECT_MAX_ATTEMPTS.
+    expect(mockGattConnect).toHaveBeenCalledTimes(1)
+    expect(result.current.isConnected).toBe(false)
+  })
+
+  it('still fast-retries a genuinely busy radio', async () => {
+    mockGattConnect
+      .mockRejectedValueOnce(
+        new DOMException('GATT connection busy', 'NetworkError')
+      )
+      .mockImplementationOnce(() => {
+        const mockCharacteristic = {
+          startNotifications: jest.fn().mockResolvedValue(undefined),
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        }
+        const mockService = {
+          getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+        }
+        const mockServer = {
+          getPrimaryService: jest.fn().mockResolvedValue(mockService),
+          disconnect: jest.fn(),
+        }
+        return Promise.resolve(mockServer)
+      })
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      await expect(result.current.connectAndStream()).resolves.toBe(true)
+    })
+
+    expect(mockGattConnect).toHaveBeenCalledTimes(2)
+    expect(result.current.isConnected).toBe(true)
+  })
+
+  it('does not abort a stale controller on retry after failure', async () => {
+    mockGattConnect.mockRejectedValue(
+      new DOMException(
+        'Bluetooth Device is no longer in range.',
+        'NetworkError'
+      )
+    )
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      await expect(result.current.connectAndStream()).rejects.toThrow()
+    })
+    await act(async () => {
+      await expect(result.current.connectAndStream()).rejects.toThrow()
+    })
+
+    expect(mockGattConnect).toHaveBeenCalledTimes(2)
+    expect(mockAbort).not.toHaveBeenCalled()
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.anything(),
+      'Aborting previous pending connection attempt'
+    )
+  })
+
+  it('returns false for a second call while GATT is in flight', async () => {
+    let releaseConnect!: (server: unknown) => void
+    mockGattConnect.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseConnect = resolve as (server: unknown) => void
+        })
+    )
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    let firstPromise!: Promise<boolean>
+    act(() => {
+      firstPromise = result.current.connectAndStream()
+    })
+    await waitFor(() => expect(mockGattConnect).toHaveBeenCalledTimes(1))
+
+    let secondResult: boolean | undefined
+    await act(async () => {
+      secondResult = await result.current.connectAndStream()
+    })
+
+    expect(secondResult).toBe(false)
+    expect(mockGattConnect).toHaveBeenCalledTimes(1)
+
+    const mockCharacteristic = {
+      startNotifications: jest.fn().mockResolvedValue(undefined),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }
+    const mockService = {
+      getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+    }
+    await act(async () => {
+      releaseConnect({
+        getPrimaryService: jest.fn().mockResolvedValue(mockService),
+        disconnect: jest.fn(),
+      })
+      await expect(firstPromise).resolves.toBe(true)
+    })
     expect(result.current.isConnected).toBe(true)
   })
 })

@@ -21,7 +21,7 @@ const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
-  const { volume, setVolume, muted, toggleMute } = useAudioContext()
+  const { volume, setVolume, muted, toggleMuteAndPersist } = useAudioContext()
   const {
     currentPhase,
     timeRemaining,
@@ -220,7 +220,7 @@ const TimerDisplay = () => {
           alignItems="center"
         >
           <IconButton
-            onClick={toggleMute}
+            onClick={toggleMuteAndPersist}
             sx={{ color: 'white' }}
             data-testid="timer-volume-mute-button"
           >

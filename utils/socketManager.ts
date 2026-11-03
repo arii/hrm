@@ -30,7 +30,7 @@ import {
 import logger from './logger.server'
 import { HrmSessionManager } from '../lib/hrm/HrmSessionManager'
 import { AppServices } from '../lib/services'
-import { roundTo, objectFromEntries } from '../lib/utils'
+import { roundTo, objectFromNonNullishEntries } from '../lib/utils'
 import { isGenericName, filterHrmData } from './hrm'
 
 let getUnifiedStateSnapshot: () => StateSnapshot
@@ -285,7 +285,7 @@ const handleHrmMetadataUpdate: IncomingMessageHandler = (
 ) => {
   const existingData = hrmSessionManager.findById(clientId)
   if (existingData) {
-    const updateData: Partial<HrmStreamData> = objectFromEntries(
+    const updateData: Partial<HrmStreamData> = objectFromNonNullishEntries(
       Object.entries((message as HrmMetadataUpdateMessage).data)
     )
 

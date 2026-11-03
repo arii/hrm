@@ -5,6 +5,7 @@
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { mapSimplifiedPlaylistToSpotifyPlaylist } from '@/lib/spotify/mappers'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
@@ -64,31 +65,12 @@ export async function GET(req: NextRequest) {
 
     // 6. Map search results to include full data
     const searchResults = (searchResponse.playlists?.items || []).map(
-      (playlist) => {
-        // Assert the type here
-        const fullPlaylist = playlist as SimplifiedPlaylist
-
-        return {
-          id: fullPlaylist.id,
-          name: fullPlaylist.name,
-          uri: fullPlaylist.uri,
-          description: fullPlaylist.description || null,
-          imageUrl:
-            fullPlaylist.images &&
-            fullPlaylist.images.length > 0 &&
-            fullPlaylist.images[0]
-              ? fullPlaylist.images[0].url
-              : null,
-          // This line will now work
-          trackCount: fullPlaylist.tracks?.total || 0,
-          owner:
-            fullPlaylist.owner?.display_name ||
-            fullPlaylist.owner?.id ||
-            'Unknown',
-          public: fullPlaylist.public || false,
-          isSearchResult: true,
-        }
-      }
+      (playlist) => ({
+        ...mapSimplifiedPlaylistToSpotifyPlaylist(
+          playlist as SimplifiedPlaylist
+        ),
+        isSearchResult: true,
+      })
     )
 
     return NextResponse.json({ items: searchResults })

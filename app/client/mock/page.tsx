@@ -16,6 +16,7 @@ import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
 } from '../../../types/websocket'
+import type { Gender } from '@/types/core'
 import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 
@@ -26,7 +27,7 @@ export default function MockPage() {
   const [age, setAge] = useState(30)
   const [weight, setWeight] = useState(70) // Add weight state
   const [height, setHeight] = useState(175) // Add height state
-  const [gender, setGender] = useState('female') // Add gender state
+  const [gender, setGender] = useState('FEMALE') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
 
   const isStreaming = intervalId !== null
@@ -62,7 +63,8 @@ export default function MockPage() {
         age: age,
         weight: weight,
         height: height,
-        gender: gender,
+        // Server validates gender against the Gender enum (MALE/FEMALE/NEUTRAL)
+        gender: gender.trim().toUpperCase() as Gender,
       },
     }
     sendData(message)
@@ -187,7 +189,7 @@ export default function MockPage() {
             <Grid size={{ xs: 4 }}>
               <TextField
                 label="Gender"
-                placeholder="e.g., male"
+                placeholder="e.g., FEMALE"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
                 fullWidth

@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { firstImageUrl } from '@/lib/spotify/mappers'
 import { RouteContext } from '@/lib/types/index'
 
 /**
@@ -35,10 +36,7 @@ async function getPlaylistDetails(
     id: playlist.id,
     name: playlist.name,
     description: playlist.description,
-    imageUrl:
-      playlist.images && playlist.images.length > 0
-        ? (playlist.images[0]?.url ?? null)
-        : null,
+    imageUrl: firstImageUrl(playlist.images),
     owner: playlist.owner?.display_name ?? null,
     trackCount: playlist.tracks?.total ?? 0,
     tracks: playlist.tracks.items.map((item) => item.track),

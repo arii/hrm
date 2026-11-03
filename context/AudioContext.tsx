@@ -7,7 +7,7 @@ export interface AudioContextType {
   volume: number
   setVolume: (volume: number) => void
   muted: boolean
-  toggleMute: () => void
+  toggleMuteAndPersist: () => void
   isLoaded: boolean
 }
 

@@ -51,6 +51,10 @@ const envSchema = z
     // The default of 1000 provides a generous limit for concurrent WebSocket connections,
     // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
     WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
+    // Reverse-proxy hops in front of the app (nginx in prod, Caddy in dev).
+    // Drives Express 'trust proxy' and right-to-left X-Forwarded-For parsing
+    // so client IPs can't be spoofed with a forged leftmost entry.
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
     SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(5000),
     SPOTIFY_DEVICE_POLLING_INTERVAL_MS: z.coerce.number().default(10000),
     WEBSOCKET_GRACE_PERIOD_MS: z.coerce.number().default(5000),

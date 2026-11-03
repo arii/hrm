@@ -5,7 +5,7 @@
  * @param entries An array of [key, value] pairs.
  * @returns A new object with the null/undefined values removed.
  */
-export const objectFromEntries = <T>(
+export const objectFromNonNullishEntries = <T>(
   entries: [string, T | null | undefined][]
 ): Record<string, T> => {
   return Object.fromEntries(
