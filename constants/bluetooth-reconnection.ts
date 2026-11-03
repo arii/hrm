@@ -19,6 +19,13 @@ export const RECONNECT_RANDOM_DELAY_MS = 1000
 export const FAST_RECONNECT_DELAY_MS = 1000
 export const FAST_RECONNECT_MAX_ATTEMPTS = 3
 
+// Quiet-strap retries for fresh connects (silent and manual): delays before
+// attempts 2, 3, 4 (attempts at ~0/5/15/35s). The first radio op often
+// fails fast ("no longer in range") while the adapter/strap wakes; each
+// miss fails instantly, so a truly absent device costs 4 fast failures,
+// not hammering. Reconnect drops keep their own backoff (no quiet retry).
+export const QUIET_STRAP_RETRY_DELAYS_MS = [5000, 10000, 20000]
+
 /**
  * @param attempt - The current attempt number (starting from 1).
  * @returns The delay in milliseconds using a linear backoff strategy with jitter.

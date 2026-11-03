@@ -138,12 +138,6 @@ describe('Bluetooth Message Constants', () => {
       )
     })
 
-    it('should have the correct string for connectionTimeoutReset', () => {
-      expect(BLUETOOTH_MESSAGES.connectionTimeoutReset).toBe(
-        'Connection timeout. Resetting device...'
-      )
-    })
-
     it('should have the correct string for unknownError', () => {
       expect(BLUETOOTH_MESSAGES.unknownError).toBe('An unknown error occurred.')
     })
