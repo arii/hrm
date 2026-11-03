@@ -543,6 +543,24 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
+    it('should sever the GATT link when a connection attempt fails (#9154 zombie killer)', async () => {
+      jest.useRealTimers() // fast-retry path sleeps on real timers
+      // Persistent failure: every fast-retry attempt fails so the outer catch runs.
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'GATT Server is disconnected. Connect first.',
+          'NetworkError'
+        )
+      )
+
+      const { result } = renderHook(() => useBluetoothHRM())
+      await act(async () => {
+        await result.current.connectAndStream().catch(() => {})
+      })
+      // Failure path must best-effort disconnect so retries meet a free radio.
+      expect(mockGatt.disconnect).toHaveBeenCalled()
+    })
+
     it(`should attempt to reconnect on disconnection and give up after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 

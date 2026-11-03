@@ -56,4 +56,42 @@ describe('GET /api/spotify/playlists/[playlistId]/tracks', () => {
       uri: 'spotify:track:t1',
     })
   })
+
+  it.each([
+    ['limit=200&offset=-5', 50, 0],
+    ['limit=abc&offset=xyz', 20, 0],
+    ['limit=0', 1, 0],
+    ['', 20, 0],
+  ])('clamps pagination params (%s)', async (query, limit, offset) => {
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      accessToken: 'test-token',
+    })
+    const mockGetPlaylistItems = jest.fn().mockResolvedValue({
+      items: [],
+      total: 0,
+      limit,
+      offset,
+      next: null,
+      previous: null,
+    })
+    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue({
+      playlists: { getPlaylistItems: mockGetPlaylistItems },
+    })
+
+    const req = new Request(
+      `http://localhost/api/spotify/playlists/123/tracks?${query}`
+    )
+    const params = { params: { playlistId: '123' } }
+
+    const response = await GET(req, params)
+
+    expect(response.status).toBe(200)
+    expect(mockGetPlaylistItems).toHaveBeenCalledWith(
+      '123',
+      undefined,
+      undefined,
+      limit,
+      offset
+    )
+  })
 })

@@ -8,60 +8,24 @@ import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 import { firstImageUrl } from '@/lib/spotify/mappers'
 import { RouteContext } from '@/lib/types/index'
+import type { MaxInt } from '@spotify/web-api-ts-sdk'
 
-type SpotifyPagingParams =
-  | 0
-  | 3
-  | 2
-  | 15
-  | 1
-  | 4
-  | 7
-  | 9
-  | 5
-  | 10
-  | 20
-  | 40
-  | 50
-  | 30
-  | 36
-  | 6
-  | 8
-  | 11
-  | 12
-  | 13
-  | 14
-  | 16
-  | 17
-  | 18
-  | 19
-  | 21
-  | 22
-  | 23
-  | 24
-  | 25
-  | 26
-  | 27
-  | 28
-  | 29
-  | 31
-  | 32
-  | 33
-  | 34
-  | 35
-  | 37
-  | 38
-  | 39
-  | 41
-  | 42
-  | 43
-  | 44
-  | 45
-  | 46
-  | 47
-  | 48
-  | 49
-  | undefined
+// Spotify caps page size at 50 items.
+const DEFAULT_TRACKS_LIMIT = 20
+const MAX_TRACKS_LIMIT = 50
+
+/** Parses and clamps the ?limit= query param to a valid Spotify page size. */
+const parseTracksLimit = (raw: string | null): MaxInt<50> => {
+  const parsed = parseInt(raw ?? '', 10)
+  if (isNaN(parsed)) return DEFAULT_TRACKS_LIMIT as MaxInt<50>
+  return Math.min(Math.max(parsed, 1), MAX_TRACKS_LIMIT) as MaxInt<50>
+}
+
+/** Parses the ?offset= query param; garbage becomes 0. */
+const parseTracksOffset = (raw: string | null): number => {
+  const parsed = parseInt(raw ?? '', 10)
+  return isNaN(parsed) ? 0 : Math.max(parsed, 0)
+}
 
 /**
  * GET handler for fetching playlist tracks.
@@ -75,8 +39,8 @@ async function getPlaylistTracks(
 ) {
   const { playlistId } = await context.params
   const { searchParams } = new URL(req.url)
-  const limit = parseInt(searchParams.get('limit') || '20', 10)
-  const offset = parseInt(searchParams.get('offset') || '0', 10)
+  const limit = parseTracksLimit(searchParams.get('limit'))
+  const offset = parseTracksOffset(searchParams.get('offset'))
 
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')
@@ -87,7 +51,7 @@ async function getPlaylistTracks(
     playlistId,
     undefined,
     undefined,
-    limit as SpotifyPagingParams,
+    limit,
     offset
   )
 

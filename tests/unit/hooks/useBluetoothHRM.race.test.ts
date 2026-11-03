@@ -88,6 +88,7 @@ describe('useBluetoothHRM Race Conditions', () => {
       name: 'Test HRM',
       gatt: {
         connect: mockGattConnect,
+        disconnect: jest.fn(),
       },
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
@@ -192,6 +193,7 @@ describe('useBluetoothHRM Race Conditions', () => {
       name: 'Saved HRM',
       gatt: {
         connect: mockGattConnect,
+        disconnect: jest.fn(),
       },
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),

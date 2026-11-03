@@ -246,6 +246,9 @@ export const useWorkoutSessionManager = () => {
   const ageRef = useRef<number>(30)
   const weightRef = useRef<number>(70)
   const genderRef = useRef<Gender | undefined>(undefined)
+  // BLE heart rate arrives at ~1Hz, so a 5-sample rolling mean smooths about
+  // 5 seconds: enough to absorb single-beat sensor spikes, short enough that
+  // interval transitions still register promptly in calories and zone time.
   const smoothingWindow = 5 // Configurable if needed
 
   const clearStaleSession = useCallback(

@@ -10,9 +10,7 @@ import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
 import { HrTileProps } from '@/types'
-import { HR_TILE_MIN_HEIGHT } from '@/constants/layout'
-
-const HERO_FONT_FAMILY = 'var(--font-roboto-mono), "Courier New", monospace'
+import { HR_TILE_MIN_HEIGHT, HERO_FONT_FAMILY } from '@/constants/layout'
 
 const IdentityTier = ({ name }: { name: string }) => (
   <Box sx={{ pt: 1, textAlign: 'center' }}>
