@@ -103,6 +103,58 @@ describe('SpotifyPlayerManager', () => {
       })
     })
 
+    it('trusts is_playing when the item is null (playing unknown content)', async () => {
+      // Arrange: Spotify reports playing with no item (observed live:
+      // episode with item:null). Must NOT collapse to "nothing playing".
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 49 },
+        is_playing: true,
+        progress_ms: 223094,
+        currently_playing_type: 'episode',
+        item: null,
+      })
+
+      // Act
+      await playerManager.refreshPlaybackState()
+
+      // Assert
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'SPOTIFY_UPDATE',
+        payload: expect.objectContaining({
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              name: 'Podcast episode',
+            }),
+            is_playing: true,
+          }),
+        }),
+      })
+    })
+
+    it('labels unknown non-episode content honestly', async () => {
+      mockPlayer.getPlaybackState.mockResolvedValue({
+        device: { volume_percent: 49 },
+        is_playing: true,
+        progress_ms: 1000,
+        currently_playing_type: 'unknown',
+        item: null,
+      })
+
+      await playerManager.refreshPlaybackState()
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'SPOTIFY_UPDATE',
+        payload: expect.objectContaining({
+          playback: expect.objectContaining({
+            track: expect.objectContaining({
+              name: 'Unknown track',
+            }),
+            is_playing: true,
+          }),
+        }),
+      })
+    })
+
     it('should update state and broadcast when playback stops', async () => {
       // Arrange: Current state shows playing, SDK returns null
       currentState = {
