@@ -96,6 +96,47 @@ describe('Health Check Logic', () => {
       const result = await checkWebSocketService()
       expect(result.healthy).toBe(false)
     })
+
+    it('should dial the /ws upgrade path (root path never upgrades)', async () => {
+      MockedWebSocket.mockImplementation(function (this: WebSocket) {
+        this.close = jest.fn()
+        setTimeout(() => this.onopen && this.onopen(), 10)
+        return this
+      })
+      const prevWsUrl = process.env.WS_URL
+      const prevPort = process.env.PORT
+      delete process.env.WS_URL
+      process.env.PORT = '4321'
+      try {
+        const result = await checkWebSocketService()
+        expect(result.healthy).toBe(true)
+        expect(MockedWebSocket).toHaveBeenCalledWith('ws://localhost:4321/ws')
+        expect(result.details.url).toBe('ws://localhost:4321/ws')
+      } finally {
+        if (prevWsUrl === undefined) delete process.env.WS_URL
+        else process.env.WS_URL = prevWsUrl
+        if (prevPort === undefined) delete process.env.PORT
+        else process.env.PORT = prevPort
+      }
+    })
+
+    it('should honor the WS_URL override verbatim', async () => {
+      MockedWebSocket.mockImplementation(function (this: WebSocket) {
+        this.close = jest.fn()
+        setTimeout(() => this.onopen && this.onopen(), 10)
+        return this
+      })
+      const prevWsUrl = process.env.WS_URL
+      process.env.WS_URL = 'ws://proxy:9000/custom'
+      try {
+        const result = await checkWebSocketService()
+        expect(result.healthy).toBe(true)
+        expect(MockedWebSocket).toHaveBeenCalledWith('ws://proxy:9000/custom')
+      } finally {
+        if (prevWsUrl === undefined) delete process.env.WS_URL
+        else process.env.WS_URL = prevWsUrl
+      }
+    })
   })
 
   describe('checkTimerService', () => {

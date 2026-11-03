@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
+import { resolveTargetDeviceId } from '@/lib/spotify/deviceResolution'
 
 /**
  * Specific payload types for each Spotify command to ensure type safety.
@@ -68,10 +69,12 @@ export const useSpotifyCommand = () => {
    */
   const execute = useCallback<ExecuteSpotify>(
     (command, payload) => {
-      // Explicitly handle deviceId priority: Payload override > Active Device > HRM Player
       const payloadDeviceId = (payload as SpotifyBasePayload)?.deviceId
-      const resolvedDeviceId =
-        payloadDeviceId || activeDevice?.id || hrmPlayer?.id || undefined
+      const resolvedDeviceId = resolveTargetDeviceId(
+        payloadDeviceId,
+        spotifyData.devices,
+        hrmPlayer?.id
+      )
 
       const message: SpotifyCommandMessage = {
         ...(payload || {}),
@@ -82,7 +85,7 @@ export const useSpotifyCommand = () => {
 
       sendData(message)
     },
-    [sendData, activeDevice, hrmPlayer]
+    [sendData, spotifyData.devices, hrmPlayer]
   )
 
   return {

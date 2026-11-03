@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { firstImageUrl } from '@/lib/spotify/mappers'
 import { RouteContext } from '@/lib/types/index'
 
 type SpotifyPagingParams =
@@ -99,10 +100,7 @@ async function getPlaylistTracks(
         id: track.id,
         name: track.name,
         artists: track.artists.map((artist) => artist.name).join(', '),
-        albumArt:
-          track.album.images && track.album.images.length > 0
-            ? (track.album.images[0]?.url ?? null)
-            : null,
+        albumArt: firstImageUrl(track.album.images),
         duration: track.duration_ms,
         uri: track.uri,
       }

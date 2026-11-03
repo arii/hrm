@@ -5,6 +5,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
+import { mapSimplifiedPlaylistToSpotifyPlaylist } from '@/lib/spotify/mappers'
 import { SpotifyPlaylist } from '@/types/core'
 
 /**
@@ -33,19 +34,7 @@ async function getPlaylists(_req: NextRequest) {
 
   // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
   const userPlaylists: SpotifyPlaylist[] = playlistsResponse.items.map(
-    (playlist) => ({
-      id: playlist.id,
-      name: playlist.name,
-      uri: playlist.uri,
-      description: playlist.description || null,
-      imageUrl:
-        playlist.images && playlist.images.length > 0 && playlist.images[0]
-          ? playlist.images[0].url
-          : null,
-      trackCount: playlist.tracks?.total || 0,
-      owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
-      public: playlist.public || false,
-    })
+    mapSimplifiedPlaylistToSpotifyPlaylist
   )
 
   return NextResponse.json({ presetPlaylists, userPlaylists })

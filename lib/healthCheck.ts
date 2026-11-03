@@ -25,7 +25,10 @@ export function checkMemoryUsage(): HealthCheckResult {
 
 export async function checkWebSocketService(): Promise<HealthCheckResult> {
   try {
-    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
+    // The app socket only upgrades /ws (see isAppWsUpgrade): dialing the
+    // root path hangs until timeout, so the default must include /ws.
+    const port = process.env.PORT || '3000'
+    const wsUrl = process.env.WS_URL || `ws://localhost:${port}/ws`
     // Check if WebSocket server is accepting connections
     const wsHealth = await new Promise((resolve) => {
       const testWs = new WebSocket(wsUrl)

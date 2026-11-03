@@ -16,7 +16,10 @@ import { initSocketManager, resetSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import { resolveClientIp } from './lib/clientIp.js'
+import { getBasePath } from './utils/urls.js'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 import path from 'path'
 
 const app = next({
@@ -35,6 +38,56 @@ app.prepare().then(async () => {
   // Must be the first middleware to capture all requests
   expressApp.use(httpLogger as RequestHandler)
 
+  // --- Trust Proxy ---
+  // Behind nginx (prod) / Caddy (dev): trust exactly TRUST_PROXY_HOPS so
+  // req.ip — used by the rate limiters below — is spoof-proof.
+  expressApp.set('trust proxy', env.TRUST_PROXY_HOPS)
+
+  // --- Security Headers ---
+  // unsafe-eval is dev-only (Turbopack HMR); prod chunks run without it.
+  // No upgrade-insecure-requests: plain-http LAN dev must keep working.
+  expressApp.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            ...(env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : []),
+            'https://sdk.scdn.co',
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https://*.scdn.co'],
+          mediaSrc: ["'self'", 'blob:', 'data:', 'https://*.scdn.co'],
+          connectSrc: [
+            "'self'",
+            'ws:',
+            'wss:',
+            'https://api.spotify.com',
+            'https://accounts.spotify.com',
+          ],
+          fontSrc: ["'self'", 'data:'],
+          frameSrc: [
+            "'self'",
+            'https://docs.google.com',
+            // Spotify Web Playback SDK renders a hidden playback iframe.
+            'https://sdk.scdn.co',
+          ],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          upgradeInsecureRequests: null,
+        },
+      },
+      frameguard: { action: 'deny' },
+      hsts: { maxAge: 31536000, includeSubDomains: true },
+      // COEP require-corp would break the Spotify SDK and Google iframe.
+      crossOriginEmbedderPolicy: false,
+    }) as RequestHandler
+  )
+
   // Global body parsing is intentionally omitted here.
   // Next.js API routes handle their own body parsing, and adding a global
   // `express.json()` middleware can cause conflicts, such as the
@@ -48,13 +101,7 @@ app.prepare().then(async () => {
       max: env.SPOTIFY_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req) => {
-        return (
-          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-          req.socket.remoteAddress ||
-          'unknown'
-        )
-      },
+      // Default keyGenerator uses req.ip, which honors 'trust proxy' above.
       message: {
         error: 'Too many requests to Spotify API, please try again later.',
       },
@@ -65,13 +112,7 @@ app.prepare().then(async () => {
       max: env.INTERNAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req) => {
-        return (
-          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-          req.socket.remoteAddress ||
-          'unknown'
-        )
-      },
+      // Default keyGenerator uses req.ip, which honors 'trust proxy' above.
       message: {
         error: 'Too many requests to internal API, please try again later.',
       },
@@ -81,13 +122,7 @@ app.prepare().then(async () => {
       max: env.GENERAL_API_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: (req) => {
-        return (
-          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-          req.socket.remoteAddress ||
-          'unknown'
-        )
-      },
+      // Default keyGenerator uses req.ip, which honors 'trust proxy' above.
       message: { error: 'Too many requests, please try again later.' },
       skip: (req) =>
         req.path.startsWith('/api/spotify') ||
@@ -149,7 +184,16 @@ app.prepare().then(async () => {
     return res.status(200).json({ status: 'reset' })
   })
 
-  expressApp.get('/api/internal/health/services', async (_req, res) => {
+  // Single owner of the services health payload in every environment:
+  // /api/health/detailed fetches via getInternalApiUrl, which prefixes the
+  // basePath when one is configured, so serve both paths here (Express
+  // matches exactly and would otherwise fall through to Next).
+  const servicesHealthPaths = ['/api/internal/health/services']
+  const basePath = getBasePath()
+  if (basePath) {
+    servicesHealthPaths.push(`${basePath}/api/internal/health/services`)
+  }
+  expressApp.get(servicesHealthPaths, async (_req, res) => {
     const timerCheck = checkTimerService(services.tabataService)
     const wsCheck = await checkWebSocketService()
 
@@ -170,13 +214,13 @@ app.prepare().then(async () => {
 
   server.on('upgrade', (req, socket, head) => {
     if (env.NODE_ENV !== 'test' && isAppWsUpgrade(req.url)) {
-      const ip =
-        (req.headers['x-forwarded-for'] as string)
-          ?.split(',')
-          .shift()
-          ?.trim() || req.socket.remoteAddress
+      const ip = resolveClientIp(
+        req.headers['x-forwarded-for'],
+        req.socket.remoteAddress,
+        env.TRUST_PROXY_HOPS
+      )
 
-      if (ip && !wsLimiter.checkAndTrack(ip, socket as Socket)) {
+      if (ip !== 'unknown' && !wsLimiter.checkAndTrack(ip, socket as Socket)) {
         socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
         socket.destroy()
         return

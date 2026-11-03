@@ -8,6 +8,7 @@ import {
   UserPhysicalProfileSchema,
 } from '@/lib/validation/schemas'
 import { v4 as uuidv4 } from 'uuid'
+import { GENDERS } from '@/types/core'
 
 describe('Zod Schema Validation', () => {
   describe('UserProfileSchema', () => {
@@ -29,13 +30,20 @@ describe('Zod Schema Validation', () => {
   })
 
   describe('GenderSchema', () => {
-    it('should accept valid genders', () => {
-      expect(GenderSchema.safeParse('MALE').success).toBe(true)
-      expect(GenderSchema.safeParse('FEMALE').success).toBe(true)
+    it('should accept all canonical genders', () => {
+      for (const g of GENDERS) {
+        expect(GenderSchema.safeParse(g).success).toBe(true)
+      }
+    })
+
+    it('should stay in sync with the canonical Gender type', () => {
+      // Every canonical value parses, and the schema accepts nothing else.
+      expect(GenderSchema.options).toEqual([...GENDERS])
     })
 
     it('should reject invalid genders', () => {
       expect(GenderSchema.safeParse('OTHER').success).toBe(false)
+      expect(GenderSchema.safeParse('female').success).toBe(false)
       expect(GenderSchema.safeParse('').success).toBe(false)
     })
   })

@@ -1,10 +1,34 @@
 import {
+  createRangeValidator,
   validateAgeValue,
   validateHeightValue,
   validateWeightValue,
 } from '@/lib/validation/userMetrics'
 
 describe('User Metrics Validation', () => {
+  describe('createRangeValidator', () => {
+    const validate = createRangeValidator(1, 10, 'out of range')
+
+    it('accepts numbers and numeric strings in range', () => {
+      expect(validate(5)).toBeNull()
+      expect(validate('5')).toBeNull()
+      expect(validate(1)).toBeNull()
+      expect(validate(10)).toBeNull()
+    })
+
+    it('rejects out-of-range and non-numeric values', () => {
+      expect(validate(0)).toBe('out of range')
+      expect(validate(11)).toBe('out of range')
+      expect(validate('abc')).toBe('out of range')
+      expect(validate(NaN)).toBe('out of range')
+    })
+
+    it('treats blank input as absent (optional field)', () => {
+      expect(validate('')).toBeNull()
+      expect(validate('   ')).toBeNull()
+    })
+  })
+
   describe('validateAgeValue', () => {
     it('should return null for valid age', () => {
       expect(validateAgeValue('30')).toBeNull()

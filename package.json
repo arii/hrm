@@ -79,6 +79,7 @@
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.38.0",
     "he": "^1.2.0",
+    "helmet": "^8.3.0",
     "idb": "^8.0.3",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.23",

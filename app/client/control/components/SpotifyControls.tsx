@@ -16,6 +16,7 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import { resolveTargetDeviceId as resolveDeviceId } from '@/lib/spotify/deviceResolution'
 import { SpotifyCommand } from '@/types/websocket'
 import {
   HRM_WEB_PLAYER_NAME,
@@ -34,7 +35,8 @@ const SpotifyControls = () => {
     useWebSocket()
   const { execute: executeSpotify } = useSpotifyCommand()
   const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMuteAndPersist } =
+    useVolumePreference()
   const { showWarning } = useAppSnackbar()
   const lastSentVolumeRef = useRef<string | null>(null)
   const lastWarningTimeRef = useRef<number>(0)
@@ -154,11 +156,7 @@ const SpotifyControls = () => {
   }, [devices, selectedDeviceId, hrmDevice])
 
   const resolveTargetDeviceId = useCallback(() => {
-    return (
-      selectedDeviceId ||
-      devices.find((device) => device.is_active)?.id ||
-      hrmDevice?.id
-    )
+    return resolveDeviceId(selectedDeviceId, devices, hrmDevice?.id)
   }, [devices, selectedDeviceId, hrmDevice])
 
   const sendSpotifyCommand = useCallback(
@@ -359,7 +357,7 @@ const SpotifyControls = () => {
               muted={muted}
               onVolumeChange={handleVolumeChange}
               onVolumeChangeCommitted={handleVolumeChangeCommitted}
-              onToggleMute={toggleMute}
+              onToggleMute={toggleMuteAndPersist}
               showValue
               sliderColor={SPOTIFY_BRAND_COLOR}
               size="medium"

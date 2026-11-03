@@ -793,7 +793,9 @@ describe('useBluetoothHRM', () => {
         await autoPromise
       })
 
-      expect(mockGatt.connect).toHaveBeenCalledTimes(3)
+      // Fail-fast (#9303): not-in-range attempts the radio once, but the
+      // surfaced banner is unchanged.
+      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(result.current.deviceStatus).toBe(
         BLUETOOTH_MESSAGES.connectionFailed
       )
