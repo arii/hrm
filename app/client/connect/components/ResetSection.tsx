@@ -2,13 +2,14 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 
-interface ResetSectionProps {
+export interface ResetSectionProps {
   onReset: () => void
   isResetting: boolean
 }
 
 const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
   <Box
+    data-testid="reset-section"
     sx={{
       textAlign: 'center',
       mt: 4,

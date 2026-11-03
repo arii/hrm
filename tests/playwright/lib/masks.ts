@@ -73,3 +73,14 @@ export function getTimerMasks(page: Page): Locator[] {
 export function getSpotifyMasks(page: Page): Locator[] {
   return [page.locator(VRT_MASK_SELECTORS.spotifyCurrentTrack)]
 }
+
+/**
+ * Returns locators for the user-settings input values (#8890). Mask the
+ * persisted values, not the `user-settings-form` container, so labels,
+ * layout, toggles, and validation chrome stay asserted.
+ */
+export function getUserSettingsMasks(page: Page): Locator[] {
+  return ['name', 'age', 'height-cm', 'feet', 'inches', 'weight'].map((field) =>
+    page.locator(`[data-testid="user-settings-value-${field}"]`)
+  )
+}

@@ -16,12 +16,16 @@ import { calculateMaxHr } from '@/utils/hrCalculations'
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
-import ZoneDistribution from './ZoneDistribution'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
+
+const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })

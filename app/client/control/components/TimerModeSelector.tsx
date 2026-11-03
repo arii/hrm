@@ -5,15 +5,14 @@ import Timer from '@mui/icons-material/Timer'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import { alpha, useTheme } from '@mui/material/styles'
+import { useTheme, alpha } from '@mui/material/styles'
 import { motion } from 'framer-motion'
-
-export type TimerMode = 'TABATA' | 'STOPWATCH'
+import { TimerMode } from '@/types/core'
 
 interface TimerModeSelectorProps {
   mode: TimerMode
   disabled: boolean
-  onSelectMode: (mode: TimerMode) => void
+  onSelect: (mode: TimerMode) => void
 }
 
 const MODES: TimerMode[] = ['TABATA', 'STOPWATCH']
@@ -21,7 +20,7 @@ const MODES: TimerMode[] = ['TABATA', 'STOPWATCH']
 const TimerModeSelector = ({
   mode,
   disabled,
-  onSelectMode,
+  onSelect,
 }: TimerModeSelectorProps) => {
   const theme = useTheme()
 
@@ -55,7 +54,7 @@ const TimerModeSelector = ({
             data-testid={
               m === 'TABATA' ? 'tabata-mode-button' : 'stopwatch-mode-button'
             }
-            onClick={() => onSelectMode(m)}
+            onClick={() => onSelect(m)}
             disabled={disabled}
             startIcon={m === 'TABATA' ? <FitnessCenter /> : <Timer />}
             sx={{

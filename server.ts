@@ -19,6 +19,7 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { resolveClientIp } from './lib/clientIp.js'
 import { getBasePath } from './utils/urls.js'
 import rateLimit from 'express-rate-limit'
+import compression from 'compression'
 import helmet from 'helmet'
 import path from 'path'
 
@@ -107,6 +108,12 @@ app.prepare().then(async () => {
   // `express.json()` middleware can cause conflicts, such as the
   // "TypeError: Response body object should not be disturbed or locked" error,
   // by attempting to parse the request body twice.
+
+  // --- Response Compression ---
+  // The front proxy gzips HTML but passes API JSON through uncompressed
+  // (verified live on prod). Compress here; upgrade sockets (ws) bypass
+  // middleware untouched and proxies pass pre-encoded responses through.
+  expressApp.use(compression() as RequestHandler)
 
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {

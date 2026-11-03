@@ -1,7 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
@@ -383,5 +389,43 @@ describe('components/SpotifyControls', () => {
         deviceId: 'hrm-player',
       })
     )
+  })
+
+  it('tolerates devices with null names (#9298)', async () => {
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: createMockSpotifyData({
+        playback: {
+          ...createMockSpotifyData().playback,
+          track: {
+            id: 'track1',
+            name: 'Test Track',
+            artist: 'Test Artist',
+            albumName: 'Album',
+            albumArtUrl: '',
+          },
+          is_playing: false,
+        },
+        devices: [
+          createMockSpotifyDevice({
+            id: 'nameless',
+            name: null,
+            is_active: true,
+          }),
+        ],
+      }),
+      sendData: mockSendData,
+      spotifyServiceInitialized: true,
+    })
+
+    expect(() => render(<SpotifyControls />)).not.toThrow()
+    expect(screen.getByTestId('spotify-controls')).toBeInTheDocument()
+
+    // Open the dropdown: null names must render an (empty) option, not crash.
+    const select = screen.getByTestId('spotify-device-select')
+    fireEvent.mouseDown(within(select).getByRole('combobox'))
+    expect(
+      await screen.findByTestId('spotify-device-select-option-nameless')
+    ).toBeInTheDocument()
   })
 })

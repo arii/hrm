@@ -1,3 +1,4 @@
+import { env } from './env.js'
 import { ServerMessage } from '../types/websocket.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
@@ -14,7 +15,7 @@ export async function createServices(
 ): Promise<AppServices> {
   // Reuse existing instances in development (Next.js Singleton Pattern)
   if (
-    process.env.NODE_ENV !== 'production' &&
+    env.NODE_ENV !== 'production' &&
     global.spotifyService &&
     global.tabataService
   ) {
@@ -26,7 +27,7 @@ export async function createServices(
   }
 
   // Cleanup partial state if necessary
-  if (process.env.NODE_ENV !== 'production') {
+  if (env.NODE_ENV !== 'production') {
     global.spotifyService?.cleanup()
     global.tabataService?.cleanup()
   }

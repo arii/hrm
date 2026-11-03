@@ -112,6 +112,13 @@ Our CI/CD pipeline automates many aspects of the development process, including 
 
 The project is deployed to a self-hosted production environment using a GitHub Actions workflow. The deployment follows a "hard restart" strategy.
 
+### Review Strategy Inputs
+
+`scripts/decide-review-strategy.sh` decides whether a PR needs a Gemini review. Its key inputs:
+
+- `IGNORE_PATTERN` (defined in the script): an ERE matching changed files that never need a review on their own — `(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)`. A PR touching only these files is skipped as "no significant code changes". Docs, images, lockfiles, and gitignore edits never trigger a review by themselves.
+- `QUALITY_GATE_BOT_USERNAMES` (env, default `github-actions[bot]`): a single username or space-separated list of bot usernames whose quality-gate comments mark a commit as already reviewed. Used to avoid re-reviewing commits the pipeline already passed.
+
 ## Testing
 
 For a comprehensive guide on testing, including our testing structure, commands, and best practices, please refer to the [Testing Guide](./TESTING.md).

@@ -73,4 +73,25 @@ describe('HrmConnectionPanel', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     expect(screen.queryByText('No Heart Rate Data')).not.toBeInTheDocument()
   })
+
+  // NOTE (UX branch): leader's #9024 Skeleton-loader test is intentionally
+  // dropped here — this branch's held redesign uses a CircularProgress
+  // spinner for the loading state (asserted above), not a skeleton.
+  it('renders no skeleton in the idle empty state (loader is transient-only)', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Connected',
+      activeAlerts: [],
+    })
+    const { container } = render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // A pulsing skeleton that never resolves lies to users and trips the VRT
+    // readiness gate (waitForPageReady waits for skeletons to disappear).
+    expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
+    expect(screen.queryByTestId('hr-tile-grid-item')).not.toBeInTheDocument()
+    expect(container.querySelector('.MuiSkeleton-root')).toBeNull()
+  })
 })

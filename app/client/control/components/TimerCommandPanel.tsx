@@ -4,7 +4,7 @@ import PlayArrow from '@mui/icons-material/PlayArrow'
 import Stop from '@mui/icons-material/Stop'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
-import { alpha, Theme, useTheme } from '@mui/material/styles'
+import { useTheme, alpha, Theme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
 
 interface TimerCommandPanelProps {

@@ -10,6 +10,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import { memo, useEffect, useState } from 'react'
 import logger from '@/utils/logger'
@@ -25,6 +26,27 @@ interface GoogleDocViewerProps {
   refreshKey?: number
   onRefresh?: () => void
 }
+
+const InvalidUrlPlaceholder = ({
+  title,
+  reason,
+}: {
+  title: string
+  reason: 'missing' | 'invalid'
+}) => (
+  <Card elevation={6} data-testid="google-doc-viewer-invalid">
+    <CardContent>
+      <Typography variant="h6" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {reason === 'missing'
+          ? 'No document URL is configured, so there is nothing to display.'
+          : 'The configured document URL is invalid, so it cannot be displayed.'}
+      </Typography>
+    </CardContent>
+  </Card>
+)
 
 const GoogleDocViewer = ({
   title,
@@ -51,7 +73,9 @@ const GoogleDocViewer = ({
     return () => clearTimeout(timeout)
   }, [refreshKey]) // Rerun on refresh
 
-  if (!embedUrl) return null
+  // Fail visible, not silent: a blank hole in the dashboard with no
+  // explanation is worse than a short notice (#9260).
+  if (!embedUrl) return <InvalidUrlPlaceholder title={title} reason="missing" />
 
   let finalEmbedUrl = ''
   try {
@@ -60,7 +84,7 @@ const GoogleDocViewer = ({
     finalEmbedUrl = u.toString()
   } catch {
     logger.error('Invalid URL:', embedUrl)
-    return null
+    return <InvalidUrlPlaceholder title={title} reason="invalid" />
   }
 
   return (

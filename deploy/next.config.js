@@ -2,6 +2,8 @@
 const nextConfig = {
   poweredByHeader: false,
   images: {
+    // Serve AVIF/WebP to supporting browsers (Spotify artwork via next/image).
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',

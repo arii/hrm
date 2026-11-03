@@ -11,11 +11,16 @@ import {
 import dynamic from 'next/dynamic'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
-import ZoneDistribution from './ZoneDistribution'
 import { generateFitFile } from '@/utils/fit-export'
+import { generateCsvExport } from '@/utils/csv-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
+
+const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
@@ -40,21 +45,36 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
     session.hrHistory.reduce((sum, dp) => sum + dp.hr, 0) /
       session.hrHistory.length || 0
 
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const handleExportFit = () => {
     try {
       const blob = generateFitFile(session)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `hrm_session_${session.sessionId}.fit`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      downloadBlob(blob, `hrm_session_${session.sessionId}.fit`)
       showSuccess('FIT file exported successfully')
     } catch (error) {
       console.error('Failed to export FIT file:', error)
       showError('Failed to export FIT file')
+    }
+  }
+
+  const handleExportCsv = () => {
+    try {
+      const blob = generateCsvExport(session)
+      downloadBlob(blob, `hrm_session_${session.sessionId}.csv`)
+      showSuccess('CSV file exported successfully')
+    } catch (error) {
+      console.error('Failed to export CSV file:', error)
+      showError('Failed to export CSV file')
     }
   }
 
@@ -68,6 +88,9 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
           <Button onClick={onBack}>&larr; Back to List</Button>
           <Button onClick={handleExportFit} variant="outlined">
             Export FIT
+          </Button>
+          <Button onClick={handleExportCsv} variant="outlined">
+            Export CSV
           </Button>
         </Box>
 

@@ -5,9 +5,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import SessionDetail from '@/app/client/experimental/components/SessionDetail'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { generateFitFile } from '@/utils/fit-export'
+import { generateCsvExport } from '@/utils/csv-export'
 
 jest.mock('@/utils/fit-export', () => ({
   generateFitFile: jest.fn(),
+}))
+
+jest.mock('@/utils/csv-export', () => ({
+  generateCsvExport: jest.fn(),
 }))
 
 const mockShowSuccess = jest.fn()
@@ -82,6 +87,49 @@ describe('SessionDetail', () => {
     expect(mockShowError).toHaveBeenCalledWith('Failed to export FIT file')
     expect(consoleSpy).toHaveBeenCalledWith(
       'Failed to export FIT file:',
+      expect.any(Error)
+    )
+    consoleSpy.mockRestore()
+  })
+
+  it('handles CSV export success (#9078)', () => {
+    const onBack = jest.fn()
+    render(<SessionDetail session={mockSession} onBack={onBack} />)
+
+    const exportButton = screen.getByText(/Export CSV/i)
+    expect(exportButton).toBeInTheDocument()
+
+    const mockBlob = new Blob(['csv-data'], { type: 'text/csv' })
+    ;(generateCsvExport as jest.Mock).mockReturnValue(mockBlob)
+
+    const createElementSpy = jest.spyOn(document, 'createElement')
+
+    fireEvent.click(exportButton)
+
+    expect(generateCsvExport).toHaveBeenCalledWith(mockSession)
+    expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob)
+    expect(createElementSpy).toHaveBeenCalledWith('a')
+    expect(mockShowSuccess).toHaveBeenCalledWith(
+      'CSV file exported successfully'
+    )
+  })
+
+  it('handles CSV export failure (#9078)', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const onBack = jest.fn()
+    render(<SessionDetail session={mockSession} onBack={onBack} />)
+
+    const exportButton = screen.getByText(/Export CSV/i)
+    ;(generateCsvExport as jest.Mock).mockImplementation(() => {
+      throw new Error('Export failed')
+    })
+
+    fireEvent.click(exportButton)
+
+    expect(generateCsvExport).toHaveBeenCalledWith(mockSession)
+    expect(mockShowError).toHaveBeenCalledWith('Failed to export CSV file')
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to export CSV file:',
       expect.any(Error)
     )
     consoleSpy.mockRestore()

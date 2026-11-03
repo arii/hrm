@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
 import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
+import { debugAccessDenied } from '@/lib/debug-guard'
+import { env } from '@/lib/env'
 
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.
  * This helps diagnose "Invalid Client" and redirect URI issues.
  */
 export async function GET() {
+  const denied = debugAccessDenied()
+  if (denied) return denied
   try {
-    const clientId = process.env.SPOTIFY_CLIENT_ID
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+    const clientId = env.SPOTIFY_CLIENT_ID
+    const clientSecret = env.SPOTIFY_CLIENT_SECRET
     const nextAuthUrl = getBaseURL()
-    const nextAuthSecret = process.env.NEXTAUTH_SECRET
+    const nextAuthSecret = env.NEXTAUTH_SECRET
 
     return NextResponse.json({
       nextAuthConfigured: !!(nextAuthUrl && nextAuthSecret),

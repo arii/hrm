@@ -167,6 +167,11 @@ export default function ConnectView({
     }
     return null
   })()
+  // Flattened render conditions (#9606): kept for the non-banner branches.
+  const showUserProfile = !showUserDetails
+  const isConnecting = deviceStatus.includes('Connecting')
+  const hasProfile = Boolean(data.userName.trim() && data.userAge.trim())
+  const showStatusCaption = deviceStatus !== 'Connected'
 
   return (
     <>
@@ -175,7 +180,7 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
-        {!showUserDetails ? (
+        {showUserProfile ? (
           <UserSettings profile={userProfile} />
         ) : (
           <Box
@@ -216,13 +221,9 @@ export default function ConnectView({
               variant="contained"
               size="large"
               onClick={onConnect}
-              disabled={
-                !data.userName.trim() ||
-                !data.userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
+              disabled={!hasProfile || isConnecting}
             >
-              {deviceStatus.includes('Connecting') ? (
+              {isConnecting ? (
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CircularProgress size={20} color="inherit" />
                   <span>Connecting...</span>
@@ -268,7 +269,7 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-              {deviceStatus !== 'Connected' && (
+              {showStatusCaption && (
                 <Typography variant="caption" color="text.secondary">
                   Status: {deviceStatus}
                 </Typography>
