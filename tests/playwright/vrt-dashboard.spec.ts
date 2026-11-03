@@ -170,6 +170,32 @@ test.describe('Dashboard Visual Regression Tests', () => {
       })
     })
 
+    test('md laptop viewport fills without page scroll', async ({
+      dashboardPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      // Owner's review viewport: short laptop screen. The whole dashboard
+      // (timer + HRM + cards) must fit with zero page scroll.
+      await dashboardPage.setViewportSize({ width: 1064, height: 696 })
+      await dashboardPage.evaluate(() => window.scrollTo(0, 0))
+      await dashboardPage.waitForFunction(
+        (width) => document.body.clientWidth === width,
+        1064,
+        { timeout: VRT_TIMEOUTS.STANDARD }
+      )
+      // The dashboard is top-anchored content; the page itself is the
+      // scroller, so document height must not exceed the viewport.
+      const scrolled = await dashboardPage.evaluate(
+        () => document.documentElement.scrollHeight <= window.innerHeight + 1
+      )
+      expect(scrolled).toBe(true)
+      const dashboard = dashboardPage.getByTestId('dashboard')
+      await takeScreenshot(dashboard, 'dashboard-md-laptop.png', {
+        mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
+      })
+    })
+
     test('mobile viewport', async ({ dashboardPage }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)

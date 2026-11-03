@@ -89,7 +89,7 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         // Ensure the card fills the grid cell height
         height: '100%',
-        minHeight: { xs: 200, sm: 250, md: 300 },
+        minHeight: { xs: 200, sm: 220, md: 220 },
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
@@ -191,7 +191,14 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
+            // Viewport-aware at md+: short screens (laptop/TV) shrink the
+            // digits so the whole dashboard fits without page scroll; tall
+            // screens keep the full 14rem.
+            fontSize: {
+              xs: '7rem',
+              sm: '10rem',
+              md: 'clamp(7rem, 22vh, 14rem)',
+            },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',

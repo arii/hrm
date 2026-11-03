@@ -52,16 +52,16 @@ const mainGridStyles: SxProps = {
   display: 'grid',
   gridTemplateColumns: {
     xs: '1fr',
-    lg: '1fr 1fr',
+    md: '1fr 1fr',
   },
   gap: 2,
   // On large screens the top row (timer/HR) takes ~2/5 of the free
   // vertical space and the workout section takes the rest, so the
   // dashboard fills the viewport instead of top-anchoring with a blank
   // band below. Mobile stays content-sized (page scrolls).
-  flexGrow: { xs: 0, lg: 2 },
+  flexGrow: { xs: 0, md: 2 },
   flexShrink: 1,
-  flexBasis: { xs: 'auto', lg: 0 },
+  flexBasis: { xs: 'auto', md: 0 },
 }
 
 interface DashboardClientProps {
@@ -131,10 +131,10 @@ const DashboardClient = ({
             mt: 2,
             // Workout section takes ~3/5 of free vertical space on large
             // screens (cards stretch via height:100% chains); content-sized
-            // with page scroll on mobile.
-            flexGrow: { xs: 0, lg: 3 },
+            // with page scroll below md.
+            flexGrow: { xs: 0, md: 3 },
             flexShrink: 1,
-            flexBasis: { xs: 'auto', lg: 0 },
+            flexBasis: { xs: 'auto', md: 0 },
           }}
         >
           {!hasValidConfig ? (
