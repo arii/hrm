@@ -1,5 +1,68 @@
 import { z } from 'zod'
 
+/** Fields read by cross-variable env validation. */
+interface EnvValidationData {
+  NODE_ENV: string
+  NEXTAUTH_SECRET: string
+  NEXTAUTH_URL?: string
+  SPOTIFY_CLIENT_ID?: string
+  SPOTIFY_CLIENT_SECRET?: string
+  SPOTIFY_CALLBACK_URL?: string
+}
+
+/** Adds a "required variable" issue for one env key. */
+function addRequiredIssue(
+  ctx: z.RefinementCtx,
+  key: string,
+  message: string
+): void {
+  ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message })
+}
+
+/** Spotify credentials must be paired, with a derivable callback URL. */
+function validateSpotifyEnv(data: EnvValidationData, ctx: z.RefinementCtx) {
+  if (data.SPOTIFY_CLIENT_ID && !data.SPOTIFY_CLIENT_SECRET) {
+    addRequiredIssue(
+      ctx,
+      'SPOTIFY_CLIENT_SECRET',
+      'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.'
+    )
+  }
+  if (!data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
+    addRequiredIssue(
+      ctx,
+      'SPOTIFY_CLIENT_ID',
+      'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.'
+    )
+  }
+  if (
+    data.SPOTIFY_CLIENT_ID &&
+    data.SPOTIFY_CLIENT_SECRET &&
+    !data.SPOTIFY_CALLBACK_URL &&
+    !data.NEXTAUTH_URL
+  ) {
+    addRequiredIssue(
+      ctx,
+      'SPOTIFY_CALLBACK_URL',
+      'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.'
+    )
+  }
+}
+
+/** Production requires a long secret; everywhere requires a non-empty one. */
+function validateNextAuthSecret(data: EnvValidationData, ctx: z.RefinementCtx) {
+  if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET.length < 32) {
+    addRequiredIssue(
+      ctx,
+      'NEXTAUTH_SECRET',
+      'NEXTAUTH_SECRET must be at least 32 characters long in production.'
+    )
+  }
+  if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET.length < 1) {
+    addRequiredIssue(ctx, 'NEXTAUTH_SECRET', 'NEXTAUTH_SECRET is required.')
+  }
+}
+
 const envSchema = z
   .object({
     NODE_ENV: z
@@ -76,53 +139,8 @@ const envSchema = z
     HRM_SESSION_TTL_MS: z.coerce.number().int().min(60000).default(1800000),
   })
   .superRefine((data, ctx) => {
-    // Paired validation for Spotify credentials
-    if (data.SPOTIFY_CLIENT_ID && !data.SPOTIFY_CLIENT_SECRET) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['SPOTIFY_CLIENT_SECRET'],
-        message:
-          'SPOTIFY_CLIENT_SECRET is required when SPOTIFY_CLIENT_ID is set.',
-      })
-    }
-    if (!data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['SPOTIFY_CLIENT_ID'],
-        message:
-          'SPOTIFY_CLIENT_ID is required when SPOTIFY_CLIENT_SECRET is set.',
-      })
-    }
-
-    // If Spotify credentials are provided, a callback URL must be available.
-    if (data.SPOTIFY_CLIENT_ID && data.SPOTIFY_CLIENT_SECRET) {
-      if (!data.SPOTIFY_CALLBACK_URL && !data.NEXTAUTH_URL) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['SPOTIFY_CALLBACK_URL'],
-          message:
-            'SPOTIFY_CALLBACK_URL is required when SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are set, but it could not be derived from NEXTAUTH_URL.',
-        })
-      }
-    }
-
-    // Production-ready NEXTAUTH_SECRET validation
-    if (data.NODE_ENV === 'production' && data.NEXTAUTH_SECRET.length < 32) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['NEXTAUTH_SECRET'],
-        message:
-          'NEXTAUTH_SECRET must be at least 32 characters long in production.',
-      })
-    }
-
-    if (data.NODE_ENV !== 'production' && data.NEXTAUTH_SECRET.length < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['NEXTAUTH_SECRET'],
-        message: 'NEXTAUTH_SECRET is required.',
-      })
-    }
+    validateSpotifyEnv(data, ctx)
+    validateNextAuthSecret(data, ctx)
   })
   .transform((data) => {
     if (!data.SPOTIFY_CALLBACK_URL && data.NEXTAUTH_URL) {
