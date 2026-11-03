@@ -302,8 +302,10 @@ const handleHrmMetadataUpdate: IncomingMessageHandler = (
   broadcastState()
 }
 
-const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
-  const hrmMessage = message as HrmInputMessage
+const ensureInputSession = (
+  ws: Parameters<IncomingMessageHandler>[0],
+  clientId: string
+) => {
   let existingData = hrmSessionManager.findById(clientId)
   let inputSessionState = clientSessionState.get(clientId)
 
@@ -330,6 +332,41 @@ const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
     inputSessionState = clientSessionState.get(clientId)!
   }
 
+  return { existingData, inputSessionState }
+}
+
+// Sanity check to prevent anomalous calorie values from the client.
+// Returns the server value when the client's is rejected.
+const resolveClientCalories = (
+  clientCalories: number,
+  serverCalories: number,
+  clientId: string
+): number => {
+  const diff = Math.abs(clientCalories - serverCalories)
+  const isAnomalousJump =
+    diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
+  const isAnomalousInitialValue =
+    serverCalories === 0 && clientCalories > MAX_INITIAL_CALORIES
+
+  if (isAnomalousJump || isAnomalousInitialValue) {
+    logger.warn(
+      {
+        clientId,
+        clientCalories,
+        serverCalories,
+        isInitialValue: isAnomalousInitialValue,
+      },
+      'Anomalous calorie value detected. Using last known server value.'
+    )
+    return serverCalories
+  }
+  return clientCalories
+}
+
+const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
+  const hrmMessage = message as HrmInputMessage
+  const { existingData, inputSessionState } = ensureInputSession(ws, clientId)
+
   if (existingData && inputSessionState) {
     const now = Date.now()
     inputSessionState.lastUpdate = now
@@ -337,31 +374,12 @@ const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
 
     // Use the client-provided calories directly
     if (typeof hrmMessage.data.calories === 'number') {
-      const clientCalories = hrmMessage.data.calories
-      const serverCalories = inputSessionState.accumulatedCalories
-      const diff = Math.abs(clientCalories - serverCalories)
-
-      // Sanity check to prevent anomalous calorie values from the client.
-      const isAnomalousJump =
-        diff > MAX_CALORIE_JUMP_PER_UPDATE && serverCalories > 0
-      const isAnomalousInitialValue =
-        serverCalories === 0 && clientCalories > MAX_INITIAL_CALORIES
-
-      if (isAnomalousJump || isAnomalousInitialValue) {
-        logger.warn(
-          {
-            clientId,
-            clientCalories,
-            serverCalories,
-            isInitialValue: isAnomalousInitialValue,
-          },
-          'Anomalous calorie value detected. Using last known server value.'
-        )
-        finalCalories = serverCalories // Reject the client's value
-      } else {
-        inputSessionState.accumulatedCalories = clientCalories
-        finalCalories = clientCalories // Accept the client's value
-      }
+      finalCalories = resolveClientCalories(
+        hrmMessage.data.calories,
+        inputSessionState.accumulatedCalories,
+        clientId
+      )
+      inputSessionState.accumulatedCalories = finalCalories
     }
 
     // Update the manager with the latest data

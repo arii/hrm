@@ -15,6 +15,44 @@ import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
  * @protection This endpoint is protected by a secret header (`x-internal-token-secret`)
  * defined in the `INTERNAL_TOKEN_DELIVERY_SECRET` environment variable.
  */
+const assertInternalAuth = (req: NextRequest): void => {
+  const secretHeader = req.headers.get('x-internal-token-secret') || ''
+  const expected = env.NEXTAUTH_SECRET
+  if (!expected) {
+    throw new ApiError(500, 'NEXTAUTH_SECRET is not set.')
+  }
+  if (secretHeader !== expected) {
+    throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
+  }
+}
+
+// We explicitly construct the payload to ensure type safety without 'any'.
+const parseTokenPayload = (
+  tokenData: Record<string, unknown>
+): SpotifyTokenPayload => {
+  const sub = typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown'
+  if (sub === 'unknown') {
+    logger.warn('Spotify token delivery: user identity (sub) is unknown.')
+  }
+
+  return {
+    provider: 'spotify',
+    sub,
+    access_token:
+      typeof tokenData.access_token === 'string' ? tokenData.access_token : '',
+    refresh_token:
+      typeof tokenData.refresh_token === 'string'
+        ? tokenData.refresh_token
+        : '',
+    expires_in:
+      typeof tokenData.expires_in === 'number'
+        ? tokenData.expires_in
+        : SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
+    scope: typeof tokenData.scope === 'string' ? tokenData.scope : '',
+    obtainedAt: Date.now(),
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the token from the request body
@@ -24,14 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Authenticate the request from our internal callback
-    const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = env.NEXTAUTH_SECRET
-    if (!expected) {
-      throw new ApiError(500, 'NEXTAUTH_SECRET is not set.')
-    }
-    if (secretHeader !== expected) {
-      throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
-    }
+    assertInternalAuth(req)
 
     // 3. Get the singleton instance of the Spotify service
     // FIX: Removed `!spotifyService.isReady()` check.
@@ -42,30 +73,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    // We explicitly construct the payload to ensure type safety without 'any'.
-    const sub = typeof tokenData.sub === 'string' ? tokenData.sub : 'unknown'
-    if (sub === 'unknown') {
-      logger.warn('Spotify token delivery: user identity (sub) is unknown.')
-    }
-
-    const payload: SpotifyTokenPayload = {
-      provider: 'spotify',
-      sub,
-      access_token:
-        typeof tokenData.access_token === 'string'
-          ? tokenData.access_token
-          : '',
-      refresh_token:
-        typeof tokenData.refresh_token === 'string'
-          ? tokenData.refresh_token
-          : '',
-      expires_in:
-        typeof tokenData.expires_in === 'number'
-          ? tokenData.expires_in
-          : SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
-      scope: typeof tokenData.scope === 'string' ? tokenData.scope : '',
-      obtainedAt: Date.now(),
-    }
+    const payload = parseTokenPayload(tokenData)
 
     await global.spotifyService.handleTokenUpdate(payload)
     logger.info('Spotify token delivered and processed successfully.')
