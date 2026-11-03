@@ -877,6 +877,36 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
     })
 
+    it('cancels silent retries on unmount', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
+      )
+      const { result, unmount } = renderHook(() => useBluetoothHRM())
+
+      let autoPromise: Promise<void> | undefined
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      // Let the first attempt fail, then unmount mid-retry-wait.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(1000)
+      })
+      act(() => {
+        unmount()
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(40000)
+        await autoPromise
+      })
+
+      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+    })
+
     it('does not log a stale abort warning across sequential attempts', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
       mockBluetooth.getDevices.mockResolvedValue([mockDevice])
@@ -917,6 +947,36 @@ describe('useBluetoothHRM', () => {
         await expect(connectPromise).resolves.toBe(true)
       })
 
+      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+      expect(mockGatt.disconnect).not.toHaveBeenCalled()
+      expect(result.current.isConnected).toBe(true)
+    })
+
+    it('adopts a live link on an instant "no longer in range" error', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      // BlueZ can raise an instant miss while the OS link is already up;
+      // the live link must be adopted, not severed by the zombie killer.
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
+      )
+      mockGatt.connected = true
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let connectPromise: Promise<boolean> | undefined
+      act(() => {
+        connectPromise = result.current.connectAndStream('VRT', 30)
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(40000)
+        await expect(connectPromise).resolves.toBe(true)
+      })
+
+      // Adopted on the first error: zero additional radio ops, the
+      // zombie sever never runs, and no quiet-retry sleep is entered.
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(mockGatt.disconnect).not.toHaveBeenCalled()
       expect(result.current.isConnected).toBe(true)
