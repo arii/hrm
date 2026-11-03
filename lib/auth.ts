@@ -30,7 +30,6 @@ declare module 'next-auth/jwt' {
 }
 
 /**
-/**
  * Safely extracts the hostname from `NEXTAUTH_URL` to set the cookie domain.
  * Returns `undefined` for localhost to allow the browser to use the current domain,
  * preventing cookie domain errors in local development.
