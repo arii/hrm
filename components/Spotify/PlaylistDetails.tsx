@@ -53,31 +53,44 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
     return controller.signal
   }, [])
 
+  // Shared page fetch for initial load + infinite scroll. Returns the
+  // tracks, or null when aborted/failed (error state already set).
+  const fetchTracksPage = useCallback(
+    async (fetchOffset: number): Promise<Track[] | null> => {
+      try {
+        const response = await fetch(
+          withBasePath(
+            `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${fetchOffset}`
+          ),
+          { signal: startFetch() }
+        )
+        if (!response.ok) {
+          throw new Error('Failed to fetch playlist details')
+        }
+        const data = await response.json()
+        return data.tracks
+      } catch (err) {
+        if (isAbort(err)) return null
+        console.error('Failed to fetch playlist tracks:', err)
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred'
+        )
+        return null
+      }
+    },
+    [playlistId, limit, startFetch]
+  )
+
   const fetchMoreTracks = useCallback(async () => {
     if (!playlistId) return
     setError(null)
 
-    try {
-      const response = await fetch(
-        withBasePath(
-          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}`
-        ),
-        { signal: startFetch() }
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch playlist details')
-      }
-      const data = await response.json()
-
-      setTracks((prev) => [...prev, ...data.tracks])
-      setOffset((prev) => prev + data.tracks.length)
-      setHasMore(data.tracks.length === limit)
-    } catch (err) {
-      if (isAbort(err)) return
-      console.error('Failed to fetch playlist tracks:', err)
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
-    }
-  }, [playlistId, offset, limit, startFetch])
+    const page = await fetchTracksPage(offset)
+    if (!page) return
+    setTracks((prev) => [...prev, ...page])
+    setOffset((prev) => prev + page.length)
+    setHasMore(page.length === limit)
+  }, [playlistId, offset, limit, fetchTracksPage])
 
   useEffect(() => {
     const fetchInitialTracks = async () => {
@@ -87,31 +100,15 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
       setHasMore(true)
       setError(null)
 
-      try {
-        const response = await fetch(
-          withBasePath(
-            `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=0`
-          ),
-          { signal: startFetch() }
-        )
-        if (!response.ok) {
-          throw new Error('Failed to fetch playlist details')
-        }
-        const data = await response.json()
-        setTracks(data.tracks)
-        setOffset(data.tracks.length)
-        setHasMore(data.tracks.length === limit)
-      } catch (err) {
-        if (isAbort(err)) return
-        console.error('Failed to fetch playlist tracks:', err)
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        )
-      }
+      const page = await fetchTracksPage(0)
+      if (!page) return
+      setTracks(page)
+      setOffset(page.length)
+      setHasMore(page.length === limit)
     }
 
     fetchInitialTracks()
-  }, [playlistId, limit, startFetch])
+  }, [playlistId, limit, fetchTracksPage])
 
   return (
     <>

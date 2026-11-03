@@ -7,7 +7,6 @@ import {
 import { readFile, writeFile } from 'fs/promises'
 import { execSync } from 'child_process'
 import path from 'path'
-import { runConflictResolution } from './conflict-resolver'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
@@ -280,6 +279,9 @@ async function main() {
         )
         process.exit(1)
       }
+      // Lazy: this CLI-only edge stays out of the static import graph so
+      // gemini-client (low-level) and conflict-resolver (task) don't cycle.
+      const { runConflictResolution } = await import('./conflict-resolver')
       await runConflictResolution(genAI, contextFile, outputFile)
     } else {
       // Default/Generic mode
@@ -310,7 +312,9 @@ async function main() {
   }
 }
 
-type ExtendedGenerateContentRequest = GenerateContentRequest & { thought_signature?: string };
+type ExtendedGenerateContentRequest = GenerateContentRequest & {
+  thought_signature?: string
+}
 
 export async function generateContentWithFallback({
   genAI,
@@ -331,7 +335,7 @@ export async function generateContentWithFallback({
       const request: ExtendedGenerateContentRequest = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         ...config,
-        ...(thoughtSignature && { thought_signature: thoughtSignature })
+        ...(thoughtSignature && { thought_signature: thoughtSignature }),
       }
 
       const result = await model.generateContent(request)
@@ -366,12 +370,11 @@ export async function generateContentWithFallback({
         503: 'Infrastructure Issue',
       }
 
-      const retriableCode =
-        Object.keys(RETRIABLE_MAP)
-          .map(Number)
-          .find(
-            (code) => errorStatus === code || errorMessage.includes(String(code))
-          )
+      const retriableCode = Object.keys(RETRIABLE_MAP)
+        .map(Number)
+        .find(
+          (code) => errorStatus === code || errorMessage.includes(String(code))
+        )
 
       if (retriableCode) {
         const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
@@ -618,7 +621,7 @@ export async function buildReviewPrompt(
                 `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
-        } catch (_e) {
+        } catch {
           return context.previousReviews
         }
       })()

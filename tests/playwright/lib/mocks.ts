@@ -11,7 +11,12 @@ import type {
   SpotifyData as SpotifyPlaybackState,
 } from '../../../types/websocket'
 
-import { MOCK_IMAGE } from './setup'
+/**
+ * A consistent, offline-safe 1x1 transparent PNG image for VRT.
+ * Prevents flaky tests caused by external placeholder services.
+ */
+export const MOCK_IMAGE =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
 
 const STABLE_WORKOUT_HTML = `
   <!DOCTYPE html>
