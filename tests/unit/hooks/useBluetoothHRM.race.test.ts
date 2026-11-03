@@ -3,6 +3,7 @@
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { clientEnv } from '@/lib/env-client'
 import Cookies from 'js-cookie'
 
 const mockBluetooth = {
@@ -335,5 +336,81 @@ describe('useBluetoothHRM Race Conditions', () => {
       await expect(firstPromise).resolves.toBe(true)
     })
     expect(result.current.isConnected).toBe(true)
+  })
+
+  it('stale silent auto-connect failure does not wipe injected newer state', async () => {
+    // The hook installs window.__TEST_CONTROLS__ when
+    // clientEnv.NEXT_PUBLIC_TESTING is set (read at effect time).
+    const prevTesting = clientEnv.NEXT_PUBLIC_TESTING
+    clientEnv.NEXT_PUBLIC_TESTING = 'true'
+    try {
+      await runStaleInjectionScenario()
+    } finally {
+      clientEnv.NEXT_PUBLIC_TESTING = prevTesting
+    }
+
+    async function runStaleInjectionScenario() {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      let rejectConnect!: (error: unknown) => void
+      mockGattConnect.mockImplementation(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectConnect = reject
+          })
+      )
+      const mockSavedDevice = {
+        id: 'test-device-id',
+        name: 'Saved HRM',
+        gatt: {
+          connect: mockGattConnect,
+          disconnect: jest.fn(),
+        },
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      Object.defineProperty(global.navigator, 'bluetooth', {
+        value: {
+          ...mockBluetooth,
+          getDevices: jest.fn().mockResolvedValue([mockSavedDevice]),
+        },
+        writable: true,
+      })
+
+      const { result, unmount } = renderHook(() => useBluetoothHRM())
+      await waitFor(() =>
+        expect(
+          window.__TEST_CONTROLS__?.setCustomHrmStatusMessage
+        ).toBeDefined()
+      )
+
+      let autoPromise!: Promise<void>
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      await waitFor(() => expect(mockGattConnect).toHaveBeenCalledTimes(1))
+
+      // A newer operation (VRT state injection) claims UI ownership mid-flight.
+      const injectedMessage = 'Scanning for HRM...'
+      act(() => {
+        window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!(injectedMessage)
+      })
+      expect(result.current.deviceStatus).toBe(injectedMessage)
+
+      // The stale silent attempt now fails. Its completion must not overwrite
+      // the injected state with an auto-connect failure banner.
+      await act(async () => {
+        rejectConnect(
+          new DOMException(
+            'Bluetooth Device is no longer in range.',
+            'NetworkError'
+          )
+        )
+        await autoPromise
+      })
+
+      expect(result.current.deviceStatus).toBe(injectedMessage)
+      unmount()
+      delete window.__TEST_CONTROLS__
+    }
   })
 })

@@ -31,3 +31,18 @@ This document records significant architectural decisions made during the develo
 **Implementation:**
 
 - See [ADR-0007: Consolidated Timer Service and CQRS Removal](./adr/0007-consolidated-timer-service.md) for details.
+
+## Client/Server Module Boundaries
+
+**Decision:** Transport and server-only modules must never be imported by UI components. Enforced by ESLint (`no-restricted-imports`, `no-restricted-syntax`) on `components/**` and `**/components/**` — see `eslint.config.mjs` ("Architectural Boundaries", #9707 A3).
+
+**Reasoning:**
+
+- **Bundle safety**: `ws`, socket helpers, and `utils/logger.server` pull Node-only APIs (sockets, pino, filesystem) into the client bundle, crashing or bloating browser builds.
+- **Single ownership**: all socket I/O lives behind `WebSocketContext` / `context` adapters and `hooks/`; components subscribe to state instead of constructing transports, which keeps connection lifecycle, reconnect, and watchdog behavior in one place.
+
+**Implementation:**
+
+- Need a socket in a component? Use `useWebSocket()` from `@/context/WebSocketContext` (state + `sendData`), never `new WebSocket(...)`.
+- Need logging in a component? Use `@/utils/logger` (client-safe). `utils/logger.server` is server-only.
+- Exceptions require an inline `eslint-disable` justification plus the PR approval label, per #9707 A3.3.
