@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/fallow/schema.json",
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "minimumVersion": "3.39.0",
   "entry": [
     "app/**/*",
