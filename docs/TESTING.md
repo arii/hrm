@@ -82,6 +82,30 @@ pnpm run test:visual
 
 This command will run Playwright in headless mode and compare the latest screenshots with the snapshots stored in the repository. If there are any visual differences, the tests will fail.
 
+### Running VRT Locally (basePath gotcha)
+
+Playwright builds a production server and probes root paths (`/api/health/simple`, `/client/...`), exactly like CI. A local `.env.local` with `NEXT_PUBLIC_BASE_PATH=/hrm` breaks this twice: the value is baked into the client bundle at build time, and the custom server re-reads `next.config.js` at startup so routing shifts to `/hrm` too — every root probe then 404s and the run times out in `config.webServer` (an empty `NEXT_PUBLIC_BASE_PATH=` override does NOT win over `.env.local`).
+
+For a CI-equivalent local run, move `.env.local` aside for both the build and the test, then restore it:
+
+```bash
+mv .env.local /tmp/.env.local.vrt-keep
+# Build with the same env Playwright/CI uses (build env is baked into the bundle):
+PORT=3000 TESTING=true NEXT_PUBLIC_TESTING=true \
+  NEXTAUTH_SECRET='a-super-long-and-secure-secret-for-ci-tests' \
+  NEXTAUTH_URL=http://127.0.0.1:3000 \
+  SPOTIFY_CLIENT_ID=test_client_id SPOTIFY_CLIENT_SECRET=test_client_secret \
+  ALLOW_DEBUG_RESET=true \
+  GOOGLE_DOC_WORKOUT_URL=https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit \
+  GOOGLE_DOC_IFRAME_URL=https://docs.google.com/spreadsheets/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true \
+  WEBSOCKET_WATCHDOG_INTERVAL=5000 \
+  pnpm run build
+SKIP_BUILD=true pnpm exec playwright test --project=chromium tests/playwright/vrt-connect-page.spec.ts
+mv /tmp/.env.local.vrt-keep .env.local
+```
+
+(`SKIP_BUILD=true` reuses the build because a full build exceeds Playwright's 120s `webServer` budget on this box.) Expect Spotify `invalid_client` noise in the server log — the on-disk `logs/spotify_tokens.json` fails refresh against the test client ID, but it is non-fatal and the server still becomes ready. Never delete or commit the real token file.
+
 ### Updating Snapshots
 
 If you've made intentional changes to the UI, you'll need to update the snapshots. To do this, run the following command:
