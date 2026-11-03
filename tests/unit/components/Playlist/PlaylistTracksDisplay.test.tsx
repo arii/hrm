@@ -87,6 +87,8 @@ describe('PlaylistTracksDisplay', () => {
   }
 
   it('should render loading state initially', () => {
+    // Never-resolving fetch keeps the loading state with no dangling setState.
+    ;(fetch as jest.Mock).mockReturnValueOnce(new Promise(() => {}))
     render(
       <WebSocketContext.Provider value={mockContextValue}>
         <PlaylistTracksDisplay playlistId="123" />

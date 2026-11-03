@@ -73,6 +73,7 @@ postlude`
   })
 
   it('should skip a file that is too large', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     mockedStat.mockResolvedValue({ size: 2 * 1024 * 1024 } as jest.Mocked<
       typeof stat
     >)
@@ -80,5 +81,9 @@ postlude`
     const conflicts = await parseConflicts('large-file.ts')
     expect(conflicts).toHaveLength(0)
     expect(mockedReadFile).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Skipping large file')
+    )
+    warnSpy.mockRestore()
   })
 })

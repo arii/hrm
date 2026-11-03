@@ -67,6 +67,7 @@ describe('SessionDetail', () => {
   })
 
   it('handles FIT export failure', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     const onBack = jest.fn()
     render(<SessionDetail session={mockSession} onBack={onBack} />)
 
@@ -79,5 +80,10 @@ describe('SessionDetail', () => {
 
     expect(generateFitFile).toHaveBeenCalledWith(mockSession)
     expect(mockShowError).toHaveBeenCalledWith('Failed to export FIT file')
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to export FIT file:',
+      expect.any(Error)
+    )
+    consoleSpy.mockRestore()
   })
 })
