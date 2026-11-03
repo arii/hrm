@@ -13,12 +13,17 @@ interface LiveDurationProps {
  * Isolated component to prevent unnecessary re-renders of parent list.
  */
 const LiveDuration = ({ startTime, endTime }: LiveDurationProps) => {
-  const [now, setNow] = useState(() => Date.now())
+  // Initialize from props so server and first client render match;
+  // the real clock value is set after mount.
+  const [now, setNow] = useState(startTime)
 
   useEffect(() => {
     // Only run interval for active sessions (no endTime)
     if (endTime) return
 
+    // Seed the ticking clock subscription once after mount (SSR-safe init above).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now())
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [endTime])
@@ -28,7 +33,7 @@ const LiveDuration = ({ startTime, endTime }: LiveDurationProps) => {
     : (now - startTime) / 60000
 
   return (
-    <Typography variant="body2">
+    <Typography variant="body2" component="span" sx={{ display: 'block' }}>
       {durationMinutes.toFixed(1)} min
       {!endTime && ' (active)'}
     </Typography>
