@@ -55,6 +55,13 @@ const mainGridStyles: SxProps = {
     lg: '1fr 1fr',
   },
   gap: 2,
+  // On large screens the top row (timer/HR) takes ~2/5 of the free
+  // vertical space and the workout section takes the rest, so the
+  // dashboard fills the viewport instead of top-anchoring with a blank
+  // band below. Mobile stays content-sized (page scrolls).
+  flexGrow: { xs: 0, lg: 2 },
+  flexShrink: 1,
+  flexBasis: { xs: 'auto', lg: 0 },
 }
 
 interface DashboardClientProps {
@@ -100,7 +107,16 @@ const DashboardClient = ({
         onClick={handleInteraction}
         sx={{
           py: { xs: 2, sm: 3 },
-          minHeight: '100vh',
+          // Flex column over the viewport: growers below absorb leftover
+          // space (no blank band); when content exceeds the viewport the
+          // min-height floor lets the page scroll normally. Bottom padding
+          // reserves room for the fixed Spotify bar (64px) + bottom nav
+          // (56px) plus breathing room. vh first for older browsers.
+          minHeight: ['100vh', '100dvh'],
+          // 64px Spotify bar + 56px bottom nav + 24px breathing room
+          paddingBottom: 'calc(64px + 56px + 24px)',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Box sx={mainGridStyles}>
@@ -109,7 +125,18 @@ const DashboardClient = ({
           </Box>
           <HrmConnectionPanel />
         </Box>
-        <Box sx={{ width: '100%', mt: 2 }}>
+        <Box
+          sx={{
+            width: '100%',
+            mt: 2,
+            // Workout section takes ~3/5 of free vertical space on large
+            // screens (cards stretch via height:100% chains); content-sized
+            // with page scroll on mobile.
+            flexGrow: { xs: 0, lg: 3 },
+            flexShrink: 1,
+            flexBasis: { xs: 'auto', lg: 0 },
+          }}
+        >
           {!hasValidConfig ? (
             <Alert severity="warning" sx={{ width: '100%' }}>
               {missingConfigMsg}

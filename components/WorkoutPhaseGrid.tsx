@@ -15,11 +15,83 @@ import {
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { withBasePath } from '@/utils/urls'
+import { useFitFontSize } from '@/hooks/useFitFontSize'
+import { FIT_TYPE_MIN_PX, CARD_TYPE_MAX_PX } from '@/constants/layout'
 
 interface WorkoutPhaseGridProps {
   docId: string
   refreshKey?: number
   onRefresh?: () => void
+}
+
+/**
+ * One workout-phase card. Owns a useFitFontSize instance (hooks can't run
+ * in the header map below), so each card independently shrinks its type to
+ * fit its own line count: sparse cards stay large, dense cards (up to the
+ * observed 11-line max) step down to the shared floor before any scroll
+ * fallback. Child type uses em units so the measured wrapper's px size
+ * cascades; ratios match the old rem ceilings (header 1.3em ~= 36px,
+ * exercises 1em = 28px at max).
+ */
+const PhaseCard = ({
+  header,
+  exercises,
+}: {
+  header: string
+  exercises: string[]
+}) => {
+  const contentRef = useFitFontSize<HTMLDivElement>({
+    minPx: FIT_TYPE_MIN_PX,
+    maxPx: CARD_TYPE_MAX_PX,
+  })
+  return (
+    <Card
+      elevation={2}
+      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+    >
+      <CardContent sx={{ p: 3, flexGrow: 1, minHeight: 0, display: 'flex' }}>
+        <Box
+          ref={contentRef}
+          sx={{
+            fontSize: CARD_TYPE_MAX_PX,
+            flexGrow: 1,
+            minHeight: 0,
+            overflow: 'auto',
+          }}
+        >
+          <Typography
+            component="h3"
+            sx={{
+              fontWeight: 700,
+              fontSize: '1.3em',
+              lineHeight: 1.15,
+              textAlign: 'center',
+            }}
+          >
+            {header}
+          </Typography>
+          {exercises.length > 0 && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <Stack spacing={1.5}>
+                {exercises.map((exercise, i) => (
+                  <Typography
+                    key={i}
+                    sx={{
+                      fontSize: '1em',
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {exercise}
+                  </Typography>
+                ))}
+              </Stack>
+            </>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function WorkoutPhaseGrid({
@@ -88,60 +160,26 @@ export default function WorkoutPhaseGrid({
         sx={{
           display: 'grid',
           gap: 2,
+          height: '100%',
           // Auto-fit shares the row however many phases the day has (2 share
           // halves, 4 share quarters) instead of orphaning a wrapped card.
           gridTemplateColumns:
             'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
         }}
       >
-        {data.headers.map((header, index) => {
-          const exercises = columns[index] ?? []
-          return (
-            <Card
-              key={`${header}-${index}`}
-              elevation={2}
-              sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            >
-              <CardContent sx={{ p: 3, flexGrow: 1 }}>
-                <Typography
-                  component="h3"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: 'clamp(1.5rem, 1.25rem + 2vw, 2.25rem)',
-                    lineHeight: 1.15,
-                    textAlign: 'center',
-                  }}
-                >
-                  {header}
-                </Typography>
-                {exercises.length > 0 && (
-                  <>
-                    <Divider sx={{ my: 2 }} />
-                    <Stack spacing={1.5}>
-                      {exercises.map((exercise, i) => (
-                        <Typography
-                          key={i}
-                          sx={{
-                            fontSize: 'clamp(1.25rem, 1rem + 1.75vw, 1.75rem)',
-                            lineHeight: 1.25,
-                          }}
-                        >
-                          {exercise}
-                        </Typography>
-                      ))}
-                    </Stack>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
+        {data.headers.map((header, index) => (
+          <PhaseCard
+            key={`${header}-${index}`}
+            header={header}
+            exercises={columns[index] ?? []}
+          />
+        ))}
       </Box>
     )
   }
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', height: '100%' }}>
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}

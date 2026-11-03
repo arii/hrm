@@ -19,6 +19,7 @@ const IdentityTier = ({ name }: { name: string }) => (
       variant="h4"
       sx={{
         fontWeight: 900,
+        fontSize: 'clamp(1.5rem, 2.5vh + 1.5vw, 2.5rem)',
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -48,7 +49,7 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
         fontSize: {
           xs: 'clamp(3rem, 10vw, 4rem)',
           sm: 'clamp(4rem, 12vw, 5rem)',
-          md: 'clamp(5rem, 15vw, 6rem)',
+          md: 'clamp(5rem, 8vh + 10vw, 10rem)',
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -69,7 +70,11 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+  <Typography
+    data-testid={testId}
+    variant="h4"
+    sx={{ fontWeight: 800, fontSize: 'clamp(1.75rem, 3vh + 2vw, 3rem)' }}
+  >
     {value}{' '}
     <Typography
       component="span"
