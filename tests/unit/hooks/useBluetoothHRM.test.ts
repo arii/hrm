@@ -838,4 +838,60 @@ describe('useBluetoothHRM', () => {
       expect(abortWarns).toHaveLength(0)
     })
   })
+
+  describe('slow-link adoption', () => {
+    it('adopts a link that comes up after our timeout instead of failing', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      // First radio call hangs past the 20s timer; the link itself is up.
+      mockGatt.connect
+        .mockImplementationOnce(() => new Promise(() => {}))
+        .mockResolvedValue(mockGatt)
+      mockGatt.connected = true
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let connectPromise: Promise<boolean> | undefined
+      act(() => {
+        connectPromise = result.current.connectAndStream('VRT', 30)
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(25000)
+        await expect(connectPromise).resolves.toBe(true)
+      })
+
+      // Second call adopts the live server; we never severed it.
+      expect(mockGatt.connect).toHaveBeenCalledTimes(2)
+      expect(mockGatt.disconnect).not.toHaveBeenCalled()
+      expect(result.current.isConnected).toBe(true)
+    })
+
+    it('keeps the saved device on a genuine timeout (link down)', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockImplementation(() => new Promise(() => {}))
+      mockGatt.connected = false
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let connectPromise: Promise<boolean> | undefined
+      act(() => {
+        connectPromise = result.current.connectAndStream('VRT', 30)
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(25000)
+        await expect(connectPromise).rejects.toThrow(/timeout/i)
+      })
+      // Let any delayed timers (there must be no wipe timer) flush.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(10000)
+      })
+
+      // One radio attempt (timeouts fail fast, no busy retry), timeout
+      // message surfaced, and — critically — no permission wipe.
+      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+      expect(result.current.deviceStatus).toContain(
+        BLUETOOTH_MESSAGES.connectionTimeout
+      )
+      expect(Cookies.remove).not.toHaveBeenCalled()
+    })
+  })
 })

@@ -41,6 +41,5 @@ export const BLUETOOTH_MESSAGES = {
     'Connection failed. Device might be too far or low battery.',
   bluetoothError: (errorName: string) => `Bluetooth error: ${errorName}`,
   connectionTimeout: 'Connection timed out. Wake up device and try again.',
-  connectionTimeoutReset: 'Connection timeout. Resetting device...',
   unknownError: 'An unknown error occurred.',
 }
