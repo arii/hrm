@@ -98,6 +98,68 @@ test.describe('Dashboard Visual Regression Tests', () => {
       })
     })
 
+    // Max-content bounds from previous_workouts history (227 workouts):
+    // 6 phases, 11 exercises in the densest phase, ~30-char lines.
+    test('max-content workout fills without overflow', async ({
+      dashboardPage,
+    }) => {
+      await setupMinimalVisualRegressionTest(dashboardPage, '/', {
+        headers: [
+          '30/10 x 3',
+          'Tabata 20/10',
+          'EMOM 60/60',
+          '3 x 12',
+          '2 x 15',
+          'Finisher',
+        ],
+        columns: [
+          ['3 way crunch', 'Dead bug', 'Plank variations'],
+          [
+            'Band h. Bridge',
+            'Band p. Squat',
+            'Band hydrants',
+            'Bulgarian split squat pulses L',
+            'Single-leg deadlift row R',
+            'Overhead walking lunge twist',
+            'Lateral band monster walks',
+            'Standing calf raise pyramid',
+            'Tibialis anterior wall leans',
+            'Seated hip abduction holds',
+            'Prone hamstring slider curls',
+          ],
+          ['RDL', 'High pull', '1 1/2 squat'],
+          ['Alt box ch press', 'Single Hip thrust'],
+          ['Kb curl', 'Tricep planks', 'Butterfly bridge'],
+          ['60 second hollow body hold'],
+        ],
+      })
+      const grid = dashboardPage.getByTestId('workout-phase-grid')
+      await grid.waitFor({
+        state: 'visible',
+        timeout: VRT_TIMEOUTS.STANDARD,
+      })
+      // Six cards render, and every card fits its content: the fit hook
+      // must have shrunk type instead of leaving inner scrollbars.
+      await expect(dashboardPage.getByTestId('phase-card-content')).toHaveCount(
+        6
+      )
+      const overflowing = await dashboardPage.evaluate(() => {
+        const cards = Array.from(
+          document.querySelectorAll('[data-testid="phase-card-content"]')
+        )
+        return cards.filter(
+          (el) =>
+            el.scrollHeight > el.clientHeight + 1 ||
+            el.scrollWidth > el.clientWidth + 1
+        ).length
+      })
+      expect(overflowing).toBe(0)
+      await takeScreenshot(grid, 'dashboard-max-content.png', {
+        mask: getDynamicContentMasks(dashboardPage),
+        maxDiffPixelRatio: 0.1,
+      })
+    })
+
     test('large desktop viewport', async ({ dashboardPage }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })

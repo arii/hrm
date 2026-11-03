@@ -52,6 +52,7 @@ const PhaseCard = ({
       <CardContent sx={{ p: 3, flexGrow: 1, minHeight: 0, display: 'flex' }}>
         <Box
           ref={contentRef}
+          data-testid="phase-card-content"
           sx={{
             fontSize: CARD_TYPE_MAX_PX,
             flexGrow: 1,

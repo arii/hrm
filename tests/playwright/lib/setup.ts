@@ -299,16 +299,17 @@ export async function setupVisualRegressionTest(browser: Browser): Promise<{
  */
 export async function setupMinimalVisualRegressionTest(
   page: Page,
-  path: string = ''
+  path: string = '',
+  workoutMock: { headers: string[]; columns?: string[][] } = {
+    headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
+  }
 ): Promise<void> {
   // Mock the workout API response for stable VRT
   await page.route('**/api/workout*', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        headers: ['PHASE', 'INTENSITY', 'DURATION', 'NOTES'],
-      }),
+      body: JSON.stringify(workoutMock),
     })
   })
 
