@@ -12,7 +12,7 @@ type SpotifyBasePayload = {
   deviceId?: string
 }
 
-type SpotifyPlayPayload = SpotifyBasePayload & {
+export type SpotifyPlayPayload = SpotifyBasePayload & {
   playlistUri?: string
   contextUri?: string
   uri?: string

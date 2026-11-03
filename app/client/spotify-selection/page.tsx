@@ -10,7 +10,11 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
+import {
+  useSpotifyCommand,
+  SpotifyPlayPayload,
+} from '@/hooks/useSpotifyCommand'
+import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -32,7 +36,12 @@ const PlaylistDetails = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData } = useWebSocket()
-  const { execute: executeSpotify } = useSpotifyCommand()
+  const {
+    execute: executeSpotify,
+    activeDevice,
+    hrmPlayer,
+  } = useSpotifyCommand()
+  const { showWarning } = useAppSnackbar()
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
     null
   )
@@ -42,13 +51,24 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistId(playlistId || null)
   }
 
+  const playOnTarget = (payload: SpotifyPlayPayload): void => {
+    const targetDeviceId = activeDevice?.id || hrmPlayer?.id || null
+    if (!targetDeviceId) {
+      showWarning(
+        'No Spotify device available. Open the dashboard to start the web player.'
+      )
+      return
+    }
+    executeSpotify('PLAY', { ...payload, deviceId: targetDeviceId })
+  }
+
   const handlePlaylistPlay = (uri: string) => {
-    executeSpotify('PLAY', { contextUri: uri })
+    playOnTarget({ contextUri: uri })
   }
 
   const handleTrackPlay = (index: number) => {
     if (selectedPlaylistId) {
-      executeSpotify('PLAY', {
+      playOnTarget({
         contextUri: `spotify:playlist:${selectedPlaylistId}`,
         offset: { position: index },
       })

@@ -12,6 +12,7 @@ import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { alpha } from '@mui/material/styles'
 import { memo, useEffect, useState } from 'react'
+import logger from '@/utils/logger'
 import RefreshIconButton from './RefreshIconButton'
 
 interface GoogleDocViewerProps {
@@ -58,7 +59,7 @@ const GoogleDocViewer = ({
     u.searchParams.set('embedded', 'true')
     finalEmbedUrl = u.toString()
   } catch {
-    console.error('Invalid URL:', embedUrl)
+    logger.error('Invalid URL:', embedUrl)
     return null
   }
 

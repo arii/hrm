@@ -29,12 +29,7 @@ const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-const HEARTBEAT_INTERVAL_MS_test = 500
-const HEARTBEAT_INTERVAL_MS_prod = 1000
-export const HEARTBEAT_INTERVAL_MS =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? HEARTBEAT_INTERVAL_MS_test
-    : HEARTBEAT_INTERVAL_MS_prod
+export const HEARTBEAT_INTERVAL_MS = 1000
 
 const statusMessageMap: Record<BluetoothConnectionStatus, string> = {
   [BluetoothConnectionStatus.DISCONNECTED]: BLUETOOTH_MESSAGES.disconnected,

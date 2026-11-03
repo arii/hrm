@@ -13,12 +13,6 @@ import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
 const port = process.env.PORT || 3000
 const baseURL = `http://127.0.0.1:${port}`
 
-// Check if Spotify/NextAuth credentials are available
-const hasSpotifyCredentials = !!(
-  process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET
-)
-const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
-
 // Optimized ignore list - run more tests by default
 const testIgnoreList = [
   // Hardware-dependent tests (require Web Bluetooth, specific hardware)
@@ -36,14 +30,8 @@ const testIgnoreList = [
   'oauth/**/*.spec.ts',
 ]
 
-// Only ignore auth-dependent tests if credentials are missing
-// We now have a fallback test in auth-flow.spec.ts so we don't need to ignore it entirely
-if (!hasSpotifyCredentials) {
-  // auth-flow.spec.ts is now safe to run without credentials
-}
-if (!hasNextAuthSecret) {
-  testIgnoreList.push('debug.spec.ts')
-}
+// Note: auth-flow.spec.ts runs without credentials (has a fallback test);
+// no credential-gated ignores remain.
 
 // Define reporters with strict typing to avoid 'as any'
 const reporters: ReporterDescription[] = [

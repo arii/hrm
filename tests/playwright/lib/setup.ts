@@ -187,8 +187,8 @@ export async function resetServerState(
 ): Promise<void> {
   const response = await request.post(`${getBaseURL()}/api/debug/reset`)
   if (!response.ok()) {
-    console.warn(
-      `Warning: Failed to reset server state. Status: ${response.status()}`
+    throw new Error(
+      `Failed to reset server state. Status: ${response.status()}`
     )
   }
 }

@@ -14,11 +14,10 @@ const checkLocalStorage = () => {
     window.localStorage.setItem(testKey, testKey)
     window.localStorage.removeItem(testKey)
     isLocalStorageAvailable = true
-    return true
   } catch {
     isLocalStorageAvailable = false
-    return false
   }
+  return isLocalStorageAvailable
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

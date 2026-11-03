@@ -1,13 +1,13 @@
 // lib/hrm/HrmSessionManager.ts
-import { RingBuffer } from '../structures/RingBuffer'
+import { RingBuffer } from '@/lib/structures/RingBuffer'
 import {
   HrmStreamData,
   RawHrmStreamData,
   HeartRateDataPoint,
   HrmInternalStats,
-} from '../../types/core'
-import { env } from '../env'
-import { HrmStatsCalculator } from '../../services/HrmStatsCalculator'
+} from '@/types/core'
+import { env } from '@/lib/env'
+import { HrmStatsCalculator } from '@/services/HrmStatsCalculator'
 
 type HrmDataPoint = Pick<HeartRateDataPoint, 'heartRate' | 'timestamp'>
 
@@ -52,12 +52,39 @@ export class HrmSessionManager {
 
   /**
    * Retrieves all client data entries with aggregated session stats.
+   * Lazily purges sessions idle beyond the TTL first, so memory cannot
+   * grow unboundedly. The TTL (default 30 min) far exceeds the display
+   * staleness threshold (30 s), so purged sessions were long invisible.
    * @returns An array of all client data.
    */
   findAll(): HrmStreamData[] {
+    this.purgeInactiveSessions()
     return Array.from(this.sessions.values()).map((session) =>
       this.mergeStats(session)
     )
+  }
+
+  /**
+   * Deletes sessions with no update within the TTL.
+   * Sessions without any timestamp are kept (never purge the unknown).
+   * @param now Reference time in ms (defaults to Date.now()).
+   * @param ttlMs Idle timeout in ms (defaults to env HRM_SESSION_TTL_MS).
+   * @returns The number of purged sessions.
+   */
+  purgeInactiveSessions(
+    now: number = Date.now(),
+    ttlMs: number = env.HRM_SESSION_TTL_MS
+  ): number {
+    let purged = 0
+    for (const [clientId, session] of this.sessions) {
+      const updatedAt = session.latestData.updatedAt
+      if (updatedAt === undefined) continue
+      if (now - updatedAt > ttlMs) {
+        this.sessions.delete(clientId)
+        purged++
+      }
+    }
+    return purged
   }
 
   /**
