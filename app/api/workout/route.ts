@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { parseGoogleDocTable } from '@/services/googleDocParser'
 import logger from '@/utils/logger'
+import { env } from '@/lib/env'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -14,10 +15,7 @@ export async function GET(request: Request) {
   }
 
   // Prevent hitting real Google Docs in tests
-  if (
-    process.env.TESTING === 'true' ||
-    process.env.NEXT_PUBLIC_TESTING === 'true'
-  ) {
+  if (env.TESTING === 'true' || env.NEXT_PUBLIC_TESTING === 'true') {
     return NextResponse.json({
       headers: ['20/10', '3 x 10'],
       columns: [

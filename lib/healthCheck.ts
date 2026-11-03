@@ -1,6 +1,7 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
+import { env } from '@/lib/env'
 
 export type HealthCheckResult = {
   healthy: boolean
@@ -27,8 +28,8 @@ export async function checkWebSocketService(): Promise<HealthCheckResult> {
   try {
     // The app socket only upgrades /ws (see isAppWsUpgrade): dialing the
     // root path hangs until timeout, so the default must include /ws.
-    const port = process.env.PORT || '3000'
-    const wsUrl = process.env.WS_URL || `ws://localhost:${port}/ws`
+    const port = env.PORT || 3000
+    const wsUrl = env.WS_URL || `ws://localhost:${port}/ws`
     // Check if WebSocket server is accepting connections
     const wsHealth = await new Promise((resolve) => {
       const testWs = new WebSocket(wsUrl)

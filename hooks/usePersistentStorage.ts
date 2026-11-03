@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
 import isEqual from 'lodash/isEqual'
+import { clientEnv } from '@/lib/env-client'
 
 let isLocalStorageAvailable: boolean | null = null
 
 const checkLocalStorage = () => {
   if (typeof window === 'undefined') return false
-  if (isLocalStorageAvailable !== null && process.env.NODE_ENV !== 'test') {
+  if (isLocalStorageAvailable !== null && clientEnv.NODE_ENV !== 'test') {
     return isLocalStorageAvailable
   }
   try {
@@ -141,7 +142,7 @@ function usePersistentStorage<T>(
             try {
               Cookies.set(key, JSON.stringify(valueToStore), {
                 expires: 365,
-                secure: process.env.NODE_ENV === 'production',
+                secure: clientEnv.NODE_ENV === 'production',
                 sameSite: 'strict',
               })
             } catch (cookieError) {

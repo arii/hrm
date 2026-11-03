@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
+import { describe, expect, it, jest, afterAll } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
@@ -16,6 +16,11 @@ jest.mock('@/utils/logger', () => ({
   },
 }))
 
+// Route reads the import-time env snapshot, not live process.env (#9140).
+jest.mock('@/lib/env', () => ({
+  env: { NEXTAUTH_SECRET: 'test-secret' },
+}))
+
 // Mock Service Container
 const mockSpotifyService = {
   isReady: jest.fn(),
@@ -23,14 +28,7 @@ const mockSpotifyService = {
 }
 
 describe('POST /api/internal/token-delivery', () => {
-  const originalNextAuthSecret = process.env.NEXTAUTH_SECRET
-
-  beforeAll(() => {
-    process.env.NEXTAUTH_SECRET = 'test-secret'
-  })
-
   afterAll(() => {
-    process.env.NEXTAUTH_SECRET = originalNextAuthSecret
     // @ts-expect-error - Deleting global for test isolation
     delete global.spotifyService
   })

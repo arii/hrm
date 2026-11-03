@@ -1,5 +1,6 @@
 // app/api/health/detailed/route.ts
 import { NextResponse } from 'next/server'
+import { env } from '@/lib/env'
 import { checkMemoryUsage, checkSpotifyAPI } from '../../../../lib/healthCheck'
 import { getInternalApiUrl } from '@/utils/urls'
 
@@ -7,7 +8,7 @@ async function checkStatefulServices(): Promise<{
   healthy: boolean
   details: Record<string, unknown>
 }> {
-  const baseUrl = process.env.NEXTAUTH_URL
+  const baseUrl = env.NEXTAUTH_URL
   if (!baseUrl) {
     return {
       healthy: false,
@@ -46,6 +47,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     status: 'healthy' as 'healthy' | 'degraded' | 'unhealthy',
     uptime: process.uptime(),
+    // npm-injected build metadata, not configuration: deliberately not in env schema (#9140).
     version: process.env.npm_package_version || 'unknown',
     checks: {
       memory: checkMemoryUsage(),
