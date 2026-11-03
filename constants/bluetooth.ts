@@ -34,6 +34,12 @@ export const DATA_LIVENESS_TIMEOUT_MS = 30000
 export const ROLLING_AVG_HISTORY_LENGTH = 5
 
 /**
+ * Consecutive slow packets that trigger the "signal weak" user warning.
+ * Fires once when the counter reaches this value (#9598).
+ */
+export const SLOW_PACKET_WARNING_THRESHOLD = 3
+
+/**
  * Signal quality tier thresholds (ms)
  */
 export const EXCELLENT_SIGNAL_THRESHOLD_MS = 1200

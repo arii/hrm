@@ -12,7 +12,7 @@ import { SpotifyPlaylist } from '@/types/core'
  * API route to fetch preset and user Spotify playlists.
  *
  * This endpoint is specifically for the standalone Spotify playlist selection page.
- * It returns both preset playlists (HIIT, Rock, Pop) and the user's personal playlists.
+ * It returns both preset playlists (Workout, Rock, Pop) and the user's personal playlists.
  * Uses the official Spotify Web API TypeScript SDK for type safety and automatic pagination.
  *
  * @param _req The incoming Next.js API request (unused).
@@ -25,11 +25,13 @@ async function getPlaylists(_req: NextRequest) {
   // Correct syntax for @spotify/web-api-ts-sdk
   const playlistsResponse = await spotify.currentUser.playlists.playlists(50)
 
-  // 5. Preset playlists for the standalone page
+  // 5. Preset playlists for the standalone page.
+  // URIs verified live Nov 2026 (#9772): Spotify retires editorial IDs, so
+  // re-probe via open.spotify.com before assuming these resolve.
   const presetPlaylists: SpotifyPlaylist[] = [
-    { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
+    { name: 'Workout', uri: 'spotify:playlist:37i9dQZF1DX0HRj9P7NxeE' },
     { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
-    { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
+    { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DWUa8ZRTfalHk' },
   ]
 
   // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)

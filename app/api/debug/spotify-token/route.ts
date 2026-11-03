@@ -1,17 +1,13 @@
 import fs from 'fs'
 import { NextResponse } from 'next/server'
 import path from 'path'
+import { debugAccessDenied } from '@/lib/debug-guard'
 
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {
-  // SECURITY: Prevent exposure of secrets in production unless in a test environment
-  if (process.env.NODE_ENV === 'production' && process.env.TESTING !== 'true') {
-    return NextResponse.json(
-      { error: 'Not available in production' },
-      { status: 403 }
-    )
-  }
+  const denied = debugAccessDenied()
+  if (denied) return denied
 
   try {
     let token = null

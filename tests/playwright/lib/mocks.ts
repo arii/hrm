@@ -148,9 +148,9 @@ export async function mockSpotifyPlaylists(
       body: JSON.stringify({
         presetPlaylists: [
           {
-            name: 'HIIT',
-            uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5',
-            id: 'preset-hiit',
+            name: 'Workout',
+            uri: 'spotify:playlist:37i9dQZF1DX0HRj9P7NxeE',
+            id: 'preset-workout',
             imageUrl: MOCK_IMAGE,
           },
         ],
