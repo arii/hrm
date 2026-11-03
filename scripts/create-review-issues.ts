@@ -6,7 +6,9 @@ import crypto from 'crypto'
 import { z } from 'zod'
 
 // --- Constants ---
-const MIN_DESCRIPTION_LENGTH = 50
+const MIN_DESCRIPTION_LENGTH = process.env.MIN_DESCRIPTION_LENGTH
+  ? parseInt(process.env.MIN_DESCRIPTION_LENGTH, 10)
+  : 50
 export const FINGERPRINT_REGEX = /<!-- fingerprint: (.*) -->/
 
 // --- Label Configuration ---
@@ -595,7 +597,7 @@ export async function run(
       const pattern = `\\b(?:${escapedWords.join('|')})\\b`
       slopPattern = new RegExp(pattern, 'i')
     }
-  } catch (e) {
+  } catch {
     console.warn('Could not read ai_slop_words.txt, skipping quality check.')
   }
 

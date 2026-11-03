@@ -1,6 +1,6 @@
 // tests/unit/lib/hrm/HrmSessionManager.test.ts
-import { HrmSessionManager } from '../../../../lib/hrm/HrmSessionManager'
-import { RawHrmStreamData } from '../../../../types/core'
+import { HrmSessionManager } from '@/lib/hrm/HrmSessionManager'
+import { RawHrmStreamData } from '@/types/core'
 
 describe('HrmSessionManager', () => {
   let manager: HrmSessionManager
@@ -127,5 +127,35 @@ describe('HrmSessionManager', () => {
     expect(snapshot?.summary.avgHr).toBe(0)
     expect(snapshot?.summary.count).toBe(0)
     expect(snapshot?.summary.peakHr).toBe(0)
+  })
+
+  it('should purge sessions idle beyond the TTL and keep fresh ones', () => {
+    const now = 2000000
+    manager.save({ ...client1, value: 80, updatedAt: now - 1900000 })
+    manager.save({ ...client2, value: 90, updatedAt: now - 1000 })
+
+    const purged = manager.purgeInactiveSessions(now, 1800000)
+
+    expect(purged).toBe(1)
+    expect(manager.findById('client1')).toBeUndefined()
+    expect(manager.findById('client2')).toBeDefined()
+  })
+
+  it('should never purge sessions without a timestamp', () => {
+    manager.save({ ...client1, value: 80 })
+
+    const purged = manager.purgeInactiveSessions(Date.now(), 1)
+
+    expect(purged).toBe(0)
+    expect(manager.findById('client1')).toBeDefined()
+  })
+
+  it('should lazily purge idle sessions on findAll', () => {
+    manager.save({ ...client1, value: 80, updatedAt: 1000 })
+
+    const all = manager.findAll()
+
+    expect(all).toHaveLength(0)
+    expect(manager.findById('client1')).toBeUndefined()
   })
 })

@@ -27,6 +27,16 @@ export const test = base.extend<PageFixtures>({
     await freezeUIForVRT(page)
 
     page.on('console', (msg) => {
+      // Only surface errors and warnings; info/log/debug add noise.
+      // Set PW_CONSOLE_VERBOSE=1 for full output when debugging.
+      const type = msg.type()
+      if (
+        type !== 'error' &&
+        type !== 'warning' &&
+        process.env.PW_CONSOLE_VERBOSE !== '1'
+      ) {
+        return
+      }
       const text = msg.text()
       // Filter out expected noise
       if (text.includes('DOCS_timing')) return
@@ -36,7 +46,7 @@ export const test = base.extend<PageFixtures>({
         return
       }
 
-      console.log(`Console ${msg.type()}: ${text}`)
+      console.log(`Console ${type}: ${text}`)
     })
 
     await use(page)

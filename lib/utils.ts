@@ -90,6 +90,11 @@ export const formatDate = (
   return d.toLocaleDateString(locale, options)
 }
 
+/**
+ * Extracts the document ID from a Google Docs URL (`/d/<id>` path segment).
+ * Returns undefined for missing/unparsable input. Single consumer: the
+ * dashboard page, which derives the workout doc ID from the configured URL.
+ */
 export const extractGoogleDocId = (url?: string): string | undefined => {
   if (!url) return undefined
   // Standard Google Doc IDs are usually 44 chars, but we look for at least 25

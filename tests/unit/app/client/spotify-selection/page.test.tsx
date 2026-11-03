@@ -11,6 +11,11 @@ import '@testing-library/jest-dom'
 // Mock the dependencies
 jest.mock('@/context/WebSocketContext')
 jest.mock('@/hooks/useSpotifyCommand')
+jest.mock('@/hooks/useAppSnackbar', () => ({
+  useAppSnackbar: jest.fn(() => ({
+    showWarning: jest.fn(),
+  })),
+}))
 jest.mock('next/dynamic', () => () => {
   const MockComponent = ({
     onPlaylistSelected,
@@ -108,13 +113,38 @@ describe('SpotifySelectionPage', () => {
     expect(screen.getByText('Song 1 - Artist 1')).toBeInTheDocument()
   })
 
-  it('dispatches PLAY command when a playlist is played', async () => {
+  it('dispatches PLAY command with target device when a playlist is played', async () => {
+    mockedUseSpotifyCommand.mockReturnValue({
+      ...mockHookValue,
+      hrmPlayer: { id: 'hrm-device-1' },
+    })
     render(<SpotifySelectionPage />)
     const playButton = screen.getByText('Play')
     fireEvent.click(playButton)
 
     expect(executeMock).toHaveBeenCalledWith('PLAY', {
       contextUri: 'spotify:playlist:mock1',
+      deviceId: 'hrm-device-1',
     })
+  })
+
+  it('warns instead of dispatching when no device is available', async () => {
+    const { useAppSnackbar } = jest.requireMock('@/hooks/useAppSnackbar') as {
+      useAppSnackbar: jest.Mock
+    }
+    const showWarning = jest.fn()
+    ;(useAppSnackbar as jest.Mock).mockReturnValue({ showWarning })
+    mockedUseSpotifyCommand.mockReturnValue({
+      ...mockHookValue,
+      activeDevice: null,
+      hrmPlayer: null,
+    })
+    render(<SpotifySelectionPage />)
+    fireEvent.click(screen.getByText('Play'))
+
+    expect(executeMock).not.toHaveBeenCalled()
+    expect(showWarning).toHaveBeenCalledWith(
+      expect.stringContaining('No Spotify device available')
+    )
   })
 })

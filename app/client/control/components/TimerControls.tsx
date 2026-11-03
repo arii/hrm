@@ -1,7 +1,5 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-// File: app/client/control/components/TimerControls.tsx
-'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { useWebSocket } from '@/context/WebSocketContext'
