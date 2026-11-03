@@ -1,6 +1,7 @@
 'use client'
 import throttle from 'lodash.throttle'
 import logger from '@/utils/logger'
+import { generateClientId } from '@/utils/clientId'
 import {
   createContext,
   ReactNode,
@@ -53,13 +54,13 @@ export const WebSocketProvider = ({
     try {
       let id = localStorage.getItem('clientId')
       if (!id) {
-        id = window.crypto.randomUUID()
+        id = generateClientId()
         localStorage.setItem('clientId', id)
       }
       return id
     } catch (error) {
       logger.error('Failed to access localStorage', error)
-      return window.crypto.randomUUID() // Fallback to in-memory UUID
+      return generateClientId() // Fallback to in-memory UUID
     }
   })
 

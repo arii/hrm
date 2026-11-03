@@ -72,4 +72,38 @@ describe('HrmConnectionPanel', () => {
     // Expect the placeholder grid item to be present
     expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
   })
+
+  it('renders a semantic Skeleton loader while connection is pending (#9024)', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Reconnecting...',
+      activeAlerts: [],
+    })
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // Regression: the placeholder must pulse via MUI Skeleton, not a static Box.
+    const placeholder = screen.getByTestId('hr-tile-grid-item')
+    expect(placeholder).toHaveClass('MuiSkeleton-root')
+  })
+
+  it('renders no skeleton in the idle empty state (loader is transient-only)', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Connected',
+      activeAlerts: [],
+    })
+    const { container } = render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // A pulsing skeleton that never resolves lies to users and trips the VRT
+    // readiness gate (waitForPageReady waits for skeletons to disappear).
+    expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
+    expect(screen.queryByTestId('hr-tile-grid-item')).not.toBeInTheDocument()
+    expect(container.querySelector('.MuiSkeleton-root')).toBeNull()
+  })
 })
