@@ -589,6 +589,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 { device: device.name, attempt },
                 'GATT connection busy, fast-retrying...'
               )
+              // Progress is UI-owned: only the current attempt may write it,
+              // so a superseded silent retry never clobbers a newer manual
+              // operation's message (same ownership rule as autoConnect).
+              if (connectionAttemptRef.current === connectAttemptToken) {
+                setStatus(BluetoothConnectionStatus.CONNECTING)
+                setCustomStatusMessage(
+                  BLUETOOTH_MESSAGES.deviceBusy(
+                    FAST_RECONNECT_DELAY_MS,
+                    attempt,
+                    FAST_RECONNECT_MAX_ATTEMPTS
+                  )
+                )
+              }
               await new Promise((res) =>
                 setTimeout(res, FAST_RECONNECT_DELAY_MS)
               )
@@ -617,6 +630,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 { device: device.name, attempt: quietRetries },
                 'Strap quiet, retrying shortly...'
               )
+              // Surface the wait so the user sees progress instead of a
+              // stuck "Connecting..." (and doesn't tap mid-retry). Gated on
+              // the ownership token like the busy write above.
+              if (connectionAttemptRef.current === connectAttemptToken) {
+                setStatus(BluetoothConnectionStatus.CONNECTING)
+                setCustomStatusMessage(
+                  BLUETOOTH_MESSAGES.quietStrapRetry(
+                    quietRetries,
+                    QUIET_STRAP_RETRY_DELAYS_MS.length
+                  )
+                )
+              }
               await new Promise((res) => setTimeout(res, quietDelay))
               if (
                 !isManualDisconnect.current &&

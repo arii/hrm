@@ -30,6 +30,8 @@ export const BLUETOOTH_MESSAGES = {
   connectingToSavedDevice: 'Connecting to saved device...',
   deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
     `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
+  quietStrapRetry: (retry: number, maxRetries: number) =>
+    `Strap is quiet. Retrying... (Attempt ${retry}/${maxRetries})`,
 
   // Error Messages
   error: 'Error',
