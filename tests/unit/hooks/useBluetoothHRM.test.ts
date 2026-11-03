@@ -927,6 +927,111 @@ describe('useBluetoothHRM', () => {
     })
   })
 
+  describe('connect progress visibility', () => {
+    it('surfaces quiet-retry progress while waiting for a strap', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
+      )
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let autoPromise: Promise<void> | undefined
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      // First attempt fails fast; the 5s wait must say what is happening.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(1000)
+      })
+      expect(result.current.deviceStatus).toBe(
+        'Strap is quiet. Retrying... (Attempt 1/3)'
+      )
+      // Second attempt fails after its wait; progress advances.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(5000)
+      })
+      expect(result.current.deviceStatus).toBe(
+        'Strap is quiet. Retrying... (Attempt 2/3)'
+      )
+      // Exhaustion still surfaces the existing final banner.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(40000)
+        await autoPromise
+      })
+      expect(result.current.deviceStatus).toBe(
+        BLUETOOTH_MESSAGES.connectionFailed
+      )
+    })
+
+    it('keeps quiet-retry progress when a manual tap is skipped behind it', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(
+        new DOMException(
+          'Bluetooth Device is no longer in range.',
+          'NetworkError'
+        )
+      )
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let autoPromise: Promise<void> | undefined
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(1000)
+      })
+      // A manual tap while the silent attempt owns the radio is skipped and
+      // claims nothing, so the silent progress keeps surfacing.
+      let manualResult: boolean | undefined
+      await act(async () => {
+        manualResult = await result.current.connectAndStream('VRT', 30)
+      })
+      expect(manualResult).toBe(false)
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(5000)
+      })
+      expect(result.current.deviceStatus).toBe(
+        'Strap is quiet. Retrying... (Attempt 2/3)'
+      )
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(40000)
+        await autoPromise
+      })
+    })
+
+    it('surfaces busy fast-retry progress', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      mockGatt.connect.mockRejectedValue(
+        new DOMException('GATT connection busy', 'NetworkError')
+      )
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let autoPromise: Promise<void> | undefined
+      act(() => {
+        autoPromise = result.current.autoConnect()
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(500)
+      })
+      expect(result.current.deviceStatus).toBe(
+        'Device busy. Retrying in 1s... (1/3)'
+      )
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(10000)
+        await autoPromise
+      })
+      expect(result.current.deviceStatus).toBe(
+        BLUETOOTH_MESSAGES.connectionFailed
+      )
+    })
+  })
+
   describe('slow-link adoption', () => {
     it('adopts a link that comes up after our timeout instead of failing', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
