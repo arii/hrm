@@ -3,52 +3,21 @@
 import { useDebounce } from '@/hooks/useDebounce'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { useWebSocket } from '@/context/WebSocketContext'
-import {
-  TimerCommandMessage,
-  TimerConfigMessage,
-  TimerModeCommandMessage,
-} from '@/types/websocket'
-import FitnessCenter from '@mui/icons-material/FitnessCenter'
-import PlayArrow from '@mui/icons-material/PlayArrow'
-import Stop from '@mui/icons-material/Stop'
-import Timer from '@mui/icons-material/Timer'
+import { TimerConfigMessage, TimerModeCommandMessage } from '@/types/websocket'
+import { TimerMode } from '@/types/core'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import {
-  DISCONNECTED_UI_REVERT_DELAY,
-  OPTIMISTIC_ACTION_TIMEOUT,
-} from '../constants'
+import { useEffect, useState } from 'react'
 import DurationStepper from './DurationStepper'
+import TimerModeSelector from './TimerModeSelector'
+import TimerCommandPanel from './TimerCommandPanel'
+import { useTimerCommand } from './useTimerCommand'
 
-import { useTheme, alpha, Theme } from '@mui/material/styles'
-
-const actionButtonBaseSx = {
-  flex: 1,
-  width: '100%',
-  fontWeight: 'bold',
-  py: 1,
-  minHeight: '48px',
-  color: 'common.white',
-  borderRadius: 2,
-}
-
-const startButtonSx = (theme: Theme) => ({
-  ...actionButtonBaseSx,
-  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-  boxShadow: `0 8px 24px ${alpha(theme.palette.success.main, 0.4)}`,
-})
-
-const stopButtonSx = (theme: Theme) => ({
-  ...actionButtonBaseSx,
-  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
-  boxShadow: `0 8px 24px ${alpha(theme.palette.error.main, 0.4)}`,
-})
+import { useTheme, alpha } from '@mui/material/styles'
 
 const TimerControls = () => {
   const theme = useTheme()
@@ -56,38 +25,18 @@ const TimerControls = () => {
   const { execute: executeSpotify } = useSpotifyCommand()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
-  const [optimisticAction, setOptimisticAction] = useState<
-    'START' | 'STOP' | null
-  >(null)
 
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
 
-  // When the server's timer data changes, it becomes the source of truth.
-  // We clear any optimistic action to ensure the UI reflects the server state.
-  useEffect(() => {
-    if (optimisticAction === 'START' && timerData.isRunning === true) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOptimisticAction(null)
-    } else if (optimisticAction === 'STOP' && timerData.isRunning === false) {
-      setOptimisticAction(null)
-    }
-  }, [timerData.isRunning, optimisticAction])
-
-  // Safety timeout to clear the optimistic action if the server doesn't
-  // confirm it within a reasonable time.
-  useEffect(() => {
-    if (optimisticAction) {
-      const timer = setTimeout(() => {
-        console.warn(
-          `[TimerControls] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
-        )
-        setOptimisticAction(null)
-      }, OPTIMISTIC_ACTION_TIMEOUT)
-      return () => clearTimeout(timer)
-    }
-    return () => {}
-  }, [optimisticAction])
+  const { isRunning, sendTimerCommand } = useTimerCommand({
+    isServerRunning: timerData.isRunning,
+    connectionStatus,
+    workTime,
+    restTime,
+    sendData,
+    executeSpotify,
+  })
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') return
@@ -100,56 +49,13 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData, connectionStatus])
 
-  const sendTimerCommand = useCallback(
-    (command: 'START' | 'STOP') => {
-      // Optimistically update the UI
-      setOptimisticAction(command)
-
-      // If disconnected, revert the optimistic update after a short delay
-      if (connectionStatus !== 'Connected') {
-        console.warn(
-          `[TimerControls] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
-        )
-        setTimeout(() => {
-          setOptimisticAction(null)
-        }, DISCONNECTED_UI_REVERT_DELAY)
-        return
-      }
-
-      // When starting, send the most up-to-date config.
-      if (command === 'START') {
-        const config: TimerConfigMessage = {
-          type: 'TIMER_CONFIG',
-          workDuration: workTime,
-          restDuration: restTime,
-        }
-        sendData(config)
-      }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
-
-      if (command === 'START') executeSpotify('NEXT')
-      else if (command === 'STOP') executeSpotify('PAUSE')
-    },
-    [sendData, executeSpotify, connectionStatus, workTime, restTime]
-  )
-
-  const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
+  const sendModeCommand = (mode: TimerMode) => {
     if (connectionStatus !== 'Connected') return
     const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
     sendData(message)
   }
 
-  // Derive the running state from the server state and any optimistic action.
-  const isRunning =
-    optimisticAction === 'START'
-      ? true
-      : optimisticAction === 'STOP'
-        ? false
-        : timerData.isRunning
-
   const controlsDisabled = isRunning || connectionStatus !== 'Connected'
-  const modes = ['TABATA', 'STOPWATCH']
 
   return (
     <Card
@@ -167,67 +73,11 @@ const TimerControls = () => {
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box sx={{ mb: 1.5 }}>
-          <Typography
-            variant="subtitle1"
-            data-testid="timer-mode-heading"
-            sx={{
-              color: 'common.white',
-              fontWeight: 'medium',
-              mb: 1,
-              textAlign: 'center',
-            }}
-          >
-            Timer Mode
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              position: 'relative',
-              backgroundColor: alpha(theme.palette.common.white, 0.1),
-              borderRadius: '24px',
-              p: '4px',
-            }}
-          >
-            {modes.map((mode) => (
-              <Button
-                key={mode}
-                data-testid={
-                  mode === 'TABATA'
-                    ? 'tabata-mode-button'
-                    : 'stopwatch-mode-button'
-                }
-                onClick={() => sendModeCommand(mode as 'TABATA' | 'STOPWATCH')}
-                disabled={controlsDisabled}
-                startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
-                sx={{
-                  color: 'common.white',
-                  zIndex: 1,
-                  transition: 'color 0.3s',
-                  borderRadius: '20px',
-                  py: 1,
-                }}
-              >
-                {mode.charAt(0) + mode.slice(1).toLowerCase()}
-              </Button>
-            ))}
-            <motion.div
-              layoutId="pill-switch"
-              transition={{ type: 'spring', duration: 0.4 }}
-              style={{
-                position: 'absolute',
-                top: '4px',
-                left: timerData.mode === 'TABATA' ? '4px' : 'calc(50% - 4px)',
-                width: 'calc(50% - 4px)',
-                height: 'calc(100% - 8px)',
-                background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
-                borderRadius: '20px',
-                zIndex: 0,
-              }}
-            />
-          </Box>
-        </Box>
+        <TimerModeSelector
+          mode={timerData.mode}
+          disabled={controlsDisabled}
+          onSelect={sendModeCommand}
+        />
 
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography
@@ -322,37 +172,12 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <motion.div
-            style={{ flex: 1 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            {!isRunning ? (
-              <Button
-                data-testid="start-timer-button"
-                variant="contained"
-                onClick={() => sendTimerCommand('START')}
-                disabled={connectionStatus !== 'Connected'}
-                sx={startButtonSx(theme)}
-                startIcon={<PlayArrow fontSize="large" />}
-              >
-                START
-              </Button>
-            ) : (
-              <Button
-                data-testid="stop-timer-button"
-                variant="contained"
-                onClick={() => sendTimerCommand('STOP')}
-                disabled={connectionStatus !== 'Connected'}
-                sx={stopButtonSx(theme)}
-                startIcon={<Stop fontSize="large" />}
-              >
-                STOP
-              </Button>
-            )}
-          </motion.div>
-        </Stack>
+        <TimerCommandPanel
+          isRunning={isRunning}
+          disabled={connectionStatus !== 'Connected'}
+          onStart={() => sendTimerCommand('START')}
+          onStop={() => sendTimerCommand('STOP')}
+        />
       </CardContent>
     </Card>
   )

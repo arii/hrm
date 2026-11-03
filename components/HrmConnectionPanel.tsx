@@ -1,6 +1,7 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
+import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
 import HrTile from '@/components/HrTile'
@@ -52,13 +53,13 @@ const HrmConnectionPanel = () => {
               and streaming.
             </Typography>
           </Box>
-          <Box
+          <Skeleton
+            variant="rectangular"
             data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
               width: { sm: 'calc(50% - 12px)' },
               height: 220,
-              backgroundColor: 'action.hover',
               borderRadius: 3,
             }}
           />

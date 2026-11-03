@@ -72,4 +72,20 @@ describe('HrmConnectionPanel', () => {
     // Expect the placeholder grid item to be present
     expect(screen.getByTestId('hr-tile-grid-item')).toBeInTheDocument()
   })
+
+  it('renders a semantic Skeleton loader while connection is pending (#9024)', () => {
+    mockUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Reconnecting...',
+      activeAlerts: [],
+    })
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    // Regression: the placeholder must pulse via MUI Skeleton, not a static Box.
+    const placeholder = screen.getByTestId('hr-tile-grid-item')
+    expect(placeholder).toHaveClass('MuiSkeleton-root')
+  })
 })
