@@ -87,8 +87,10 @@ export const setupBatteryNotifications = async (
       const target = event.target as BluetoothRemoteGATTCharacteristic
       onBatteryLevel(target.value!.getUint8(0))
     })
-  } catch {
-    /* Battery service optional */
+  } catch (error) {
+    // Best-effort: the battery service is optional on HR straps, but a
+    // failed read should leave a trace instead of a silent mystery.
+    logger.debug({ error }, 'Battery service unavailable; skipping level')
   }
 }
 

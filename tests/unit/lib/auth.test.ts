@@ -122,6 +122,43 @@ describe('authOptions.callbacks.jwt', () => {
     )
   })
 
+  it('runs concurrent expiry refreshes through a single rotation', async () => {
+    const expired = (): JWT => ({
+      ...baseToken,
+      accessToken: 'expired-access-token',
+      refreshToken: 'current-refresh-token',
+      accessTokenExpires: Date.now() - 1000, // Expired 1 second ago
+      providerAccountId: 'spotify-user-id',
+    })
+
+    let resolveRefresh!: (value: unknown) => void
+    ;(spotify.refreshSpotifyToken as jest.Mock).mockReturnValue(
+      new Promise((resolve) => {
+        resolveRefresh = resolve
+      })
+    )
+    ;(fetch as jest.Mock).mockResolvedValue({ ok: true })
+
+    // Three expiry hits land while the first rotation is still in flight.
+    const pending = [
+      jwtCallback({ token: expired(), account: null }),
+      jwtCallback({ token: expired(), account: null }),
+      jwtCallback({ token: expired(), account: null }),
+    ]
+    resolveRefresh({
+      access_token: 'rotated-access-token',
+      expires_in: 3600,
+      refresh_token: 'rotated-refresh-token',
+    })
+    const results = await Promise.all(pending)
+
+    expect(spotify.refreshSpotifyToken).toHaveBeenCalledTimes(1)
+    for (const result of results) {
+      expect(result.accessToken).toBe('rotated-access-token')
+      expect(result.error).toBeUndefined()
+    }
+  })
+
   it('should return an error if token refresh fails', async () => {
     const token: JWT = {
       ...baseToken,
