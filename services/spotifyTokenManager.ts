@@ -41,6 +41,17 @@ export interface TokenRecord {
   payload: SpotifyTokenPayload
 }
 
+/** Client errors are fatal except rate limiting (429), which is retriable. */
+function isNonRetriableStatus(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 429
+}
+
+/** Throws for a failed refresh response, marking fatal statuses. */
+function throwForErrorStatus(status: number, body: string): never {
+  const fatal = isNonRetriableStatus(status) ? ' (Non-retriable)' : ''
+  throw new Error(`HTTP ${status}: ${body}${fatal}`)
+}
+
 export class SpotifyTokenManager {
   /**
    * Directly set the access token (for command injection/testing).
@@ -120,66 +131,10 @@ export class SpotifyTokenManager {
     while (attempt < maxRetries) {
       attempt++
       try {
-        const basic = Buffer.from(
-          `${this.clientId}:${this.clientSecret}`
-        ).toString('base64')
-
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${basic}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            grant_type: 'refresh_token',
-            refresh_token: this.currentToken.payload.refresh_token,
-          }).toString(),
-        })
-
-        if (!response.ok) {
-          const errorBody = await response.text()
-          // Don't retry client errors (4xx) unless it's rate limiting (429)
-          if (
-            response.status >= 400 &&
-            response.status < 500 &&
-            response.status !== 429
-          ) {
-            throw new Error(
-              `HTTP ${response.status}: ${errorBody} (Non-retriable)`
-            )
-          }
-          throw new Error(`HTTP ${response.status}: ${errorBody}`)
-        }
-
-        const data = (await response.json()) as SpotifyTokenResponse
-        console.log(
-          'Spotify token refresh successful. Status:',
-          response.status,
-          'Body:',
-          data
+        const data = await this.attemptTokenRefresh(
+          this.currentToken.payload.refresh_token
         )
-
-        // Update current token with new values
-        this.currentToken = {
-          receivedAt: Date.now(),
-          payload: {
-            ...this.currentToken.payload,
-            access_token: data.access_token,
-            expires_in: data.expires_in ?? SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
-            scope: data.scope ?? this.currentToken.payload.scope,
-            refresh_token:
-              data.refresh_token ?? this.currentToken.payload.refresh_token,
-            obtainedAt: Date.now(),
-          },
-        }
-
-        // Save updated token
-        writeTokenFileSafe(this.tokenFile, this.currentToken)
-
-        console.log(
-          'Refreshed Spotify token for:',
-          this.currentToken.payload.sub
-        )
+        this.storeRefreshedToken(data)
         return true
       } catch (error: unknown) {
         const err = error as Error
@@ -200,6 +155,62 @@ export class SpotifyTokenManager {
       }
     }
     return false
+  }
+
+  /**
+   * Single token-refresh attempt. Throws on failure; client errors other
+   * than 429 are marked `(Non-retriable)` so the retry loop gives up.
+   */
+  private async attemptTokenRefresh(
+    refreshToken: string
+  ): Promise<SpotifyTokenResponse> {
+    const basic = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
+      'base64'
+    )
+
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basic}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }).toString(),
+    })
+
+    if (!response.ok) {
+      throwForErrorStatus(response.status, await response.text())
+    }
+
+    const data = (await response.json()) as SpotifyTokenResponse
+    console.log(
+      'Spotify token refresh successful. Status:',
+      response.status,
+      'Body:',
+      data
+    )
+    return data
+  }
+
+  /** Merges a refresh response into the current token and persists it. */
+  private storeRefreshedToken(data: SpotifyTokenResponse): void {
+    if (!this.currentToken) return
+    this.currentToken = {
+      receivedAt: Date.now(),
+      payload: {
+        ...this.currentToken.payload,
+        access_token: data.access_token,
+        expires_in: data.expires_in ?? SPOTIFY_DEFAULT_TOKEN_EXPIRY_S,
+        scope: data.scope ?? this.currentToken.payload.scope,
+        refresh_token:
+          data.refresh_token ?? this.currentToken.payload.refresh_token,
+        obtainedAt: Date.now(),
+      },
+    }
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
+    console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
   }
 
   async getValidAccessToken(): Promise<string | null> {
