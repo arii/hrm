@@ -5,8 +5,9 @@ import { render, act } from '@testing-library/react'
 import { fitFontSizeToBox, useUniformFitFontSize } from '@/hooks/useFitFontSize'
 
 // jsdom has no layout engine: box measurements are mocked per test via
-// defineProperty. The hook itself uses no observers (mount, resetKey,
-// window resize, and one font-settle pass are the only triggers).
+// defineProperty. The hook refits on mount, resetKey, window resize, one
+// font-settle pass, and observed content changes (childList/characterData
+// only -- never attributes, so its own font-size writes cannot loop).
 
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>
 
@@ -239,6 +240,46 @@ describe('useUniformFitFontSize', () => {
       } finally {
         document.body.removeChild(pageEl)
       }
+    } finally {
+      restore()
+    }
+  })
+
+  it('refits when content arrives after mount', async () => {
+    const restore = installPrototypeBox({
+      clientHeight: 200,
+      scrollHeight: 100,
+    })
+    try {
+      // The workout fetch resolves after mount: items appear with no
+      // resetKey change, and the fit must follow the content, not the key.
+      const Late = ({ text }: { text: string | null }) => {
+        const ref = useUniformFitFontSize<HTMLDivElement>('[data-fit-item]', {
+          minPx: 14,
+          maxPx: 28,
+          resetKey: 1,
+        })
+        return (
+          <div ref={ref}>
+            {text !== null && <div data-fit-item="late">{text}</div>}
+          </div>
+        )
+      }
+      const { container, rerender } = render(<Late text={null} />)
+      expect(itemsOf(container)).toHaveLength(0)
+
+      rerender(<Late text="newly arrived dense content" />)
+      const [item] = itemsOf(container) as [HTMLElement]
+      mockBox(item, {
+        clientHeight: 200,
+        scrollHeightOf: () => parseFloat(item.style.fontSize || '28') * 10,
+      })
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      })
+
+      // 28px -> 280 overflows; the content-driven refit lands on 20px.
+      expect(item.style.fontSize).toBe('20px')
     } finally {
       restore()
     }

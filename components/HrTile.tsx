@@ -19,7 +19,7 @@ const IdentityTier = ({ name }: { name: string }) => (
       variant="h4"
       sx={{
         fontWeight: 900,
-        fontSize: 'clamp(1.5rem, 2.5vh + 1.5vw, 2.5rem)',
+        fontSize: 'clamp(1.1rem, 2vh + 1vw, 1.6rem)',
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -49,7 +49,7 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
         fontSize: {
           xs: 'clamp(3rem, 10vw, 4rem)',
           sm: 'clamp(4rem, 12vw, 5rem)',
-          md: 'clamp(5rem, 8vh + 10vw, 10rem)',
+          md: 'clamp(2.5rem, 6vh + 6vw, 7rem)',
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -73,13 +73,13 @@ const MetricItem = ({
   <Typography
     data-testid={testId}
     variant="h4"
-    sx={{ fontWeight: 800, fontSize: 'clamp(1.75rem, 3vh + 2vw, 3rem)' }}
+    sx={{ fontWeight: 800, fontSize: 'clamp(1.2rem, 2.5vh + 1.5vw, 2rem)' }}
   >
     {value}{' '}
     <Typography
       component="span"
       variant="caption"
-      sx={{ fontSize: '1.2rem', fontWeight: 700, opacity: 0.9 }}
+      sx={{ fontSize: '0.9rem', fontWeight: 700, opacity: 0.9 }}
     >
       {label}
     </Typography>
@@ -167,7 +167,7 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          minHeight: HR_TILE_MIN_HEIGHT,
+          minHeight: { xs: 140, sm: HR_TILE_MIN_HEIGHT },
           // Ensure the tile fills the container height in the grid
           height: '100%',
           display: 'flex',
@@ -215,7 +215,7 @@ const HrTile = ({
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            p: 2,
+            p: 1.5,
           }}
         >
           {showName && <IdentityTier name={name} />}
@@ -223,7 +223,7 @@ const HrTile = ({
           <DataTier value={value} calories={calories} showName={showName} />
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: 'common.black', py: 1, textAlign: 'center' }}>
           <Typography
             variant="h6"
             sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}

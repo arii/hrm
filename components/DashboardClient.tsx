@@ -55,13 +55,14 @@ const mainGridStyles: SxProps = {
     md: '1fr 1fr',
   },
   gap: 2,
-  // On large screens the top row (timer/HR) takes ~2/5 of the free
-  // vertical space and the workout section takes the rest, so the
-  // dashboard fills the viewport instead of top-anchoring with a blank
-  // band below. Mobile stays content-sized (page scrolls).
-  flexGrow: { xs: 0, md: 2 },
+  // Fixed 45% of the column at every breakpoint: the timer/HR row never
+  // grows into the cards and never collapses. Cells compress inside
+  // (minHeight 0 + clip); the card text-fit absorbs the remainder.
+  flexGrow: 0,
   flexShrink: 0,
-  flexBasis: { xs: 'auto', md: 0 },
+  flexBasis: '45%',
+  minHeight: 0,
+  overflow: 'clip',
 }
 
 interface DashboardClientProps {
@@ -111,15 +112,17 @@ const DashboardClient = ({
           // queries sort after base styles), silently dropping the
           // overlay budget to 16px. Keep the two paddings separate.
           paddingTop: { xs: 2, sm: 3, md: 2, lg: 3 },
-          // Flex column capped at the viewport (md+): the top row is
-          // rigid, the card section compresses, and the uniform fit
-          // shrinks type until everything fits. Below md the page
-          // scrolls normally. vh first for older browsers.
+          // Fixed-viewport column at every breakpoint: timer row 45%,
+          // cards the remainder, footer budget below. Zero-scroll
+          // contract: nothing here may scroll on either axis; the card
+          // text-fit (floor 12px, em-scaled chrome) absorbs overflow.
+          // vh first for older browsers.
           minHeight: ['100vh', '100dvh'],
-          height: { xs: 'auto', md: ['100vh', '100dvh'] },
-          overflow: { xs: 'visible', md: 'clip' },
-          // ~72px Spotify bar + 56px bottom nav + 8px breathing room.
-          paddingBottom: 'calc(72px + 56px + 8px)',
+          height: ['100vh', '100dvh'],
+          overflow: 'clip',
+          // Slimmed Spotify bar (measured 64px) + 56px bottom nav + 8px
+          // breathing room.
+          paddingBottom: 'calc(64px + 56px + 8px)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -134,14 +137,14 @@ const DashboardClient = ({
           sx={{
             width: '100%',
             mt: 2,
-            // Workout section takes ~3/5 of free vertical space on large
-            // screens (cards stretch via height:100% chains); content-sized
-            // with page scroll below md.
-            flexGrow: { xs: 0, md: 3 },
+            // Workout section fills the remainder (~50%) after the fixed
+            // 45% top row; cards stretch via height:100% chains and clip
+            // (never scroll) past the text-fit floor.
+            flexGrow: 1,
             flexShrink: 1,
-            flexBasis: { xs: 'auto', md: 0 },
-            minHeight: { md: 0 },
-            overflowY: { xs: 'visible', md: 'auto' },
+            flexBasis: 0,
+            minHeight: 0,
+            overflow: 'clip',
           }}
         >
           {!hasValidConfig ? (

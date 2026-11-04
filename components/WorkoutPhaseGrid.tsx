@@ -41,16 +41,33 @@ const PhaseCard = memo(
     return (
       <Card
         elevation={2}
-        sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+        sx={{
+          height: '100%',
+          minWidth: 0,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
-        <CardContent sx={{ p: 3, flexGrow: 1, minHeight: 0, display: 'flex' }}>
+        <CardContent
+          sx={{ p: 0, flexGrow: 1, minHeight: 0, minWidth: 0, display: 'flex' }}
+        >
           <Box
             data-testid="phase-card-content"
             sx={{
               fontSize: CARD_TYPE_MAX_PX,
+              // Padding inside the measured box in em so it shrinks with
+              // the fit (0.85em ~= 24px at max, the old p:3). Fixed px
+              // chrome would defeat the fit at small sizes.
+              padding: '0.85em',
               flexGrow: 1,
               minHeight: 0,
-              overflow: 'auto',
+              minWidth: 0,
+              // Zero-scroll contract: the fit (not a scrollbar) absorbs
+              // overflow. Lines stay tight (no spread gaps); the uniform
+              // size grows until the box is full.
+              overflow: 'hidden',
+              overflowWrap: 'break-word',
             }}
           >
             <Typography
@@ -66,8 +83,8 @@ const PhaseCard = memo(
             </Typography>
             {exercises.length > 0 && (
               <>
-                <Divider sx={{ my: 2 }} />
-                <Stack spacing={1.5}>
+                <Divider sx={{ my: '0.55em' }} />
+                <Stack sx={{ gap: '0.4em' }}>
                   {exercises.map((exercise, i) => (
                     <Typography
                       key={i}
@@ -138,7 +155,7 @@ export default function WorkoutPhaseGrid({
           display="flex"
           justifyContent="center"
           alignItems="center"
-          sx={{ minHeight: 200 }}
+          sx={{ height: '100%', minHeight: 200 }}
         >
           <CircularProgress size={32} />
         </Box>
@@ -158,6 +175,14 @@ export default function WorkoutPhaseGrid({
     // columns is tolerant of headers-only payloads (older mocks).
     const columns = data.columns ?? []
 
+    // Exactly one track per phase: the cards always share a single row
+    // (2 share halves, 4 share quarters) at any viewport width. minmax(0,…)
+    // lets narrow tracks shrink below content minimums instead of wrapping.
+    // The single row is pinned to the grid height so cards are truly
+    // constrained: without it the row grows with content, the fit sees no
+    // overflow, and the section clips instead of fitting.
+    const trackCount = Math.max(1, data.headers.length)
+
     return (
       <Box
         data-testid="workout-phase-grid"
@@ -165,10 +190,8 @@ export default function WorkoutPhaseGrid({
           display: 'grid',
           gap: 2,
           height: '100%',
-          // Auto-fit shares the row however many phases the day has (2 share
-          // halves, 4 share quarters) instead of orphaning a wrapped card.
-          gridTemplateColumns:
-            'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+          gridTemplateColumns: `repeat(${trackCount}, minmax(0, 1fr))`,
+          gridTemplateRows: 'minmax(0, 1fr)',
         }}
       >
         {data.headers.map((header, index) => (
@@ -191,7 +214,7 @@ export default function WorkoutPhaseGrid({
           sx={(theme) => ({
             position: 'absolute',
             top: -8,
-            right: -8,
+            right: 8,
             zIndex: 10,
             width: 48,
             height: 48,

@@ -254,7 +254,7 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
-          py: 1.5,
+          py: 1,
           borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
@@ -266,7 +266,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: '56px',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -312,7 +312,7 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: { xs: 2, sm: 3 },
-          py: 1.5,
+          py: 1,
           borderRadius: 2,
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
@@ -324,7 +324,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: '56px',
         }}
       >
         <Box
@@ -454,6 +454,7 @@ const SpotifyDisplay = () => {
             alignItems: 'center',
             justifySelf: 'end',
             gap: 1,
+            minWidth: 0,
           }}
         >
           <VolumeSlider

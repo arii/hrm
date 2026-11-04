@@ -89,7 +89,7 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         // Ensure the card fills the grid cell height
         height: '100%',
-        minHeight: { xs: 200, sm: 220, md: 200 },
+        minHeight: { xs: 150, sm: 220, md: 200 },
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
@@ -155,7 +155,7 @@ const TimerDisplay = () => {
         sx={{
           position: 'relative',
           width: '100%',
-          py: { xs: 2, md: 3 },
+          py: { xs: 2, md: 2 },
           px: SIDE_COLUMN_WIDTH,
           textAlign: 'center',
           display: 'flex',
@@ -172,7 +172,12 @@ const TimerDisplay = () => {
             variant="h6"
             aria-live="polite"
             sx={{
-              mb: 1,
+              // Overlaid (mirrors the status indicator top-right): the label
+              // costs zero layout height, so WORK and IDLE render the same
+              // height and the fixed 45% cell never clips either.
+              position: 'absolute',
+              top: 12,
+              left: 48,
               color: phaseColor,
               fontWeight: 700,
               letterSpacing: 2,
@@ -197,7 +202,7 @@ const TimerDisplay = () => {
             fontSize: {
               xs: '7rem',
               sm: '10rem',
-              md: 'clamp(7rem, 22vh, 14rem)',
+              md: 'clamp(6rem, 22vh, 14rem)',
             },
             fontWeight: 900,
             lineHeight: 1,
@@ -217,9 +222,9 @@ const TimerDisplay = () => {
             data-testid="timer-work-rest-badge"
             aria-label={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
             sx={{
-              mt: 2,
+              mt: 1,
               px: 2.5,
-              py: 0.75,
+              py: 0.5,
               borderRadius: 999,
               border: `1px solid ${theme.palette.grey[800]}`,
               backgroundColor: theme.palette.grey[900],

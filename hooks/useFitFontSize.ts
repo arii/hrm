@@ -45,10 +45,10 @@ export const fitFontSizeToBox = (
 interface UniformFitOptions extends FitFontSizeOptions {
   /**
    * Refit generation key. Pass data identity (a refetch produces a new
-   * object) so new content refits. Deliberately NOT box/DOM observers:
-   * fitting runs on mount, when resetKey changes, on window resize, and
-   * once when webfonts settle -- never in response to its own output, so
-   * the loop cannot oscillate.
+   * object) so new content refits. A content-only MutationObserver
+   * (childList + characterData, never attributes) covers content that
+   * arrives without a key change; fitting still never observes its own
+   * font-size output, so the loop cannot oscillate.
    */
   resetKey: unknown
 }
@@ -117,11 +117,23 @@ export const useUniformFitFontSize = <T extends HTMLElement>(
     fitAll()
 
     let timer: ReturnType<typeof setTimeout> | null = null
-    const onResize = () => {
+    const refitSoon = () => {
       if (timer) clearTimeout(timer)
       timer = setTimeout(fitAll, RESIZE_DEBOUNCE_MS)
     }
-    window.addEventListener('resize', onResize)
+    window.addEventListener('resize', refitSoon)
+
+    // Late-arriving content (the workout fetch resolves after mount;
+    // refreshes swap content without unmounting) must refit once filled:
+    // fitting an empty box locks in a wrong size. Content-only observation
+    // (childList + characterData, never attributes) sees real content
+    // changes but not our own font-size writes, so it cannot loop.
+    const contentObserver = new MutationObserver(refitSoon)
+    contentObserver.observe(container, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    })
 
     // Webfont swaps change metrics after mount; refit once when the
     // initial font load settles (fires once, cannot loop).
@@ -133,7 +145,8 @@ export const useUniformFitFontSize = <T extends HTMLElement>(
       .catch(() => undefined)
 
     return () => {
-      window.removeEventListener('resize', onResize)
+      window.removeEventListener('resize', refitSoon)
+      contentObserver.disconnect()
       if (timer) clearTimeout(timer)
       fontsCancelled = true
     }
