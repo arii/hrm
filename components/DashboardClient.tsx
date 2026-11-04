@@ -106,20 +106,20 @@ const DashboardClient = ({
         maxWidth="xl"
         onClick={handleInteraction}
         sx={{
-          py: { xs: 2, sm: 3, md: 2, lg: 3 },
-          // Flex column over the viewport: growers below absorb leftover
-          // space (no blank band); when content exceeds the viewport the
-          // min-height floor lets the page scroll normally. Bottom padding
-          // reserves room for the fixed Spotify bar (64px) + bottom nav
-          // (56px) plus breathing room. vh first for older browsers.
+          // Top padding only: a `py` shorthand would emit breakpoint
+          // rules that override the base paddingBottom below (media
+          // queries sort after base styles), silently dropping the
+          // overlay budget to 16px. Keep the two paddings separate.
+          paddingTop: { xs: 2, sm: 3, md: 2, lg: 3 },
+          // Flex column capped at the viewport (md+): the top row is
+          // rigid, the card section compresses, and the uniform fit
+          // shrinks type until everything fits. Below md the page
+          // scrolls normally. vh first for older browsers.
           minHeight: ['100vh', '100dvh'],
-          // Fixed cap at md+: flex-shrink engages so sections compress
-          // instead of growing the page; the uniform fit then shrinks
-          // card type until everything fits. Below md the page scrolls.
           height: { xs: 'auto', md: ['100vh', '100dvh'] },
           overflow: { xs: 'visible', md: 'clip' },
-          // 64px Spotify bar + 56px bottom nav + 8px breathing room
-          paddingBottom: 'calc(64px + 56px + 8px)',
+          // ~72px Spotify bar + 56px bottom nav + 8px breathing room.
+          paddingBottom: 'calc(72px + 56px + 8px)',
           display: 'flex',
           flexDirection: 'column',
         }}

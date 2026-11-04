@@ -200,6 +200,27 @@ test.describe('Dashboard Visual Regression Tests', () => {
       })
       expect(scrolled.documentFits).toBe(true)
       expect(scrolled.dashboardFits).toBe(true)
+      // Cards must also clear the fixed overlays (Spotify bar above the
+      // bottom nav): fitting the viewport is not enough if the grid
+      // extends under them. Guards the dashboard's bottom padding budget.
+      const clearance = await dashboardPage.evaluate(() => {
+        const grid = document.querySelector(
+          '[data-testid="workout-phase-grid"]'
+        )
+        const bar = document.querySelector(
+          '[data-testid="spotify-auth-container"], [data-testid="spotify-display-container"]'
+        )
+        const nav = document.querySelector('[data-testid="bottom-nav-bar"]')
+        if (!grid) return { ok: false, gridBottom: -1, limit: -1 }
+        const limit = (bar ?? nav)?.getBoundingClientRect().top
+        if (limit === undefined) return { ok: true, gridBottom: -1, limit: -1 }
+        const gridBottom = grid.getBoundingClientRect().bottom
+        return { ok: gridBottom <= limit + 1, gridBottom, limit }
+      })
+      expect(
+        clearance.ok,
+        `grid bottom ${clearance.gridBottom} must clear overlay top ${clearance.limit}`
+      ).toBe(true)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-md-laptop.png', {
         mask: getDynamicContentMasks(dashboardPage),
