@@ -116,6 +116,166 @@ export const isBusyRadioError = (errorText: string): boolean =>
 export const isQuietStrapMiss = (errorText: string): boolean =>
   /no longer in range|device not found/i.test(errorText)
 
+/**
+ * Terminal classification of a failed GATT connection attempt. Timeout is
+ * checked first, mirroring the original branch order: abort errors never
+ * carry 'timeout' in their message (see cancellablePromise), so the order
+ * agrees on every producible error. Pure: unit-tested.
+ */
+type GattFailureKind =
+  | 'timeout'
+  | 'disconnected-during-connect'
+  | 'intentional-abort'
+  | 'failed'
+
+export const classifyGattFailure = (
+  error: unknown,
+  signalAborted: boolean
+): GattFailureKind => {
+  const errorMsg = error instanceof Error ? error.message : String(error)
+  const errorName = error instanceof DOMException ? error.name : 'Error'
+  if (errorMsg.includes('timeout')) return 'timeout'
+  if (
+    errorMsg.includes('GATT Server is disconnected') ||
+    errorMsg.includes('GATT operation failed')
+  ) {
+    return 'disconnected-during-connect'
+  }
+  if (errorName === 'AbortError' && signalAborted) return 'intentional-abort'
+  return 'failed'
+}
+
+/**
+ * What the GATT connect loop should do about one failed radio attempt.
+ * Pure policy: the loop still owns the sleeps, the UI writes, and the
+ * post-sleep re-checks. Unit-tested.
+ */
+type GattConnectRetryAction =
+  | { kind: 'adopt-live-link' }
+  | { kind: 'busy-retry'; delayMs: number }
+  | { kind: 'quiet-retry'; delayMs: number; retryNumber: number }
+  | { kind: 'fail' }
+
+/** Loop and hook state the retry policy reads. All plain values. */
+export interface GattConnectRetryState {
+  linkUp: boolean
+  aborted: boolean
+  attempt: number
+  quietRetriesUsed: number
+  retryQuietStrap: boolean
+  manualDisconnect: boolean
+  unmounted: boolean
+  ownershipCurrent: boolean
+}
+
+export const classifyGattConnectError = (
+  errorText: string,
+  state: GattConnectRetryState
+): GattConnectRetryAction => {
+  // Adopt live links: the radio can report failure while the OS link is
+  // already up — our 20s timer firing on a slow strap, or BlueZ raising
+  // an instant miss mid-negotiation. Adopting device.gatt directly costs
+  // zero new radio ops and cannot collide with the still-pending original
+  // connect() (a second connect() call could throw "already in progress").
+  if (state.linkUp && !state.aborted) return { kind: 'adopt-live-link' }
+  // Fast-retry only a busy radio. "No longer in range" skips this path:
+  // instant misses get the quiet-strap schedule below, since hammering
+  // gatt.connect() cannot summon an absent device and the extra radio ops
+  // risk wedging the adapter (self-inflicted busy).
+  if (
+    isBusyRadioError(errorText) &&
+    state.attempt < FAST_RECONNECT_MAX_ATTEMPTS
+  ) {
+    return { kind: 'busy-retry', delayMs: FAST_RECONNECT_DELAY_MS }
+  }
+  return quietRetryOrFail(errorText, state)
+}
+
+/**
+ * Quiet-strap schedule check: the first radio op often fails fast while
+ * the adapter/strap wakes; retry a few times over ~35s. Only instant
+ * misses qualify: a 20s timeout already consumed a full radio engagement
+ * (and slow-link wins are adopted above), so re-hammering a timing-out
+ * radio would risk the adapter wedging #9303 warned about. Covered
+ * through classifyGattConnectError's tests.
+ */
+const quietRetryOrFail = (
+  errorText: string,
+  state: GattConnectRetryState
+): GattConnectRetryAction => {
+  const quietDelay = QUIET_STRAP_RETRY_DELAYS_MS[state.quietRetriesUsed]
+  if (!state.retryQuietStrap) return { kind: 'fail' }
+  if (quietDelay === undefined) return { kind: 'fail' }
+  if (!isQuietStrapMiss(errorText)) return { kind: 'fail' }
+  if (state.manualDisconnect || state.unmounted) return { kind: 'fail' }
+  if (!state.ownershipCurrent) return { kind: 'fail' }
+  return {
+    kind: 'quiet-retry',
+    delayMs: quietDelay,
+    retryNumber: state.quietRetriesUsed + 1,
+  }
+}
+
+/** The VRT/test control slots this hook installs on window. */
+export interface HrmTestControls {
+  setHrmStatus: Dispatch<SetStateAction<BluetoothConnectionStatus>>
+  setCustomHrmStatusMessage: Dispatch<SetStateAction<string | null>>
+  setSignalStatus: Dispatch<SetStateAction<{ last: number; slow: number }>>
+}
+
+/**
+ * Removes this hook instance's VRT/test controls, but only when the slots
+ * still hold these exact functions: a remounted hook overwrites them with
+ * its own wrappers, which a stale unmount must not delete. The identities
+ * to match arrive as arguments (the installed wrappers, not the raw
+ * setters) so the comparison can actually succeed.
+ */
+export const teardownTestControls = (installed: HrmTestControls): void => {
+  if (typeof window === 'undefined') return
+  const controls = window.__TEST_CONTROLS__
+  if (!controls) return
+  if (controls.setHrmStatus === installed.setHrmStatus) {
+    delete controls.setHrmStatus
+  }
+  if (
+    controls.setCustomHrmStatusMessage === installed.setCustomHrmStatusMessage
+  ) {
+    delete controls.setCustomHrmStatusMessage
+  }
+  if (controls.setSignalStatus === installed.setSignalStatus) {
+    delete controls.setSignalStatus
+  }
+}
+
+/** Dependencies resolveConnectDevice needs from the hook. */
+interface ConnectDeviceResolver {
+  savedDevice: BluetoothDevice | null
+  findSavedDevice: (silent: boolean) => Promise<BluetoothDevice | null>
+  onScanning: () => void
+}
+
+/**
+ * Device-resolution stage of connectAndStream: the already-known device,
+ * else the saved-device lookup, else (manual only) the system picker.
+ * Silent attempts never open the picker; picker cancellation propagates
+ * to the caller. Extracted verbatim from connectAndStream's resolution
+ * branch. Unit-tested.
+ */
+export const resolveConnectDevice = async (
+  silent: boolean,
+  resolver: ConnectDeviceResolver
+): Promise<BluetoothDevice | null> => {
+  if (resolver.savedDevice) return resolver.savedDevice
+  const found = await resolver.findSavedDevice(silent)
+  if (found) return found
+  if (silent) return null
+  resolver.onScanning()
+  return navigator.bluetooth.requestDevice({
+    filters: [{ services: [HR_SERVICE_UUID] }],
+    optionalServices: [BATTERY_SERVICE_UUID],
+  })
+}
+
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
   throttleMs?: number
@@ -171,6 +331,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Set when a GATT timeout stops the auto-reconnect loop: a timeout means
+  // an asleep strap or slow adapter, not a dead link, so retries halt but
+  // the saved device and cookie are kept for a one-touch retry (unlike
+  // attempts exhaustion, which forgets the device). Consumed by
+  // reconnect(); cleared on every fresh episode (see onDisconnected),
+  // manual disconnect, and successful connect.
+  const reconnectHaltedRef = useRef(false)
   const isConnecting = useRef(false)
   // Set once by the unmount cleanup below; quiet-retry sleeps check it so
   // a resolved timer never fires radio ops into an unmounted hook.
@@ -178,6 +345,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
+  const activeHrSubscriptionRef = useRef<{
+    characteristic: BluetoothRemoteGATTCharacteristic
+    listener: (event: unknown) => void
+  } | null>(null)
 
   const updateSignalPeriod = useCallback((newPeriod: number) => {
     periodHistory.current.push(newPeriod)
@@ -332,6 +503,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     claimConnectionAttempt()
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
+    reconnectHaltedRef.current = false
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -396,6 +568,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const reconnect = useCallback(
     (device: BluetoothDevice, reason = 'Connection lost') => {
       claimConnectionAttempt()
+      if (reconnectHaltedRef.current) {
+        // A GATT timeout already stopped this episode: the ERROR/timeout
+        // banner from handleGattFailure stands, and the saved device is
+        // kept for a one-touch retry. Consume the halt so a later
+        // episode starts fresh.
+        reconnectHaltedRef.current = false
+        logger.warn(
+          { device: device.name },
+          'Reconnect halted after GATT timeout; keeping saved device.'
+        )
+        return
+      }
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
@@ -477,6 +661,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (isManualDisconnect.current) {
         logger.info('Not attempting to reconnect (manual disconnect).')
         reconnectAttempts.current = 0
+        reconnectHaltedRef.current = false
         if (reconnectTimeoutRef.current)
           clearTimeout(reconnectTimeoutRef.current)
         return
@@ -484,6 +669,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       // Start the reconnection process
       reconnectAttempts.current = 0
+      reconnectHaltedRef.current = false
       reconnect(device, 'Connection lost')
     },
     [reconnect]
@@ -492,6 +678,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // Cleanup
   useEffect(() => {
     isManualDisconnect.current = false
+
+    // Identities installed below; the cleanup only removes slots that still
+    // hold these exact functions (a remount overwrites them with its own).
+    let installedControls: HrmTestControls | null = null
 
     if (
       typeof window !== 'undefined' &&
@@ -517,6 +707,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setCustomHrmStatusMessage: setTestMessage,
         setSignalStatus,
       }
+      installedControls = {
+        setHrmStatus: setTestStatus,
+        setCustomHrmStatusMessage: setTestMessage,
+        setSignalStatus,
+      }
     }
 
     return () => {
@@ -528,25 +723,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         activeDisconnectListenerRef.current = null
       }
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (
-        typeof window !== 'undefined' &&
-        clientEnv.NEXT_PUBLIC_TESTING === 'true' &&
-        window.__TEST_CONTROLS__
-      ) {
-        if (window.__TEST_CONTROLS__.setHrmStatus === setStatus) {
-          delete window.__TEST_CONTROLS__.setHrmStatus
-        }
-        if (
-          window.__TEST_CONTROLS__.setCustomHrmStatusMessage ===
-          setCustomStatusMessage
-        ) {
-          delete window.__TEST_CONTROLS__.setCustomHrmStatusMessage
-        }
-        if (window.__TEST_CONTROLS__.setSignalStatus === setSignalStatus) {
-          delete window.__TEST_CONTROLS__.setSignalStatus
-        }
+      if (activeHrSubscriptionRef.current) {
+        const { characteristic, listener } = activeHrSubscriptionRef.current
+        characteristic.removeEventListener(
+          'characteristicvaluechanged',
+          listener
+        )
+        activeHrSubscriptionRef.current = null
       }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (installedControls) teardownTestControls(installedControls)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -637,6 +823,34 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   /**
+   * Moves the heart-rate notification subscription onto the current
+   * characteristic, unsubscribing the previous one first. Without this a
+   * reconnect to an already-seen characteristic object stacks duplicate
+   * listeners and every beat is counted twice (HR callbacks and the
+   * signal-period stats). Mirrors swapDisconnectListener.
+   */
+  const swapHrListener = useCallback(
+    (characteristic: BluetoothRemoteGATTCharacteristic) => {
+      const active = activeHrSubscriptionRef.current
+      if (active) {
+        active.characteristic.removeEventListener(
+          'characteristicvaluechanged',
+          active.listener
+        )
+      }
+      characteristic.addEventListener(
+        'characteristicvaluechanged',
+        handleHrMeasurement
+      )
+      activeHrSubscriptionRef.current = {
+        characteristic,
+        listener: handleHrMeasurement,
+      }
+    },
+    [handleHrMeasurement]
+  )
+
+  /**
    * Failure path for connectToGatt: severs half-open links (zombie killer),
    * classifies the error, and writes the matching status, then hands the
    * error back so the caller rethrows from the original site (preserving
@@ -655,22 +869,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
       const errorMsg = error instanceof Error ? error.message : String(error)
       const errorName = error instanceof DOMException ? error.name : 'Error'
+      const kind = classifyGattFailure(
+        error,
+        abortControllerRef.current?.signal.aborted ?? false
+      )
 
-      const isIntentionalAbort =
-        errorName === 'AbortError' && abortControllerRef.current?.signal.aborted
-
-      const isGattDisconnected =
-        errorMsg.includes('GATT Server is disconnected') ||
-        errorMsg.includes('GATT operation failed')
-
-      if (!isIntentionalAbort) {
+      if (kind !== 'intentional-abort') {
         logger.error(
           { errorName, errorMsg, device: device.name },
           'GATT Connection failed'
         )
       }
 
-      if (errorMsg.includes('timeout')) {
+      if (kind === 'timeout') {
         // Timeout is NOT revoked permissions: the strap was likely asleep
         // or the adapter slow. Keep the saved device and cookie so a
         // one-touch retry works; only explicit denial (NotFoundError /
@@ -683,15 +894,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         setStatus(BluetoothConnectionStatus.ERROR)
         setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeout)
-        reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+        // Halt the auto-reconnect loop without spending the attempts
+        // budget: reconnect() consumes this and stops, keeping the saved
+        // device (attempts exhaustion would forget it).
+        reconnectHaltedRef.current = true
         connectedDeviceRef.current = null
-      } else if (isGattDisconnected) {
+      } else if (kind === 'disconnected-during-connect') {
         logger.warn(
           { device: device.name },
           'Device disconnected during connection. Will attempt auto-reconnect.'
         )
         connectedDeviceRef.current = null
-      } else if (!isIntentionalAbort) {
+      } else if (kind === 'failed') {
         connectedDeviceRef.current = null
       }
 
@@ -752,20 +966,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             })
             break
           } catch (error) {
-            // Adopt live links: the radio can report failure while the OS
-            // link is already up — our 20s timer firing on a slow strap, or
-            // BlueZ raising an instant miss mid-negotiation. If the link is
-            // up, adopt the live server object directly instead of
-            // failing — device.gatt IS the connected server, so this costs
-            // zero new radio ops and cannot collide with the still-pending
-            // original connect() (a second connect() call could throw
-            // "already in progress"). Without this we severed a good link
-            // for a strap that was just slow to answer.
-            const errorText = String(error)
-            if (
-              device.gatt?.connected &&
-              !abortControllerRef.current?.signal.aborted
-            ) {
+            // Retry policy is pure (see classifyGattConnectError); this
+            // block only executes the action: UI writes, sleeps, and the
+            // post-sleep re-checks.
+            const action = classifyGattConnectError(String(error), {
+              linkUp: device.gatt?.connected ?? false,
+              aborted: abortControllerRef.current?.signal.aborted ?? false,
+              attempt,
+              quietRetriesUsed: quietRetries,
+              retryQuietStrap,
+              manualDisconnect: isManualDisconnect.current,
+              unmounted: isUnmountedRef.current,
+              ownershipCurrent:
+                connectionAttemptRef.current === connectAttemptToken,
+            })
+            if (action.kind === 'adopt-live-link') {
               logger.info(
                 { device: device.name },
                 'GATT link is up despite connect error; adopting it.'
@@ -773,12 +988,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               server = device.gatt
               break
             }
-            // Fast-retry only a busy radio. "No longer in range" skips this
-            // path: instant misses get the quiet-strap schedule below, since
-            // hammering gatt.connect() cannot summon an absent device and the
-            // extra radio ops risk wedging the adapter (self-inflicted busy).
-            const isBusy = isBusyRadioError(errorText)
-            if (isBusy && attempt < FAST_RECONNECT_MAX_ATTEMPTS) {
+            if (action.kind === 'busy-retry') {
               logger.warn(
                 { device: device.name, attempt },
                 'GATT connection busy, fast-retrying...'
@@ -796,32 +1006,17 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                   )
                 )
               }
-              await new Promise((res) =>
-                setTimeout(res, FAST_RECONNECT_DELAY_MS)
-              )
+              await new Promise((res) => setTimeout(res, action.delayMs))
               continue
             }
-            // Quiet-strap retry: the first radio op often fails fast ("no
-            // longer in range") while the adapter/strap wakes; retry a few
-            // times over ~35s. Only instant misses qualify: a 20s timeout
-            // already consumed a full radio engagement (and slow-link wins
-            // are adopted above), so re-hammering a timing-out radio would
-            // risk the adapter wedging #9303 warned about. Cancelled by a
-            // manual disconnect, unmount, or any newer operation (ownership
-            // token); on cancel return false like the in-flight guard
-            // ("someone else owns the radio") instead of throwing.
-            const quietDelay = QUIET_STRAP_RETRY_DELAYS_MS[quietRetries]
-            if (
-              retryQuietStrap &&
-              quietDelay !== undefined &&
-              isQuietStrapMiss(errorText) &&
-              !isManualDisconnect.current &&
-              !isUnmountedRef.current &&
-              connectionAttemptRef.current === connectAttemptToken
-            ) {
+            if (action.kind === 'quiet-retry') {
+              // Cancelled by a manual disconnect, unmount, or any newer
+              // operation (ownership token); on cancel return false like
+              // the in-flight guard ("someone else owns the radio")
+              // instead of throwing.
               quietRetries++
               logger.info(
-                { device: device.name, attempt: quietRetries },
+                { device: device.name, attempt: action.retryNumber },
                 'Strap quiet, retrying shortly...'
               )
               // Surface the wait so the user sees progress instead of a
@@ -831,12 +1026,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
                 setCustomStatusMessage(
                   BLUETOOTH_MESSAGES.quietStrapRetry(
-                    quietRetries,
+                    action.retryNumber,
                     QUIET_STRAP_RETRY_DELAYS_MS.length
                   )
                 )
               }
-              await new Promise((res) => setTimeout(res, quietDelay))
+              await new Promise((res) => setTimeout(res, action.delayMs))
               if (
                 !isManualDisconnect.current &&
                 !isUnmountedRef.current &&
@@ -878,10 +1073,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         await characteristic.startNotifications()
 
-        characteristic.addEventListener(
-          'characteristicvaluechanged',
-          handleHrMeasurement
-        )
+        swapHrListener(characteristic)
 
         setStatus(BluetoothConnectionStatus.CONNECTED)
         setCustomStatusMessage(
@@ -896,6 +1088,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         isManualDisconnect.current = false
         isTimeoutDisconnect.current = false
         reconnectAttempts.current = 0
+        reconnectHaltedRef.current = false
         onConnectRef.current?.()
         return true
       } catch (error) {
@@ -908,7 +1101,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current = null
       }
     },
-    [swapDisconnectListener, handleHrMeasurement, handleGattFailure]
+    [swapDisconnectListener, swapHrListener, handleGattFailure]
   )
 
   useEffect(() => {
@@ -1008,6 +1201,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // the UI and its completion must land. Silent attempts never claim
       // (see autoConnect).
       if (!silent) claimConnectionAttempt()
+      // Capture, don't claim: a stale silent failure must not clobber UI
+      // state written by a newer operation (same ownership rule as the
+      // retry progress writes and autoConnect's completion guard).
+      const attemptToken = connectionAttemptRef.current
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
         if (!silent) handleConnectionError(err)
@@ -1020,30 +1217,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           'connectAndStream called'
         )
         setStatus(BluetoothConnectionStatus.CONNECTING)
-        let device = savedDevice
-
-        if (!device) {
-          const found = await findSavedDevice(silent)
-          if (found) {
-            if (!(await connectToGatt(found, false, true))) return false
-            return true
-          }
-        }
-
-        if (!device && !silent) {
-          setStatus(BluetoothConnectionStatus.CONNECTING)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
-          device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [HR_SERVICE_UUID] }],
-            optionalServices: [BATTERY_SERVICE_UUID],
-          })
-        }
+        const device = await resolveConnectDevice(silent, {
+          savedDevice,
+          findSavedDevice,
+          onScanning: () => {
+            setStatus(BluetoothConnectionStatus.CONNECTING)
+            setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
+          },
+        })
 
         if (device) {
           logger.info({ device: device.name }, 'Connecting to device')
           if (!(await connectToGatt(device, false, true))) return false
           return true
-        } else if (!silent) {
+        }
+        if (!silent) {
           logger.info('No device to connect')
           throw new Error('No device found or selected for connection.')
         }
@@ -1058,8 +1246,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         const errorMsg = error instanceof Error ? error.message : String(error)
         logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-        // Reset the status to allow for a manual connection attempt.
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        // Reset the status to allow for a manual connection attempt —
+        // but only while no newer operation has claimed the UI since,
+        // so a late background failure never wipes a manual attempt's
+        // CONNECTING/ERROR state.
+        if (connectionAttemptRef.current === attemptToken) {
+          setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        }
         throw error
       }
     },

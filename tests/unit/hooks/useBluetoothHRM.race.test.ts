@@ -444,4 +444,27 @@ describe('useBluetoothHRM Race Conditions', () => {
       delete window.__TEST_CONTROLS__
     }
   })
+
+  it('removes injected test controls on unmount', async () => {
+    const prevTesting = clientEnv.NEXT_PUBLIC_TESTING
+    clientEnv.NEXT_PUBLIC_TESTING = 'true'
+    try {
+      const { unmount } = renderHook(() => useBluetoothHRM())
+      await act(async () => {})
+      expect(window.__TEST_CONTROLS__?.setHrmStatus).toBeDefined()
+      expect(window.__TEST_CONTROLS__?.setCustomHrmStatusMessage).toBeDefined()
+      expect(window.__TEST_CONTROLS__?.setSignalStatus).toBeDefined()
+
+      unmount()
+
+      expect(window.__TEST_CONTROLS__?.setHrmStatus).toBeUndefined()
+      expect(
+        window.__TEST_CONTROLS__?.setCustomHrmStatusMessage
+      ).toBeUndefined()
+      expect(window.__TEST_CONTROLS__?.setSignalStatus).toBeUndefined()
+    } finally {
+      clientEnv.NEXT_PUBLIC_TESTING = prevTesting
+      delete window.__TEST_CONTROLS__
+    }
+  })
 })

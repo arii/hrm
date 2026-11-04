@@ -4,10 +4,21 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, {
   HEARTBEAT_INTERVAL_MS,
+  classifyGattConnectError,
+  classifyGattFailure,
   getAutoConnectFailureMessage,
   isBusyRadioError,
   isQuietStrapMiss,
+  resolveConnectDevice,
+  teardownTestControls,
+  type GattConnectRetryState,
+  type HrmTestControls,
 } from '@/hooks/useBluetoothHRM'
+import {
+  FAST_RECONNECT_DELAY_MS,
+  FAST_RECONNECT_MAX_ATTEMPTS,
+  QUIET_STRAP_RETRY_DELAYS_MS,
+} from '@/constants/bluetooth-reconnection'
 import logger from '@/utils/logger'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import * as WebSocketContext from '@/context/WebSocketContext'
@@ -358,6 +369,7 @@ describe('useBluetoothHRM', () => {
                 ) => {
                   characteristicCallback = cb
                 },
+                removeEventListener: jest.fn(),
               }),
           }),
       } as unknown as MockBluetoothRemoteGATTServer)
@@ -675,6 +687,117 @@ describe('useBluetoothHRM', () => {
       expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
     })
 
+    it('halts retries but keeps the saved device when a reconnect times out', async () => {
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.isConnected).toBe(true)
+      mockGatt.connect.mockClear()
+
+      // The strap goes quiet: radio attempts hang until the 20s timer.
+      mockGatt.connect.mockImplementation(() => new Promise(() => {}))
+      mockGatt.connected = false
+
+      await act(async () => {
+        onDisconnectedCallback()
+      })
+      // Flush the backoff delay, the 20s radio timer, and any follow-up
+      // timers (a forget timer must never be scheduled).
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(120000)
+      })
+
+      // One radio attempt, then the loop halts: no retry storm, no wipe.
+      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+      expect(result.current.deviceStatus).toContain(
+        BLUETOOTH_MESSAGES.connectionTimeout
+      )
+      expect(Cookies.remove).not.toHaveBeenCalledWith('hrm_device_id')
+
+      // A later genuine disconnect starts a fresh episode (halt consumed).
+      // Real disconnect events carry the device as their target.
+      mockGatt.connect.mockReset()
+      mockGatt.connect.mockResolvedValue(mockGatt)
+      await act(async () => {
+        ;(onDisconnectedCallback as (event: unknown) => void)({
+          target: mockDevice,
+        })
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(10000)
+      })
+      expect(result.current.isConnected).toBe(true)
+    })
+
+    it('does not stack heart-rate listeners across reconnects', async () => {
+      const hrChar = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      mockGatt.getPrimaryService.mockResolvedValue({
+        getCharacteristic: jest.fn().mockResolvedValue(hrChar),
+      })
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.isConnected).toBe(true)
+      expect(hrChar.addEventListener).toHaveBeenCalledTimes(1)
+
+      // Drop and reconnect: the same characteristic object is subscribed
+      // again, so the previous subscription must be removed first.
+      await act(async () => {
+        onDisconnectedCallback()
+      })
+      await act(async () => {
+        jest.runOnlyPendingTimers()
+      })
+      await waitFor(() => {
+        expect(result.current.isConnected).toBe(true)
+      })
+
+      expect(hrChar.addEventListener).toHaveBeenCalledTimes(2)
+      expect(hrChar.removeEventListener).toHaveBeenCalledTimes(1)
+      expect(hrChar.removeEventListener).toHaveBeenCalledWith(
+        'characteristicvaluechanged',
+        expect.any(Function)
+      )
+      expect(
+        hrChar.removeEventListener.mock.invocationCallOrder[0]
+      ).toBeLessThan(hrChar.addEventListener.mock.invocationCallOrder[1])
+    })
+
+    it('removes the heart-rate listener on unmount', async () => {
+      const hrChar = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      mockGatt.getPrimaryService.mockResolvedValue({
+        getCharacteristic: jest.fn().mockResolvedValue(hrChar),
+      })
+      const { result, unmount } = renderHook(() => useBluetoothHRM())
+
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(hrChar.addEventListener).toHaveBeenCalledTimes(1)
+
+      act(() => {
+        unmount()
+      })
+
+      expect(hrChar.removeEventListener).toHaveBeenCalledTimes(1)
+      expect(hrChar.removeEventListener).toHaveBeenCalledWith(
+        'characteristicvaluechanged',
+        expect.any(Function)
+      )
+    })
+
     it('should not attempt to reconnect after a manual disconnect', async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
@@ -816,6 +939,281 @@ describe('useBluetoothHRM', () => {
     })
   })
 
+  describe('classifyGattFailure', () => {
+    it.each([
+      [
+        'timeout wins over everything',
+        new Error('GATT connection timeout'),
+        false,
+        'timeout',
+      ],
+      [
+        'timeout wins even when aborted',
+        new Error('GATT connection timeout'),
+        true,
+        'timeout',
+      ],
+      [
+        'server-disconnected during connect',
+        new Error('GATT Server is disconnected'),
+        false,
+        'disconnected-during-connect',
+      ],
+      [
+        'operation-failed during connect',
+        new Error('GATT operation failed'),
+        false,
+        'disconnected-during-connect',
+      ],
+      [
+        'intentional abort',
+        new DOMException('Connection cancelled', 'AbortError'),
+        true,
+        'intentional-abort',
+      ],
+      [
+        'abort name without an aborted signal is a plain failure',
+        new DOMException('Connection cancelled', 'AbortError'),
+        false,
+        'failed',
+      ],
+      ['plain error', new Error('boom'), false, 'failed'],
+      ['non-error rejection', 'string failure', false, 'failed'],
+    ])('%s', (_name, error, aborted, expected) => {
+      expect(classifyGattFailure(error, aborted)).toBe(expected)
+    })
+  })
+
+  describe('classifyGattConnectError', () => {
+    const baseState = (): GattConnectRetryState => ({
+      linkUp: false,
+      aborted: false,
+      attempt: 1,
+      quietRetriesUsed: 0,
+      retryQuietStrap: true,
+      manualDisconnect: false,
+      unmounted: false,
+      ownershipCurrent: true,
+    })
+
+    it.each([
+      [
+        'adopts a live link despite the error',
+        'GATT connection timeout',
+        { linkUp: true },
+        { kind: 'adopt-live-link' },
+      ],
+      [
+        'an aborted attempt never adopts',
+        'Failed: GATT busy',
+        { linkUp: true, aborted: true },
+        { kind: 'busy-retry', delayMs: FAST_RECONNECT_DELAY_MS },
+      ],
+      [
+        'busy radio fast-retries',
+        'Failed: GATT busy',
+        {},
+        { kind: 'busy-retry', delayMs: FAST_RECONNECT_DELAY_MS },
+      ],
+      [
+        'busy radio gives up at the fast-retry bound',
+        'Failed: GATT busy',
+        { attempt: FAST_RECONNECT_MAX_ATTEMPTS },
+        { kind: 'fail' },
+      ],
+      [
+        'quiet strap misses take the staggered schedule',
+        'Bluetooth Device is no longer in range.',
+        {},
+        {
+          kind: 'quiet-retry',
+          delayMs: QUIET_STRAP_RETRY_DELAYS_MS[0],
+          retryNumber: 1,
+        },
+      ],
+      [
+        'later quiet retries use later delays',
+        'Bluetooth Device is no longer in range.',
+        { quietRetriesUsed: 1 },
+        {
+          kind: 'quiet-retry',
+          delayMs: QUIET_STRAP_RETRY_DELAYS_MS[1],
+          retryNumber: 2,
+        },
+      ],
+      [
+        'exhausted quiet schedule fails',
+        'Bluetooth Device is no longer in range.',
+        { quietRetriesUsed: QUIET_STRAP_RETRY_DELAYS_MS.length },
+        { kind: 'fail' },
+      ],
+      [
+        'busy text with an in-range miss routes to the quiet schedule',
+        'busy radio, device no longer in range',
+        {},
+        {
+          kind: 'quiet-retry',
+          delayMs: QUIET_STRAP_RETRY_DELAYS_MS[0],
+          retryNumber: 1,
+        },
+      ],
+      [
+        'quiet retry disabled fails',
+        'Bluetooth Device is no longer in range.',
+        { retryQuietStrap: false },
+        { kind: 'fail' },
+      ],
+      [
+        'manual disconnect cancels quiet retry',
+        'Bluetooth Device is no longer in range.',
+        { manualDisconnect: true },
+        { kind: 'fail' },
+      ],
+      [
+        'unmount cancels quiet retry',
+        'Bluetooth Device is no longer in range.',
+        { unmounted: true },
+        { kind: 'fail' },
+      ],
+      [
+        'superseded attempt cancels quiet retry',
+        'Bluetooth Device is no longer in range.',
+        { ownershipCurrent: false },
+        { kind: 'fail' },
+      ],
+      [
+        'genuine timeout fails',
+        'GATT connection timeout',
+        {},
+        { kind: 'fail' },
+      ],
+      ['abort fails', 'Connection aborted', {}, { kind: 'fail' }],
+    ])('%s', (_name, text, overrides, expected) => {
+      expect(
+        classifyGattConnectError(text, { ...baseState(), ...overrides })
+      ).toEqual(expected)
+    })
+  })
+
+  describe('resolveConnectDevice', () => {
+    const fakeDevice = { id: 'd1', name: 'HRM' } as unknown as BluetoothDevice
+
+    it('returns the already-known device without scanning', async () => {
+      const findSavedDevice = jest.fn()
+      const onScanning = jest.fn()
+      await expect(
+        resolveConnectDevice(false, {
+          savedDevice: fakeDevice,
+          findSavedDevice,
+          onScanning,
+        })
+      ).resolves.toBe(fakeDevice)
+      expect(findSavedDevice).not.toHaveBeenCalled()
+      expect(onScanning).not.toHaveBeenCalled()
+      expect(mockBluetooth.requestDevice).not.toHaveBeenCalled()
+    })
+
+    it('falls back to a found saved device', async () => {
+      const findSavedDevice = jest.fn().mockResolvedValue(fakeDevice)
+      const onScanning = jest.fn()
+      await expect(
+        resolveConnectDevice(false, {
+          savedDevice: null,
+          findSavedDevice,
+          onScanning,
+        })
+      ).resolves.toBe(fakeDevice)
+      expect(findSavedDevice).toHaveBeenCalledWith(false)
+      expect(mockBluetooth.requestDevice).not.toHaveBeenCalled()
+    })
+
+    it('opens the picker for a manual attempt with no device', async () => {
+      const findSavedDevice = jest.fn().mockResolvedValue(null)
+      const onScanning = jest.fn()
+      await expect(
+        resolveConnectDevice(false, {
+          savedDevice: null,
+          findSavedDevice,
+          onScanning,
+        })
+      ).resolves.toBe(mockDevice)
+      expect(onScanning).toHaveBeenCalledTimes(1)
+      expect(mockBluetooth.requestDevice).toHaveBeenCalledTimes(1)
+    })
+
+    it('returns null for a silent attempt with no device (never picks)', async () => {
+      const findSavedDevice = jest.fn().mockResolvedValue(null)
+      const onScanning = jest.fn()
+      await expect(
+        resolveConnectDevice(true, {
+          savedDevice: null,
+          findSavedDevice,
+          onScanning,
+        })
+      ).resolves.toBeNull()
+      expect(findSavedDevice).toHaveBeenCalledWith(true)
+      expect(onScanning).not.toHaveBeenCalled()
+      expect(mockBluetooth.requestDevice).not.toHaveBeenCalled()
+    })
+
+    it('propagates picker cancellation to the caller', async () => {
+      const findSavedDevice = jest.fn().mockResolvedValue(null)
+      mockBluetooth.requestDevice.mockRejectedValueOnce(
+        new DOMException('User cancelled', 'NotFoundError')
+      )
+      await expect(
+        resolveConnectDevice(false, {
+          savedDevice: null,
+          findSavedDevice,
+          onScanning: jest.fn(),
+        })
+      ).rejects.toMatchObject({ name: 'NotFoundError' })
+    })
+  })
+
+  describe('teardownTestControls', () => {
+    const makeControls = (): HrmTestControls =>
+      ({
+        setHrmStatus: jest.fn(),
+        setCustomHrmStatusMessage: jest.fn(),
+        setSignalStatus: jest.fn(),
+      }) as unknown as HrmTestControls
+
+    afterEach(() => {
+      delete window.__TEST_CONTROLS__
+    })
+
+    it('removes only slots that still hold the installed functions', () => {
+      const first = makeControls()
+      const second = makeControls()
+      window.__TEST_CONTROLS__ = { ...first }
+      // A remount overwrites the slots with its own wrappers.
+      window.__TEST_CONTROLS__ = { ...second }
+
+      // A stale unmount must not delete the remount's controls.
+      teardownTestControls(first)
+      expect(window.__TEST_CONTROLS__?.setHrmStatus).toBe(second.setHrmStatus)
+      expect(window.__TEST_CONTROLS__?.setCustomHrmStatusMessage).toBe(
+        second.setCustomHrmStatusMessage
+      )
+      expect(window.__TEST_CONTROLS__?.setSignalStatus).toBe(
+        second.setSignalStatus
+      )
+
+      teardownTestControls(second)
+      expect(window.__TEST_CONTROLS__?.setHrmStatus).toBeUndefined()
+      expect(
+        window.__TEST_CONTROLS__?.setCustomHrmStatusMessage
+      ).toBeUndefined()
+      expect(window.__TEST_CONTROLS__?.setSignalStatus).toBeUndefined()
+    })
+
+    it('tolerates missing controls', () => {
+      delete window.__TEST_CONTROLS__
+      expect(() => teardownTestControls(makeControls())).not.toThrow()
+    })
+  })
+
   describe('auto-connect failure surfacing', () => {
     it('shows the specific range message when GATT reports out of range', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
@@ -901,6 +1299,48 @@ describe('useBluetoothHRM', () => {
 
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(result.current.isConnected).toBe(false)
+    })
+
+    it('stale silent failure does not clobber a newer manual attempt', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      // Silent path pends on getDevices; the interleaved manual attempt
+      // finds the saved device and connects fully.
+      let rejectGetDevices!: (error: unknown) => void
+      mockBluetooth.getDevices
+        .mockReturnValueOnce(
+          new Promise<MockBluetoothDevice[]>((_, reject) => {
+            rejectGetDevices = reject
+          })
+        )
+        .mockResolvedValue([mockDevice])
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Silent auto-connect starts and pends on getDevices.
+      let silentDone!: Promise<void>
+      await act(async () => {
+        silentDone = result.current
+          .connectAndStream(undefined, undefined, { silent: true })
+          .then(
+            () => undefined,
+            () => undefined
+          )
+      })
+
+      // Manual attempt interleaves: claims ownership and connects.
+      await act(async () => {
+        await result.current.connectAndStream('Ann', 30)
+      })
+      expect(result.current.isConnected).toBe(true)
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+
+      // Silent attempt now fails; the ownership-guarded reset must skip,
+      // leaving the live connection (not Disconnected) in place.
+      await act(async () => {
+        rejectGetDevices(new Error('GATT connection timeout'))
+        await silentDone
+      })
+      expect(result.current.isConnected).toBe(true)
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
     })
 
     it('cancels silent retries on unmount', async () => {
