@@ -48,9 +48,21 @@ describe('Bluetooth Message Constants', () => {
       )
     })
 
-    it('should generate the correct failedToReconnect message', () => {
-      expect(BLUETOOTH_MESSAGES.failedToReconnect(5)).toBe(
-        'Failed to reconnect after 5 attempts. Resetting device...'
+    it('should generate the correct waitingForDevice message', () => {
+      expect(BLUETOOTH_MESSAGES.waitingForDevice('My HRM')).toBe(
+        'Waiting for My HRM to wake up...'
+      )
+    })
+
+    it('should generate the correct stillWaitingForDevice message', () => {
+      expect(BLUETOOTH_MESSAGES.stillWaitingForDevice('My HRM')).toBe(
+        'Still waiting for My HRM. Tap Connect to re-select it.'
+      )
+    })
+
+    it('should generate the correct deviceHeldElsewhere message', () => {
+      expect(BLUETOOTH_MESSAGES.deviceHeldElsewhere('My HRM')).toBe(
+        "My HRM is nearby but won't connect. It may be used by another app."
       )
     })
 

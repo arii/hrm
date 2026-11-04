@@ -93,6 +93,45 @@ describe('ConnectView', () => {
     })
   })
 
+  it('orders live telemetry and summary above the connection controls', () => {
+    const { container } = render(
+      <ConnectView
+        {...mockProps}
+        isConnected={true}
+        bluetoothConnected={true}
+        hasStarted={true}
+        deviceStatus="Connected"
+      />
+    )
+    const html = container.innerHTML
+    const order = [
+      'data-testid="hr-tile"',
+      'Workout Summary',
+      'data-testid="action-toolbar"',
+      'Disconnect',
+      'data-testid="reset-section"',
+    ].map((marker) => {
+      const pos = html.indexOf(marker)
+      expect(pos).toBeGreaterThan(-1)
+      return pos
+    })
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+  })
+
+  it('shows the metadata strip with live status while connected', () => {
+    render(
+      <ConnectView
+        {...mockProps}
+        isConnected={true}
+        bluetoothConnected={true}
+        hasStarted={true}
+        deviceStatus="Connected to: Test HRM"
+      />
+    )
+    expect(screen.getByText(/Connected as Test User/)).toBeInTheDocument()
+    expect(screen.getByText(/Connected to: Test HRM/)).toBeInTheDocument()
+  })
+
   it('displays an error message for invalid age only when ageError is set', () => {
     const { rerender } = render(<ConnectView {...mockProps} />)
     expect(screen.queryByText('Invalid age')).not.toBeInTheDocument()
@@ -193,7 +232,7 @@ describe('ConnectView', () => {
       ).toBeInTheDocument()
     })
 
-    it('shows the paused warning after a mid-workout disconnect', () => {
+    it('shows the disconnected warning after a mid-workout disconnect', () => {
       render(
         <ConnectView
           {...mockProps}
@@ -202,8 +241,20 @@ describe('ConnectView', () => {
         />
       )
       expect(banners()).toHaveLength(1)
+      expect(screen.getByText('Device disconnected')).toBeInTheDocument()
+    })
+
+    it('surfaces live BLE state instead of a static notice mid-workout', () => {
+      render(
+        <ConnectView
+          {...mockProps}
+          hasStarted={true}
+          deviceStatus="Waiting for Test HRM to wake up..."
+        />
+      )
+      expect(banners()).toHaveLength(1)
       expect(
-        screen.getByText('Device Disconnected - Workout Paused')
+        screen.getByText('Waiting for Test HRM to wake up...')
       ).toBeInTheDocument()
     })
 
@@ -219,9 +270,7 @@ describe('ConnectView', () => {
       expect(
         screen.getByText('Failed: Connection failed. Device might be too far.')
       ).toBeInTheDocument()
-      expect(
-        screen.queryByText('Device Disconnected - Workout Paused')
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText('Device disconnected')).not.toBeInTheDocument()
     })
   })
 })
@@ -245,6 +294,14 @@ describe('getConnectionBanner', () => {
       'error',
     ],
     [{ ...base, hasStarted: true }, 'warning'],
+    [
+      {
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Strap missed. Reconnecting... (Attempt 3/8)',
+      },
+      'warning',
+    ],
     [
       {
         ...base,
@@ -274,6 +331,23 @@ describe('getConnectionBanner', () => {
       getConnectionBanner({ ...base, deviceStatus: 'Scanning...' })?.text
     ).toBe('Scanning...')
   })
+
+  it('carries live recovery state through a started workout', () => {
+    expect(
+      getConnectionBanner({
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Waiting for Test HRM to wake up...',
+      })?.text
+    ).toBe('Waiting for Test HRM to wake up...')
+    expect(
+      getConnectionBanner({
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Connection failed. Device might be too far.',
+      })?.text
+    ).toBe('Connection failed. Device might be too far.')
+  })
 })
 
 describe('resolveConnectViewState', () => {
@@ -291,7 +365,6 @@ describe('resolveConnectViewState', () => {
       showUserProfile: true,
       isConnecting: false,
       hasProfile: true,
-      showStatusCaption: true,
       banner: null,
     })
   })
@@ -317,7 +390,6 @@ describe('resolveConnectViewState', () => {
       showUserProfile: false,
       isConnecting: false,
       hasProfile: true,
-      showStatusCaption: false,
       banner: {
         severity: 'success',
         text: 'Connected! Heart rate data is being streamed.',
@@ -338,5 +410,29 @@ describe('resolveConnectViewState', () => {
     const state = resolveConnectViewState({ ...base, hasStarted: true })
     expect(state.showUserProfile).toBe(false)
     expect(state.banner?.severity).toBe('warning')
+  })
+
+  it.each([
+    ['Connecting...', true],
+    ['Connecting to: Test HRM...', true],
+    ['Connecting to saved device...', true],
+    ['Reconnecting...', true],
+    ['Strap missed. Reconnecting... (Attempt 3/8)', true],
+    ['Connection unstable. Reconnecting...', true],
+    ['Scanning for devices...', true],
+    ['Checking saved devices...', true],
+    ['Device busy. Retrying in 3s... (1/3)', true],
+    ['Strap is quiet. Retrying... (Attempt 1/3)', true],
+    ['Waiting for Test HRM to wake up...', false],
+    ['Still waiting for Test HRM. Tap Connect to re-select it.', false],
+    ["Test HRM is nearby but won't connect.", false],
+    ['Failed: timeout', false],
+    ['Connection failed. Device might be too far.', false],
+    ['Disconnected', false],
+    ['', false],
+  ])('flags isConnecting=%s for %p', (deviceStatus, expected) => {
+    expect(
+      resolveConnectViewState({ ...base, deviceStatus }).isConnecting
+    ).toBe(expected)
   })
 })

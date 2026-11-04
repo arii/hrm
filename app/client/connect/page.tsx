@@ -159,8 +159,11 @@ export default function ConnectPage() {
     ) {
       logger.info('WebSocket ready, attempting auto-connect...')
       const timeout = setTimeout(() => {
-        autoConnect().catch(() => {
-          logger.info('Auto-connect failed, user can connect manually')
+        autoConnect().catch((error: unknown) => {
+          logger.info(
+            { error },
+            'Auto-connect failed, user can connect manually'
+          )
         })
       }, 100)
       return () => clearTimeout(timeout)
