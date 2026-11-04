@@ -93,6 +93,29 @@ describe('ConnectView', () => {
     })
   })
 
+  it('orders live telemetry and summary above the connection controls', () => {
+    const { container } = render(
+      <ConnectView
+        {...mockProps}
+        isConnected={true}
+        bluetoothConnected={true}
+        hasStarted={true}
+      />
+    )
+    const html = container.innerHTML
+    const order = [
+      'data-testid="hr-tile"',
+      'Workout Summary',
+      'Disconnect',
+      'data-testid="reset-section"',
+    ].map((marker) => {
+      const pos = html.indexOf(marker)
+      expect(pos).toBeGreaterThan(-1)
+      return pos
+    })
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+  })
+
   it('displays an error message for invalid age only when ageError is set', () => {
     const { rerender } = render(<ConnectView {...mockProps} />)
     expect(screen.queryByText('Invalid age')).not.toBeInTheDocument()

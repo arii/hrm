@@ -192,24 +192,9 @@ const ConnectedIdentity = ({
   userName: string
   userAge: string
 }) => (
-  <Box
-    sx={{
-      mb: 3,
-      textAlign: 'center',
-      p: 2,
-      bgcolor: 'background.paper',
-      borderRadius: 1,
-      boxShadow: 1,
-    }}
-  >
-    <Typography variant="subtitle1" color="text.secondary">
-      Connected as
-    </Typography>
-    <Typography variant="h5" fontWeight="bold">
-      {userName}
-    </Typography>
+  <Box sx={{ mb: 2, textAlign: 'center' }}>
     <Typography variant="body2" color="text.secondary">
-      Age: {userAge}
+      Connected as {userName} · Age {userAge}
     </Typography>
   </Box>
 )
@@ -456,6 +441,23 @@ const ConnectMain = ({
 
         <StatusBanner banner={state.banner} />
 
+        {/* Live telemetry first: both render null when absent, so idle and
+            disconnected views are unaffected by this order. */}
+        <HrSection
+          isConnected={view.isConnected}
+          userName={data.userName}
+          currentHR={view.currentHR}
+          hrZoneData={view.hrZoneData}
+          caloriesBurned={view.caloriesBurned}
+          isDataStale={view.isDataStale ?? false}
+        />
+
+        <HistorySection
+          hasStarted={view.hasStarted}
+          duration={view.duration}
+          caloriesBurned={view.caloriesBurned}
+        />
+
         <ConnectionSwitch
           isConnected={view.isConnected}
           onConnect={view.onConnect}
@@ -475,15 +477,6 @@ const ConnectMain = ({
           isResetting={reset.isResetting}
         />
 
-        <HrSection
-          isConnected={view.isConnected}
-          userName={data.userName}
-          currentHR={view.currentHR}
-          hrZoneData={view.hrZoneData}
-          caloriesBurned={view.caloriesBurned}
-          isDataStale={view.isDataStale ?? false}
-        />
-
         <WorkoutControls
           workoutStatus={view.workoutStatus}
           isConnected={view.isConnected}
@@ -491,12 +484,6 @@ const ConnectMain = ({
           onPause={view.onPauseWorkout}
           onEnd={view.onEndWorkout}
           onResume={view.onStartWorkout}
-        />
-
-        <HistorySection
-          hasStarted={view.hasStarted}
-          duration={view.duration}
-          caloriesBurned={view.caloriesBurned}
         />
 
         <Typography
