@@ -45,7 +45,10 @@ export default function Main({ children }: { children: React.ReactNode }) {
           <LoadingIndicator />
         </LoadingProvider>
       </ErrorProvider>
-      <Footer />
+      {/* The dashboard is a fixed-viewport surface (100dvh, clipped);
+          an in-flow footer would only add dead scroll below the fold,
+          invisible behind the fixed bottom nav. Other pages keep it. */}
+      {pathname !== '/' && <Footer />}
       <BottomNavBar />
     </ErrorBoundary>
   )

@@ -18,7 +18,9 @@ test.describe('Component-Specific VRT', () => {
   })
 
   test('Footer rendering', async ({ dashboardPage }) => {
-    await setupMinimalVisualRegressionTest(dashboardPage, '/')
+    // The dashboard (/) hides the in-flow footer to hold zero page
+    // scroll, so screenshot it on a scrolling page instead.
+    await setupMinimalVisualRegressionTest(dashboardPage, '/client/control')
     const footer = dashboardPage.getByTestId('footer')
     await takeScreenshot(footer, 'footer.png')
   })
