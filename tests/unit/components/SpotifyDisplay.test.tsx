@@ -6,10 +6,11 @@ jest.mock('uuid', () => ({
   v4: () => 'mock-uuid-1234',
 }))
 
-import SpotifyDisplay, {
+import SpotifyDisplay from '@/components/SpotifyDisplay'
+import {
   AUTO_TRANSFER_COOLDOWN_KEY,
   AUTO_TRANSFER_COOLDOWN_MS,
-} from '@/components/SpotifyDisplay'
+} from '@/constants/spotify'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket, WebSocketContextType } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'

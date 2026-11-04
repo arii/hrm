@@ -1,14 +1,27 @@
 import { GoogleGenerativeAIError } from '@google/generative-ai'
-import { mkdtempSync, readFileSync, rmSync } from 'fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import os from 'os'
 import path from 'path'
 import {
+  applyPlaceholders,
+  buildFallbackReview,
+  buildInvalidJsonReview,
   buildReviewPrompt,
+  buildTestCoverageAlert,
   cleanJsonOutput,
   handleError,
+  isThinReview,
+  extractThoughtSignature,
+  getRetriableReason,
+  loadContextFiles,
+  normalizeReviewData,
+  readMetricsAndTestsFromEnv,
+  readPrIdentityFromEnv,
+  readReviewStateFromEnv,
   ReviewContext,
   FailedCheck,
   JsonProcessor,
+  shouldSkipReview,
 } from '../../../scripts/gemini-client'
 
 describe('JsonProcessor', () => {
@@ -259,6 +272,315 @@ describe('buildReviewPrompt', () => {
     expect(prompt).toContain('...[TRUNCATED]')
     expect(prompt).not.toContain('S'.repeat(3000))
   })
+})
+
+describe('shouldSkipReview', () => {
+  it.each([
+    ['ai-reviewed', true],
+    ['abandon', true],
+    ['ai-reviewed,approved', true],
+    ['test-label', false],
+    ['', false],
+  ])('prLabels %p skips: %p', (prLabels, expected) => {
+    expect(shouldSkipReview(prLabels)).toBe(expected)
+  })
+})
+
+describe('isThinReview', () => {
+  it.each([
+    [{}, true],
+    [{ reviewComment: '' }, true],
+    [{ reviewComment: 'short' }, true],
+    [{ reviewComment: '   ' }, true],
+    [{ reviewComment: 'x'.repeat(19) }, true],
+    [{ reviewComment: 'x'.repeat(20) }, false],
+    [{ reviewComment: 'a thorough review comment here' }, false],
+  ])('%p is thin: %p', (reviewData, expected) => {
+    expect(isThinReview(reviewData)).toBe(expected)
+  })
+})
+
+describe('normalizeReviewData', () => {
+  const prContext = {
+    repo: 'o/r',
+    prNumber: '1',
+    branchName: 'b',
+    commitHash: 'abc',
+  }
+
+  it('appends the commit marker and context', () => {
+    const result = normalizeReviewData(
+      { reviewComment: 'x'.repeat(30), verdict: 'approve', labels: [] },
+      'sig-1',
+      prContext,
+      '\n\n> Reviewed at commit: `abc`'
+    )
+    expect(result.reviewComment).toContain('> Reviewed at commit: `abc`')
+    expect(result.prContext).toEqual(prContext)
+    expect(result.thoughtSignature).toBe('sig-1')
+  })
+
+  it('keeps an existing thought signature', () => {
+    const result = normalizeReviewData(
+      {
+        reviewComment: 'x'.repeat(30),
+        verdict: 'comment',
+        labels: [],
+        thoughtSignature: 'original-sig',
+      },
+      'new-sig',
+      prContext,
+      ''
+    )
+    expect(result.thoughtSignature).toBe('original-sig')
+  })
+
+  it.each([
+    [{ verdict: 'approve', labels: [] }, 'approve', ['approved']],
+    [{ verdict: 'comment', labels: [] }, 'comment', ['not approved']],
+    [{ verdict: undefined, labels: undefined }, 'comment', ['not approved']],
+    [{ verdict: 'approve', labels: ['approved'] }, 'approve', ['approved']],
+    [
+      { verdict: 'comment', labels: ['not approved'] },
+      'comment',
+      ['not approved'],
+    ],
+  ])('defaults %p to verdict %p labels %p', (input, verdict, labels) => {
+    const result = normalizeReviewData(
+      { reviewComment: 'x'.repeat(30), ...input },
+      undefined,
+      prContext,
+      ''
+    )
+    expect(result.verdict).toBe(verdict)
+    expect(result.labels).toEqual(labels)
+  })
+
+  it('does not mutate its input', () => {
+    const input = { reviewComment: 'x'.repeat(30), labels: [] as string[] }
+    normalizeReviewData(input, undefined, prContext, '')
+    expect(input).toEqual({ reviewComment: 'x'.repeat(30), labels: [] })
+  })
+})
+
+describe('buildFallbackReview', () => {
+  it('builds the verification-complete approval', () => {
+    const result = buildFallbackReview('> Reviewed at commit: `abc`')
+    expect(result.verdict).toBe('approve')
+    expect(result.labels).toEqual(['ai-reviewed', 'approved'])
+    expect(result.reviewComment).toContain('Verification Complete')
+    expect(result.reviewComment).toContain('> Reviewed at commit: `abc`')
+  })
+})
+
+describe('buildInvalidJsonReview', () => {
+  it('builds the structured parse-failure output', () => {
+    const details = { error: 'unexpected token' }
+    const result = buildInvalidJsonReview(
+      'RAW {{{',
+      details,
+      '> Reviewed at commit: `abc`'
+    )
+    expect(result.verdict).toBe('comment')
+    expect(result.labels).toEqual(['ci-failure', 'not reviewed'])
+    expect(result.error.category).toBe('Invalid JSON Response')
+    expect(result.error.details).toBe(details)
+    expect(result.reviewComment).toContain('RAW {{{')
+    expect(result.reviewComment).toContain('> Reviewed at commit: `abc`')
+  })
+
+  it('tolerates a missing raw response', () => {
+    const result = buildInvalidJsonReview(undefined, null, '')
+    expect(result.reviewComment).toContain('```\n\n```')
+  })
+})
+
+describe('buildTestCoverageAlert', () => {
+  it('warns when source changed without tests', () => {
+    expect(
+      buildTestCoverageAlert({
+        missingTests: true,
+        hasTestChanges: false,
+      })
+    ).toContain('TEST COVERAGE ALERT')
+  })
+
+  it('confirms when tests were updated', () => {
+    expect(
+      buildTestCoverageAlert({
+        missingTests: false,
+        hasTestChanges: true,
+        testFiles: 'a.test.ts',
+      })
+    ).toContain('a.test.ts')
+  })
+
+  it('stays silent otherwise', () => {
+    expect(
+      buildTestCoverageAlert({ missingTests: false, hasTestChanges: false })
+    ).toBe('')
+  })
+})
+
+describe('applyPlaceholders', () => {
+  it('replaces every placeholder occurrence', () => {
+    expect(
+      applyPlaceholders('{{a}} and {{a}} plus {{b}}', { a: 'A', b: 'B' })
+    ).toBe('A and A plus B')
+  })
+
+  it('leaves unknown placeholders untouched', () => {
+    expect(applyPlaceholders('{{known}} {{other}}', { known: 'K' })).toBe(
+      'K {{other}}'
+    )
+  })
+})
+
+describe('readPrIdentityFromEnv', () => {
+  it('maps PR identity fields with empty defaults', () => {
+    const prev = { ...process.env }
+    try {
+      process.env.PR_NUMBER = '42'
+      process.env.PR_TITLE = 'Fix it'
+      process.env.PR_AUTHOR = 'octo'
+      process.env.PR_DESCRIPTION = 'desc'
+      process.env.PR_LABELS = 'a,b'
+      process.env.PR_BRANCH_NAME = 'feat/x'
+      process.env.COMMIT_MESSAGES = 'm1'
+      process.env.COMMIT_HASH = 'abc123'
+      expect(readPrIdentityFromEnv()).toEqual({
+        prNumber: '42',
+        prTitle: 'Fix it',
+        prAuthor: 'octo',
+        prDescription: 'desc',
+        prLabels: 'a,b',
+        prBranchName: 'feat/x',
+        commitMessages: 'm1',
+        commitHash: 'abc123',
+      })
+      delete process.env.PR_NUMBER
+      delete process.env.COMMIT_HASH
+      expect(readPrIdentityFromEnv().prNumber).toBe('')
+      expect(readPrIdentityFromEnv().commitHash).toBe('')
+    } finally {
+      process.env = prev
+    }
+  })
+})
+
+describe('readReviewStateFromEnv', () => {
+  it('maps review state with validated depth and int counts', () => {
+    const prev = { ...process.env }
+    try {
+      delete process.env.FAILED_CHECKS_JSON
+      delete process.env.LINKED_ISSUE_BODY
+      delete process.env.ISSUE_TITLE
+      process.env.REVIEW_DEPTH = 'focused'
+      process.env.REVIEW_COUNT = '3'
+      process.env.RESOLVED_COUNT = '1'
+      process.env.CHANGES_REQUESTED = '0'
+      process.env.PREVIOUS_REVIEWS = 'r1'
+      process.env.ISSUE_NUMBER = '7'
+      const state = readReviewStateFromEnv()
+      expect(state.reviewDepth).toBe('focused')
+      expect(state.reviewCount).toBe(3)
+      expect(state.previousReviews).toBe('r1')
+      expect(state.issueNumber).toBe('7')
+      expect(state.failedChecks).toEqual([])
+      process.env.REVIEW_DEPTH = 'bogus'
+      expect(readReviewStateFromEnv().reviewDepth).toBe('standard')
+    } finally {
+      process.env = prev
+    }
+  })
+})
+
+describe('readMetricsAndTestsFromEnv', () => {
+  it('combines git metrics with test flags', () => {
+    const prev = { ...process.env }
+    try {
+      process.env.HAS_TEST_CHANGES = 'true'
+      process.env.MISSING_TESTS = 'false'
+      process.env.TEST_FILES = 'a.test.ts'
+      process.env.SLOP_ANALYSIS = 'clean'
+      const state = readMetricsAndTestsFromEnv({
+        filesChanged: 5,
+        totalLoc: 100,
+        changedAreas: 'app/',
+      })
+      expect(state).toEqual({
+        filesChanged: 5,
+        totalLoc: 100,
+        changedAreas: 'app/',
+        hasTestChanges: true,
+        missingTests: false,
+        testFiles: 'a.test.ts',
+        slopAnalysis: 'clean',
+        thoughtSignature: undefined,
+      })
+    } finally {
+      process.env = prev
+    }
+  })
+})
+
+describe('loadContextFiles', () => {
+  it('concatenates readable files and marks missing ones', async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'gemini-ctx-'))
+    try {
+      const file = path.join(dir, 'a.md')
+      writeFileSync(file, 'hello context')
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      try {
+        const out = await loadContextFiles([
+          file,
+          '  ',
+          path.join(dir, 'missing.md'),
+        ])
+        expect(out).toContain('hello context')
+        expect(out).toContain('Start of Context File')
+        expect(out).toContain('MISSING/ERROR')
+        expect(warn).toHaveBeenCalled()
+      } finally {
+        warn.mockRestore()
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('getRetriableReason', () => {
+  it.each([
+    ['429: rate limited', 429, 'Rate Limited'],
+    ['quota 429 exceeded', undefined, 'Rate Limited'],
+    ['503 upstream', 503, 'Infrastructure Issue'],
+    ['got 500', undefined, 'Infrastructure Issue'],
+    ['404 missing', 404, 'Not Found'],
+    ['400 bad request', 400, 'Invalid Request'],
+    ['401 unauthorized', 401, null],
+    ['some other failure', undefined, null],
+    ['', undefined, null],
+  ])('%p (status %p) -> %p', (message, status, expected) => {
+    expect(getRetriableReason(message, status)).toBe(expected)
+  })
+})
+
+describe('extractThoughtSignature', () => {
+  it('captures the signature when present', () => {
+    expect(
+      extractThoughtSignature({
+        candidates: [{ thought_signature: 'sig-9' }],
+      })
+    ).toBe('sig-9')
+  })
+
+  it.each([[{}], [{ candidates: [] }], [{ candidates: [{}] }]])(
+    'returns undefined for %p',
+    (response) => {
+      expect(extractThoughtSignature(response)).toBeUndefined()
+    }
+  )
 })
 
 describe('handleError', () => {

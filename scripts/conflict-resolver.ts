@@ -80,6 +80,85 @@ The following files could not be processed due to errors:
 ${unprocessedFiles.map((f) => `- \`${f.file}\` (Reason: ${f.error})`).join('\n')}
 `
 
+type FileResolutionOutcome =
+  | { kind: 'resolved'; chunk: string; conflicts: number }
+  | { kind: 'unprocessed'; file: string; error: string }
+  | { kind: 'skipped' }
+
+// Resolves one conflicted file: guards (blank, traversal, unparseable,
+// conflict-free) then AI resolution. Verbatim move of the loop body.
+// Only resolved files report a count: the empty-report gate also
+// requires zero unprocessed files, and any AI failure lands in
+// unprocessed, so the gate fires in exactly the same cases as before.
+const resolveFileConflicts = async (
+  genAI: GoogleGenerativeAI,
+  file: string,
+  prCodeRoot: string
+): Promise<FileResolutionOutcome> => {
+  if (!file.trim()) return { kind: 'skipped' }
+
+  const trimmedFile = path.join('pr-code', file.trim())
+  const absolutePath = path.resolve(process.cwd(), trimmedFile)
+  const relativePath = path.relative(prCodeRoot, absolutePath)
+
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    console.warn(`Skipping potential path traversal: ${file}`)
+    return { kind: 'skipped' }
+  }
+
+  let fileConflicts
+  try {
+    fileConflicts = await parseConflicts(trimmedFile)
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
+    return { kind: 'unprocessed', file: trimmedFile, error: errorMessage }
+  }
+
+  if (fileConflicts.length === 0) {
+    return { kind: 'skipped' }
+  }
+
+  return generateFileResolution(genAI, trimmedFile, fileConflicts)
+}
+
+// AI resolution stage for one parsed file: prompt, generate, parse the
+// resolution JSON, format the report chunk. Failures become unprocessed.
+const generateFileResolution = async (
+  genAI: GoogleGenerativeAI,
+  trimmedFile: string,
+  fileConflicts: ConflictBlock[]
+): Promise<Exclude<FileResolutionOutcome, { kind: 'skipped' }>> => {
+  const prompt = buildResolverPrompt(trimmedFile, fileConflicts)
+
+  try {
+    const { text } = await generateContentWithFallback({
+      genAI,
+      prompt,
+      config: {
+        generationConfig: { responseMimeType: 'application/json' },
+      },
+    })
+
+    // Process the JSON output
+    const jsonProcessor = new JsonProcessor()
+    const result = jsonProcessor.process(text)
+
+    if (result.success && isResolutionArray(result.data)) {
+      return {
+        kind: 'resolved',
+        chunk: formatResolutionChunk(fileConflicts, result.data),
+        conflicts: fileConflicts.length,
+      }
+    }
+    throw new Error('Failed to parse AI resolution JSON')
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown AI error'
+    return { kind: 'unprocessed', file: trimmedFile, error: errorMessage }
+  }
+}
+
 export async function runConflictResolution(
   genAI: GoogleGenerativeAI,
   contextFile: string,
@@ -94,56 +173,12 @@ export async function runConflictResolution(
   const prCodeRoot = path.resolve(process.cwd(), 'pr-code')
 
   for (const file of conflictFilePaths) {
-    if (!file.trim()) continue
-
-    const trimmedFile = path.join('pr-code', file.trim())
-    const absolutePath = path.resolve(process.cwd(), trimmedFile)
-    const relativePath = path.relative(prCodeRoot, absolutePath)
-
-    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-      console.warn(`Skipping potential path traversal: ${file}`)
-      continue
-    }
-
-    let fileConflicts
-    try {
-      fileConflicts = await parseConflicts(trimmedFile)
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error'
-      unprocessedFiles.push({ file: trimmedFile, error: errorMessage })
-      continue
-    }
-    totalConflicts += fileConflicts.length
-
-    if (fileConflicts.length === 0) {
-      continue
-    }
-
-    const prompt = buildResolverPrompt(trimmedFile, fileConflicts)
-
-    try {
-      const { text } = await generateContentWithFallback({
-        genAI,
-        prompt,
-        config: {
-          generationConfig: { responseMimeType: 'application/json' },
-        },
-      })
-
-      // Process the JSON output
-      const jsonProcessor = new JsonProcessor()
-      const result = jsonProcessor.process(text)
-
-      if (result.success && isResolutionArray(result.data)) {
-        report += formatResolutionChunk(fileConflicts, result.data)
-      } else {
-        throw new Error('Failed to parse AI resolution JSON')
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown AI error'
-      unprocessedFiles.push({ file: trimmedFile, error: errorMessage })
+    const outcome = await resolveFileConflicts(genAI, file, prCodeRoot)
+    if (outcome.kind === 'resolved') {
+      report += outcome.chunk
+      totalConflicts += outcome.conflicts
+    } else if (outcome.kind === 'unprocessed') {
+      unprocessedFiles.push({ file: outcome.file, error: outcome.error })
     }
   }
 

@@ -72,158 +72,189 @@ const initialState: SessionManagerState = {
   pauseTime: null,
 }
 
+type StartPayload = Extract<SessionManagerAction, { type: 'START' }>['payload']
+type HrDataPayload = Extract<
+  SessionManagerAction,
+  { type: 'ADD_HR_DATA' }
+>['payload']
+
+const applySetSession = (
+  state: SessionManagerState,
+  session: WorkoutSessionData
+): SessionManagerState => {
+  if (state.status !== 'idle') return state
+  return {
+    ...state,
+    session,
+    status: session.status,
+    pauseTime: session.pauseTime,
+  }
+}
+
+const createSession = (payload: StartPayload): WorkoutSessionData => {
+  const { age, weight, maxHr: providedMaxHr, gender } = payload
+  const maxHr = providedMaxHr || calculateMaxHr(age)
+  const initialTimeInZones = Object.fromEntries(
+    HR_ZONE_ORDER.map((zone) => [zone, 0])
+  ) as Record<HeartRateZone, number>
+
+  return {
+    sessionId: uuidv4(),
+    startTime: Date.now(),
+    endTime: null,
+    status: 'running',
+    hrHistory: [],
+    timeInZones: initialTimeInZones,
+    averageHr: 0,
+    maxHr: 0,
+    totalPaused: 0,
+    pauseTime: null,
+    calorieHistory: [],
+    totalCaloriesBurned: 0,
+    userSettings: { age, weight, maxHr, gender },
+    lastSyncTime: Date.now(),
+    syncStatus: 'pending',
+  }
+}
+
+const applyStart = (
+  state: SessionManagerState,
+  payload: StartPayload
+): SessionManagerState => {
+  if (state.status !== 'idle') return state
+  return {
+    ...state,
+    session: createSession(payload),
+    status: 'running',
+    pauseTime: null,
+  }
+}
+
+const applyPause = (state: SessionManagerState): SessionManagerState => {
+  if (!state.session || state.status !== 'running') return state
+  const now = Date.now()
+  return {
+    ...state,
+    status: 'paused',
+    pauseTime: now,
+    session: {
+      ...state.session,
+      status: 'paused',
+      pauseTime: now,
+    },
+  }
+}
+
+const applyResume = (state: SessionManagerState): SessionManagerState => {
+  if (!state.session || state.status !== 'paused') return state
+  const pauseDuration = state.pauseTime ? Date.now() - state.pauseTime : 0
+  return {
+    ...state,
+    status: 'running',
+    pauseTime: null,
+    session: {
+      ...state.session,
+      status: 'running',
+      pauseTime: null,
+      totalPaused: (state.session.totalPaused || 0) + pauseDuration,
+    },
+  }
+}
+
+const applyFinish = (state: SessionManagerState): SessionManagerState => {
+  if (!state.session) return state
+  let totalPaused = state.session.totalPaused || 0
+  if (state.status === 'paused' && state.pauseTime) {
+    totalPaused += Date.now() - state.pauseTime
+  }
+  return {
+    ...state,
+    status: 'finished',
+    pauseTime: null,
+    session: {
+      ...state.session,
+      status: 'finished',
+      endTime: Date.now(),
+      pauseTime: null,
+      totalPaused,
+    },
+  }
+}
+
+const applyHrData = (
+  state: SessionManagerState,
+  payload: HrDataPayload
+): SessionManagerState => {
+  if (!state.session || state.status !== 'running') return state
+
+  const { hr, time, caloriesDelta, smoothedHr, caloriesPerSecond } = payload
+
+  const lastDataPoint =
+    state.session.hrHistory[state.session.hrHistory.length - 1]
+  const timeDelta = lastDataPoint ? (time - lastDataPoint.time) / 1000 : 1
+
+  const { zone } = calculateZoneFromMaxHr(hr, state.session.userSettings.maxHr)
+  const zoneName = toHeartRateZone(zone)
+  const newTimeInZones = {
+    ...state.session.timeInZones,
+    [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
+  }
+
+  const newHrHistory = [...state.session.hrHistory, { time, hr }]
+  const newMaxHr = Math.max(state.session.maxHr, hr)
+  const oldAverage = state.session.averageHr
+  const oldLength = state.session.hrHistory.length
+  const newAverageHr = (oldAverage * oldLength + hr) / (oldLength + 1)
+
+  const newTotalCalories = Math.min(
+    state.session.totalCaloriesBurned + caloriesDelta,
+    MAX_CALORIES_PER_WORKOUT
+  )
+
+  const newCalorieDataPoint: CalorieDataPoint = {
+    time,
+    hr: smoothedHr,
+    caloriesPerSecond,
+    totalToThisPoint: newTotalCalories,
+  }
+  const newCalorieHistory = [
+    ...state.session.calorieHistory,
+    newCalorieDataPoint,
+  ]
+
+  return {
+    ...state,
+    session: {
+      ...state.session,
+      hrHistory: newHrHistory,
+      maxHr: newMaxHr,
+      averageHr: newAverageHr,
+      timeInZones: newTimeInZones,
+      totalCaloriesBurned: newTotalCalories,
+      calorieHistory: newCalorieHistory,
+    },
+  }
+}
+
 function sessionManagerReducer(
   state: SessionManagerState,
   action: SessionManagerAction
 ): SessionManagerState {
   switch (action.type) {
-    case 'SET_SESSION': {
-      if (state.status !== 'idle') return state
-      return {
-        ...state,
-        session: action.payload,
-        status: action.payload.status,
-        pauseTime: action.payload.pauseTime,
-      }
-    }
-    case 'START': {
-      if (state.status !== 'idle') return state
-      const { age, weight, maxHr: providedMaxHr, gender } = action.payload
-      const maxHr = providedMaxHr || calculateMaxHr(age)
-      const initialTimeInZones = Object.fromEntries(
-        HR_ZONE_ORDER.map((zone) => [zone, 0])
-      ) as Record<HeartRateZone, number>
-
-      const newSession: WorkoutSessionData = {
-        sessionId: uuidv4(),
-        startTime: Date.now(),
-        endTime: null,
-        status: 'running',
-        hrHistory: [],
-        timeInZones: initialTimeInZones,
-        averageHr: 0,
-        maxHr: 0,
-        totalPaused: 0,
-        pauseTime: null,
-        calorieHistory: [],
-        totalCaloriesBurned: 0,
-        userSettings: { age, weight, maxHr, gender },
-        lastSyncTime: Date.now(),
-        syncStatus: 'pending',
-      }
-      return {
-        ...state,
-        session: newSession,
-        status: 'running',
-        pauseTime: null,
-      }
-    }
-    case 'PAUSE': {
-      if (!state.session || state.status !== 'running') return state
-      const now = Date.now()
-      return {
-        ...state,
-        status: 'paused',
-        pauseTime: now,
-        session: {
-          ...state.session,
-          status: 'paused',
-          pauseTime: now,
-        },
-      }
-    }
-    case 'RESUME': {
-      if (!state.session || state.status !== 'paused') return state
-      const pauseDuration = state.pauseTime ? Date.now() - state.pauseTime : 0
-      return {
-        ...state,
-        status: 'running',
-        pauseTime: null,
-        session: {
-          ...state.session,
-          status: 'running',
-          pauseTime: null,
-          totalPaused: (state.session.totalPaused || 0) + pauseDuration,
-        },
-      }
-    }
-    case 'FINISH': {
-      if (!state.session) return state
-      let totalPaused = state.session.totalPaused || 0
-      if (state.status === 'paused' && state.pauseTime) {
-        totalPaused += Date.now() - state.pauseTime
-      }
-      return {
-        ...state,
-        status: 'finished',
-        pauseTime: null,
-        session: {
-          ...state.session,
-          status: 'finished',
-          endTime: Date.now(),
-          pauseTime: null,
-          totalPaused,
-        },
-      }
-    }
-    case 'RESET': {
+    case 'SET_SESSION':
+      return applySetSession(state, action.payload)
+    case 'START':
+      return applyStart(state, action.payload)
+    case 'PAUSE':
+      return applyPause(state)
+    case 'RESUME':
+      return applyResume(state)
+    case 'FINISH':
+      return applyFinish(state)
+    case 'RESET':
       return initialState
-    }
-    case 'ADD_HR_DATA': {
-      if (!state.session || state.status !== 'running') return state
-
-      const { hr, time, caloriesDelta, smoothedHr, caloriesPerSecond } =
-        action.payload
-
-      const lastDataPoint =
-        state.session.hrHistory[state.session.hrHistory.length - 1]
-      const timeDelta = lastDataPoint ? (time - lastDataPoint.time) / 1000 : 1
-
-      const { zone } = calculateZoneFromMaxHr(
-        hr,
-        state.session.userSettings.maxHr
-      )
-      const zoneName = toHeartRateZone(zone)
-      const newTimeInZones = {
-        ...state.session.timeInZones,
-        [zoneName]: (state.session.timeInZones[zoneName] || 0) + timeDelta,
-      }
-
-      const newHrHistory = [...state.session.hrHistory, { time, hr }]
-      const newMaxHr = Math.max(state.session.maxHr, hr)
-      const oldAverage = state.session.averageHr
-      const oldLength = state.session.hrHistory.length
-      const newAverageHr = (oldAverage * oldLength + hr) / (oldLength + 1)
-
-      const newTotalCalories = Math.min(
-        state.session.totalCaloriesBurned + caloriesDelta,
-        MAX_CALORIES_PER_WORKOUT
-      )
-
-      const newCalorieDataPoint: CalorieDataPoint = {
-        time,
-        hr: smoothedHr,
-        caloriesPerSecond,
-        totalToThisPoint: newTotalCalories,
-      }
-      const newCalorieHistory = [
-        ...state.session.calorieHistory,
-        newCalorieDataPoint,
-      ]
-
-      return {
-        ...state,
-        session: {
-          ...state.session,
-          hrHistory: newHrHistory,
-          maxHr: newMaxHr,
-          averageHr: newAverageHr,
-          timeInZones: newTimeInZones,
-          totalCaloriesBurned: newTotalCalories,
-          calorieHistory: newCalorieHistory,
-        },
-      }
-    }
+    case 'ADD_HR_DATA':
+      return applyHrData(state, action.payload)
     default:
       return state
   }

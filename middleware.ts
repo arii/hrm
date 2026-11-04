@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server'
 const API_AUTH_BASE = '/api/auth/'
 
 /** Re-emits proxy headers for auth routes behind the reverse proxy. */
-function handleAuthProxy(req: NextRequest) {
+export function handleAuthProxy(req: NextRequest) {
   const response = NextResponse.next()
   const forwardedHost = req.headers.get('x-forwarded-host')
   const forwardedProto = req.headers.get('x-forwarded-proto')
