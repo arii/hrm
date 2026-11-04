@@ -445,6 +445,7 @@ const handleSpotifyCommand: IncomingMessageHandler = (
   const spotifyCommandParams: {
     deviceId?: string
     volume?: number
+    play?: boolean
     playlistUri?: string
     contextUri?: string
     uri?: string
@@ -453,6 +454,8 @@ const handleSpotifyCommand: IncomingMessageHandler = (
   if (commandMsg.deviceId) spotifyCommandParams.deviceId = commandMsg.deviceId
   if (commandMsg.volume !== undefined)
     spotifyCommandParams.volume = commandMsg.volume
+  // !== undefined (not truthiness): false is the meaningful silent-transfer value.
+  if (commandMsg.play !== undefined) spotifyCommandParams.play = commandMsg.play
   if (commandMsg.playlistUri)
     spotifyCommandParams.playlistUri = commandMsg.playlistUri
   if (commandMsg.contextUri)
