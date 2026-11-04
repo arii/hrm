@@ -1008,6 +1008,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // the UI and its completion must land. Silent attempts never claim
       // (see autoConnect).
       if (!silent) claimConnectionAttempt()
+      // Capture, don't claim: a stale silent failure must not clobber UI
+      // state written by a newer operation (same ownership rule as the
+      // retry progress writes and autoConnect's completion guard).
+      const attemptToken = connectionAttemptRef.current
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
         if (!silent) handleConnectionError(err)
@@ -1058,8 +1062,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         const errorMsg = error instanceof Error ? error.message : String(error)
         logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-        // Reset the status to allow for a manual connection attempt.
-        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        // Reset the status to allow for a manual connection attempt —
+        // but only while no newer operation has claimed the UI since,
+        // so a late background failure never wipes a manual attempt's
+        // CONNECTING/ERROR state.
+        if (connectionAttemptRef.current === attemptToken) {
+          setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        }
         throw error
       }
     },

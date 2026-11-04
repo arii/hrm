@@ -903,6 +903,48 @@ describe('useBluetoothHRM', () => {
       expect(result.current.isConnected).toBe(false)
     })
 
+    it('stale silent failure does not clobber a newer manual attempt', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      // Silent path pends on getDevices; the interleaved manual attempt
+      // finds the saved device and connects fully.
+      let rejectGetDevices!: (error: unknown) => void
+      mockBluetooth.getDevices
+        .mockReturnValueOnce(
+          new Promise<MockBluetoothDevice[]>((_, reject) => {
+            rejectGetDevices = reject
+          })
+        )
+        .mockResolvedValue([mockDevice])
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      // Silent auto-connect starts and pends on getDevices.
+      let silentDone!: Promise<void>
+      await act(async () => {
+        silentDone = result.current
+          .connectAndStream(undefined, undefined, { silent: true })
+          .then(
+            () => undefined,
+            () => undefined
+          )
+      })
+
+      // Manual attempt interleaves: claims ownership and connects.
+      await act(async () => {
+        await result.current.connectAndStream('Ann', 30)
+      })
+      expect(result.current.isConnected).toBe(true)
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+
+      // Silent attempt now fails; the ownership-guarded reset must skip,
+      // leaving the live connection (not Disconnected) in place.
+      await act(async () => {
+        rejectGetDevices(new Error('GATT connection timeout'))
+        await silentDone
+      })
+      expect(result.current.isConnected).toBe(true)
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+    })
+
     it('cancels silent retries on unmount', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
       mockBluetooth.getDevices.mockResolvedValue([mockDevice])
