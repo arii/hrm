@@ -147,7 +147,7 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         // Ensure the card fills the grid cell height
         height: '100%',
-        minHeight: { xs: 200, sm: 250, md: 300 },
+        minHeight: { xs: 180, sm: 225, md: 270 },
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
@@ -213,7 +213,7 @@ const TimerDisplay = () => {
         sx={{
           position: 'relative',
           width: '100%',
-          py: { xs: 2, md: 3 },
+          py: { xs: 1.5, md: 2.5 },
           px: SIDE_COLUMN_WIDTH,
           textAlign: 'center',
           display: 'flex',
@@ -249,7 +249,7 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
+            fontSize: { xs: '6.3rem', sm: '9rem', md: '12.6rem' },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',
@@ -268,7 +268,7 @@ const TimerDisplay = () => {
             data-testid="timer-work-rest-badge"
             aria-label={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
             sx={{
-              mt: 2,
+              mt: 1.5,
               px: 2.5,
               py: 0.75,
               borderRadius: 999,
