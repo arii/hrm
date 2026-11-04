@@ -625,6 +625,21 @@ describe('WebSocket Manager', () => {
       )
     })
 
+    it('should forward play:false for silent TRANSFER_PLAYBACK (issue 9804)', () => {
+      const message = JSON.stringify({
+        type: 'SPOTIFY_COMMAND',
+        command: 'TRANSFER_PLAYBACK',
+        deviceId: 'sdk-device',
+        play: false,
+      })
+      mockWs.emit('message', message.toString())
+
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
+        'TRANSFER_PLAYBACK',
+        { deviceId: 'sdk-device', play: false }
+      )
+    })
+
     it('should extract uri from SPOTIFY_COMMAND', () => {
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
