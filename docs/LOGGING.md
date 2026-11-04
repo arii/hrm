@@ -47,6 +47,14 @@ The unified logger supports the following logging levels:
 - `warn`: For warnings and potential issues.
 - `error`: For errors and exceptions.
 
+#### Production gating
+
+On the client, `debug` and `info` are silenced in production builds: the
+production console shows warnings and errors only. Routine lifecycle
+chatter belongs at `debug`. Raw `console.*` calls are banned in shipped
+source by the `no-console` ESLint rule (tests, scripts, and the logger
+implementation itself are exempt) — route everything through the logger.
+
 #### Examples
 
 Here are some examples of how to use the unified logger:

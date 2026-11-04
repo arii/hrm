@@ -2,6 +2,7 @@
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem } from '../types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
+import logger from '../utils/logger.server.js'
 
 /**
  * Fetches user playlists from Spotify API.
@@ -11,7 +12,7 @@ export async function getUserPlaylists(
   accessToken: string
 ): Promise<SpotifyPlaylistItem[]> {
   if (!accessToken) {
-    console.warn('Cannot get user playlists: Access token is missing.')
+    logger.warn('Cannot get user playlists: Access token is missing.')
     return []
   }
   try {
@@ -40,7 +41,7 @@ export async function getUserPlaylists(
       uri: item.uri,
     }))
   } catch (error) {
-    console.error('Error fetching user playlists:', error)
+    logger.error('Error fetching user playlists:', error)
     return []
   }
 }

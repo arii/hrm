@@ -2,6 +2,7 @@
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
+import logger from '@/utils/logger'
 import { Gender } from '@/types/core'
 
 // --- TypeScript Interfaces ---
@@ -94,7 +95,7 @@ export class WorkoutSessionStorage {
           store.createIndex('status', 'status')
         },
       }).catch((error) => {
-        console.error('Failed to initialize IndexedDB:', error)
+        logger.error('Failed to initialize IndexedDB:', error)
         return null
       }) as Promise<IDBPDatabase<WorkoutDB>>
     }
@@ -121,7 +122,7 @@ export class WorkoutSessionStorage {
         }
       }
     } catch (error) {
-      console.warn(
+      logger.warn(
         `IndexedDB ${operation} failed, falling back to localStorage:`,
         error
       )
@@ -177,7 +178,7 @@ export class WorkoutSessionStorage {
           )
           return sessionStr ? JSON.parse(sessionStr) : null
         } catch (error) {
-          console.error('Failed to retrieve session from localStorage:', error)
+          logger.error('Failed to retrieve session from localStorage:', error)
           return null
         }
       }
@@ -204,7 +205,7 @@ export class WorkoutSessionStorage {
                 )
                 return sessionStr ? JSON.parse(sessionStr) : null
               } catch (parseError) {
-                console.warn(`Failed to parse session ${id}:`, parseError)
+                logger.warn(`Failed to parse session ${id}:`, parseError)
                 return null
               }
             })
@@ -212,7 +213,7 @@ export class WorkoutSessionStorage {
               (session): session is WorkoutSessionData => session !== null
             )
         } catch (error) {
-          console.error('Failed to retrieve sessions from localStorage:', error)
+          logger.error('Failed to retrieve sessions from localStorage:', error)
           return []
         }
       }
@@ -240,7 +241,7 @@ export class WorkoutSessionStorage {
           )
           localStorage.removeItem(this.localStorageKeyPrefix + sessionId)
         } catch (error) {
-          console.error('Failed to delete session from localStorage:', error)
+          logger.error('Failed to delete session from localStorage:', error)
         }
       }
     )
@@ -285,7 +286,7 @@ export class WorkoutSessionStorage {
           const pausedSession = allSessions.find((s) => s.status === 'paused')
           return pausedSession || null
         } catch (error) {
-          console.error(
+          logger.error(
             'Failed to get incomplete session from localStorage:',
             error
           )

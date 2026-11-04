@@ -27,6 +27,33 @@ describe('Client Logger (logger.ts)', () => {
     expect(consoleInfoSpy).toHaveBeenCalledWith('test message')
   })
 
+  it('should silence debug/info in production but keep warn/error', async () => {
+    const prevEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    jest.resetModules()
+    try {
+      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+      const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {})
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      const { default: logger } = await import('@/utils/logger')
+
+      logger.debug('debug message')
+      logger.info('info message')
+      logger.warn('warn message')
+      logger.error('error message')
+
+      expect(logSpy).not.toHaveBeenCalled()
+      expect(infoSpy).not.toHaveBeenCalled()
+      expect(warnSpy).toHaveBeenCalledWith('warn message')
+      expect(errorSpy).toHaveBeenCalledWith('error message')
+    } finally {
+      process.env.NODE_ENV = prevEnv
+      jest.resetModules()
+    }
+  })
+
   it('should return a no-op httpLogger on the client-side', async () => {
     const { httpLogger } = await import('@/utils/logger')
     const next = jest.fn()

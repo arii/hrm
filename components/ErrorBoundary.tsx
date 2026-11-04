@@ -2,6 +2,7 @@
 
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { VRT_TEST_ERROR_MESSAGE } from '@/constants/vrt'
+import logger from '@/utils/logger'
 
 interface Props {
   children: ReactNode
@@ -26,7 +27,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (error.message === VRT_TEST_ERROR_MESSAGE) {
       return
     }
-    console.error('Uncaught error:', error, errorInfo)
+    logger.error('Uncaught error:', error, errorInfo)
   }
 
   public render() {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
 import { debugAccessDenied } from '@/lib/debug-guard'
 import { env } from '@/lib/env'
+import logger from '@/utils/logger.server'
 
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.
@@ -24,7 +25,7 @@ export async function GET() {
       redirectUri: getSpotifyCallbackURL(),
     })
   } catch (err) {
-    console.error('Auth check failed:', err)
+    logger.error('Auth check failed:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

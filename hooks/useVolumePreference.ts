@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
+import logger from '@/utils/logger'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
@@ -28,7 +29,7 @@ const useVolumePreference = (defaultVolume = 70) => {
       setMutedState(isMuted)
       setVolumeState(isMuted ? 0 : preferredVolume)
     } catch (error) {
-      console.warn('Failed to read audio preferences from localStorage:', error)
+      logger.warn('Failed to read audio preferences from localStorage:', error)
     } finally {
       setIsLoaded(true)
     }
@@ -76,7 +77,7 @@ const useVolumePreference = (defaultVolume = 70) => {
         new CustomEvent('hrm:muteChange', { detail: isMuting })
       )
     } catch (error) {
-      console.warn('Could not persist mute preference:', error)
+      logger.warn('Could not persist mute preference:', error)
     }
   }, [muted, volume])
 

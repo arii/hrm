@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Cookies from 'js-cookie'
+import logger from '@/utils/logger'
 import isEqual from 'lodash/isEqual'
 import { clientEnv } from '@/lib/env-client'
 
@@ -82,7 +83,7 @@ function usePersistentStorage<T>(
           })
         }
       } catch (error) {
-        console.error(
+        logger.error(
           `Error reading or parsing persistent storage key “${key}”`,
           error
         )
@@ -136,7 +137,7 @@ function usePersistentStorage<T>(
             try {
               window.localStorage.setItem(key, JSON.stringify(valueToStore))
             } catch (storageError) {
-              console.error('LocalStorage write failed:', storageError)
+              logger.error('LocalStorage write failed:', storageError)
             }
           } else if (enableCookieFallback) {
             try {
@@ -146,13 +147,13 @@ function usePersistentStorage<T>(
                 sameSite: 'strict',
               })
             } catch (cookieError) {
-              console.error('Cookie write failed:', cookieError)
+              logger.error('Cookie write failed:', cookieError)
             }
           }
           return valueToStore
         })
       } catch (error) {
-        console.error(`Error setting persistent storage key “${key}”:`, error)
+        logger.error(`Error setting persistent storage key “${key}”:`, error)
       }
     },
     [key, enableCookieFallback]
@@ -172,7 +173,7 @@ function usePersistentStorage<T>(
             return current
           })
         } catch (error) {
-          console.error(`Error parsing storage change for key “${key}”:`, error)
+          logger.error(`Error parsing storage change for key “${key}”:`, error)
         }
       }
     }

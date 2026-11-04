@@ -214,7 +214,24 @@ export default defineConfig([
   },
   {
     rules: {
-      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+      // Always on: the old NODE_ENV check never fired because CI lint runs
+      // without NODE_ENV=production. Route through utils/logger instead.
+      'no-console': 'error',
+    },
+  },
+  {
+    // The logger implementation itself, plus tests/scripts that assert on
+    // or silence console output, are the only sanctioned console users.
+    files: [
+      'utils/logger.ts',
+      'tests/**/*.{ts,tsx,js,jsx,mjs,cjs}',
+      'scripts/**/*.{ts,tsx,js,jsx,mjs,cjs}',
+      'stories/**/*.{ts,tsx,js,jsx,mjs,cjs}',
+      '**/*.test.{ts,tsx,js,jsx}',
+      '**/*.spec.{ts,tsx,js,jsx}',
+    ],
+    rules: {
+      'no-console': 'off',
     },
   },
 ])

@@ -2,6 +2,7 @@
 'use client'
 import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
+import logger from '@/utils/logger'
 import { formatDate } from '@/lib/utils'
 import { generateFitFile } from '@/utils/fit-export'
 import { generateCsvExport } from '@/utils/csv-export'
@@ -45,7 +46,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
       downloadBlob(blob, `hrm_session_${session.sessionId}.fit`)
       showSuccess('FIT file exported successfully')
     } catch (error) {
-      console.error('Failed to export FIT file:', error)
+      logger.error('Failed to export FIT file:', error)
       showError('Failed to export FIT file')
     }
   }
@@ -56,7 +57,7 @@ const SessionDetail = ({ session, onBack }: SessionDetailProps) => {
       downloadBlob(blob, `hrm_session_${session.sessionId}.csv`)
       showSuccess('CSV file exported successfully')
     } catch (error) {
-      console.error('Failed to export CSV file:', error)
+      logger.error('Failed to export CSV file:', error)
       showError('Failed to export CSV file')
     }
   }

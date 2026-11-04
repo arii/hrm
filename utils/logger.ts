@@ -14,10 +14,19 @@ export interface Logger {
   child: (bindings: object) => Logger
 }
 
-// Client-side logger - wrap console methods to match pino interface
+// Client-side logger - wrap console methods to match pino interface.
+// debug/info are silenced in production: the prod console shows warnings
+// and errors only. The env is read per call (not at import) so tests can
+// flip it; Next inlines NODE_ENV at build time, so this costs nothing.
+const isProduction = (): boolean => process.env.NODE_ENV === 'production'
+
 const logger: Logger = {
-  debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
-  info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+  debug: (msg: unknown, ...args: unknown[]) => {
+    if (!isProduction()) console.log(msg, ...args)
+  },
+  info: (msg: unknown, ...args: unknown[]) => {
+    if (!isProduction()) console.info(msg, ...args)
+  },
   warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
   error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
   child: function () {
