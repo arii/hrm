@@ -193,7 +193,7 @@ describe('ConnectView', () => {
       ).toBeInTheDocument()
     })
 
-    it('shows the paused warning after a mid-workout disconnect', () => {
+    it('shows the disconnected warning after a mid-workout disconnect', () => {
       render(
         <ConnectView
           {...mockProps}
@@ -202,8 +202,20 @@ describe('ConnectView', () => {
         />
       )
       expect(banners()).toHaveLength(1)
+      expect(screen.getByText('Device disconnected')).toBeInTheDocument()
+    })
+
+    it('surfaces live BLE state instead of a static notice mid-workout', () => {
+      render(
+        <ConnectView
+          {...mockProps}
+          hasStarted={true}
+          deviceStatus="Waiting for Test HRM to wake up..."
+        />
+      )
+      expect(banners()).toHaveLength(1)
       expect(
-        screen.getByText('Device Disconnected - Workout Paused')
+        screen.getByText('Waiting for Test HRM to wake up...')
       ).toBeInTheDocument()
     })
 
@@ -219,9 +231,7 @@ describe('ConnectView', () => {
       expect(
         screen.getByText('Failed: Connection failed. Device might be too far.')
       ).toBeInTheDocument()
-      expect(
-        screen.queryByText('Device Disconnected - Workout Paused')
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText('Device disconnected')).not.toBeInTheDocument()
     })
   })
 })
@@ -245,6 +255,14 @@ describe('getConnectionBanner', () => {
       'error',
     ],
     [{ ...base, hasStarted: true }, 'warning'],
+    [
+      {
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Strap missed. Reconnecting... (Attempt 3/8)',
+      },
+      'warning',
+    ],
     [
       {
         ...base,
@@ -273,6 +291,23 @@ describe('getConnectionBanner', () => {
     expect(
       getConnectionBanner({ ...base, deviceStatus: 'Scanning...' })?.text
     ).toBe('Scanning...')
+  })
+
+  it('carries live recovery state through a started workout', () => {
+    expect(
+      getConnectionBanner({
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Waiting for Test HRM to wake up...',
+      })?.text
+    ).toBe('Waiting for Test HRM to wake up...')
+    expect(
+      getConnectionBanner({
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Connection failed. Device might be too far.',
+      })?.text
+    ).toBe('Connection failed. Device might be too far.')
   })
 })
 

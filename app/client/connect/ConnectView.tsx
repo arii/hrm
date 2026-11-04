@@ -63,9 +63,11 @@ interface ConnectionBanner {
 }
 
 // Exactly one status banner at a time, highest priority first: a named
-// failure beats the workout-paused notice (pause state is also visible in
-// the workout controls), which beats the connected confirmation, which
-// beats transient progress info. Pure: unit-tested.
+// failure beats live BLE state, which beats the bare-disconnected notice,
+// which beats the connected confirmation. A started workout must not mask
+// recovery progress ("Reconnecting... (Attempt 3/8)", "Waiting for ... to
+// wake up..."): the raw caption only renders while connected, so the banner
+// is the only place that state is visible. Pure: unit-tested.
 export const getConnectionBanner = ({
   deviceStatus,
   isConnected,
@@ -74,18 +76,18 @@ export const getConnectionBanner = ({
 }: ConnectionBannerArgs): ConnectionBanner | null => {
   if (!isConnected) {
     // An empty status cannot name a failure, so no emptiness guard here;
-    // the info branch below needs one (empty must stay silent, not info).
+    // the live-state branch below needs one (empty must stay silent).
     if (deviceStatus.includes('Failed')) {
       return { severity: 'error', text: deviceStatus }
     }
-    if (hasStarted) {
+    if (deviceStatus && !deviceStatus.includes('Disconnected')) {
       return {
-        severity: 'warning',
-        text: 'Device Disconnected - Workout Paused',
+        severity: hasStarted ? 'warning' : 'info',
+        text: deviceStatus,
       }
     }
-    if (deviceStatus && !deviceStatus.includes('Disconnected')) {
-      return { severity: 'info', text: deviceStatus }
+    if (hasStarted) {
+      return { severity: 'warning', text: 'Device disconnected' }
     }
     return null
   }

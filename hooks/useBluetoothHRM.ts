@@ -17,10 +17,11 @@ import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
   getBackoffDelay,
-  FAST_RECONNECT_DELAY_MS,
-  FAST_RECONNECT_MAX_ATTEMPTS,
+  BUSY_RETRY_DELAYS_MS,
   QUIET_STRAP_RETRY_DELAYS_MS,
   ADVERTISEMENT_FALLBACK_POLL_MS,
+  WAKE_ATTEMPT_COOLDOWN_MS,
+  WAIT_GUIDANCE_AFTER_MISSES,
 } from '@/constants/bluetooth-reconnection'
 import {
   STABILITY_THRESHOLD_MS,
@@ -153,7 +154,7 @@ export const classifyGattFailure = (
  */
 type GattConnectRetryAction =
   | { kind: 'adopt-live-link' }
-  | { kind: 'busy-retry'; delayMs: number }
+  | { kind: 'busy-retry'; delayMs: number; retryNumber: number }
   | { kind: 'quiet-retry'; delayMs: number; retryNumber: number }
   | { kind: 'fail' }
 
@@ -162,6 +163,7 @@ export interface GattConnectRetryState {
   linkUp: boolean
   aborted: boolean
   attempt: number
+  busyRetriesUsed: number
   quietRetriesUsed: number
   retryQuietStrap: boolean
   manualDisconnect: boolean
@@ -179,15 +181,19 @@ export const classifyGattConnectError = (
   // zero new radio ops and cannot collide with the still-pending original
   // connect() (a second connect() call could throw "already in progress").
   if (state.linkUp && !state.aborted) return { kind: 'adopt-live-link' }
-  // Fast-retry only a busy radio. "No longer in range" skips this path:
-  // instant misses get the quiet-strap schedule below, since hammering
-  // gatt.connect() cannot summon an absent device and the extra radio ops
-  // risk wedging the adapter (self-inflicted busy).
-  if (
-    isBusyRadioError(errorText) &&
-    state.attempt < FAST_RECONNECT_MAX_ATTEMPTS
-  ) {
-    return { kind: 'busy-retry', delayMs: FAST_RECONNECT_DELAY_MS }
+  // Retry only a busy radio on an escalating schedule. "No longer in
+  // range" skips this path: instant misses get the quiet-strap schedule
+  // below, since hammering gatt.connect() cannot summon an absent device
+  // and the extra radio ops risk wedging the adapter (self-inflicted
+  // busy). Escalation (not a fixed fast delay) gives a genuinely wedged
+  // daemon time to settle instead of re-colliding with it.
+  const busyDelay = BUSY_RETRY_DELAYS_MS[state.busyRetriesUsed]
+  if (isBusyRadioError(errorText) && busyDelay !== undefined) {
+    return {
+      kind: 'busy-retry',
+      delayMs: busyDelay,
+      retryNumber: state.busyRetriesUsed + 1,
+    }
   }
   return quietRetryOrFail(errorText, state)
 }
@@ -340,6 +346,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     device: BluetoothDevice
     listener: () => void
   } | null>(null)
+  const lastWakeAttemptAtRef = useRef(0)
+  const waitMissesRef = useRef(0)
+  const waitAdSeenRef = useRef(false)
   // Set when a GATT timeout stops the auto-reconnect loop: a timeout means
   // an asleep strap or slow adapter, not a dead link, so retries halt but
   // the saved device and cookie are kept for a one-touch retry (unlike
@@ -586,6 +595,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (waitingDeviceRef.current === device) return
       stopWaitingForDevice()
       waitingDeviceRef.current = device
+      waitMissesRef.current = 0
+      waitAdSeenRef.current = false
       reconnectAttempts.current = 0
       reconnectHaltedRef.current = false
       setStatus(BluetoothConnectionStatus.RECONNECTING)
@@ -593,14 +604,37 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
       )
 
+      // Sustained misses escalate the message from patience to guidance:
+      // advertisements seen but connects refused means the strap is held
+      // elsewhere; silence means re-selecting may be needed. Recovery
+      // keeps running underneath either way.
+      const waitingMessage = () =>
+        waitMissesRef.current >= WAIT_GUIDANCE_AFTER_MISSES
+          ? waitAdSeenRef.current
+            ? BLUETOOTH_MESSAGES.deviceHeldElsewhere(device.name || '')
+            : BLUETOOTH_MESSAGES.stillWaitingForDevice(device.name || '')
+          : BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
+
       const scheduleWaitingPoll = () => {
         if (waitingPollTimeoutRef.current) {
           clearTimeout(waitingPollTimeoutRef.current)
         }
         waitingPollTimeoutRef.current = setTimeout(() => {
           waitingPollTimeoutRef.current = null
+          // Each 60s window re-arms "nearby" detection: only
+          // advertisements in the current window count.
+          waitAdSeenRef.current = false
           attemptWakeConnect()
         }, ADVERTISEMENT_FALLBACK_POLL_MS)
+      }
+
+      const recordWakeMiss = () => {
+        waitMissesRef.current++
+        // connectToGatt only writes UI on timeouts; restore the wait
+        // (or escalate to guidance) so a stray banner doesn't stick.
+        setStatus(BluetoothConnectionStatus.RECONNECTING)
+        setCustomStatusMessage(waitingMessage())
+        scheduleWaitingPoll()
       }
 
       const attemptWakeConnect = () => {
@@ -616,6 +650,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         ) {
           return
         }
+        // Advertisements arrive ~1Hz: without a cooldown every one would
+        // fire a radio op, spinning a refusing strap's adapter hot.
+        const now = Date.now()
+        if (now - lastWakeAttemptAtRef.current < WAKE_ATTEMPT_COOLDOWN_MS) {
+          return
+        }
+        lastWakeAttemptAtRef.current = now
         // Single attempts (no quiet retries): the 60s cadence IS the
         // retry loop, and each miss fails fast.
         connectToGattRef
@@ -625,18 +666,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (connected) {
               stopWaitingForDevice()
             } else {
-              scheduleWaitingPoll()
+              recordWakeMiss()
             }
           })
           .catch(() => {
             if (waitingDeviceRef.current !== device) return
-            // connectToGatt only writes UI on timeouts; restore the wait
-            // so a stray timeout banner doesn't stick.
-            setStatus(BluetoothConnectionStatus.RECONNECTING)
-            setCustomStatusMessage(
-              BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
-            )
-            scheduleWaitingPoll()
+            recordWakeMiss()
           })
       }
 
@@ -647,22 +682,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         device as unknown as { watchAdvertisements?: () => Promise<void> }
       ).watchAdvertisements
       if (typeof watch === 'function') {
-        const listener = () => attemptWakeConnect()
+        const listener = () => {
+          waitAdSeenRef.current = true
+          attemptWakeConnect()
+        }
         device.addEventListener('advertisementreceived', listener)
         waitingAdvertisementRef.current = { device, listener }
         try {
           const started: unknown = watch()
           if (started instanceof Promise) {
-            started.catch(() => {
+            started.catch((error: unknown) => {
               logger.debug(
-                { device: device.name },
+                { device: device.name, error },
                 'Advertisement watch rejected; polling only.'
               )
             })
           }
-        } catch {
+        } catch (error) {
           logger.debug(
-            { device: device.name },
+            { device: device.name, error },
             'Advertisement watch threw; polling only.'
           )
         }
@@ -707,15 +745,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     (device: BluetoothDevice, reason = 'Connection lost') => {
       claimConnectionAttempt()
       if (reconnectHaltedRef.current) {
-        // A GATT timeout already stopped this episode: the ERROR/timeout
-        // banner from handleGattFailure stands, and the saved device is
-        // kept for a one-touch retry. Consume the halt so a later
-        // episode starts fresh.
+        // A GATT timeout already stopped this episode's burst: the radio
+        // needs settle time, not another immediate attempt — but stopping
+        // dead would strand the user on an ERROR banner with only a manual
+        // retry for company. Wait instead: no rapid radio ops, and the
+        // strap is still caught automatically when it reappears. Consume
+        // the halt so a later episode starts fresh.
         reconnectHaltedRef.current = false
         logger.warn(
           { device: device.name },
-          'Reconnect halted after GATT timeout; keeping saved device.'
+          'Reconnect halted after GATT timeout; waiting for the strap.'
         )
+        startWaitingForDevice(device)
         return
       }
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
@@ -807,9 +848,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // Start the reconnection process
       reconnectAttempts.current = 0
       reconnectHaltedRef.current = false
+      stopWaitingForDevice()
       reconnect(device, 'Connection lost')
     },
-    [reconnect]
+    [reconnect, stopWaitingForDevice]
   )
 
   // Cleanup
@@ -1091,14 +1133,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
 
         let server: BluetoothRemoteGATTServer | undefined
+        let busyRetries = 0
         let quietRetries = 0
         let lastError: unknown = null
-        // Busy fast-retries (≤3) plus quiet-strap retries (≤3) share this
+        // Busy retries (≤3) plus quiet-strap retries (≤3) share this
         // loop; each path is bounded by its own counter below.
         for (
           let attempt = 1;
           attempt <=
-          FAST_RECONNECT_MAX_ATTEMPTS + QUIET_STRAP_RETRY_DELAYS_MS.length;
+          BUSY_RETRY_DELAYS_MS.length + QUIET_STRAP_RETRY_DELAYS_MS.length;
           attempt++
         ) {
           try {
@@ -1116,6 +1159,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               linkUp: device.gatt?.connected ?? false,
               aborted: abortControllerRef.current?.signal.aborted ?? false,
               attempt,
+              busyRetriesUsed: busyRetries,
               quietRetriesUsed: quietRetries,
               retryQuietStrap,
               manualDisconnect: isManualDisconnect.current,
@@ -1132,9 +1176,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               break
             }
             if (action.kind === 'busy-retry') {
+              busyRetries++
               logger.warn(
                 { device: device.name, attempt },
-                'GATT connection busy, fast-retrying...'
+                'GATT connection busy, retrying with backoff...'
               )
               // Progress is UI-owned: only the current attempt may write it,
               // so a superseded silent retry never clobbers a newer manual
@@ -1143,9 +1188,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
                 setCustomStatusMessage(
                   BLUETOOTH_MESSAGES.deviceBusy(
-                    FAST_RECONNECT_DELAY_MS,
-                    attempt,
-                    FAST_RECONNECT_MAX_ATTEMPTS
+                    action.delayMs,
+                    action.retryNumber,
+                    BUSY_RETRY_DELAYS_MS.length
                   )
                 )
               }
@@ -1344,8 +1389,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // the UI and its completion must land. Silent attempts never claim
       // (see autoConnect).
       if (!silent) {
-        // A deliberate tap supersedes any background wait.
+        // A deliberate tap supersedes any background wait and resumes
+        // automation (clears a prior manual stop).
         stopWaitingForDevice()
+        isManualDisconnect.current = false
         claimConnectionAttempt()
       }
       // Capture, don't claim: a stale silent failure must not clobber UI
@@ -1427,7 +1474,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
 
   const autoConnect = useCallback(async (): Promise<void> => {
-    if (isConnecting.current) return
+    // Never auto-connect after a manual stop: disconnect() resets
+    // connectionAttempted, so the page effect refires this — without this
+    // guard a manual disconnect would silently undo itself 100ms later.
+    if (isConnecting.current || isManualDisconnect.current) return
 
     // Capture, don't claim: silent attempts yield to any newer operation.
     const attempt = connectionAttemptRef.current
