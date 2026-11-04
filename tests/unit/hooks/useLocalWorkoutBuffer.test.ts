@@ -2,7 +2,10 @@
  * @jest-environment jsdom
  */
 import { renderHook, act } from '@testing-library/react'
-import { useLocalWorkoutBuffer } from '@/hooks/useLocalWorkoutBuffer'
+import {
+  useLocalWorkoutBuffer,
+  HR_HISTORY_MAX_SAMPLES,
+} from '@/hooks/useLocalWorkoutBuffer'
 import { HR_ZONE_ORDER } from '@/lib/shared/hr-zones'
 
 describe('useLocalWorkoutBuffer', () => {
@@ -82,6 +85,28 @@ describe('useLocalWorkoutBuffer', () => {
     // History should have 2 points, but zone time should not have been added for the gapped data.
     expect(result.current.hrHistory).toHaveLength(2)
     expect(result.current.timeInZones.ZONE_3).toBe(0)
+  })
+
+  it('caps history without breaking zone accounting', () => {
+    const { result } = renderHook(() => useLocalWorkoutBuffer())
+    const maxHr = 190
+    const t0 = new Date('2023-01-01T12:00:00.000Z').getTime()
+    const total = HR_HISTORY_MAX_SAMPLES + 100
+
+    act(() => {
+      for (let i = 0; i < total; i++) {
+        jest.setSystemTime(t0 + i * 1000)
+        result.current.addHrData(120, maxHr) // steady 63% -> ZONE_2
+      }
+    })
+
+    // Bounded: oldest samples dropped, newest kept.
+    expect(result.current.hrHistory).toHaveLength(HR_HISTORY_MAX_SAMPLES)
+    expect(result.current.hrHistory[0].time).toBe(t0 + 100 * 1000)
+    expect(result.current.lastDataPointTime).toBe(t0 + (total - 1) * 1000)
+    // Zone accounting spans the full stream, not just the retained
+    // window: (total - 1) one-second intervals, all in ZONE_2.
+    expect(result.current.timeInZones.ZONE_2).toBeCloseTo(total - 1)
   })
 
   it('should reset the buffer to its initial state', () => {
