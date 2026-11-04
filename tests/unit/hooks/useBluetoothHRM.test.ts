@@ -1770,11 +1770,15 @@ describe('useBluetoothHRM', () => {
     it('adopts a link that comes up after our timeout instead of failing', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
       mockBluetooth.getDevices.mockResolvedValue([mockDevice])
-      // First radio call hangs past the 20s timer; the link itself is up.
-      // Adoption uses the live server object directly: zero new radio ops,
-      // so no second connect() that could collide with the pending one.
-      mockGatt.connect.mockImplementationOnce(() => new Promise(() => {}))
-      mockGatt.connected = true
+      // First radio call hangs past the 20s timer; the link itself comes
+      // up mid-handshake (flipped when the radio op starts: the classifier
+      // only reads it in the catch). Adoption uses the live server object
+      // directly: zero new radio ops, so no second connect() that could
+      // collide with the pending one.
+      mockGatt.connect.mockImplementationOnce(() => {
+        mockGatt.connected = true
+        return new Promise(() => {})
+      })
       const { result } = renderHook(() => useBluetoothHRM())
 
       let connectPromise: Promise<boolean> | undefined
@@ -1796,13 +1800,17 @@ describe('useBluetoothHRM', () => {
       mockBluetooth.getDevices.mockResolvedValue([mockDevice])
       // BlueZ can raise an instant miss while the OS link is already up;
       // the live link must be adopted, not severed by the zombie killer.
-      mockGatt.connect.mockRejectedValue(
-        new DOMException(
-          'Bluetooth Device is no longer in range.',
-          'NetworkError'
+      // (Flipped when the radio op starts so the catch path is exercised;
+      // entry adoption below covers the link-up-at-entry case.)
+      mockGatt.connect.mockImplementationOnce(() => {
+        mockGatt.connected = true
+        return Promise.reject(
+          new DOMException(
+            'Bluetooth Device is no longer in range.',
+            'NetworkError'
+          )
         )
-      )
-      mockGatt.connected = true
+      })
       const { result } = renderHook(() => useBluetoothHRM())
 
       let connectPromise: Promise<boolean> | undefined
@@ -1817,6 +1825,28 @@ describe('useBluetoothHRM', () => {
       // Adopted on the first error: zero additional radio ops, the
       // zombie sever never runs, and no quiet-retry sleep is entered.
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+      expect(mockGatt.disconnect).not.toHaveBeenCalled()
+      expect(result.current.isConnected).toBe(true)
+    })
+
+    it('adopts an already-up link without any radio call', async () => {
+      ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+      mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+      // OS link already up at entry (previous page load, orphaned
+      // handshake): discovery runs on it directly — bluetooth-internals
+      // connected must mean page connected.
+      mockGatt.connected = true
+      const { result } = renderHook(() => useBluetoothHRM())
+
+      let connectPromise: Promise<boolean> | undefined
+      act(() => {
+        connectPromise = result.current.connectAndStream('VRT', 30)
+      })
+      await act(async () => {
+        await expect(connectPromise).resolves.toBe(true)
+      })
+
+      expect(mockGatt.connect).not.toHaveBeenCalled()
       expect(mockGatt.disconnect).not.toHaveBeenCalled()
       expect(result.current.isConnected).toBe(true)
     })

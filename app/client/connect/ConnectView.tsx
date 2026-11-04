@@ -114,21 +114,38 @@ interface ConnectViewState {
   isConnecting: boolean
   hasProfile: boolean
   showStatusCaption: boolean
+  showReset: boolean
   banner: ConnectionBanner | null
 }
 
 // Flattened render conditions (#9606): which profile block, whether the
-// connect button spins or is gated, whether the status caption shows, and
-// the single status banner. Pure: unit-tested.
+// connect button spins (disabled) or is tappable, whether the status
+// caption and the reset escape hatch show, and the single status banner.
+// Pure: unit-tested.
 export const resolveConnectViewState = (
   input: ConnectViewStateInput
 ): ConnectViewState => {
   const showUserDetails = input.hasStarted || input.isConnected
   return {
     showUserProfile: !showUserDetails,
-    isConnecting: input.deviceStatus.includes('Connecting'),
+    // Any in-flight radio op spins and disables the button, so a tap can
+    // never collide with an attempt. Patient waiting is deliberately not
+    // in-flight: the button stays tappable as a retry-now.
+    isConnecting: /Connecting|Reconnecting|Scanning|Checking|Retrying/.test(
+      input.deviceStatus
+    ),
     hasProfile: Boolean(input.userName.trim() && input.userAge.trim()),
     showStatusCaption: input.deviceStatus !== 'Connected',
+    // The nuclear option stays hidden until the connection is genuinely
+    // stuck: a named failure, or the wait engine's own guidance after
+    // sustained misses (stillWaitingForDevice / deviceHeldElsewhere).
+    // Routine progress, patient waiting, and plain idle offer the
+    // Connect button instead.
+    showReset:
+      !input.isConnected &&
+      (input.deviceStatus.includes('Failed') ||
+        input.deviceStatus.includes('Tap Connect') ||
+        input.deviceStatus.includes("won't connect")),
     banner: getConnectionBanner({
       deviceStatus: input.deviceStatus,
       isConnected: input.isConnected,
@@ -465,6 +482,13 @@ const ConnectMain = ({
           deviceStatus={view.deviceStatus}
         />
 
+        {state.showReset && (
+          <ResetSection
+            onReset={reset.handleFullReset}
+            isResetting={reset.isResetting}
+          />
+        )}
+
         <HrSection
           isConnected={view.isConnected}
           userName={data.userName}
@@ -497,11 +521,6 @@ const ConnectMain = ({
         >
           WebSocket: {view.connectionStatus}
         </Typography>
-
-        <ResetSection
-          onReset={reset.handleFullReset}
-          isResetting={reset.isResetting}
-        />
       </Container>
     </>
   )

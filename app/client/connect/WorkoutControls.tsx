@@ -42,12 +42,11 @@ const WorkoutControls = ({
         </Button>
       )}
       {workoutStatus === 'paused' && (
-        <>
+        <Stack direction="row" spacing={2} justifyContent="center">
           <Button
             variant="contained"
             onClick={onResume}
             size="large"
-            sx={{ minWidth: '200px' }}
             disabled={!isConnected}
             aria-label="Resume workout session"
           >
@@ -57,20 +56,18 @@ const WorkoutControls = ({
             variant="outlined"
             onClick={onEnd}
             size="large"
-            sx={{ minWidth: '200px' }}
             aria-label="End workout session"
           >
             End Workout
           </Button>
-        </>
+        </Stack>
       )}
       {workoutStatus === 'running' && (
-        <>
+        <Stack direction="row" spacing={2} justifyContent="center">
           <Button
             variant="contained"
             onClick={onPause}
             size="large"
-            sx={{ minWidth: '200px' }}
             aria-label="Pause workout session"
           >
             Pause Workout
@@ -79,12 +76,11 @@ const WorkoutControls = ({
             variant="outlined"
             onClick={onEnd}
             size="large"
-            sx={{ minWidth: '200px' }}
             aria-label="End workout session"
           >
             End Workout
           </Button>
-        </>
+        </Stack>
       )}
     </Stack>
   )

@@ -29,11 +29,13 @@ test.describe('Bluetooth HRM Connection', () => {
     ).toBeVisible()
     await expect(connectPage.getByText('Connected to: Mock HRM')).toBeVisible()
 
-    // The "Forget" logic is part of the "Reset" button, which should be visible after connection.
-    const resetButton = connectPage.getByRole('button', {
-      name: 'Reset Permissions & Settings',
-    })
-    await expect(resetButton).toBeVisible()
+    // The reset escape hatch stays hidden on a healthy connection: it
+    // only appears when the connection is genuinely stuck.
+    await expect(
+      connectPage.getByRole('button', {
+        name: 'Reset Permissions & Settings',
+      })
+    ).not.toBeVisible()
   })
 
   test('robustness: handles stale connection by forgetting and prompting', async ({
@@ -87,24 +89,25 @@ test.describe('Bluetooth HRM Connection', () => {
   test('Reset Server button triggers device forget', async ({
     connectPage,
   }) => {
-    // 1. Connect first
+    // 1. Drive a stuck failure state via the hook test controls: the
+    // reset escape hatch only appears when the connection is stuck.
     await connectPage.getByLabel('Your Name').fill('Reset Tester')
     await connectPage.getByLabel('Your Age').fill('25')
-    await connectPage
-      .getByRole('button', { name: 'Connect Bluetooth HRM' })
-      .click()
-
-    // Simulate heart rate to complete connection
+    // Let the page's silent auto-connect settle first, or its late
+    // completion wipes the injected state mid-assert (see vrt-connect).
+    await connectPage.waitForTimeout(2500)
+    await connectPage.waitForFunction(
+      () => window.__TEST_CONTROLS__?.setCustomHrmStatusMessage
+    )
     await connectPage.evaluate(() => {
-      window.bluetoothTestHelpers.simulateHeartRate(75)
+      window.__TEST_CONTROLS__!.setCustomHrmStatusMessage!('Failed: timeout')
     })
-
-    await expect(connectPage.getByText('Connected to: Mock HRM')).toBeVisible()
-
-    // 2. Click Reset
     const resetButton = connectPage.getByRole('button', {
       name: 'Reset Permissions & Settings',
     })
+    await expect(resetButton).toBeVisible({ timeout: 10000 })
+
+    // 2. Click Reset
     await resetButton.scrollIntoViewIfNeeded()
     await resetButton.click()
 

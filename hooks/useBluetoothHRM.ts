@@ -1132,7 +1132,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           )
         }
 
-        let server: BluetoothRemoteGATTServer | undefined
+        // Proactive adoption: a previous attempt (or a previous page load)
+        // may have left the OS link up while this state machine thinks it
+        // is down — bluetooth-internals connected, page dead, no data.
+        // Discovery on the live link costs zero radio ops and cannot
+        // collide with anything; only connect() when the link is down.
+        let server: BluetoothRemoteGATTServer | undefined = device.gatt
+          ?.connected
+          ? device.gatt
+          : undefined
+        if (server) {
+          logger.info(
+            { device: device.name },
+            'GATT link already up; adopting without a radio call.'
+          )
+        }
         let busyRetries = 0
         let quietRetries = 0
         let lastError: unknown = null
@@ -1140,8 +1154,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // loop; each path is bounded by its own counter below.
         for (
           let attempt = 1;
+          !server &&
           attempt <=
-          BUSY_RETRY_DELAYS_MS.length + QUIET_STRAP_RETRY_DELAYS_MS.length;
+            BUSY_RETRY_DELAYS_MS.length + QUIET_STRAP_RETRY_DELAYS_MS.length;
           attempt++
         ) {
           try {
