@@ -9,7 +9,7 @@ import {
 } from '@/lib/workout-session-storage'
 import type { WorkoutStatus } from '@/types/workout'
 
-type SessionListView = 'active' | 'list' | 'detail'
+export type SessionListView = 'active' | 'list' | 'detail'
 
 // Newest-first session fetch shared by the init/end effects and delete
 // handler (previously three copies of fetch + sort). State updates stay

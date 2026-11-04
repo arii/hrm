@@ -1,6 +1,6 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useEffect, useMemo, useRef, useCallback } from 'react'
+import { useEffect, useMemo, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -18,6 +18,8 @@ import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
 import { HeartRateTimeSeries, ZoneDistribution } from './dynamicCharts'
 import { useSessionList } from './useSessionList'
+import type { SessionListView } from './useSessionList'
+import { useHrRecording } from './useHrRecording'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
@@ -111,6 +113,113 @@ const WorkoutStatusActions = ({
   </Box>
 )
 
+interface WorkoutViewActions {
+  onStart: () => void
+  onPause: () => void
+  onResume: () => void
+  onEnd: () => void
+  onHistory: () => void
+}
+
+interface ActiveWorkoutViewProps {
+  view: SessionListView
+  status: WorkoutStatus
+  duration: number
+  userName: string
+  defaultDate: Date
+  summary: SessionSummaryStats
+  session: WorkoutSessionData | null
+  actions: WorkoutViewActions
+}
+
+const ActiveWorkoutView = ({
+  view,
+  status,
+  duration,
+  userName,
+  defaultDate,
+  summary,
+  session,
+  actions,
+}: ActiveWorkoutViewProps) =>
+  view === 'active' ? (
+    <>
+      <WorkoutStatusActions
+        status={status}
+        onStart={actions.onStart}
+        onPause={actions.onPause}
+        onResume={actions.onResume}
+        onEnd={actions.onEnd}
+        onHistory={actions.onHistory}
+      />
+
+      <Box sx={{ display: 'grid', gap: 3 }}>
+        <WorkoutSummary
+          duration={duration}
+          calories={summary.totalCalories}
+          status={status}
+          userName={userName}
+          date={session ? new Date(session.startTime) : defaultDate}
+        />
+
+        <CalorieTracker calorieHistory={session?.calorieHistory || []} />
+
+        <ZoneDistribution timeInZones={summary.timeInZones} />
+
+        {session && session.hrHistory.length > 0 && (
+          <HeartRateTimeSeries hrHistory={session.hrHistory} />
+        )}
+      </Box>
+    </>
+  ) : null
+
+interface SessionHistoryViewProps {
+  view: SessionListView
+  sessions: WorkoutSessionData[]
+  hasActiveSession: boolean
+  onBackToActive: () => void
+  onSelectSession: (session: WorkoutSessionData) => void
+  onDeleteSession: (sessionId: string) => void
+}
+
+const SessionHistoryView = ({
+  view,
+  sessions,
+  hasActiveSession,
+  onBackToActive,
+  onSelectSession,
+  onDeleteSession,
+}: SessionHistoryViewProps) =>
+  view === 'list' ? (
+    <>
+      <Box sx={{ mb: 3 }}>
+        <Button variant="contained" onClick={onBackToActive}>
+          {hasActiveSession ? 'Back to Active Workout' : 'New Workout'}
+        </Button>
+      </Box>
+      <SessionList
+        sessions={sessions}
+        onSelectSession={onSelectSession}
+        onDeleteSession={onDeleteSession}
+      />
+    </>
+  ) : null
+
+interface SessionDetailViewProps {
+  view: SessionListView
+  session: WorkoutSessionData | null
+  onBack: () => void
+}
+
+const SessionDetailView = ({
+  view,
+  session,
+  onBack,
+}: SessionDetailViewProps) =>
+  view === 'detail' && session ? (
+    <SessionDetail session={session} onBack={onBack} />
+  ) : null
+
 // Newest-first session fetch shared by the init/end effects and delete
 // handler (previously three copies of fetch + sort). State updates stay
 // at the call sites (promise callbacks), never inside effects directly.
@@ -171,28 +280,9 @@ const ExperimentalAnalyticsPage = () => {
     }
   }, [connectionStatus, userSettings, sendData])
 
-  /**
-   * FIX: Use ref to avoid interval reset on HR updates (addresses audit issue #1)
-   * This prevents the interval from being recreated on every hrmData change
-   */
-  const latestHrRef = useRef(0)
-
-  useEffect(() => {
-    latestHrRef.current = hrmData[0]?.value ?? 0
-  }, [hrmData])
-
-  // Recording interval - only depends on status, not hrmData
-  useEffect(() => {
-    if (status !== 'running') return
-
-    const intervalId = setInterval(() => {
-      const currentHr = latestHrRef.current
-      // Add HR data point (handles calorie calc internally)
-      addHrData(currentHr)
-    }, 1000)
-
-    return () => clearInterval(intervalId)
-  }, [status, addHrData])
+  // One sample per second while running; the ref mirror keeps the
+  // interval stable across HR updates (see hook).
+  useHrRecording(status, hrmData, addHrData)
 
   // Handlers
   const handleStartWorkout = useCallback(() => {
@@ -227,59 +317,35 @@ const ExperimentalAnalyticsPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
-      {view === 'active' && (
-        <>
-          <WorkoutStatusActions
-            status={status}
-            onStart={handleStartWorkout}
-            onPause={handlePauseWorkout}
-            onResume={handleResumeWorkout}
-            onEnd={handleEndWorkout}
-            onHistory={() => setView('list')}
-          />
-
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <WorkoutSummary
-              duration={duration}
-              calories={summaryData.totalCalories}
-              status={status}
-              userName={userSettings.userName || 'Guest User'}
-              date={
-                activeSession ? new Date(activeSession.startTime) : defaultDate
-              }
-            />
-
-            <CalorieTracker
-              calorieHistory={activeSession?.calorieHistory || []}
-            />
-
-            <ZoneDistribution timeInZones={summaryData.timeInZones} />
-
-            {activeSession && activeSession.hrHistory.length > 0 && (
-              <HeartRateTimeSeries hrHistory={activeSession.hrHistory} />
-            )}
-          </Box>
-        </>
-      )}
-
-      {view === 'list' && (
-        <>
-          <Box sx={{ mb: 3 }}>
-            <Button variant="contained" onClick={() => setView('active')}>
-              {activeSession ? 'Back to Active Workout' : 'New Workout'}
-            </Button>
-          </Box>
-          <SessionList
-            sessions={allSessions}
-            onSelectSession={handleViewSession}
-            onDeleteSession={handleDeleteSession}
-          />
-        </>
-      )}
-
-      {view === 'detail' && selectedSession && (
-        <SessionDetail session={selectedSession} onBack={handleBackToList} />
-      )}
+      <ActiveWorkoutView
+        view={view}
+        status={status}
+        duration={duration}
+        userName={userSettings.userName || 'Guest User'}
+        defaultDate={defaultDate}
+        summary={summaryData}
+        session={activeSession}
+        actions={{
+          onStart: handleStartWorkout,
+          onPause: handlePauseWorkout,
+          onResume: handleResumeWorkout,
+          onEnd: handleEndWorkout,
+          onHistory: () => setView('list'),
+        }}
+      />
+      <SessionHistoryView
+        view={view}
+        sessions={allSessions}
+        hasActiveSession={!!activeSession}
+        onBackToActive={() => setView('active')}
+        onSelectSession={handleViewSession}
+        onDeleteSession={handleDeleteSession}
+      />
+      <SessionDetailView
+        view={view}
+        session={selectedSession}
+        onBack={handleBackToList}
+      />
     </Container>
   )
 }
