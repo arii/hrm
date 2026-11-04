@@ -72,6 +72,63 @@ describe('SpotifyDeviceManager', () => {
       })
     })
 
+    it('should stay silent when the polled devices are unchanged', async () => {
+      const mockDevices = {
+        devices: [
+          {
+            id: 'device1',
+            name: 'Speaker',
+            type: 'Speaker',
+            is_active: true,
+            volume_percent: 50,
+          },
+        ],
+      }
+      mockPlayer.getAvailableDevices.mockResolvedValue(mockDevices)
+
+      // First poll broadcasts and captures the mapped shape.
+      await deviceManager.refreshDevices()
+      expect(broadcastMock).toHaveBeenCalledTimes(1)
+      const setStateFunction = setStateMock.mock.calls[0][0]
+      const mapped = setStateFunction({ devices: [] }).devices
+      getStateMock.mockReturnValue({ devices: mapped })
+
+      // Same list, fresh poll: no state write, no broadcast.
+      await deviceManager.refreshDevices()
+      expect(setStateMock).toHaveBeenCalledTimes(1)
+      expect(broadcastMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('should broadcast when a device flag flips', async () => {
+      getStateMock.mockReturnValue({
+        devices: [
+          {
+            id: 'device1',
+            name: 'Speaker',
+            type: 'Speaker',
+            is_active: false,
+            volume_percent: 50,
+          },
+        ],
+      })
+      mockPlayer.getAvailableDevices.mockResolvedValue({
+        devices: [
+          {
+            id: 'device1',
+            name: 'Speaker',
+            type: 'Speaker',
+            is_active: true,
+            volume_percent: 50,
+          },
+        ],
+      })
+
+      await deviceManager.refreshDevices()
+
+      expect(setStateMock).toHaveBeenCalledTimes(1)
+      expect(broadcastMock).toHaveBeenCalledTimes(1)
+    })
+
     it('should handle errors during device fetch', async () => {
       const error = new Error('Failed to fetch devices')
       mockPlayer.getAvailableDevices.mockRejectedValue(error)

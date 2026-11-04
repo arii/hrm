@@ -36,6 +36,31 @@ export class SpotifyDeviceManager {
           volume_percent: d.volume_percent ?? 0,
         }))
 
+      // The poll reallocates the list every tick; only state changes
+      // reach clients, so steady-state polls stay silent.
+      const prevDevices = this.getState().devices
+      if (
+        prevDevices.length === validDevices.length &&
+        prevDevices.every((prev, i) => {
+          // Lengths match, so the peer always exists; the guard is for
+          // strict indexing.
+          const next = validDevices[i]
+          return (
+            next !== undefined &&
+            prev.id === next.id &&
+            prev.is_active === next.is_active &&
+            prev.name === next.name &&
+            prev.type === next.type
+          )
+        })
+      ) {
+        logger.debug(
+          { count: validDevices.length },
+          'Devices unchanged, skipping broadcast'
+        )
+        return
+      }
+
       this.setState((prevState) => ({ ...prevState, devices: validDevices }))
       this.broadcastUpdate({
         type: 'SPOTIFY_UPDATE',
