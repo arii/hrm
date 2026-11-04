@@ -37,12 +37,23 @@ export const useLatchedSpotifyPresence = (
     const negL = negListed.current
     const lastName = lastActiveName.current
     // Convergent: derived from poll arrivals, settles between polls.
+    // The device poll reallocates the list every tick, so same-value
+    // polls must keep the previous identity or every tick re-renders.
     setStable((prev) => {
       const nextActive = !!active || (prev.active && negA < STABLE_ACTIVE_POLLS)
+      const nextHrmActive = nextActive && lastName === HRM_WEB_PLAYER_NAME
+      const nextListed = listed || (prev.listed && negL < STABLE_ACTIVE_POLLS)
+      if (
+        prev.active === nextActive &&
+        prev.hrmActive === nextHrmActive &&
+        prev.listed === nextListed
+      ) {
+        return prev
+      }
       return {
         active: nextActive,
-        hrmActive: nextActive && lastName === HRM_WEB_PLAYER_NAME,
-        listed: listed || (prev.listed && negL < STABLE_ACTIVE_POLLS),
+        hrmActive: nextHrmActive,
+        listed: nextListed,
       }
     })
   }, [devices])

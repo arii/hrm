@@ -220,9 +220,6 @@ const SessionDetailView = ({
     <SessionDetail session={session} onBack={onBack} />
   ) : null
 
-// Newest-first session fetch shared by the init/end effects and delete
-// handler (previously three copies of fetch + sort). State updates stay
-// at the call sites (promise callbacks), never inside effects directly.
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
