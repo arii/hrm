@@ -4,6 +4,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ConnectView, {
   getConnectionBanner,
+  resolveConnectViewState,
 } from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
 import { UserProfileState } from '@/types/connect'
@@ -272,5 +273,70 @@ describe('getConnectionBanner', () => {
     expect(
       getConnectionBanner({ ...base, deviceStatus: 'Scanning...' })?.text
     ).toBe('Scanning...')
+  })
+})
+
+describe('resolveConnectViewState', () => {
+  const base = {
+    deviceStatus: 'Disconnected',
+    isConnected: false,
+    hasStarted: false,
+    bluetoothConnected: false,
+    userName: 'Test User',
+    userAge: '30',
+  }
+
+  it('shows the profile form when idle and disconnected', () => {
+    expect(resolveConnectViewState(base)).toEqual({
+      showUserProfile: true,
+      isConnecting: false,
+      hasProfile: true,
+      showStatusCaption: true,
+      banner: null,
+    })
+  })
+
+  it('flags connecting and surfaces the progress banner', () => {
+    const state = resolveConnectViewState({
+      ...base,
+      deviceStatus: 'Connecting...',
+    })
+    expect(state.isConnecting).toBe(true)
+    expect(state.banner?.severity).toBe('info')
+    expect(state.showUserProfile).toBe(true)
+  })
+
+  it('hides the profile and caption once streaming', () => {
+    const state = resolveConnectViewState({
+      ...base,
+      deviceStatus: 'Connected',
+      isConnected: true,
+      bluetoothConnected: true,
+    })
+    expect(state).toEqual({
+      showUserProfile: false,
+      isConnecting: false,
+      hasProfile: true,
+      showStatusCaption: false,
+      banner: {
+        severity: 'success',
+        text: 'Connected! Heart rate data is being streamed.',
+      },
+    })
+  })
+
+  it('requires a non-blank name and age for a profile', () => {
+    expect(
+      resolveConnectViewState({ ...base, userName: '   ' }).hasProfile
+    ).toBe(false)
+    expect(resolveConnectViewState({ ...base, userAge: '' }).hasProfile).toBe(
+      false
+    )
+  })
+
+  it('shows the identity block after a mid-workout disconnect', () => {
+    const state = resolveConnectViewState({ ...base, hasStarted: true })
+    expect(state.showUserProfile).toBe(false)
+    expect(state.banner?.severity).toBe('warning')
   })
 })

@@ -19,6 +19,7 @@ import { SignalQualityIndicator } from './SignalQualityIndicator'
 import WorkoutControls from './WorkoutControls'
 import ResetSection from './components/ResetSection'
 import { useState, useEffect } from 'react'
+import { useFullReset } from '@/hooks/useFullReset'
 import logger from '@/utils/logger'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
@@ -71,26 +72,68 @@ export const getConnectionBanner = ({
   hasStarted,
   bluetoothConnected,
 }: ConnectionBannerArgs): ConnectionBanner | null => {
-  const failed = deviceStatus && !isConnected && deviceStatus.includes('Failed')
-  if (failed) {
-    return { severity: 'error', text: deviceStatus }
-  }
-  if (hasStarted && !isConnected) {
-    return {
-      severity: 'warning',
-      text: 'Device Disconnected - Workout Paused',
+  if (!isConnected) {
+    // An empty status cannot name a failure, so no emptiness guard here;
+    // the info branch below needs one (empty must stay silent, not info).
+    if (deviceStatus.includes('Failed')) {
+      return { severity: 'error', text: deviceStatus }
     }
+    if (hasStarted) {
+      return {
+        severity: 'warning',
+        text: 'Device Disconnected - Workout Paused',
+      }
+    }
+    if (deviceStatus && !deviceStatus.includes('Disconnected')) {
+      return { severity: 'info', text: deviceStatus }
+    }
+    return null
   }
-  if (isConnected && bluetoothConnected) {
+  if (bluetoothConnected) {
     return {
       severity: 'success',
       text: 'Connected! Heart rate data is being streamed.',
     }
   }
-  if (deviceStatus && !isConnected && !deviceStatus.includes('Disconnected')) {
-    return { severity: 'info', text: deviceStatus }
-  }
   return null
+}
+
+interface ConnectViewStateInput {
+  deviceStatus: string
+  isConnected: boolean
+  hasStarted: boolean
+  bluetoothConnected: boolean
+  userName: string
+  userAge: string
+}
+
+interface ConnectViewState {
+  showUserProfile: boolean
+  isConnecting: boolean
+  hasProfile: boolean
+  showStatusCaption: boolean
+  banner: ConnectionBanner | null
+}
+
+// Flattened render conditions (#9606): which profile block, whether the
+// connect button spins or is gated, whether the status caption shows, and
+// the single status banner. Pure: unit-tested.
+export const resolveConnectViewState = (
+  input: ConnectViewStateInput
+): ConnectViewState => {
+  const showUserDetails = input.hasStarted || input.isConnected
+  return {
+    showUserProfile: !showUserDetails,
+    isConnecting: input.deviceStatus.includes('Connecting'),
+    hasProfile: Boolean(input.userName.trim() && input.userAge.trim()),
+    showStatusCaption: input.deviceStatus !== 'Connected',
+    banner: getConnectionBanner({
+      deviceStatus: input.deviceStatus,
+      isConnected: input.isConnected,
+      hasStarted: input.hasStarted,
+      bluetoothConnected: input.bluetoothConnected,
+    }),
+  }
 }
 
 const BatteryIcon = ({ level }: { level: number }) => {
@@ -252,6 +295,53 @@ const HrSection = ({
     </Box>
   ) : null
 
+const ConnectionSwitch = ({
+  isConnected,
+  onConnect,
+  hasProfile,
+  isConnecting,
+  reducedMotion,
+  batteryLevel,
+  signalPeriodMs,
+  lastPeriodMs,
+  onDisconnect,
+  showStatusCaption,
+  deviceStatus,
+}: {
+  isConnected: boolean
+  onConnect: () => void
+  hasProfile: boolean
+  isConnecting: boolean
+  reducedMotion: boolean
+  batteryLevel: number | null
+  signalPeriodMs: number
+  lastPeriodMs: number
+  onDisconnect: () => void
+  showStatusCaption: boolean
+  deviceStatus: string
+}) => (
+  <Box sx={{ textAlign: 'center', mb: 3 }}>
+    {!isConnected ? (
+      <ConnectButton
+        onConnect={onConnect}
+        disabled={!hasProfile || isConnecting}
+        connecting={isConnecting}
+        reducedMotion={reducedMotion}
+      />
+    ) : (
+      <ConnectedPanel
+        batteryLevel={batteryLevel}
+        signalPeriodMs={signalPeriodMs}
+        lastPeriodMs={lastPeriodMs}
+        isConnected={isConnected}
+        onDisconnect={onDisconnect}
+        showStatusCaption={showStatusCaption}
+        deviceStatus={deviceStatus}
+      />
+    )}
+  </Box>
+)
+
 const HistorySection = ({
   hasStarted,
   duration,
@@ -324,36 +414,115 @@ const ConnectedPanel = ({
   </Stack>
 )
 
-export default function ConnectView({
-  duration,
-  caloriesBurned,
-  userProfile,
-  isConnected,
-  isDataStale = false,
-  deviceStatus,
-  batteryLevel,
-  onConnect,
-  onDisconnect,
-  onForgetDevice,
-  isSupported,
-  signalPeriodMs,
-  lastPeriodMs,
-  currentHR,
-  hrZoneData,
-  connectionStatus,
-  bluetoothConnected,
-  hasStarted,
-  onReset,
-  workoutStatus,
-  onStartWorkout,
-  onPauseWorkout,
-  onEndWorkout,
-}: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
+interface ConnectMainProps {
+  view: ConnectViewProps
+  state: ConnectViewState
+  reset: {
+    handleFullReset: () => Promise<void>
+    isResetting: boolean
+  }
+  reducedMotion: boolean
+}
+
+// Main content below the mount/support gates: pure composition over the
+// resolved view state, no hooks of its own.
+const ConnectMain = ({
+  view,
+  state,
+  reset,
+  reducedMotion,
+}: ConnectMainProps) => {
+  const { data } = view.userProfile
+  return (
+    <>
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Connect Heart Rate Monitor
+        </Typography>
+
+        <ProfileSection
+          showUserProfile={state.showUserProfile}
+          userProfile={view.userProfile}
+          userName={data.userName}
+          userAge={data.userAge}
+        />
+
+        <StatusBanner banner={state.banner} />
+
+        <ConnectionSwitch
+          isConnected={view.isConnected}
+          onConnect={view.onConnect}
+          hasProfile={state.hasProfile}
+          isConnecting={state.isConnecting}
+          reducedMotion={reducedMotion}
+          batteryLevel={view.batteryLevel}
+          signalPeriodMs={view.signalPeriodMs}
+          lastPeriodMs={view.lastPeriodMs}
+          onDisconnect={view.onDisconnect}
+          showStatusCaption={state.showStatusCaption}
+          deviceStatus={view.deviceStatus}
+        />
+
+        <HrSection
+          isConnected={view.isConnected}
+          userName={data.userName}
+          currentHR={view.currentHR}
+          hrZoneData={view.hrZoneData}
+          caloriesBurned={view.caloriesBurned}
+          isDataStale={view.isDataStale ?? false}
+        />
+
+        <WorkoutControls
+          workoutStatus={view.workoutStatus}
+          isConnected={view.isConnected}
+          onStart={view.onStartWorkout}
+          onPause={view.onPauseWorkout}
+          onEnd={view.onEndWorkout}
+          onResume={view.onStartWorkout}
+        />
+
+        <HistorySection
+          hasStarted={view.hasStarted}
+          duration={view.duration}
+          caloriesBurned={view.caloriesBurned}
+        />
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
+          WebSocket: {view.connectionStatus}
+        </Typography>
+
+        <ResetSection
+          onReset={reset.handleFullReset}
+          isResetting={reset.isResetting}
+        />
+      </Container>
+    </>
+  )
+}
+
+export default function ConnectView(props: ConnectViewProps) {
+  const {
+    isConnected,
+    deviceStatus,
+    onForgetDevice,
+    isSupported,
+    onReset,
+    currentHR,
+    hasStarted,
+    bluetoothConnected,
+    userProfile,
+  } = props
   const [mounted, setMounted] = useState(false)
   const { data } = userProfile
 
   useEffect(() => {
+    // One-shot hydration guard (empty deps): fires once, cannot cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -366,17 +535,9 @@ export default function ConnectView({
     }
   }, [currentHR, isConnected, data.userName])
 
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
-  }
+  // After the effects, where the reset closure lived: keeps hook order
+  // (and effect execution order) identical to before the extraction.
+  const reset = useFullReset(onForgetDevice, onReset)
 
   // Reduced motion: static hourglass instead of the indeterminate spinner.
   // Same testid/layout so waits and VRT masks are unaffected.
@@ -389,98 +550,28 @@ export default function ConnectView({
   if (!isSupported) {
     return (
       <BluetoothUnsupported
-        onFullReset={handleFullReset}
-        isResetting={isResetting}
+        onFullReset={reset.handleFullReset}
+        isResetting={reset.isResetting}
       />
     )
   }
 
-  const showUserDetails = hasStarted || isConnected
-
-  const banner = getConnectionBanner({
+  // Flattened render conditions (#9606): kept for the non-banner branches.
+  const state = resolveConnectViewState({
     deviceStatus,
     isConnected,
     hasStarted,
     bluetoothConnected,
+    userName: data.userName,
+    userAge: data.userAge,
   })
-  // Flattened render conditions (#9606): kept for the non-banner branches.
-  const showUserProfile = !showUserDetails
-  const isConnecting = deviceStatus.includes('Connecting')
-  const hasProfile = Boolean(data.userName.trim() && data.userAge.trim())
-  const showStatusCaption = deviceStatus !== 'Connected'
 
   return (
-    <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Connect Heart Rate Monitor
-        </Typography>
-
-        <ProfileSection
-          showUserProfile={showUserProfile}
-          userProfile={userProfile}
-          userName={data.userName}
-          userAge={data.userAge}
-        />
-
-        <StatusBanner banner={banner} />
-
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
-            <ConnectButton
-              onConnect={onConnect}
-              disabled={!hasProfile || isConnecting}
-              connecting={isConnecting}
-              reducedMotion={prefersReducedMotion}
-            />
-          ) : (
-            <ConnectedPanel
-              batteryLevel={batteryLevel}
-              signalPeriodMs={signalPeriodMs}
-              lastPeriodMs={lastPeriodMs}
-              isConnected={isConnected}
-              onDisconnect={onDisconnect}
-              showStatusCaption={showStatusCaption}
-              deviceStatus={deviceStatus}
-            />
-          )}
-        </Box>
-
-        <HrSection
-          isConnected={isConnected}
-          userName={data.userName}
-          currentHR={currentHR}
-          hrZoneData={hrZoneData}
-          caloriesBurned={caloriesBurned}
-          isDataStale={isDataStale}
-        />
-
-        <WorkoutControls
-          workoutStatus={workoutStatus}
-          isConnected={isConnected}
-          onStart={onStartWorkout}
-          onPause={onPauseWorkout}
-          onEnd={onEndWorkout}
-          onResume={onStartWorkout}
-        />
-
-        <HistorySection
-          hasStarted={hasStarted}
-          duration={duration}
-          caloriesBurned={caloriesBurned}
-        />
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-          WebSocket: {connectionStatus}
-        </Typography>
-
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
-      </Container>
-    </>
+    <ConnectMain
+      view={props}
+      state={state}
+      reset={reset}
+      reducedMotion={prefersReducedMotion}
+    />
   )
 }
