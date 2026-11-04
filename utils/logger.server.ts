@@ -3,15 +3,7 @@ import pino from 'pino'
 import { Request, Response } from 'express'
 import pinoHttp from 'pino-http'
 import { randomUUID } from 'crypto'
-
-// Define a consistent logger interface
-interface Logger {
-  debug: (msg: string | object, ...args: unknown[]) => void
-  info: (msg: string | object, ...args: unknown[]) => void
-  warn: (msg: string | object, ...args: unknown[]) => void
-  error: (msg: string | object, ...args: unknown[]) => void
-  child: (bindings: pino.Bindings) => Logger
-}
+import type { Logger } from './logger'
 
 export const pinoOptions: pino.LoggerOptions = {
   level:

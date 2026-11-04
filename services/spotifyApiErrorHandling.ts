@@ -79,6 +79,31 @@ export async function logSpotifyCommandError(
   }
 }
 
+/** Poll-error categories the handler treats as expected/handled. */
+export type PollErrorKind = 'rate-limited' | 'unauthorized' | 'network'
+
+const NETWORK_ERROR_MARKERS = [
+  'fetch failed',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'ECONNREFUSED',
+]
+
+/**
+ * Classifies a polling error by status code / message markers.
+ * @returns The category, or null when the error needs full logging.
+ */
+export function classifyPollError(error: unknown): PollErrorKind | null {
+  const err = error as { status?: number }
+  if (err?.status === 429) return 'rate-limited'
+  if (err?.status === 401) return 'unauthorized'
+  const message = (error as { message?: string })?.message || ''
+  if (NETWORK_ERROR_MARKERS.some((marker) => message.includes(marker))) {
+    return 'network'
+  }
+  return null
+}
+
 /**
  * Handles errors during the `getCurrentlyPlaying` poll.
  * Differentiates between rate limiting (429), token expiration (401),
@@ -92,30 +117,21 @@ export async function handleSpotifyApiError(
   error: unknown,
   onTokenExpired: () => void
 ): Promise<boolean> {
-  const err = error as {
-    status?: number
-    response?: { text: () => Promise<string> }
-  }
+  const kind = classifyPollError(error)
 
-  if (err?.status === 429) {
+  if (kind === 'rate-limited') {
     logger.warn('Spotify API Rate Limited. Backing off...')
     return true // Handled
   }
 
-  if (err?.status === 401) {
+  if (kind === 'unauthorized') {
     logger.warn('Spotify token expired during polling. Attempting refresh.')
     onTokenExpired()
     return true // Handled
   }
 
-  // Check for network errors
-  const errMsg = (error as { message?: string })?.message || ''
-  if (
-    errMsg.includes('fetch failed') ||
-    errMsg.includes('EAI_AGAIN') ||
-    errMsg.includes('ENETUNREACH') ||
-    errMsg.includes('ECONNREFUSED')
-  ) {
+  if (kind === 'network') {
+    const errMsg = (error as { message?: string })?.message || ''
     logger.warn(
       { err: error },
       `Temporary network connectivity issue during Spotify polling: ${errMsg} (suppressed)`
@@ -124,6 +140,7 @@ export async function handleSpotifyApiError(
   }
 
   // For other errors, log the response if available
+  const err = error as { response?: { text: () => Promise<string> } }
   if (err?.response && typeof err.response.text === 'function') {
     const text = await err.response.text()
     const parsed = safeParseJSON(text)

@@ -4,7 +4,9 @@
 // tests/unit/components/ExperimentalAnalyticsPage.test.tsx
 import React from 'react'
 import { render, waitFor } from '@testing-library/react'
-import ExperimentalAnalyticsPage from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
+import ExperimentalAnalyticsPage, {
+  computeSummaryStats,
+} from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -116,5 +118,67 @@ describe('ExperimentalAnalyticsPage', () => {
     await waitFor(() => {
       expect(mockGetAllSessions).toHaveBeenCalled()
     })
+  })
+})
+
+describe('computeSummaryStats', () => {
+  const zones = {
+    ZONE_0: 0,
+    ZONE_1: 10,
+    ZONE_2: 20,
+    ZONE_3: 0,
+    ZONE_4: 0,
+    ZONE_5: 0,
+    ZONE_6: 0,
+  } as const
+
+  it('returns zeros without a session', () => {
+    expect(computeSummaryStats(null, 99)).toEqual({
+      avgHr: 0,
+      maxHr: 0,
+      timeInZones: {
+        ZONE_0: 0,
+        ZONE_1: 0,
+        ZONE_2: 0,
+        ZONE_3: 0,
+        ZONE_4: 0,
+        ZONE_5: 0,
+        ZONE_6: 0,
+      },
+      totalCalories: 0,
+    })
+  })
+
+  it('averages positive HR values and ignores zeros', () => {
+    const stats = computeSummaryStats(
+      {
+        hrHistory: [
+          { time: 1, hr: 100 },
+          { time: 2, hr: 0 },
+          { time: 3, hr: 140 },
+        ],
+        timeInZones: { ...zones },
+      },
+      42
+    )
+    expect(stats.avgHr).toBe(120)
+    expect(stats.maxHr).toBe(140)
+    expect(stats.totalCalories).toBe(42)
+    expect(stats.timeInZones).toEqual(zones)
+  })
+
+  it('returns zeros when every reading is zero', () => {
+    const stats = computeSummaryStats(
+      {
+        hrHistory: [
+          { time: 1, hr: 0 },
+          { time: 2, hr: 0 },
+        ],
+        timeInZones: { ...zones },
+      },
+      7
+    )
+    expect(stats.avgHr).toBe(0)
+    expect(stats.maxHr).toBe(0)
   })
 })

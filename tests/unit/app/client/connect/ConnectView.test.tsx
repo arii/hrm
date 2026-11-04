@@ -2,7 +2,9 @@
  * @jest-environment jsdom
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import ConnectView from '@/app/client/connect/ConnectView'
+import ConnectView, {
+  getConnectionBanner,
+} from '@/app/client/connect/ConnectView'
 import '@testing-library/jest-dom'
 import { UserProfileState } from '@/types/connect'
 
@@ -220,5 +222,55 @@ describe('ConnectView', () => {
         screen.queryByText('Device Disconnected - Workout Paused')
       ).not.toBeInTheDocument()
     })
+  })
+})
+
+describe('getConnectionBanner', () => {
+  const base = {
+    deviceStatus: 'Disconnected',
+    isConnected: false,
+    hasStarted: false,
+    bluetoothConnected: false,
+  }
+
+  it.each([
+    [{ ...base, deviceStatus: 'Failed: timeout' }, 'error'],
+    [
+      {
+        ...base,
+        hasStarted: true,
+        deviceStatus: 'Failed: timeout',
+      },
+      'error',
+    ],
+    [{ ...base, hasStarted: true }, 'warning'],
+    [
+      {
+        ...base,
+        isConnected: true,
+        bluetoothConnected: true,
+        deviceStatus: 'Connected',
+      },
+      'success',
+    ],
+    [{ ...base, deviceStatus: 'Connecting...' }, 'info'],
+    [base, null],
+    [{ ...base, deviceStatus: '' }, null],
+  ])('resolves %p to %p', (args, expectedSeverity) => {
+    const banner = getConnectionBanner(args)
+    if (expectedSeverity === null) {
+      expect(banner).toBeNull()
+    } else {
+      expect(banner?.severity).toBe(expectedSeverity)
+    }
+  })
+
+  it('carries the device status text on failure and info', () => {
+    expect(
+      getConnectionBanner({ ...base, deviceStatus: 'Failed: busy' })?.text
+    ).toBe('Failed: busy')
+    expect(
+      getConnectionBanner({ ...base, deviceStatus: 'Scanning...' })?.text
+    ).toBe('Scanning...')
   })
 })
