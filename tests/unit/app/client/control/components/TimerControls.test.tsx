@@ -4,8 +4,9 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import TimerControls from '@/app/client/control/components/TimerControls'
 import {
-  WebSocketContext,
-  WebSocketContextType,
+  ConnectionContext,
+  TimerDataContext,
+  WebSocketConnectionValue,
 } from '@/context/WebSocketContext'
 import { DISCONNECTED_UI_REVERT_DELAY } from '@/app/client/control/constants'
 import { TimerData } from '@/types/websocket'
@@ -39,32 +40,24 @@ const mockTimerData: TimerData = {
   soundEventId: 0,
 }
 
-const mockWebSocketContext: WebSocketContextType = {
-  timerData: mockTimerData,
+const mockConnectionValue: WebSocketConnectionValue = {
   sendData: jest.fn(),
   connectionStatus: 'Connected',
   connect: jest.fn(),
   disconnect: jest.fn(),
-  hrmData: [],
-  spotifyData: {
-    devices: [],
-    playback: {
-      track: {
-        id: null,
-        name: '',
-        artist: '',
-        albumName: '',
-        albumArtUrl: '',
-      },
-      is_playing: false,
-      volume_percent: 0,
-      progress_ms: 0,
-      isMuted: false,
-    },
-  },
-  activeAlerts: [],
-  spotifyServiceInitialized: true,
 }
+
+const renderWithProviders = (
+  timerData: TimerData = mockTimerData,
+  connection: WebSocketConnectionValue = mockConnectionValue
+) =>
+  render(
+    <ConnectionContext.Provider value={connection}>
+      <TimerDataContext.Provider value={timerData}>
+        <TimerControls />
+      </TimerDataContext.Provider>
+    </ConnectionContext.Provider>
+  )
 
 describe('TimerControls', () => {
   const executeSpotifyMock = jest.fn()
@@ -94,12 +87,8 @@ describe('TimerControls', () => {
   })
 
   it('optimistically updates UI to "running" when start is clicked and dispatches Spotify NEXT', async () => {
-    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
-    render(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
+    const sendDataSpy = jest.spyOn(mockConnectionValue, 'sendData')
+    renderWithProviders()
 
     const startButton = screen.getByTestId('start-timer-button')
     act(() => {
@@ -118,16 +107,8 @@ describe('TimerControls', () => {
   })
 
   it('optimistically updates UI to "stopped" when stop is clicked and dispatches Spotify PAUSE', async () => {
-    const runningContext = {
-      ...mockWebSocketContext,
-      timerData: { ...mockTimerData, isRunning: true },
-    }
-    const sendDataSpy = jest.spyOn(runningContext, 'sendData')
-    render(
-      <WebSocketContext.Provider value={runningContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
+    const sendDataSpy = jest.spyOn(mockConnectionValue, 'sendData')
+    renderWithProviders({ ...mockTimerData, isRunning: true })
 
     const stopButton = screen.getByTestId('stop-timer-button')
     act(() => {
@@ -146,17 +127,13 @@ describe('TimerControls', () => {
   })
 
   it('reverts optimistic UI and does not send command if websocket is not connected', async () => {
-    const disconnectedContext: WebSocketContextType = {
-      ...mockWebSocketContext,
+    const disconnectedConnection: WebSocketConnectionValue = {
+      ...mockConnectionValue,
       connectionStatus: 'Disconnected',
     }
-    const sendDataSpy = jest.spyOn(disconnectedContext, 'sendData')
+    const sendDataSpy = jest.spyOn(disconnectedConnection, 'sendData')
 
-    render(
-      <WebSocketContext.Provider value={disconnectedContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
+    renderWithProviders(mockTimerData, disconnectedConnection)
 
     const startButton = screen.getByTestId('start-timer-button')
     act(() => {
@@ -175,12 +152,8 @@ describe('TimerControls', () => {
   })
 
   it('sends TIMER_CONFIG when Work/Rest duration is updated via stepper', async () => {
-    const sendDataSpy = jest.spyOn(mockWebSocketContext, 'sendData')
-    render(
-      <WebSocketContext.Provider value={mockWebSocketContext}>
-        <TimerControls />
-      </WebSocketContext.Provider>
-    )
+    const sendDataSpy = jest.spyOn(mockConnectionValue, 'sendData')
+    renderWithProviders()
 
     // Find stepper increment buttons
     const increaseWorkButton = screen.getByRole('button', {

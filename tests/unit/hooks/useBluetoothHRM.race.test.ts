@@ -17,7 +17,7 @@ const mockBluetooth = {
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: () => ({
+  useWebSocketConnection: () => ({
     sendData: jest.fn(),
     connectionStatus: 'Connected',
   }),

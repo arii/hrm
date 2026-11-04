@@ -3,11 +3,11 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useAudio } from '@/hooks/useAudio'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useTimerData } from '@/context/WebSocketContext'
 import { audioManager } from '@/utils/audioManager'
 
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+  useTimerData: jest.fn(),
 }))
 
 jest.mock('@/utils/audioManager', () => ({
@@ -18,16 +18,14 @@ jest.mock('@/utils/audioManager', () => ({
   },
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseTimerData = useTimerData as jest.Mock
 
 describe('useAudio', () => {
   const setup = (overrides: Record<string, unknown> = {}) => {
-    mockedUseWebSocket.mockReturnValue({
-      timerData: {
-        soundToPlay: null,
-        soundEventId: 0,
-        ...overrides,
-      },
+    mockedUseTimerData.mockReturnValue({
+      soundToPlay: null,
+      soundEventId: 0,
+      ...overrides,
     })
   }
 

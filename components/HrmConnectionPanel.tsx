@@ -3,13 +3,19 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useActiveAlerts,
+  useHrmData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import HrTile from '@/components/HrTile'
 import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
 
 const HrmConnectionPanel = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const hrmData = useHrmData()
+  const activeAlerts = useActiveAlerts()
+  const { connectionStatus } = useWebSocketConnection()
   const tileData = useMemo(() => {
     return augmentHrmData(hrmData, activeAlerts)
   }, [hrmData, activeAlerts])

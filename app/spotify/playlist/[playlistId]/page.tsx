@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import { withBasePath } from '@/utils/urls'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyData } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import Image from 'next/image'
 
@@ -38,7 +38,7 @@ interface PlaylistDetails {
 const PlaylistPage = () => {
   const params = useParams()
   const playlistId = params.playlistId as string
-  const { spotifyData } = useWebSocket()
+  const spotifyData = useSpotifyData()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)

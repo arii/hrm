@@ -4,7 +4,10 @@ import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useDashboardRegistration } from '@/hooks/useDashboardRegistration'
 import { useSpotifyVolumeSync } from '@/hooks/useSpotifyVolumeSync'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import type { ExecuteSpotify } from '@/hooks/useSpotifyCommand'
 import type { SpotifyDevice } from '@/types/core'
@@ -290,7 +293,8 @@ const DeviceColumn = ({
 
 const SpotifyDisplay = () => {
   const { isLoggedIn } = useSpotifyAuth()
-  const { spotifyData, connectionStatus } = useWebSocket()
+  const spotifyData = useSpotifyData()
+  const { connectionStatus } = useWebSocketConnection()
   const { execute: executeSpotify } = useSpotifyCommand()
 
   // Latched server truth over the flapping device list (see hook).

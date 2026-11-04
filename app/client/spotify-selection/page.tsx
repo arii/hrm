@@ -9,7 +9,7 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyData } from '@/context/WebSocketContext'
 import {
   useSpotifyCommand,
   SpotifyPlayPayload,
@@ -35,7 +35,7 @@ const PlaylistDetails = dynamic(
 )
 
 const SpotifySelectionPage = () => {
-  const { spotifyData } = useWebSocket()
+  const spotifyData = useSpotifyData()
   const {
     execute: executeSpotify,
     activeDevice,

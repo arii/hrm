@@ -4,10 +4,8 @@
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
-import {
-  WebSocketContext,
-  WebSocketContextType,
-} from '@/context/WebSocketContext'
+import { SpotifyDataContext } from '@/context/WebSocketContext'
+import { SpotifyData } from '@/types/websocket'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { jest } from '@jest/globals'
 import '@testing-library/jest-dom'
@@ -49,51 +47,36 @@ describe('PlaylistTracksDisplay', () => {
     mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
-  const mockContextValue: WebSocketContextType = {
-    spotifyData: {
-      devices: [],
-      playback: {
-        track: {
-          id: null,
-          name: '',
-          artist: '',
-          albumName: '',
-          albumArtUrl: '',
-        },
-        is_playing: false,
-        volume_percent: 70,
-        progress_ms: 0,
-        isMuted: false,
+  const mockSpotifyDataValue: SpotifyData = {
+    devices: [],
+    playback: {
+      track: {
+        id: null,
+        name: '',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
       },
+      is_playing: false,
+      volume_percent: 70,
+      progress_ms: 0,
+      isMuted: false,
     },
-    sendData: jest.fn(),
-    connectionStatus: 'Connected',
-    timerData: {
-      isRunning: false,
-      currentPhase: 'IDLE',
-      timeRemaining: 0,
-      timeElapsed: 0,
-      caloriesBurned: 0,
-      mode: 'TABATA',
-      workDuration: 30,
-      restDuration: 10,
-      soundEventId: 0,
-    },
-    hrmData: [],
-    activeAlerts: [],
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    spotifyServiceInitialized: true,
   }
+
+  const renderWithProviders = (
+    spotifyData: SpotifyData = mockSpotifyDataValue
+  ) =>
+    render(
+      <SpotifyDataContext.Provider value={spotifyData}>
+        <PlaylistTracksDisplay playlistId="123" />
+      </SpotifyDataContext.Provider>
+    )
 
   it('should render loading state initially', () => {
     // Never-resolving fetch keeps the loading state with no dangling setState.
     ;(fetch as jest.Mock).mockReturnValueOnce(new Promise(() => {}))
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    renderWithProviders()
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
@@ -118,11 +101,7 @@ describe('PlaylistTracksDisplay', () => {
       json: async () => mockTracks,
     })
 
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    renderWithProviders()
 
     const playButton = await screen.findByRole('button', { name: /play/i })
     fireEvent.click(playButton)
@@ -157,23 +136,16 @@ describe('PlaylistTracksDisplay', () => {
       json: async () => mockTracks,
     })
 
-    const playingContextValue: WebSocketContextType = {
-      ...mockContextValue,
-      spotifyData: {
-        ...mockContextValue.spotifyData,
-        playback: {
-          ...mockContextValue.spotifyData.playback,
-          is_playing: true,
-          track: { ...mockContextValue.spotifyData.playback.track, id: 't1' },
-        },
+    const playingSpotifyData: SpotifyData = {
+      ...mockSpotifyDataValue,
+      playback: {
+        ...mockSpotifyDataValue.playback,
+        is_playing: true,
+        track: { ...mockSpotifyDataValue.playback.track, id: 't1' },
       },
     }
 
-    render(
-      <WebSocketContext.Provider value={playingContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
+    renderWithProviders(playingSpotifyData)
 
     const pauseButton = await screen.findByRole('button', { name: /pause/i })
     fireEvent.click(pauseButton)

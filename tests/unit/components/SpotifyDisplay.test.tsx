@@ -12,7 +12,10 @@ import {
   AUTO_TRANSFER_COOLDOWN_MS,
 } from '@/constants/spotify'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { useWebSocket, WebSocketContextType } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
@@ -70,7 +73,8 @@ jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   default: jest.fn(),
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseSpotifyData = useSpotifyData as jest.Mock
+const mockedUseConnection = useWebSocketConnection as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
@@ -134,26 +138,25 @@ describe('SpotifyDisplay', () => {
 
   it('should render login button and call signIn with correct provider on click', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
-        devices: [],
-        playback: {
-          track: {
-            id: null,
-            name: '',
-            artist: '',
-            albumName: '',
-            albumArtUrl: '',
-          },
-          is_playing: false,
-          isMuted: false,
-          volume_percent: 0,
-          progress_ms: 0,
+    mockedUseSpotifyData.mockReturnValue({
+      devices: [],
+      playback: {
+        track: {
+          id: null,
+          name: '',
+          artist: '',
+          albumName: '',
+          albumArtUrl: '',
         },
+        is_playing: false,
+        isMuted: false,
+        volume_percent: 0,
+        progress_ms: 0,
       },
+    })
+    mockedUseConnection.mockReturnValue({
       connectionStatus: 'Connected',
-      spotifyServiceInitialized: true,
-    } as unknown as WebSocketContextType)
+    })
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isAuthenticated: false,
     })
@@ -220,12 +223,11 @@ describe('SpotifyDisplay', () => {
         data: { accessToken: 'fake-token' },
         status: 'authenticated',
       })
-      mockedUseWebSocket.mockReturnValue({
-        spotifyData: initialSpotifyData,
+      mockedUseSpotifyData.mockReturnValue(initialSpotifyData)
+      mockedUseConnection.mockReturnValue({
         sendData: mockSendData,
         connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
-      } as unknown as WebSocketContextType)
+      })
 
       const { rerender: rerenderComponent } = renderWithProviders(
         <SpotifyDisplay />
@@ -248,10 +250,7 @@ describe('SpotifyDisplay', () => {
         ...initialSpotifyData,
         playback: { ...initialSpotifyData.playback, is_playing: false },
       }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: playingData,
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue(playingData)
       rerender(<SpotifyDisplay />)
 
       const playButton = screen.getByLabelText('Play')
@@ -280,10 +279,7 @@ describe('SpotifyDisplay', () => {
         ...initialSpotifyData,
         playback: { ...initialSpotifyData.playback, volume_percent: 80 },
       }
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: updatedSpotifyData,
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue(updatedSpotifyData)
       rerender(<SpotifyDisplay />)
 
       expect(slider).toHaveValue('80')
@@ -315,10 +311,10 @@ describe('SpotifyDisplay', () => {
         ...mockHookValue,
         activeDevice: null,
       })
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: { ...initialSpotifyData, devices: [] },
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue({
+        ...initialSpotifyData,
+        devices: [],
+      })
       rerender(<SpotifyDisplay />)
 
       const sliderContainer = screen.getByTestId('volume-slider')
@@ -363,12 +359,14 @@ describe('SpotifyDisplay', () => {
         player: null,
         isAuthenticated: true,
       })
-      mockedUseWebSocket.mockReturnValue({
-        spotifyData: { devices, playback: idlePlayback },
+      mockedUseSpotifyData.mockReturnValue({
+        devices,
+        playback: idlePlayback,
+      })
+      mockedUseConnection.mockReturnValue({
         sendData: jest.fn(),
         connectionStatus: 'Connected',
-        spotifyServiceInitialized: true,
-      } as unknown as WebSocketContextType)
+      })
       mockedUseSpotifyCommand.mockReturnValue({
         ...mockHookValue,
         activeDevice: devices.find((d) => d.is_active) ?? null,
@@ -458,23 +456,20 @@ describe('SpotifyDisplay', () => {
 
     it('does nothing while disconnected', () => {
       setupAutoConnect([hrmDevice])
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
+      mockedUseConnection.mockReturnValue({
+        ...mockedUseConnection(),
         connectionStatus: 'Disconnected',
-      } as unknown as WebSocketContextType)
+      })
       renderWithProviders(<SpotifyDisplay />)
       expect(executeMock).not.toHaveBeenCalled()
     })
 
     it('never steals audible playback', () => {
       setupAutoConnect([hrmDevice])
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: {
-          devices: [hrmDevice],
-          playback: { ...idlePlayback, is_playing: true },
-        },
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue({
+        devices: [hrmDevice],
+        playback: { ...idlePlayback, is_playing: true },
+      })
       renderWithProviders(<SpotifyDisplay />)
       expect(executeMock).not.toHaveBeenCalled()
     })
@@ -555,19 +550,19 @@ describe('SpotifyDisplay', () => {
 
       // Two consecutive polls without active: badge holds (flap).
       for (let i = 0; i < 2; i++) {
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: { devices: [{ ...idleHrm }], playback: idlePlayback },
-        } as unknown as WebSocketContextType)
+        mockedUseSpotifyData.mockReturnValue({
+          devices: [{ ...idleHrm }],
+          playback: idlePlayback,
+        })
         rerender(<SpotifyDisplay />)
         expect(screen.getByText(/Browser Player Active/)).toBeInTheDocument()
       }
 
       // Third consecutive negative: latch releases.
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: { devices: [{ ...idleHrm }], playback: idlePlayback },
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue({
+        devices: [{ ...idleHrm }],
+        playback: idlePlayback,
+      })
       rerender(<SpotifyDisplay />)
       expect(
         screen.queryByText(/Browser Player Active/)
@@ -579,13 +574,10 @@ describe('SpotifyDisplay', () => {
       const { rerender } = renderWithProviders(<SpotifyDisplay />)
       expect(screen.getByText('Connecting…')).toBeInTheDocument()
 
-      mockedUseWebSocket.mockReturnValue({
-        ...mockedUseWebSocket(),
-        spotifyData: {
-          devices: [{ ...hrmDevice }],
-          playback: { ...idlePlayback, is_playing: true },
-        },
-      } as unknown as WebSocketContextType)
+      mockedUseSpotifyData.mockReturnValue({
+        devices: [{ ...hrmDevice }],
+        playback: { ...idlePlayback, is_playing: true },
+      })
       rerender(<SpotifyDisplay />)
       expect(screen.queryByText('Connecting…')).not.toBeInTheDocument()
       expect(

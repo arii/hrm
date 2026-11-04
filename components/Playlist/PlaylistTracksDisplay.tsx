@@ -1,7 +1,7 @@
 // File: components/Playlist/PlaylistTracksDisplay.tsx
 'use client'
 import { useCallback, useEffect, useState } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyData } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -36,7 +36,7 @@ interface PlaylistTracksDisplayProps {
 }
 
 const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
-  const { spotifyData } = useWebSocket()
+  const spotifyData = useSpotifyData()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [tracks, setTracks] = useState<Track[]>([])
   const [loading, setLoading] = useState(true)

@@ -54,7 +54,7 @@ jest.mock('@/hooks/useWorkoutSessionManager', () => ({
 
 const mockSendData = jest.fn()
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: () => ({
+  useWebSocketConnection: () => ({
     connectionStatus: 'Connected',
     sendData: mockSendData,
   }),

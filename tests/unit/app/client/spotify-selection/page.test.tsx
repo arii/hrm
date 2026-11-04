@@ -3,7 +3,7 @@
  */
 import { render, screen, fireEvent } from '@testing-library/react'
 import SpotifySelectionPage from '@/app/client/spotify-selection/page'
-import { useWebSocket, WebSocketContextType } from '@/context/WebSocketContext'
+import { useSpotifyData } from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { jest } from '@jest/globals'
 import '@testing-library/jest-dom'
@@ -37,7 +37,7 @@ jest.mock('next/dynamic', () => () => {
   return MockComponent
 })
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseSpotifyData = useSpotifyData as jest.Mock
 const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
   typeof useSpotifyCommand
 >
@@ -59,29 +59,26 @@ describe('SpotifySelectionPage', () => {
     isHrmPlayerActive: false,
   }
 
-  const mockContextValue: Partial<WebSocketContextType> = {
-    spotifyData: {
-      devices: [],
-      playback: {
-        track: {
-          id: null,
-          name: 'Awaiting Login...',
-          artist: '',
-          albumName: '',
-          albumArtUrl: '',
-        },
-        is_playing: false,
-        volume_percent: 70,
-        progress_ms: 0,
-        isMuted: false,
+  const mockSpotifyDataValue = {
+    devices: [],
+    playback: {
+      track: {
+        id: null,
+        name: 'Awaiting Login...',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
       },
+      is_playing: false,
+      volume_percent: 70,
+      progress_ms: 0,
+      isMuted: false,
     },
-    connectionStatus: 'Connected',
   }
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedUseWebSocket.mockReturnValue(mockContextValue)
+    mockedUseSpotifyData.mockReturnValue(mockSpotifyDataValue)
     mockedUseSpotifyCommand.mockReturnValue(mockHookValue)
   })
 
@@ -93,19 +90,16 @@ describe('SpotifySelectionPage', () => {
   })
 
   it('renders now playing when logged in', () => {
-    mockedUseWebSocket.mockReturnValue({
-      ...mockContextValue,
-      spotifyData: {
-        ...mockContextValue.spotifyData,
-        playback: {
-          ...mockContextValue.spotifyData?.playback,
-          track: {
-            id: 't1',
-            name: 'Song 1',
-            artist: 'Artist 1',
-            albumName: '',
-            albumArtUrl: '',
-          },
+    mockedUseSpotifyData.mockReturnValue({
+      ...mockSpotifyDataValue,
+      playback: {
+        ...mockSpotifyDataValue.playback,
+        track: {
+          id: 't1',
+          name: 'Song 1',
+          artist: 'Artist 1',
+          albumName: '',
+          albumArtUrl: '',
         },
       },
     })

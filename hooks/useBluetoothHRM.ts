@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import logger from '@/utils/logger'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 import { useHrmMetadataSync } from '@/hooks/useHrmMetadataSync'
 import { clientEnv } from '@/lib/env-client'
 import { cancellablePromise } from '@/utils/promise'
@@ -295,7 +295,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     onConnect,
     heartbeatInterval = HEARTBEAT_INTERVAL_MS,
   } = props
-  const { sendData, connectionStatus } = useWebSocket()
+  const { sendData, connectionStatus } = useWebSocketConnection()
   const [status, setStatus] = useState<BluetoothConnectionStatus>(
     BluetoothConnectionStatus.DISCONNECTED
   )

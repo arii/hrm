@@ -3,12 +3,12 @@
  */
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import MockPage from '@/app/client/mock/page'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+  useWebSocketConnection: jest.fn(),
 }))
 
 describe('app/client/mock/page', () => {
@@ -16,7 +16,7 @@ describe('app/client/mock/page', () => {
 
   beforeEach(() => {
     mockSendData = jest.fn()
-    ;(useWebSocket as jest.Mock).mockReturnValue({
+    ;(useWebSocketConnection as jest.Mock).mockReturnValue({
       connectionStatus: 'Connected',
       sendData: mockSendData,
     })

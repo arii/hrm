@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
@@ -29,7 +29,7 @@ export default function ConnectPage() {
 
   const [currentHR, setCurrentHR] = useState(0)
 
-  const { connectionStatus, sendData } = useWebSocket()
+  const { connectionStatus, sendData } = useWebSocketConnection()
 
   useEffect(() => {
     if (connectionStatus === 'Connected') {

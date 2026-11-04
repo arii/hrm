@@ -1,13 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { SessionProvider } from 'next-auth/react'
 import SpotifyDisplay from '@/components/SpotifyDisplay'
-import { WebSocketContext } from '@/context/WebSocketContext'
+import { MockWebSocketProvider } from './mocks/MockWebSocketProvider'
 import {
-  mockWebSocketContext,
+  mockHrmData,
+  mockSpotifyData,
   mockSpotifyDataNoActivePlayback,
+  mockTimerData,
 } from './mocks/mockWebSocketContext'
 import { mockSession } from './mocks/mockSession'
 import { handlers } from './mocks/handlers'
+
+const baseState = {
+  spotifyData: mockSpotifyData,
+  timerData: mockTimerData,
+  hrmData: [mockHrmData],
+}
 
 const meta: Meta<typeof SpotifyDisplay> = {
   title: 'Components/SpotifyDisplay',
@@ -15,9 +23,9 @@ const meta: Meta<typeof SpotifyDisplay> = {
   decorators: [
     (Story) => (
       <SessionProvider session={mockSession}>
-        <WebSocketContext.Provider value={mockWebSocketContext}>
+        <MockWebSocketProvider initialState={baseState}>
           <Story />
-        </WebSocketContext.Provider>
+        </MockWebSocketProvider>
       </SessionProvider>
     ),
   ],
@@ -49,14 +57,14 @@ export const NoActivePlayback: Story = {
   decorators: [
     (Story) => (
       <SessionProvider session={mockSession}>
-        <WebSocketContext.Provider
-          value={{
-            ...mockWebSocketContext,
+        <MockWebSocketProvider
+          initialState={{
+            ...baseState,
             spotifyData: mockSpotifyDataNoActivePlayback,
           }}
         >
           <Story />
-        </WebSocketContext.Provider>
+        </MockWebSocketProvider>
       </SessionProvider>
     ),
   ],

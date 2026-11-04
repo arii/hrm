@@ -3,6 +3,7 @@ import throttle from 'lodash.throttle'
 import logger from '@/utils/logger'
 import { generateClientId } from '@/utils/clientId'
 import {
+  Context,
   createContext,
   ReactNode,
   useCallback,
@@ -13,15 +14,21 @@ import {
   useReducer,
   useMemo,
 } from 'react'
-import { ClientCommandMessage, ServerMessage } from '../types/websocket'
+import {
+  ActiveAlert,
+  ClientCommandMessage,
+  ServerMessage,
+  SpotifyData,
+  TimerData,
+} from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-import { INITIAL_STATE, WebSocketState, reducer } from './webSocketReducer'
+import { INITIAL_STATE, reducer } from './webSocketReducer'
 import { ConnectedHrmData as HrmData } from '../types/websocket'
 
 export type { HrmData }
 
-export interface WebSocketContextType extends WebSocketState {
+export interface WebSocketConnectionValue {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
@@ -38,7 +45,42 @@ const isTestEnvironment = () => {
   )
 }
 
-export const WebSocketContext = createContext<WebSocketContextType | null>(null)
+// One context per message type so a timer tick never re-renders Spotify
+// or HRM subscribers (and vice versa). The reducer stays single — only
+// the fan-out is split — so state transitions are byte-identical. Slice
+// values are referentially stable for untouched slices because the
+// reducer spreads state.
+// Exported for the Storybook mock provider (same pattern as the old
+// single WebSocketContext); app code uses the hooks above.
+export const HrmDataContext = createContext<HrmData[] | null>(null)
+export const TimerDataContext = createContext<TimerData | null>(null)
+export const SpotifyDataContext = createContext<SpotifyData | null>(null)
+export const ActiveAlertsContext = createContext<ActiveAlert[] | null>(null)
+export const SpotifyInitContext = createContext<boolean | null>(null)
+export const ConnectionContext = createContext<WebSocketConnectionValue | null>(
+  null
+)
+
+const useSliceContext = <T,>(context: Context<T | null>, name: string): T => {
+  const value = useContext(context)
+  if (value === null) {
+    throw new Error(`${name} must be used within a WebSocketProvider`)
+  }
+  return value
+}
+
+export const useHrmData = (): HrmData[] =>
+  useSliceContext(HrmDataContext, 'useHrmData')
+export const useTimerData = (): TimerData =>
+  useSliceContext(TimerDataContext, 'useTimerData')
+export const useSpotifyData = (): SpotifyData =>
+  useSliceContext(SpotifyDataContext, 'useSpotifyData')
+export const useActiveAlerts = (): ActiveAlert[] =>
+  useSliceContext(ActiveAlertsContext, 'useActiveAlerts')
+export const useSpotifyServiceInitialized = (): boolean =>
+  useSliceContext(SpotifyInitContext, 'useSpotifyServiceInitialized')
+export const useWebSocketConnection = (): WebSocketConnectionValue =>
+  useSliceContext(ConnectionContext, 'useWebSocketConnection')
 
 export const WebSocketProvider = ({
   children,
@@ -406,25 +448,28 @@ export const WebSocketProvider = ({
     [throttledConnectionWarning]
   )
 
-  const contextValue = {
-    ...appState,
-    connectionStatus,
-    sendData,
-    connect,
-    disconnect,
-  }
+  // Stable across data dispatches: the callbacks are useCallbacks and
+  // only connectionStatus re-keys it.
+  const connectionValue = useMemo(
+    () => ({ connectionStatus, sendData, connect, disconnect }),
+    [connectionStatus, sendData, connect, disconnect]
+  )
 
   return (
-    <WebSocketContext.Provider value={contextValue}>
-      {children}
-    </WebSocketContext.Provider>
+    <ConnectionContext.Provider value={connectionValue}>
+      <HrmDataContext.Provider value={appState.hrmData}>
+        <TimerDataContext.Provider value={appState.timerData}>
+          <SpotifyDataContext.Provider value={appState.spotifyData}>
+            <ActiveAlertsContext.Provider value={appState.activeAlerts}>
+              <SpotifyInitContext.Provider
+                value={appState.spotifyServiceInitialized ?? false}
+              >
+                {children}
+              </SpotifyInitContext.Provider>
+            </ActiveAlertsContext.Provider>
+          </SpotifyDataContext.Provider>
+        </TimerDataContext.Provider>
+      </HrmDataContext.Provider>
+    </ConnectionContext.Provider>
   )
-}
-
-export const useWebSocket = () => {
-  const context = useContext(WebSocketContext)
-  if (!context) {
-    throw new Error('useWebSocket must be used within a WebSocketProvider')
-  }
-  return context
 }

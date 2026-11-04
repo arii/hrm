@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import { resolveTargetDeviceId } from '@/lib/spotify/deviceResolution'
@@ -56,7 +59,8 @@ export interface ExecuteSpotify {
  * all actions through the server-side single source of truth.
  */
 export const useSpotifyCommand = () => {
-  const { spotifyData, sendData } = useWebSocket()
+  const spotifyData = useSpotifyData()
+  const { sendData } = useWebSocketConnection()
 
   // Simplified state selectors from the unified bus
   const activeDevice = spotifyData.devices?.find((d) => d.is_active) || null

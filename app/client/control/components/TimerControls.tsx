@@ -2,7 +2,10 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { TimerConfigMessage, TimerModeCommandMessage } from '@/types/websocket'
 import { TimerMode } from '@/types/core'
 import Box from '@mui/material/Box'
@@ -19,7 +22,8 @@ import { useTheme, alpha } from '@mui/material/styles'
 
 const TimerControls = () => {
   const theme = useTheme()
-  const { timerData, sendData, connectionStatus } = useWebSocket()
+  const timerData = useTimerData()
+  const { sendData, connectionStatus } = useWebSocketConnection()
   const { execute: executeSpotify } = useSpotifyCommand()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)

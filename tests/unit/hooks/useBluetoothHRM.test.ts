@@ -65,23 +65,12 @@ describe('useBluetoothHRM', () => {
     jest.useFakeTimers()
     jest.clearAllTimers()
 
-    // Mock WebSocket context
-    jest.spyOn(WebSocketContext, 'useWebSocket').mockReturnValue({
+    // Mock WebSocket connection slice (the hook reads nothing else)
+    jest.spyOn(WebSocketContext, 'useWebSocketConnection').mockReturnValue({
       sendData: jest.fn(),
       connectionStatus: 'Connected',
-      hrmData: [],
-      timerData: {
-        phase: 'idle',
-        timeRemaining: 0,
-        currentRound: 0,
-        totalRounds: 0,
-      },
-      spotifyData: null,
-      workoutData: {
-        totalCalories: 0,
-        workoutDuration: 0,
-      },
-      lastJsonMessage: null,
+      connect: jest.fn(),
+      disconnect: jest.fn(),
     })
 
     // Mock cookie functions

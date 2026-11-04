@@ -6,13 +6,13 @@ import ConnectPage from '@/app/client/connect/page'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 
 // Mocks
 jest.mock('@/hooks/useBluetoothHRM')
 jest.mock('@/context/WebSocketContext', () => ({
   ...jest.requireActual('@/context/WebSocketContext'),
-  useWebSocket: jest.fn(),
+  useWebSocketConnection: jest.fn(),
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
@@ -28,16 +28,15 @@ describe('ConnectPage Integration', () => {
   })
 
   const mockUseBluetoothHRM = useBluetoothHRM as jest.Mock
-  const mockUseWebSocket = useWebSocket as jest.Mock
+  const mockUseConnection = useWebSocketConnection as jest.Mock
   let mockSendData: jest.Mock
   let onHeartRateUpdateCallback: (hr: number) => void
 
   beforeEach(() => {
     mockSendData = jest.fn()
-    mockUseWebSocket.mockReturnValue({
+    mockUseConnection.mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Connected',
-      hrmData: [],
     })
     mockUseBluetoothHRM.mockImplementation(({ onHeartRateUpdate }) => {
       onHeartRateUpdateCallback = onHeartRateUpdate

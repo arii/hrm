@@ -6,7 +6,10 @@ import TimerDisplay, {
   resolveWsDotColor,
   type TimerPhasePalette,
 } from '@/components/TimerDisplay'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
@@ -14,14 +17,15 @@ import { render, screen } from '@testing-library/react'
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
 
-const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseTimerData = useTimerData as jest.Mock
+const mockedUseConnection = useWebSocketConnection as jest.Mock
 
 describe('TimerDisplay', () => {
   // A helper function to set up the mock for a specific test
   const setupMock = (timerData: Partial<TimerData>) => {
-    mockedUseWebSocket.mockReturnValue({
+    mockedUseTimerData.mockReturnValue(timerData)
+    mockedUseConnection.mockReturnValue({
       connectionStatus: 'Connected',
-      timerData,
     })
   }
 

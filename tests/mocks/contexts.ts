@@ -1,5 +1,9 @@
-export const mockUseWebSocket = jest.fn()
+export const mockUseHrmData = jest.fn()
+export const mockUseActiveAlerts = jest.fn()
+export const mockUseWebSocketConnection = jest.fn()
 
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: mockUseWebSocket,
+  useHrmData: mockUseHrmData,
+  useActiveAlerts: mockUseActiveAlerts,
+  useWebSocketConnection: mockUseWebSocketConnection,
 }))

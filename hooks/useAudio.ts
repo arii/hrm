@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import logger from '@/utils/logger'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useTimerData } from '@/context/WebSocketContext'
 
 export const useAudio = () => {
-  const { timerData } = useWebSocket()
+  const timerData = useTimerData()
   const lastSoundEventId = useRef<number>(0)
 
   useEffect(() => {
