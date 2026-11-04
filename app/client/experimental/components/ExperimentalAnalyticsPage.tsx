@@ -1,34 +1,23 @@
 // app/client/experimental/components/ExperimentalAnalyticsPage.tsx
 'use client'
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { Container, Box, Button, Skeleton } from '@mui/material'
-import dynamic from 'next/dynamic'
+import { useEffect, useMemo, useRef, useCallback } from 'react'
+import { Container, Box, Button } from '@mui/material'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import {
-  workoutSessionStorage,
-  WorkoutSessionData,
-} from '@/lib/workout-session-storage'
+import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
+import type { WorkoutStatus } from '@/types/workout'
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
 import CalorieTracker from './CalorieTracker'
 import SessionList from './SessionList'
 import SessionDetail from './SessionDetail'
-
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
-
-const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
+import { HeartRateTimeSeries, ZoneDistribution } from './dynamicCharts'
+import { useSessionList } from './useSessionList'
 
 const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_0: 0,
@@ -40,8 +29,91 @@ const defaultTimeInZones: Record<HeartRateZone, number> = {
   ZONE_6: 0,
 }
 
-type View = 'active' | 'list' | 'detail'
+interface SessionSummaryStats {
+  avgHr: number
+  maxHr: number
+  timeInZones: Record<HeartRateZone, number>
+  totalCalories: number
+}
 
+// Summary stats for the active session view. Pure: unit-tested.
+export const computeSummaryStats = (
+  activeSession:
+    | Pick<WorkoutSessionData, 'hrHistory' | 'timeInZones'>
+    | null
+    | undefined,
+  caloriesBurned: number
+): SessionSummaryStats => {
+  if (!activeSession)
+    return {
+      avgHr: 0,
+      maxHr: 0,
+      timeInZones: defaultTimeInZones,
+      totalCalories: 0,
+    }
+
+  const hrValues = activeSession.hrHistory
+    .map((d) => d.hr)
+    .filter((hr) => hr > 0)
+  const avgHr =
+    hrValues.length > 0
+      ? hrValues.reduce((sum, hr) => sum + hr, 0) / hrValues.length
+      : 0
+  const maxHr = hrValues.length > 0 ? Math.max(...hrValues) : 0
+
+  return {
+    avgHr,
+    maxHr,
+    timeInZones: activeSession.timeInZones,
+    totalCalories: caloriesBurned,
+  }
+}
+
+const WorkoutStatusActions = ({
+  status,
+  onStart,
+  onPause,
+  onResume,
+  onEnd,
+  onHistory,
+}: {
+  status: WorkoutStatus
+  onStart: () => void
+  onPause: () => void
+  onResume: () => void
+  onEnd: () => void
+  onHistory: () => void
+}) => (
+  <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+    {status === 'idle' && (
+      <Button variant="contained" onClick={onStart}>
+        Start Workout
+      </Button>
+    )}
+    {status === 'running' && (
+      <Button variant="outlined" onClick={onPause}>
+        Pause
+      </Button>
+    )}
+    {status === 'paused' && (
+      <>
+        <Button variant="contained" onClick={onResume}>
+          Resume
+        </Button>
+        <Button variant="outlined" onClick={onEnd}>
+          Finish Workout
+        </Button>
+      </>
+    )}
+    <Button variant="text" onClick={onHistory}>
+      View History
+    </Button>
+  </Box>
+)
+
+// Newest-first session fetch shared by the init/end effects and delete
+// handler (previously three copies of fetch + sort). State updates stay
+// at the call sites (promise callbacks), never inside effects directly.
 const ExperimentalAnalyticsPage = () => {
   const { hrmData, sendData, connectionStatus } = useWebSocket()
   const [userSettings] = useUserSettings()
@@ -67,36 +139,22 @@ const ExperimentalAnalyticsPage = () => {
     activeSession?.endTime
   )
 
-  // Session list management (direct storage access)
-  const [allSessions, setAllSessions] = useState<WorkoutSessionData[]>([])
-  const [view, setView] = useState<View>(() =>
-    activeSession ? 'active' : 'list'
-  )
-  const [selectedSession, setSelectedSession] =
-    useState<WorkoutSessionData | null>(null)
-
-  // Load all sessions
-  useEffect(() => {
-    const loadSessions = async () => {
-      const sessions = await workoutSessionStorage.getAllSessions()
-      setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-    }
-    if (isInitialized) {
-      loadSessions()
-    }
-  }, [isInitialized, activeSession?.endTime]) // Reload when session ends
-
-  // Effect to handle the end of a workout session
-  useEffect(() => {
-    if (status === 'finished') {
-      const reloadSessions = async () => {
-        const sessions = await workoutSessionStorage.getAllSessions()
-        setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-        setView('list')
-      }
-      reloadSessions()
-    }
-  }, [status])
+  // Session list management lives in its own hook; the page keeps the
+  // recording lifecycle, metadata sync, and rendering.
+  const {
+    allSessions,
+    view,
+    setView,
+    selectedSession,
+    handleViewSession,
+    handleDeleteSession,
+    handleBackToList,
+  } = useSessionList({
+    isInitialized,
+    activeSessionEndTime: activeSession?.endTime,
+    status,
+    initialView: activeSession ? 'active' : 'list',
+  })
 
   // Send user metadata when WebSocket connects
   useEffect(() => {
@@ -144,7 +202,8 @@ const ExperimentalAnalyticsPage = () => {
 
     startWorkout(age, weight, { maxHr })
     setView('active')
-  }, [startWorkout, userSettings])
+    // setView is the hook's stable useState setter; listed for exhaustive-deps.
+  }, [startWorkout, userSettings, setView])
 
   const handlePauseWorkout = useCallback(() => {
     pauseWorkout()
@@ -158,48 +217,11 @@ const ExperimentalAnalyticsPage = () => {
     endWorkout()
   }, [endWorkout])
 
-  const handleViewSession = useCallback((session: WorkoutSessionData) => {
-    setSelectedSession(session)
-    setView('detail')
-  }, [])
-
-  const handleDeleteSession = useCallback(async (sessionId: string) => {
-    await workoutSessionStorage.deleteSession(sessionId)
-    const sessions = await workoutSessionStorage.getAllSessions()
-    setAllSessions(sessions.sort((a, b) => b.startTime - a.startTime))
-  }, [])
-
-  const handleBackToList = useCallback(() => {
-    setSelectedSession(null)
-    setView('list')
-  }, [])
-
   // Compute summary stats
-  const summaryData = useMemo(() => {
-    if (!activeSession)
-      return {
-        avgHr: 0,
-        maxHr: 0,
-        timeInZones: defaultTimeInZones,
-        totalCalories: 0,
-      }
-
-    const hrValues = activeSession.hrHistory
-      .map((d) => d.hr)
-      .filter((hr) => hr > 0)
-    const avgHr =
-      hrValues.length > 0
-        ? hrValues.reduce((sum, hr) => sum + hr, 0) / hrValues.length
-        : 0
-    const maxHr = hrValues.length > 0 ? Math.max(...hrValues) : 0
-
-    return {
-      avgHr,
-      maxHr,
-      timeInZones: activeSession.timeInZones,
-      totalCalories: caloriesBurned,
-    }
-  }, [activeSession, caloriesBurned])
+  const summaryData = useMemo(
+    () => computeSummaryStats(activeSession, caloriesBurned),
+    [activeSession, caloriesBurned]
+  )
 
   const defaultDate = useMemo(() => new Date(), [])
 
@@ -207,31 +229,14 @@ const ExperimentalAnalyticsPage = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
       {view === 'active' && (
         <>
-          <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-            {status === 'idle' && (
-              <Button variant="contained" onClick={handleStartWorkout}>
-                Start Workout
-              </Button>
-            )}
-            {status === 'running' && (
-              <Button variant="outlined" onClick={handlePauseWorkout}>
-                Pause
-              </Button>
-            )}
-            {status === 'paused' && (
-              <>
-                <Button variant="contained" onClick={handleResumeWorkout}>
-                  Resume
-                </Button>
-                <Button variant="outlined" onClick={handleEndWorkout}>
-                  Finish Workout
-                </Button>
-              </>
-            )}
-            <Button variant="text" onClick={() => setView('list')}>
-              View History
-            </Button>
-          </Box>
+          <WorkoutStatusActions
+            status={status}
+            onStart={handleStartWorkout}
+            onPause={handlePauseWorkout}
+            onResume={handleResumeWorkout}
+            onEnd={handleEndWorkout}
+            onHistory={() => setView('list')}
+          />
 
           <Box sx={{ display: 'grid', gap: 3 }}>
             <WorkoutSummary

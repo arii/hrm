@@ -1,29 +1,12 @@
 // app/client/experimental/components/SessionDetail.tsx
 'use client'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  Skeleton,
-} from '@mui/material'
-import dynamic from 'next/dynamic'
+import { Card, CardContent, Typography, Button, Box } from '@mui/material'
 import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { formatDate } from '@/lib/utils'
 import { generateFitFile } from '@/utils/fit-export'
 import { generateCsvExport } from '@/utils/csv-export'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-
-const HeartRateTimeSeries = dynamic(() => import('./HeartRateTimeSeries'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
-
-const ZoneDistribution = dynamic(() => import('./ZoneDistribution'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
+import { HeartRateTimeSeries, ZoneDistribution } from './dynamicCharts'
 
 interface SessionDetailProps {
   session: WorkoutSessionData
