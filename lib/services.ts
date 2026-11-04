@@ -3,6 +3,7 @@ import { ServerMessage } from '../types/websocket.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import { SpotifyService } from '../types/interfaces.js'
+import logger from '../utils/logger.server.js'
 
 export interface AppServices {
   spotifyService: SpotifyService
@@ -39,7 +40,7 @@ export async function createServices(
   try {
     spotifyService = await SpotifyPolling.create(broadcast)
   } catch (e) {
-    console.error('SpotifyPolling initialization failed:', e)
+    logger.error('SpotifyPolling initialization failed:', e)
     isSpotifyInitialized = false
     // Fallback stub
     spotifyService = {

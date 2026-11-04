@@ -1,6 +1,7 @@
 // components/Spotify/PlaylistDetails.tsx
 import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
+import logger from '@/utils/logger'
 import CircularProgress from '@mui/material/CircularProgress'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -71,7 +72,7 @@ const PlaylistDetails: React.FC<PlaylistDetailsProps> = ({
         return data.tracks
       } catch (err) {
         if (isAbort(err)) return null
-        console.error('Failed to fetch playlist tracks:', err)
+        logger.error('Failed to fetch playlist tracks:', err)
         setError(
           err instanceof Error ? err.message : 'An unknown error occurred'
         )

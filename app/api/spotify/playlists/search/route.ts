@@ -10,6 +10,7 @@ import { mapSimplifiedPlaylistToSpotifyPlaylist } from '@/lib/spotify/mappers'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '@/constants/spotify'
+import logger from '@/utils/logger.server'
 
 /**
  * API route to search for public Spotify playlists.
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /playlists/search] Internal Server Error: ${message}`)
+    logger.error(`[API /playlists/search] Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

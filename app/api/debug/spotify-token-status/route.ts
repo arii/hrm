@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
 import { debugAccessDenied } from '@/lib/debug-guard'
 import { env } from '@/lib/env'
+import logger from '@/utils/logger.server'
 
 export async function GET() {
   const denied = debugAccessDenied()
@@ -41,7 +42,7 @@ export async function GET() {
       { status: 200 }
     )
   } catch (error: unknown) {
-    console.error('Error in spotify-token-status API:', error)
+    logger.error('Error in spotify-token-status API:', error)
     let errorMessage = 'An unknown error occurred.'
     if (error instanceof Error) {
       errorMessage = error.message

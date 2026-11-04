@@ -2,6 +2,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { TimerCommandMessage, TimerConfigMessage } from '@/types/websocket'
+import logger from '@/utils/logger'
 import {
   DISCONNECTED_UI_REVERT_DELAY,
   OPTIMISTIC_ACTION_TIMEOUT,
@@ -49,7 +50,7 @@ export const useTimerCommand = ({
   useEffect(() => {
     if (optimisticAction) {
       const timer = setTimeout(() => {
-        console.warn(
+        logger.warn(
           `[useTimerCommand] Optimistic action "${optimisticAction}" timed out. Reverting UI.`
         )
         setOptimisticAction(null)
@@ -66,7 +67,7 @@ export const useTimerCommand = ({
 
       // If disconnected, revert the optimistic update after a short delay
       if (connectionStatus !== 'Connected') {
-        console.warn(
+        logger.warn(
           `[useTimerCommand] WebSocket not connected (status: ${connectionStatus}). Failed to send "${command}" command. Reverting optimistic UI.`
         )
         setTimeout(() => {

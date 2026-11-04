@@ -3,6 +3,7 @@
 
 import Button from '@mui/material/Button'
 import { signIn } from 'next-auth/react'
+import logger from '@/utils/logger'
 import { useState } from 'react'
 import { getBasePath } from '@/utils/urls'
 
@@ -17,7 +18,7 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
   const handleLogin = async () => {
     setIsLoading(true)
     try {
-      console.log(
+      logger.debug(
         `[AuthButton] Clicking login for ${providerName}, calling signIn()...`
       )
       const basePath = getBasePath()
@@ -26,9 +27,9 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
         callbackUrl: basePath === '' ? '/' : basePath,
         redirect: true,
       })
-      console.log(`[AuthButton] signIn() result for ${providerName}:`, result)
+      logger.debug(`[AuthButton] signIn() result for ${providerName}:`, result)
     } catch (error) {
-      console.error(`[AuthButton] signIn() error for ${providerName}:`, error)
+      logger.error(`[AuthButton] signIn() error for ${providerName}:`, error)
       setIsLoading(false)
     }
   }

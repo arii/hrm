@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import logger from '@/utils/logger'
 
 export default function GlobalError({
   error,
@@ -14,7 +15,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error(error)
+    logger.error(error)
   }, [error])
 
   return (

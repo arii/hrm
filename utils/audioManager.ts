@@ -6,6 +6,7 @@
  */
 
 import { getBasePath } from './urls'
+import logger from './logger'
 
 class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
@@ -34,7 +35,9 @@ class AudioManager {
    */
   loadAudio() {
     if (!this.loadedAudio && this.shortBeep && this.longBeep) {
-      console.log('[AudioManager] Unlocking audio context via user interaction')
+      logger.debug(
+        '[AudioManager] Unlocking audio context via user interaction'
+      )
       // On iOS you can't play back sounds unless it comes from a user
       // action first, so pretend to play the sound in this callback
       this.shortBeep
@@ -44,7 +47,7 @@ class AudioManager {
           this.shortBeep!.currentTime = 0
         })
         .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock short beep:', e)
+          logger.warn('[AudioManager] Failed to unlock short beep:', e)
         })
 
       this.longBeep
@@ -54,7 +57,7 @@ class AudioManager {
           this.longBeep!.currentTime = 0
         })
         .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock long beep:', e)
+          logger.warn('[AudioManager] Failed to unlock long beep:', e)
         })
 
       this.loadedAudio = true
@@ -66,17 +69,17 @@ class AudioManager {
    */
   playShort() {
     if (this.isMuted) {
-      console.log('[AudioManager] Skipped short beep (Muted)')
+      logger.debug('[AudioManager] Skipped short beep (Muted)')
       return
     }
     if (!this.shortBeep) {
-      console.warn('[AudioManager] Short beep audio not initialized')
+      logger.debug('[AudioManager] Short beep audio not initialized')
       return
     }
 
     this.shortBeep.currentTime = 0
     this.shortBeep.play().catch((e) => {
-      console.error('[AudioManager] Failed to play short beep:', e)
+      logger.error('[AudioManager] Failed to play short beep:', e)
     })
   }
 
@@ -85,17 +88,17 @@ class AudioManager {
    */
   playLong() {
     if (this.isMuted) {
-      console.log('[AudioManager] Skipped long beep (Muted)')
+      logger.debug('[AudioManager] Skipped long beep (Muted)')
       return
     }
     if (!this.longBeep) {
-      console.warn('[AudioManager] Long beep audio not initialized')
+      logger.debug('[AudioManager] Long beep audio not initialized')
       return
     }
 
     this.longBeep.currentTime = 0
     this.longBeep.play().catch((e) => {
-      console.error('[AudioManager] Failed to play long beep:', e)
+      logger.error('[AudioManager] Failed to play long beep:', e)
     })
   }
 
@@ -107,7 +110,6 @@ class AudioManager {
     this.volume = newVolume
     if (this.shortBeep) this.shortBeep.volume = this.volume
     if (this.longBeep) this.longBeep.volume = this.volume
-    // console.log(`[AudioManager] Volume set to ${this.volume}`)
   }
 
   /**
@@ -122,7 +124,7 @@ class AudioManager {
    */
   toggleMute() {
     this.isMuted = !this.isMuted
-    console.log(`[AudioManager] Muted: ${this.isMuted}`)
+    logger.debug(`[AudioManager] Muted: ${this.isMuted}`)
     return this.isMuted
   }
 
@@ -131,7 +133,6 @@ class AudioManager {
    */
   setMuted(muted: boolean) {
     this.isMuted = muted
-    // console.log(`[AudioManager] Muted set to: ${this.isMuted}`)
   }
 
   /**

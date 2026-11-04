@@ -9,7 +9,7 @@ The application has two logger files:
 - **`utils/logger.ts`**: Client-side logger (lightweight console wrapper)
 - **`utils/logger.server.ts`**: Server-side logger (pino-based structured logging)
 
-**Important**: Server-side code (API routes, server utilities, services) **must** explicitly import from `utils/logger.server.js` to ensure proper tree-shaking and prevent bundling pino in the client build.
+**Important**: Server-side code (API routes, server utilities, services) **must** explicitly import the server logger (not `utils/logger`) to ensure proper tree-shaking and prevent bundling pino in the client build. Use the extensionless path (`utils/logger.server`) in any file reachable from Next.js code (routes, pages, `lib/` helpers they import) — Turbopack cannot resolve the `.js` suffix to `.ts`. The `.js` suffix is only for server-graph-only files (e.g. `server.ts`, services it alone loads); `tsc-alias` adds it back at server build time.
 
 ### Unified Logger
 
@@ -46,6 +46,14 @@ The unified logger supports the following logging levels:
 - `info`: For informational messages.
 - `warn`: For warnings and potential issues.
 - `error`: For errors and exceptions.
+
+#### Production gating
+
+On the client, `debug` and `info` are silenced in production builds: the
+production console shows warnings and errors only. Routine lifecycle
+chatter belongs at `debug`. Raw `console.*` calls are banned in shipped
+source by the `no-console` ESLint rule (tests, scripts, and the logger
+implementation itself are exempt) — route everything through the logger.
 
 #### Examples
 

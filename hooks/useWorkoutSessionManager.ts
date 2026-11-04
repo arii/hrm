@@ -21,6 +21,7 @@ import {
   toHeartRateZone,
 } from '../lib/shared/hr-zones'
 import { v4 as uuidv4 } from 'uuid'
+import logger from '@/utils/logger'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import { useAppSnackbar } from './useAppSnackbar'
 import { isSessionStale } from '../lib/workout-session'
@@ -290,7 +291,7 @@ export const useWorkoutSessionManager = () => {
     ) => {
       if (isSessionStale(session)) {
         const sessionDate = new Date(session.startTime)
-        console.info(
+        logger.debug(
           `[SessionManager] Stale session from ${sessionDate.toDateString()} detected. Clearing for new day ${new Date().toDateString()}.`
         )
         await workoutSessionStorage.deleteSession(session.sessionId)
@@ -346,7 +347,7 @@ export const useWorkoutSessionManager = () => {
           dispatch({ type: 'SET_SESSION', payload: incompleteSession })
         }
       } catch (error) {
-        console.error('[SessionManager] Recovery failed:', error)
+        logger.error('[SessionManager] Recovery failed:', error)
       } finally {
         setIsInitialized(true)
       }

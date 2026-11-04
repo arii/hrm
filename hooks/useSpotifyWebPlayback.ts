@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
+import logger from '@/utils/logger'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import {
   SPOTIFY_AUTH_LOOP_GUARD_KEY,
@@ -86,7 +87,7 @@ const useSpotifyWebPlayback = () => {
               lastAuthFail &&
               now - parseInt(lastAuthFail) < SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT
             ) {
-              console.error(
+              logger.error(
                 `[Spotify] Auth loop detected (${
                   SPOTIFY_AUTH_LOOP_GUARD_TIMEOUT / 1000
                 }s threshold); aborting sign-out to prevent thrashing.`
@@ -114,7 +115,7 @@ const useSpotifyWebPlayback = () => {
         cb(accessToken)
       } catch (error) {
         const appError = error as AppError
-        console.error(
+        logger.error(
           `[Spotify Web Playback] Failed to get OAuth token: ${appError.message}`
         )
         addError(`Failed to authenticate with Spotify: ${appError.message}`, {
@@ -135,7 +136,7 @@ const useSpotifyWebPlayback = () => {
         return
       }
 
-      console.log('[Spotify Web Playback] Initializing new player instance...')
+      logger.debug('[Spotify Web Playback] Initializing new player instance...')
       isInitializing.current = true
 
       const spotifyPlayer = new window.Spotify.Player({
@@ -147,14 +148,14 @@ const useSpotifyWebPlayback = () => {
       // --- Player Event Listeners ---
 
       spotifyPlayer.addListener('ready', ({ device_id }) => {
-        console.log('[Spotify Web Playback] Ready with Device ID', device_id)
+        logger.debug('[Spotify Web Playback] Ready with Device ID', device_id)
         isInitializing.current = false
         setDeviceId(device_id)
         setIsReady(true)
       })
 
       spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-        console.log(
+        logger.debug(
           '[Spotify Web Playback] Device ID has gone offline',
           device_id
         )
@@ -165,7 +166,7 @@ const useSpotifyWebPlayback = () => {
       // Fatal player errors must clear ready state like 'not_ready' does,
       // otherwise the UI keeps showing the player as active while dead.
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Initialization Error:', message)
+        logger.error('[Spotify Web Playback] Initialization Error:', message)
         isInitializing.current = false
         setIsReady(false)
         setDeviceId(null)
@@ -173,7 +174,7 @@ const useSpotifyWebPlayback = () => {
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Authentication Error:', message)
+        logger.error('[Spotify Web Playback] Authentication Error:', message)
         isInitializing.current = false
         setIsReady(false)
         setDeviceId(null)
@@ -181,7 +182,7 @@ const useSpotifyWebPlayback = () => {
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
-        console.error('[Spotify Web Playback] Account Error:', message)
+        logger.error('[Spotify Web Playback] Account Error:', message)
         isInitializing.current = false
         setIsReady(false)
         setDeviceId(null)
@@ -194,11 +195,11 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.connect().then((success) => {
         if (success) {
-          console.log(
+          logger.debug(
             '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
           )
         } else {
-          console.warn(
+          logger.debug(
             '[Spotify Web Playback] connect() returned false, but this is often a false negative.'
           )
         }
@@ -215,7 +216,7 @@ const useSpotifyWebPlayback = () => {
 
       if (!isScriptLoading) {
         isScriptLoading = true
-        console.log('[Spotify Web Playback] Loading Spotify SDK script...')
+        logger.debug('[Spotify Web Playback] Loading Spotify SDK script...')
         const script = document.createElement('script')
         script.src = 'https://sdk.scdn.co/spotify-player.js'
         script.async = true
@@ -228,7 +229,7 @@ const useSpotifyWebPlayback = () => {
   useEffect(() => {
     return () => {
       if (player) {
-        console.log('[Spotify Web Playback] Disconnecting player on cleanup')
+        logger.debug('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
         setPlayer(null)
       }

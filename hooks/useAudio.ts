@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
+import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 export const useAudio = () => {
@@ -13,7 +14,7 @@ export const useAudio = () => {
       timerData.soundEventId &&
       timerData.soundEventId !== lastSoundEventId.current
     ) {
-      console.log(
+      logger.debug(
         `[useAudio] Triggering sound: ${timerData.soundToPlay} (Event ID: ${timerData.soundEventId})`
       )
       lastSoundEventId.current = timerData.soundEventId
@@ -27,16 +28,14 @@ export const useAudio = () => {
           audioManager.playLong() // Will respect isMuted internally
           break
         default:
-          console.warn(
-            `[useAudio] Unknown sound type: ${timerData.soundToPlay}`
-          )
+          logger.warn(`[useAudio] Unknown sound type: ${timerData.soundToPlay}`)
       }
     }
   }, [timerData.soundToPlay, timerData.soundEventId])
 
   // Initialize audio on first user interaction
   const initializeAudio = () => {
-    console.log('[useAudio] initializeAudio called')
+    logger.debug('[useAudio] initializeAudio called')
     audioManager.loadAudio()
   }
 

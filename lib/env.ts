@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import logger from '../utils/logger.server'
 
 /** Fields read by cross-variable env validation. */
 interface EnvValidationData {
@@ -152,7 +153,7 @@ const envSchema = z
 const parsedEnv = envSchema.safeParse(process.env)
 
 if (!parsedEnv.success) {
-  console.error('❌ Invalid environment variables:', parsedEnv.error.format())
+  logger.error('❌ Invalid environment variables:', parsedEnv.error.format())
   throw parsedEnv.error
 }
 

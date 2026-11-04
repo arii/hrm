@@ -6,6 +6,7 @@
 'use client'
 import { alpha } from '@mui/material/styles'
 import Box from '@mui/material/Box'
+import logger from '@/utils/logger'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
@@ -31,7 +32,7 @@ const ControlPanel = () => {
   // Register this client as a controller
   useEffect(() => {
     if (connectionStatus === 'Connected') {
-      console.log('[ControlPanel] Registering as controller')
+      logger.debug('[ControlPanel] Registering as controller')
       sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
     }
   }, [connectionStatus, sendData])
@@ -43,7 +44,7 @@ const ControlPanel = () => {
         document.visibilityState === 'visible' &&
         connectionStatus !== 'Connected'
       ) {
-        console.log(
+        logger.debug(
           '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
         )
         connect() // Attempt to reconnect

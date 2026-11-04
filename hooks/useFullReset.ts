@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import logger from '@/utils/logger'
 
 /**
  * Full device reset flow: forgets the BLE device, then resets local
@@ -18,7 +19,7 @@ export const useFullReset = (
       await onForgetDevice()
       onReset()
     } catch (error) {
-      console.error('Reset failed:', error)
+      logger.error('Reset failed:', error)
     } finally {
       setIsResetting(false)
     }

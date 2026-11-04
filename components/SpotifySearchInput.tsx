@@ -1,6 +1,7 @@
 'use client'
 
 import { Search, MusicNote } from '@mui/icons-material'
+import logger from '@/utils/logger'
 import {
   Autocomplete,
   Avatar,
@@ -71,7 +72,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         const tracks = data.tracks?.items || []
         setResults(tracks)
       } catch (error) {
-        console.error('Spotify Search Error:', error)
+        logger.error('Spotify Search Error:', error)
         enqueueSnackbar(
           error instanceof Error ? error.message : 'Failed to search Spotify',
           { variant: 'error' }
