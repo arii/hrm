@@ -69,6 +69,18 @@ const SpotifyControls = () => {
     spotifyData.playback.track.name !== '' &&
     spotifyData.playback.track.name !== 'No Track Playing'
 
+  // Device picker is independent of playback: it must stay available while
+  // idle so a target can be chosen before anything plays (dashboard parity).
+  const devicePicker =
+    devices.length > 0 ? (
+      <SpotifyDeviceDropdown
+        devices={devices}
+        selectedDeviceId={selectedDeviceId}
+        disabled={connectionStatus !== 'Connected'}
+        onSelect={handleDeviceSelect}
+      />
+    ) : null
+
   return (
     <ControlCard
       data-testid="spotify-controls"
@@ -107,14 +119,7 @@ const SpotifyControls = () => {
               sx={{ mt: 3, mb: 1 }}
             />
 
-            {devices.length > 0 && (
-              <SpotifyDeviceDropdown
-                devices={devices}
-                selectedDeviceId={selectedDeviceId}
-                disabled={connectionStatus !== 'Connected'}
-                onSelect={handleDeviceSelect}
-              />
-            )}
+            {devicePicker}
             <Button
               variant="outlined"
               size="small"
@@ -127,12 +132,15 @@ const SpotifyControls = () => {
             </Button>
           </>
         ) : (
-          <Button
-            onClick={handleBrowseClick}
-            data-testid="spotify-select-music-button"
-          >
-            Select Music
-          </Button>
+          <>
+            {devicePicker}
+            <Button
+              onClick={handleBrowseClick}
+              data-testid="spotify-select-music-button"
+            >
+              Select Music
+            </Button>
+          </>
         )}
       </CardContent>
     </ControlCard>

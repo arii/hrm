@@ -52,7 +52,8 @@ export function isTechDebtResponse(data: unknown): data is TechDebtResponse {
   )
 }
 
-export async function main() {
+/** Parses CLI args; exits with usage when required flags are missing. */
+function parseTechDebtArgs(): { diffFile: string; outputFile: string } {
   const diffFile = getArg('--diff-file')
   const outputFile = getArg('--output')
 
@@ -62,6 +63,45 @@ export async function main() {
     )
     process.exit(1)
   }
+  return { diffFile, outputFile }
+}
+
+/** Loads the diff + prompt template, truncating oversized diffs. */
+async function buildAnalysisPrompt(diffFile: string): Promise<string> {
+  const diffContent = await readFile(
+    path.resolve(process.cwd(), diffFile),
+    'utf-8'
+  )
+  const promptTemplate = await readFile(
+    path.resolve(process.cwd(), 'prompts/tech-debt-analysis.md'),
+    'utf-8'
+  )
+
+  let processedDiff = diffContent
+  if (diffContent.length > MAX_DIFF_LENGTH) {
+    console.warn(
+      `Warning: Diff content is very large (${diffContent.length} characters) and will be truncated to ${MAX_DIFF_LENGTH} characters.`
+    )
+    processedDiff =
+      diffContent.substring(0, MAX_DIFF_LENGTH) +
+      '\n\n...[DIFF TRUNCATED DUE TO SIZE]...'
+  }
+  return promptTemplate.replace('{{diff}}', processedDiff)
+}
+
+/** Writes the issues payload (possibly empty) to the output file. */
+async function writeIssuesFile(
+  outputFile: string,
+  data: TechDebtResponse
+): Promise<void> {
+  await writeFile(
+    path.resolve(process.cwd(), outputFile),
+    JSON.stringify(data, null, 2)
+  )
+}
+
+export async function main() {
+  const { diffFile, outputFile } = parseTechDebtArgs()
 
   try {
     const apiKey = process.env.GEMINI_API_KEY
@@ -70,28 +110,7 @@ export async function main() {
       process.exit(1)
     }
     const genAI = new GoogleGenerativeAI(apiKey)
-
-    const diffContent = await readFile(
-      path.resolve(process.cwd(), diffFile),
-      'utf-8'
-    )
-    const promptTemplate = await readFile(
-      path.resolve(process.cwd(), 'prompts/tech-debt-analysis.md'),
-      'utf-8'
-    )
-
-    let processedDiff = diffContent
-
-    if (diffContent.length > MAX_DIFF_LENGTH) {
-      console.warn(
-        `Warning: Diff content is very large (${diffContent.length} characters) and will be truncated to ${MAX_DIFF_LENGTH} characters.`
-      )
-      processedDiff =
-        diffContent.substring(0, MAX_DIFF_LENGTH) +
-        '\n\n...[DIFF TRUNCATED DUE TO SIZE]...'
-    }
-
-    const prompt = promptTemplate.replace('{{diff}}', processedDiff)
+    const prompt = await buildAnalysisPrompt(diffFile)
 
     const { text: rawResponse } = await generateContentWithFallback({
       genAI,
@@ -106,10 +125,7 @@ export async function main() {
     const result = jsonProcessor.process(cleanedResponse)
 
     if (result.success && isTechDebtResponse(result.data)) {
-      await writeFile(
-        path.resolve(process.cwd(), outputFile),
-        JSON.stringify(result.data, null, 2)
-      )
+      await writeIssuesFile(outputFile, result.data)
       console.log(
         `Technical debt analysis complete. Results written to ${outputFile}`
       )
@@ -119,26 +135,18 @@ export async function main() {
       )
       // Log the invalid data for debugging
       console.error('Invalid data:', JSON.stringify(result.data, null, 2))
-      // Write an empty array to the output to avoid breaking downstream workflows
-      await writeFile(
-        path.resolve(process.cwd(), outputFile),
-        JSON.stringify({ issues: [] }, null, 2)
-      )
+      // Write an empty payload to avoid breaking downstream workflows
+      await writeIssuesFile(outputFile, { issues: [] })
       // Exit with a non-zero code to indicate failure
       process.exit(1)
     }
   } catch (error) {
     console.error('An unexpected error occurred:', error)
-    // Write an empty array on error as well
-    if (outputFile) {
-      try {
-        await writeFile(
-          path.resolve(process.cwd(), outputFile),
-          JSON.stringify({ issues: [] }, null, 2)
-        )
-      } catch (writeError) {
-        console.error('Failed to write empty output file:', writeError)
-      }
+    // Write an empty payload on error as well
+    try {
+      await writeIssuesFile(outputFile, { issues: [] })
+    } catch (writeError) {
+      console.error('Failed to write empty output file:', writeError)
     }
     process.exit(1)
   }
