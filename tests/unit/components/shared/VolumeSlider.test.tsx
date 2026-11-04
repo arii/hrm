@@ -27,6 +27,7 @@ describe('components/shared/VolumeSlider', () => {
     const slider = screen.getByRole('slider')
     expect(slider).toBeInTheDocument()
     expect(slider).toHaveAttribute('aria-label', 'Volume control')
+    expect(slider).toHaveAttribute('aria-valuetext', '50 percent')
   })
 
   it('should have the correct accessibility attributes when muted', () => {

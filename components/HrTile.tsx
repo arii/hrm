@@ -203,8 +203,6 @@ const HrTile = ({
         )}
 
         <Box
-          aria-live="polite"
-          aria-atomic="true"
           sx={{
             flexGrow: 1,
             display: 'flex',
@@ -214,8 +212,32 @@ const HrTile = ({
           }}
         >
           {showName && <IdentityTier name={name} />}
-          <HeroTier percentage={percentage} />
-          <DataTier value={value} calories={calories} showName={showName} />
+          {/* Ticking digits are visual-only: a live region here would
+              announce every 1Hz update. Zone transitions go to the
+              dedicated announcer below, whose text only changes on
+              transition. */}
+          <Box data-testid="hr-tile-data" aria-hidden="true">
+            <HeroTier percentage={percentage} />
+            <DataTier value={value} calories={calories} showName={showName} />
+          </Box>
+          <Box
+            data-testid="hr-tile-announcer"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              padding: 0,
+              margin: '-1px',
+              overflow: 'hidden',
+              clip: 'rect(0, 0, 0, 0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            {`Zone ${zoneConfig.zoneNumber}: ${zoneConfig.label}`}
+          </Box>
         </Box>
 
         <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>

@@ -119,4 +119,29 @@ describe('HrTile', () => {
     rerender(<HrTile name="Jules" value={100} percentage={50} zone="ZONE_1" />)
     expect(screen.getByText('Jules')).toBeInTheDocument()
   })
+
+  it('hides ticking digits from assistive tech and announces zone only', () => {
+    const { rerender } = render(
+      <HrTile name="Test" value={100} percentage={50} zone="ZONE_1" />
+    )
+    expect(screen.getByTestId('hr-tile-data')).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    )
+    const announcer = screen.getByTestId('hr-tile-announcer')
+    expect(announcer).toHaveAttribute('aria-live', 'polite')
+    expect(announcer).toHaveTextContent('Zone 1: Recovery')
+
+    // Same zone, new BPM: announcement unchanged (no 1Hz spam).
+    rerender(<HrTile name="Test" value={120} percentage={60} zone="ZONE_1" />)
+    expect(screen.getByTestId('hr-tile-announcer')).toHaveTextContent(
+      'Zone 1: Recovery'
+    )
+
+    // Zone transition: announcement updates.
+    rerender(<HrTile name="Test" value={150} percentage={80} zone="ZONE_4" />)
+    expect(screen.getByTestId('hr-tile-announcer')).toHaveTextContent(
+      'Zone 4: Cardio'
+    )
+  })
 })
