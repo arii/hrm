@@ -60,7 +60,7 @@ const StatusColumn = ({
       alignItems: 'center',
       justifySelf: 'start',
       gap: 2,
-      minHeight: '32px',
+      minHeight: '2rem',
       minWidth: 0,
     }}
   >
@@ -356,14 +356,14 @@ const SpotifyDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'fixed',
-          bottom: 56,
+          bottom: '3.5rem',
           left: 0,
           right: 0,
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-          minHeight: '48px',
-          maxHeight: '96px',
+          minHeight: '3rem',
+          maxHeight: '6rem',
           overflow: 'hidden',
         }}
       >
@@ -409,14 +409,14 @@ const SpotifyDisplay = () => {
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         position: 'fixed',
-        bottom: 56,
+        bottom: '3.5rem',
         left: 0,
         right: 0,
         zIndex: 1100,
         boxShadow: 3,
         width: '100%',
-        minHeight: '48px',
-        maxHeight: '96px',
+        minHeight: '3rem',
+        maxHeight: '6rem',
         overflow: 'hidden',
       }}
     >

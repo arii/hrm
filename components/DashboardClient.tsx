@@ -10,6 +10,7 @@ import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
+import { FOOTER_HEIGHT_PX } from '@/constants/layout'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
@@ -18,15 +19,15 @@ const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
     <Box
       sx={{
         position: 'fixed',
-        bottom: 56,
+        bottom: '3.5rem',
         left: 0,
         right: 0,
         zIndex: 1100,
         width: '100%',
-        minHeight: '64px',
+        minHeight: '3rem',
       }}
     >
-      <DashboardSectionLoadingSkeleton height="64px" />
+      <DashboardSectionLoadingSkeleton height="48px" />
     </Box>
   ),
 })
@@ -55,6 +56,9 @@ const mainGridStyles: SxProps = {
     lg: '1fr 1fr',
   },
   gap: 2,
+  // The timer row never squeezes: the workout section below absorbs all
+  // flex (and scrolls internally when its content runs tall).
+  flexShrink: 0,
 }
 
 interface DashboardClientProps {
@@ -92,7 +96,24 @@ const DashboardClient = ({
     : 'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
 
   return (
-    <Box sx={{ backgroundColor: 'background.default' }}>
+    <Box
+      sx={{
+        backgroundColor: 'background.default',
+        // Fixed viewport app shell: the page itself never scrolls. The
+        // timer row keeps its size, the workout section flexes into the
+        // remaining space (scrolling internally when tall), and the
+        // footer reserve below accounts for the fixed footer stack. The
+        // in-flow page Footer below this shell is subtracted so the body
+        // never scrolls.
+        height: `calc(100vh - ${FOOTER_HEIGHT_PX}px)`,
+        '@supports (height: 100dvh)': {
+          height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
+        },
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {triggerError && <TestErrorTrigger />}
       <Container
         data-testid="dashboard"
@@ -100,11 +121,14 @@ const DashboardClient = ({
         onClick={handleInteraction}
         sx={{
           py: { xs: 2, sm: 3 },
-          // Reserve space for the fixed footer stack (56px bottom nav +
-          // 48px Spotify bar + gap) so trailing content never slides
-          // under it.
-          paddingBottom: '124px',
-          minHeight: '100vh',
+          // Reserve space for the fixed footer stack (bottom nav + Spotify
+          // bar + gap) so trailing content never slides under it.
+          paddingBottom: 'calc(3.5rem + 3rem + 1.25rem)',
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
         <Box sx={mainGridStyles}>
@@ -113,7 +137,15 @@ const DashboardClient = ({
           </Box>
           <HrmConnectionPanel />
         </Box>
-        <Box sx={{ width: '100%', mt: 2 }}>
+        <Box
+          sx={{
+            width: '100%',
+            mt: 2,
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+          }}
+        >
           {!hasValidConfig ? (
             <Alert severity="warning" sx={{ width: '100%' }}>
               {missingConfigMsg}
@@ -129,6 +161,7 @@ const DashboardClient = ({
               title="Today's Training Regimen"
               embedUrl={iframeUrl || ''}
               height={500}
+              flexFill
               isShrunk={docIsManuallyShrunk}
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
               refreshKey={refreshKey}
