@@ -2,7 +2,7 @@
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem } from '../types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
-import logger from '../utils/logger.server.js'
+import logger from '../utils/logger.server'
 
 /**
  * Fetches user playlists from Spotify API.

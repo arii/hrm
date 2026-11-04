@@ -6,7 +6,7 @@
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import logger from '../../utils/logger.server.js'
+import logger from '../../utils/logger.server'
 
 /**
  * Defines the type for an App Router API route handler after it has been

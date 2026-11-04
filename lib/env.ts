@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import logger from '../utils/logger.server.js'
+import logger from '../utils/logger.server'
 
 /** Fields read by cross-variable env validation. */
 interface EnvValidationData {

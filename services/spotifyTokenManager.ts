@@ -3,7 +3,7 @@ import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from '../types/core'
 import { SPOTIFY_DEFAULT_TOKEN_EXPIRY_S } from '../constants/spotify'
-import logger from '../utils/logger.server.js'
+import logger from '../utils/logger.server'
 
 /**
  * Helper for atomic writes to prevent file corruption.
