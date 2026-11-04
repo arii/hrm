@@ -36,12 +36,7 @@ const config: KnipConfig = {
     'deploy/ecosystem.config.cjs',
     'deploy/next.config.js',
   ],
-  ignoreDependencies: [
-    '@types/web-bluetooth',
-    'eslint-plugin-storybook',
-    'dotenv',
-    'bats',
-  ],
+  ignoreDependencies: ['@types/web-bluetooth', 'bats'],
   ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
 }
 

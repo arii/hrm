@@ -10,7 +10,7 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
-import { mockGoogleDocIframe } from './mocks'
+import { MOCK_IMAGE, mockGoogleDocIframe } from './mocks'
 import { APIRequestContext } from '@playwright/test'
 import {
   waitForFontsLoaded,
@@ -382,13 +382,6 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     { timeout: 10000 }
   )
 }
-
-/**
- * A consistent, offline-safe 1x1 transparent PNG image for VRT.
- * Prevents flaky tests caused by external placeholder services.
- */
-export const MOCK_IMAGE =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg=='
 
 /**
  * Mocks the NextAuth session.

@@ -2,7 +2,7 @@ import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 import { MOBILE_VIEWPORT } from './lib/viewports'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady } from './lib/waits'
+import { waitForPageReady, waitForWebSocketConnection } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 import { getHrMasks, getUserSettingsMasks } from './lib/masks'
 import { BluetoothConnectionStatus } from '../../types/bluetooth'
@@ -25,6 +25,17 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await expect(
       connectPage.getByRole('button', { name: 'Connect Bluetooth HRM' })
     ).toBeVisible()
+
+    // Deterministic injection point: the page fires a silent auto-connect
+    // ~100ms after the WebSocket connects, and its no-device failure
+    // resets status/message. Every test below injects post-hoc state, so
+    // wait for the socket AND the silent attempt to settle first;
+    // otherwise a late completion wipes the injected state mid-assert
+    // (flaky connection-status-alert timeouts).
+    await waitForWebSocketConnection(connectPage, {
+      timeout: VRT_TIMEOUTS.STANDARD,
+    })
+    await connectPage.waitForTimeout(2500)
   })
 
   test('scanning state', async ({ connectPage }) => {

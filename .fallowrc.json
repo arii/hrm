@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "minimumVersion": "3.39.0",
+  "entry": [
+    "app/**/*",
+    "components/**/*",
+    "constants/**/*",
+    "context/**/*",
+    "hooks/**/*",
+    "lib/**/*",
+    "services/**/*",
+    "types/**/*",
+    "utils/**/*",
+    "server.ts",
+    "knip.ts",
+    "scripts/get-available-port.mjs",
+    "scripts/ws-stress-client.ts"
+  ],
+  "ignorePatterns": [".next/**", ".next_prod/**", "public/**"],
+  "ignoreDependencies": ["@types/web-bluetooth", "bats"],
+  "circularDependencies": { "ignoreLazyImports": true },
+  "rules": {
+    "unused-exports": "warn",
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn",
+    "complexity-file-lines": "warn",
+    "circular-dependencies": "warn"
+  }
+}

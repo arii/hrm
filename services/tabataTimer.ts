@@ -88,18 +88,7 @@ class TabataTimer {
   public pause(): void {
     if (!this.isRunning || !this.startTime) return
 
-    const now = performance.now()
-    const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
-
-    if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
-      this.timeElapsed = this.pausedTimeElapsed + elapsedSinceLastStart
-    } else if (this.mode === 'TABATA' || this.currentPhase === 'PREPARE') {
-      const nextRemaining = Math.max(
-        0,
-        this.pausedTimeRemaining - elapsedSinceLastStart
-      )
-      this.timeRemaining = nextRemaining
-    }
+    this.syncClock(performance.now())
 
     this.isRunning = false
     if (this.timerInterval) clearInterval(this.timerInterval)
@@ -191,21 +180,37 @@ class TabataTimer {
 
   // --- Internal Timer Logic ---
 
-  private updateTimer = (): void => {
-    if (!this.isRunning || !this.startTime) return
-
-    const now = performance.now()
+  /**
+   * Recomputes timeElapsed/timeRemaining from the monotonic clock.
+   * Shared by pause() and updateTimer(); returns the TABATA remaining
+   * seconds, or null when no countdown branch applied.
+   */
+  private syncClock(now: number): number | null {
+    if (!this.startTime) return null
     const elapsedSinceLastStart = Math.floor((now - this.startTime) / 1000)
 
     if (this.mode === 'STOPWATCH' && this.currentPhase === 'RUNNING') {
       this.timeElapsed = this.pausedTimeElapsed + elapsedSinceLastStart
-    } else if (this.mode === 'TABATA' || this.currentPhase === 'PREPARE') {
+      return null
+    }
+    if (this.mode === 'TABATA' || this.currentPhase === 'PREPARE') {
       const nextRemaining = Math.max(
         0,
         this.pausedTimeRemaining - elapsedSinceLastStart
       )
       this.timeRemaining = nextRemaining
+      return nextRemaining
+    }
+    return null
+  }
 
+  private updateTimer = (): void => {
+    if (!this.isRunning || !this.startTime) return
+
+    const now = performance.now()
+    const nextRemaining = this.syncClock(now)
+
+    if (nextRemaining !== null) {
       if (nextRemaining <= 0) {
         this.transitionPhase(now)
       } else {
