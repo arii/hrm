@@ -55,33 +55,46 @@ function getCookieDomain(): string | undefined {
 }
 
 /**
+ * In-flight rotation: concurrent JWT callbacks at the expiry boundary
+ * (polling + Web Playback SDK + playback commands) join one refresh
+ * instead of racing duplicate Spotify POSTs that can 401 each other.
+ */
+let refreshPromise: Promise<JWT> | null = null
+
+/**
  * Refreshes an expired Spotify access token using the refresh token.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
-async function refreshAccessToken(token: JWT) {
-  try {
-    const refreshedTokens = await refreshSpotifyToken(
-      token.refreshToken as string
-    )
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  if (refreshPromise) return refreshPromise
+  refreshPromise = (async () => {
+    try {
+      const refreshedTokens = await refreshSpotifyToken(
+        token.refreshToken as string
+      )
 
-    // Update the token object with new values from Spotify
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      // Note: Spotify might or might not send a new refresh token.
-      // If it does, use it. If not, keep the old one.
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-      scope: refreshedTokens.scope ?? token.scope, // Persist the scope
+      // Update the token object with new values from Spotify
+      return {
+        ...token,
+        accessToken: refreshedTokens.access_token,
+        accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+        // Note: Spotify might or might not send a new refresh token.
+        // If it does, use it. If not, keep the old one.
+        refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+        scope: refreshedTokens.scope ?? token.scope, // Persist the scope
+      }
+    } catch (error) {
+      logger.error({ error }, 'Failed to refresh access token')
+      // If refresh fails, return the original token and an error property
+      return {
+        ...token,
+        error: 'RefreshAccessTokenError',
+      }
+    } finally {
+      refreshPromise = null
     }
-  } catch (error) {
-    logger.error({ error }, 'Failed to refresh access token')
-    // If refresh fails, return the original token and an error property
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
-    }
-  }
+  })()
+  return refreshPromise
 }
 
 // Define scopes required: user-read-playback-state to poll the current track,
