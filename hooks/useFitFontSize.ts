@@ -58,6 +58,12 @@ interface UniformFitOptions extends FitFontSizeOptions {
  * size: the minimum of their individual fits. Uniform by construction --
  * a dense card shrinks all cards, never just itself.
  *
+ * Then, if the page still overflows (short viewports), keeps shrinking
+ * ALL items together until the dashboard fits its viewport or the floor
+ * is reached. This page-level loop is what guarantees zero page scroll;
+ * item-level fitting alone cannot, because content floors can exceed the
+ * available space.
+ *
  * @param selector CSS selector for the measured items (e.g. card bodies).
  * @returns ref to attach to the container element.
  */
@@ -82,10 +88,28 @@ export const useUniformFitFontSize = <T extends HTMLElement>(
       )
       if (items.length === 0) return
       const fitted = items.map((item) => fitFontSizeToBox(item, { ...opts }))
-      const uniform = Math.min(...fitted)
-      items.forEach((item) => {
-        item.style.fontSize = `${uniform}px`
-      })
+      let uniform = Math.min(...fitted)
+      const apply = (size: number) => {
+        items.forEach((item) => {
+          item.style.fontSize = `${size}px`
+        })
+      }
+      apply(uniform)
+      // Nearest dashboard root (fixed viewport height at md+); falls
+      // back to the container itself when rendered standalone (tests).
+      // Resolved per pass so the measurement root is always current.
+      const pageEl =
+        container.closest<HTMLElement>('[data-testid="dashboard"]') ?? container
+      // Page loop: while the dashboard overflows its viewport cap, step
+      // every card down together. Monotonic down, floor-bounded: always
+      // terminates, never oscillates.
+      while (
+        uniform > opts.minPx &&
+        pageEl.scrollHeight > pageEl.clientHeight + 1
+      ) {
+        uniform = Math.max(opts.minPx, uniform - opts.stepPx)
+        apply(uniform)
+      }
     }
 
     // Initial pass runs in the layout effect: first paint is already

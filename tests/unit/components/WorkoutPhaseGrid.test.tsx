@@ -105,7 +105,7 @@ describe('WorkoutPhaseGrid', () => {
       expect(found).toHaveLength(2)
       return found as HTMLElement[]
     })
-    const [sparse, dense] = boxes
+    const [sparse, dense] = boxes as [HTMLElement, HTMLElement]
 
     // Sparse fits at max; dense needs 20px. Window resize refits both to
     // the dense fit -- uniform by construction, never per-card sizes.

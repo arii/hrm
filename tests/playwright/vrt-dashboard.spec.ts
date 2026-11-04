@@ -183,12 +183,23 @@ test.describe('Dashboard Visual Regression Tests', () => {
         1064,
         { timeout: VRT_TIMEOUTS.STANDARD }
       )
-      // The dashboard is top-anchored content; the page itself is the
-      // scroller, so document height must not exceed the viewport.
-      const scrolled = await dashboardPage.evaluate(
-        () => document.documentElement.scrollHeight <= window.innerHeight + 1
-      )
-      expect(scrolled).toBe(true)
+      // The dashboard is a fixed viewport-height flex column at md+:
+      // neither the document nor the dashboard element itself may scroll.
+      // The uniform fit's page loop shrinks card type until this holds.
+      const scrolled = await dashboardPage.evaluate(() => {
+        const dashboard = document.querySelector(
+          '[data-testid="dashboard"]'
+        ) as HTMLElement | null
+        return {
+          documentFits:
+            document.documentElement.scrollHeight <= window.innerHeight + 1,
+          dashboardFits:
+            dashboard !== null &&
+            dashboard.scrollHeight <= dashboard.clientHeight + 1,
+        }
+      })
+      expect(scrolled.documentFits).toBe(true)
+      expect(scrolled.dashboardFits).toBe(true)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-md-laptop.png', {
         mask: getDynamicContentMasks(dashboardPage),

@@ -60,7 +60,7 @@ const mainGridStyles: SxProps = {
   // dashboard fills the viewport instead of top-anchoring with a blank
   // band below. Mobile stays content-sized (page scrolls).
   flexGrow: { xs: 0, md: 2 },
-  flexShrink: 1,
+  flexShrink: 0,
   flexBasis: { xs: 'auto', md: 0 },
 }
 
@@ -106,15 +106,20 @@ const DashboardClient = ({
         maxWidth="xl"
         onClick={handleInteraction}
         sx={{
-          py: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3, md: 2, lg: 3 },
           // Flex column over the viewport: growers below absorb leftover
           // space (no blank band); when content exceeds the viewport the
           // min-height floor lets the page scroll normally. Bottom padding
           // reserves room for the fixed Spotify bar (64px) + bottom nav
           // (56px) plus breathing room. vh first for older browsers.
           minHeight: ['100vh', '100dvh'],
-          // 64px Spotify bar + 56px bottom nav + 24px breathing room
-          paddingBottom: 'calc(64px + 56px + 24px)',
+          // Fixed cap at md+: flex-shrink engages so sections compress
+          // instead of growing the page; the uniform fit then shrinks
+          // card type until everything fits. Below md the page scrolls.
+          height: { xs: 'auto', md: ['100vh', '100dvh'] },
+          overflow: { xs: 'visible', md: 'clip' },
+          // 64px Spotify bar + 56px bottom nav + 8px breathing room
+          paddingBottom: 'calc(64px + 56px + 8px)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -135,6 +140,8 @@ const DashboardClient = ({
             flexGrow: { xs: 0, md: 3 },
             flexShrink: 1,
             flexBasis: { xs: 'auto', md: 0 },
+            minHeight: { md: 0 },
+            overflowY: { xs: 'visible', md: 'auto' },
           }}
         >
           {!hasValidConfig ? (

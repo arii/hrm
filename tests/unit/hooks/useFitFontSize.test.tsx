@@ -131,7 +131,7 @@ describe('useUniformFitFontSize', () => {
     })
     try {
       const { container } = render(<Harness resetKey={1} dense={false} />)
-      const [only] = itemsOf(container)
+      const [only] = itemsOf(container) as [HTMLElement]
       // Sparse box fits at max on the mount pass (layout effect, sync).
       expect(only.style.fontSize).toBe('28px')
     } finally {
@@ -148,7 +148,7 @@ describe('useUniformFitFontSize', () => {
       const { container, rerender } = render(
         <Harness resetKey={1} dense={true} />
       )
-      const [sparse, dense] = itemsOf(container)
+      const [sparse, dense] = itemsOf(container) as [HTMLElement, HTMLElement]
       // Per-item overflows: sparse fits at max, dense needs 20px.
       mockBox(sparse, { clientHeight: 200, scrollHeightOf: () => 100 })
       mockBox(dense, {
@@ -172,7 +172,7 @@ describe('useUniformFitFontSize', () => {
     })
     try {
       const { container } = render(<Harness resetKey={1} dense={true} />)
-      const [sparse, dense] = itemsOf(container)
+      const [sparse, dense] = itemsOf(container) as [HTMLElement, HTMLElement]
       expect(sparse.style.fontSize).toBe('28px')
 
       // Viewport shrinks the boxes: everything must step down together.
@@ -186,6 +186,59 @@ describe('useUniformFitFontSize', () => {
 
       expect(sparse.style.fontSize).toBe('14px')
       expect(dense.style.fontSize).toBe('14px')
+    } finally {
+      restore()
+    }
+  })
+
+  it('shrinks below item fits until the page fits', () => {
+    const restore = installPrototypeBox({
+      clientHeight: 200,
+      scrollHeight: 100,
+    })
+    try {
+      // Fake dashboard root overflows its viewport cap while the items
+      // fit their own boxes. scrollHeight tracks the applied uniform
+      // size, so the page loop must step down on the mount pass itself:
+      // 500 + size*8 <= 697 needs size <= 24 (24*8+500 = 692).
+      const pageEl = document.createElement('div')
+      pageEl.setAttribute('data-testid', 'dashboard')
+      Object.defineProperty(pageEl, 'clientHeight', {
+        value: 696,
+        configurable: true,
+      })
+      Object.defineProperty(pageEl, 'scrollHeight', {
+        get: () => {
+          const first = pageEl.querySelector<HTMLElement>('[data-fit-item]')
+          const size = parseFloat(first?.style.fontSize || '28')
+          return 500 + size * 8
+        },
+        configurable: true,
+      })
+      document.body.appendChild(pageEl)
+      try {
+        const PageHarness = () => {
+          const ref = useUniformFitFontSize<HTMLDivElement>('[data-fit-item]', {
+            minPx: 14,
+            maxPx: 28,
+            resetKey: 1,
+          })
+          return (
+            <div ref={ref}>
+              <div data-fit-item="a">a</div>
+              <div data-fit-item="b">b</div>
+            </div>
+          )
+        }
+        // Render directly into the fake dashboard so closest() resolves
+        // on mount; nodes never move, so unmount cleanup stays valid.
+        const { container } = render(<PageHarness />, { container: pageEl })
+        const [a, b] = itemsOf(container) as [HTMLElement, HTMLElement]
+        expect(a.style.fontSize).toBe('24px')
+        expect(b.style.fontSize).toBe('24px')
+      } finally {
+        document.body.removeChild(pageEl)
+      }
     } finally {
       restore()
     }
