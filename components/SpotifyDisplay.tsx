@@ -350,7 +350,7 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
-          py: 1.5,
+          py: 0.5,
           borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
@@ -362,7 +362,7 @@ const SpotifyDisplay = () => {
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: '56px',
           maxHeight: '96px',
           overflow: 'hidden',
         }}
@@ -403,7 +403,7 @@ const SpotifyDisplay = () => {
         backgroundColor: 'grey.900',
         color: 'common.white',
         px: { xs: 2, sm: 3 },
-        py: 1.5,
+        py: 0.5,
         borderRadius: 2,
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
@@ -415,8 +415,8 @@ const SpotifyDisplay = () => {
         zIndex: 1100,
         boxShadow: 3,
         width: '100%',
-        minHeight: '64px',
-        maxHeight: '120px',
+        minHeight: '56px',
+        maxHeight: '96px',
         overflow: 'hidden',
       }}
     >
