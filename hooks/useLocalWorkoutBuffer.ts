@@ -11,6 +11,11 @@ import { HrDataPoint } from '../lib/workout-session-storage'
 
 // --- State, Actions, and Reducer ---
 
+// Retained samples cap: one hour at the 1Hz recording cadence. History is
+// a display window (charts read the tail); zone accounting accumulates
+// separately and is unaffected by dropping old samples.
+export const HR_HISTORY_MAX_SAMPLES = 3600
+
 interface WorkoutBufferState {
   hrHistory: HrDataPoint[]
   timeInZones: Record<HeartRateZone, number>
@@ -50,7 +55,9 @@ function workoutBufferReducer(
       }
 
       const timeDeltaSeconds = (time - state.lastDataPointTime) / 1000
-      const newHrHistory = [...state.hrHistory, { time, hr }]
+      const newHrHistory = [...state.hrHistory, { time, hr }].slice(
+        -HR_HISTORY_MAX_SAMPLES
+      )
 
       // Ignore invalid deltas for zone calculation, but still record the HR data point.
       if (timeDeltaSeconds <= 0 || timeDeltaSeconds > 10) {
