@@ -101,9 +101,9 @@ const DashboardClient = ({
         sx={{
           py: { xs: 2, sm: 3 },
           // Reserve space for the fixed footer stack (56px bottom nav +
-          // 56px Spotify bar + gap) so trailing content never slides
+          // 48px Spotify bar + gap) so trailing content never slides
           // under it.
-          paddingBottom: '132px',
+          paddingBottom: '124px',
           minHeight: '100vh',
         }}
       >
