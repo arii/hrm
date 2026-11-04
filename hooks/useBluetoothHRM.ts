@@ -20,6 +20,7 @@ import {
   FAST_RECONNECT_DELAY_MS,
   FAST_RECONNECT_MAX_ATTEMPTS,
   QUIET_STRAP_RETRY_DELAYS_MS,
+  ADVERTISEMENT_FALLBACK_POLL_MS,
 } from '@/constants/bluetooth-reconnection'
 import {
   STABILITY_THRESHOLD_MS,
@@ -331,6 +332,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isTimeoutDisconnect = useRef(false)
   const reconnectAttempts = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Waiting-for-device state (issue 9806): armed when retries exhaust
+  // with a known saved device instead of stopping/forgetting.
+  const waitingDeviceRef = useRef<BluetoothDevice | null>(null)
+  const waitingPollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const waitingAdvertisementRef = useRef<{
+    device: BluetoothDevice
+    listener: () => void
+  } | null>(null)
   // Set when a GATT timeout stops the auto-reconnect loop: a timeout means
   // an asleep strap or slow adapter, not a dead link, so retries halt but
   // the saved device and cookie are kept for a one-touch retry (unlike
@@ -438,7 +447,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
-    | ((device: BluetoothDevice, isReconnect?: boolean) => Promise<boolean>)
+    | ((
+        device: BluetoothDevice,
+        isReconnect?: boolean,
+        retryQuietStrap?: boolean
+      ) => Promise<boolean>)
     | null
   >(null)
   const onHeartRateUpdateRef = useRef(onHeartRateUpdate)
@@ -499,6 +512,33 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     heartbeatInterval,
   ])
 
+  const stopWaitingForDevice = useCallback(() => {
+    if (waitingPollTimeoutRef.current) {
+      clearTimeout(waitingPollTimeoutRef.current)
+      waitingPollTimeoutRef.current = null
+    }
+    const armed = waitingAdvertisementRef.current
+    if (armed) {
+      armed.device.removeEventListener('advertisementreceived', armed.listener)
+      // DOM types declare unwatchAdvertisements, but platforms vary —
+      // always feature-detect; absence is fine (poll-only mode).
+      const unwatch = (
+        armed.device as unknown as {
+          unwatchAdvertisements?: () => void
+        }
+      ).unwatchAdvertisements
+      if (typeof unwatch === 'function') {
+        try {
+          unwatch()
+        } catch {
+          // Already unwatched or torn down - nothing to release.
+        }
+      }
+      waitingAdvertisementRef.current = null
+    }
+    waitingDeviceRef.current = null
+  }, [])
+
   const disconnect = useCallback(() => {
     claimConnectionAttempt()
     isManualDisconnect.current = true
@@ -508,6 +548,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       abortControllerRef.current.abort()
     }
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    stopWaitingForDevice()
     if (connectedDeviceRef.current?.gatt?.connected)
       connectedDeviceRef.current.gatt.disconnect()
 
@@ -523,7 +564,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     avgPeriodMs.current = 0
     setSignalPeriodMs(0)
     setSignalStatus({ last: 0, slow: 0 })
-  }, [claimConnectionAttempt])
+  }, [claimConnectionAttempt, stopWaitingForDevice])
 
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
@@ -539,6 +580,103 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
     }
   }, [disconnect])
+
+  const startWaitingForDevice = useCallback(
+    (device: BluetoothDevice) => {
+      if (waitingDeviceRef.current === device) return
+      stopWaitingForDevice()
+      waitingDeviceRef.current = device
+      reconnectAttempts.current = 0
+      reconnectHaltedRef.current = false
+      setStatus(BluetoothConnectionStatus.RECONNECTING)
+      setCustomStatusMessage(
+        BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
+      )
+
+      const scheduleWaitingPoll = () => {
+        if (waitingPollTimeoutRef.current) {
+          clearTimeout(waitingPollTimeoutRef.current)
+        }
+        waitingPollTimeoutRef.current = setTimeout(() => {
+          waitingPollTimeoutRef.current = null
+          attemptWakeConnect()
+        }, ADVERTISEMENT_FALLBACK_POLL_MS)
+      }
+
+      const attemptWakeConnect = () => {
+        if (waitingDeviceRef.current !== device) return
+        if (currentStatusRef.current === BluetoothConnectionStatus.CONNECTED) {
+          stopWaitingForDevice()
+          return
+        }
+        if (
+          isConnecting.current ||
+          isManualDisconnect.current ||
+          isUnmountedRef.current
+        ) {
+          return
+        }
+        // Single attempts (no quiet retries): the 60s cadence IS the
+        // retry loop, and each miss fails fast.
+        connectToGattRef
+          .current?.(device, true, false)
+          ?.then((connected) => {
+            if (waitingDeviceRef.current !== device) return
+            if (connected) {
+              stopWaitingForDevice()
+            } else {
+              scheduleWaitingPoll()
+            }
+          })
+          .catch(() => {
+            if (waitingDeviceRef.current !== device) return
+            // connectToGatt only writes UI on timeouts; restore the wait
+            // so a stray timeout banner doesn't stick.
+            setStatus(BluetoothConnectionStatus.RECONNECTING)
+            setCustomStatusMessage(
+              BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
+            )
+            scheduleWaitingPoll()
+          })
+      }
+
+      // Primary: passive advertisement watcher for instant wake. May be
+      // absent or reject (platform/permission variance) — failure falls
+      // through to the slow poll below, which always arms.
+      const watch = (
+        device as unknown as { watchAdvertisements?: () => Promise<void> }
+      ).watchAdvertisements
+      if (typeof watch === 'function') {
+        const listener = () => attemptWakeConnect()
+        device.addEventListener('advertisementreceived', listener)
+        waitingAdvertisementRef.current = { device, listener }
+        try {
+          const started: unknown = watch()
+          if (started instanceof Promise) {
+            started.catch(() => {
+              logger.debug(
+                { device: device.name },
+                'Advertisement watch rejected; polling only.'
+              )
+            })
+          }
+        } catch {
+          logger.debug(
+            { device: device.name },
+            'Advertisement watch threw; polling only.'
+          )
+        }
+      } else {
+        logger.debug(
+          { device: device.name },
+          'No advertisement watcher on this platform; polling only.'
+        )
+      }
+
+      scheduleWaitingPoll()
+    },
+    [stopWaitingForDevice]
+  )
 
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = BLUETOOTH_MESSAGES.unknownError
@@ -581,14 +719,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         return
       }
       if (reconnectAttempts.current >= BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
-        setCustomStatusMessage(
-          BLUETOOTH_MESSAGES.failedToReconnect(BLUETOOTH_MAX_RECONNECT_ATTEMPTS)
+        // A sleeping strap is not a dead pairing: keep the saved device
+        // and wait for it to reappear instead of forcing a re-pair.
+        logger.warn(
+          { device: device.name },
+          'Reconnect attempts exhausted; waiting for the strap to reappear.'
         )
-        logger.error(
-          'Failed to reconnect after max attempts. Forgetting device.'
-        )
-        // Delay forgetDevice to allow the final status message to be displayed
-        setTimeout(forgetDevice, 1500)
+        startWaitingForDevice(device)
         return
       }
 
@@ -635,7 +772,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }, delay)
     },
-    [forgetDevice, claimConnectionAttempt]
+    [startWaitingForDevice, claimConnectionAttempt]
   )
 
   const onDisconnected = useCallback(
@@ -732,10 +869,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         activeHrSubscriptionRef.current = null
       }
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      stopWaitingForDevice()
       if (installedControls) teardownTestControls(installedControls)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // A live connection ends any wait (covers watcher, poll, and manual wins).
+  useEffect(() => {
+    if (status === BluetoothConnectionStatus.CONNECTED) stopWaitingForDevice()
+  }, [status, stopWaitingForDevice])
 
   /**
    * Moves the GATT disconnect listener onto the newly connected device,
@@ -1200,7 +1343,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // nothing: they wrote no state, so the in-flight attempt still owns
       // the UI and its completion must land. Silent attempts never claim
       // (see autoConnect).
-      if (!silent) claimConnectionAttempt()
+      if (!silent) {
+        // A deliberate tap supersedes any background wait.
+        stopWaitingForDevice()
+        claimConnectionAttempt()
+      }
       // Capture, don't claim: a stale silent failure must not clobber UI
       // state written by a newer operation (same ownership rule as the
       // retry progress writes and autoConnect's completion guard).
@@ -1211,6 +1358,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw err
       }
 
+      let attemptedDevice: BluetoothDevice | null = null
       try {
         logger.info(
           { connectionStatus, savedDevice },
@@ -1227,6 +1375,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (device) {
+          attemptedDevice = device
           logger.info({ device: device.name }, 'Connecting to device')
           if (!(await connectToGatt(device, false, true))) return false
           return true
@@ -1249,9 +1398,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         // Reset the status to allow for a manual connection attempt —
         // but only while no newer operation has claimed the UI since,
         // so a late background failure never wipes a manual attempt's
-        // CONNECTING/ERROR state.
+        // CONNECTING/ERROR state. With a known device, wait for it to
+        // reappear instead of stopping dead (issue 9806).
         if (connectionAttemptRef.current === attemptToken) {
-          setStatus(BluetoothConnectionStatus.DISCONNECTED)
+          if (attemptedDevice) {
+            startWaitingForDevice(attemptedDevice)
+          } else {
+            setStatus(BluetoothConnectionStatus.DISCONNECTED)
+          }
         }
         throw error
       }
@@ -1267,6 +1421,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       // Stable ref object from useHrmMetadataSync; listed for exhaustive-deps.
       userDetailsRef,
       claimConnectionAttempt,
+      stopWaitingForDevice,
+      startWaitingForDevice,
     ]
   )
 
@@ -1290,15 +1446,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (!deviceFoundAndAttempted) {
         // Stale-completion guard: a late silent finish must not wipe newer
         // state (a manual connect tap, or test-injected scan state racing
-        // this attempt). Only the latest operation owns the UI.
-        if (connectionAttemptRef.current === attempt) {
+        // this attempt). Only the latest operation owns the UI. A wait
+        // armed by the silent attempt also owns it (see connectAndStream).
+        if (
+          connectionAttemptRef.current === attempt &&
+          !waitingDeviceRef.current
+        ) {
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
           setCustomStatusMessage(null)
         }
       }
     } catch (error) {
       logger.error({ error }, 'Auto-connect failed')
-      if (connectionAttemptRef.current === attempt) {
+      if (
+        connectionAttemptRef.current === attempt &&
+        !waitingDeviceRef.current
+      ) {
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
         setCustomStatusMessage(getAutoConnectFailureMessage(error))
       }

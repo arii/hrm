@@ -26,6 +26,11 @@ export const FAST_RECONNECT_MAX_ATTEMPTS = 3
 // not hammering. Reconnect drops keep their own backoff (no quiet retry).
 export const QUIET_STRAP_RETRY_DELAYS_MS = [5000, 10000, 20000]
 
+// Slow safety poll while waiting for a sleeping strap to reappear. The
+// advertisement watcher (instant) is primary; this covers platforms
+// without it and missed advertisements. Each miss fails fast.
+export const ADVERTISEMENT_FALLBACK_POLL_MS = 60000
+
 /**
  * @param attempt - The current attempt number (starting from 1).
  * @returns The delay in milliseconds using a linear backoff strategy with jitter.

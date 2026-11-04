@@ -150,7 +150,7 @@ describe('useBluetoothHRM', () => {
     expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
   })
 
-  it('should handle silent connection failure gracefully', async () => {
+  it('enters waiting state on silent connection failure with a known device', async () => {
     ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
     mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
@@ -160,10 +160,11 @@ describe('useBluetoothHRM', () => {
       await result.current.autoConnect()
     })
 
-    // autoConnect is async and may not call getDevices synchronously
+    // autoConnect is async and may not call getDevices synchronously.
+    // A known device waits for the strap instead of failing dead (9806).
     await waitFor(() => {
       expect(result.current.deviceStatus).toBe(
-        'Auto-connect failed. Use Connect button to select device.'
+        BLUETOOTH_MESSAGES.waitingForDevice('Test HRM')
       )
     })
   })
@@ -564,7 +565,7 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
-    it(`should attempt to reconnect on disconnection and give up after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`, async () => {
+    it(`reconnects ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} times then waits keeping the device (issue 9806)`, async () => {
       const { result } = renderHook(() => useBluetoothHRM())
 
       // First connection is successful
@@ -613,28 +614,28 @@ describe('useBluetoothHRM', () => {
         }
       }
 
-      // After max attempts, it should fail
+      // After max attempts it waits (slow poll is 60s out: no more
+      // rapid calls) and keeps the saved device for the recovery.
       await act(async () => {
         jest.advanceTimersByTime(100)
       })
 
       await waitFor(() => {
-        expect(result.current.deviceStatus).toMatch(
-          new RegExp(
-            `failed to reconnect after ${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS} attempts`,
-            'i'
-          )
+        expect(result.current.deviceStatus).toBe(
+          BLUETOOTH_MESSAGES.waitingForDevice('Test HRM')
         )
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(
         env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-      ) // No more calls
+      ) // No more rapid calls
 
-      // It should also forget the device
       await act(async () => {
-        jest.advanceTimersByTime(2000) // Run the final timer to forget the device
+        jest.advanceTimersByTime(2000)
       })
-      expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
+      expect(Cookies.remove).not.toHaveBeenCalledWith('hrm_device_id')
+      expect(mockGatt.connect).toHaveBeenCalledTimes(
+        env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+      )
     })
 
     it('should successfully reconnect after a disconnection', async () => {
@@ -718,6 +719,140 @@ describe('useBluetoothHRM', () => {
         await jest.advanceTimersByTimeAsync(10000)
       })
       expect(result.current.isConnected).toBe(true)
+    })
+
+    describe('waiting for device (issue 9806)', () => {
+      const armWaitingViaSilentFailure = async (
+        autoConnect: () => Promise<void>
+      ) => {
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        mockGatt.connect.mockRejectedValue(
+          new DOMException(
+            'Bluetooth Device is no longer in range.',
+            'NetworkError'
+          )
+        )
+        await act(async () => {
+          const pending = autoConnect().catch(() => {})
+          // Quiet retries span ~35s; stay under the 60s safety poll.
+          await jest.advanceTimersByTimeAsync(45000)
+          await pending
+        })
+      }
+
+      const addWatchMocks = () => {
+        const watch = jest.fn().mockResolvedValue(undefined)
+        const unwatch = jest.fn()
+        Object.assign(mockDevice, {
+          watchAdvertisements: watch,
+          unwatchAdvertisements: unwatch,
+        })
+        return { watch, unwatch }
+      }
+
+      const adListener = (): (() => void) => {
+        const call = mockDevice.addEventListener.mock.calls.find(
+          ([eventName]: [string, unknown]) =>
+            eventName === 'advertisementreceived'
+        )
+        if (!call) throw new Error('no advertisement listener registered')
+        return call[1] as () => void
+      }
+
+      it('waits (instead of stopping) when silent auto-connect exhausts with a known device', async () => {
+        const { watch } = addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+
+        expect(result.current.deviceStatus).toContain('Waiting')
+        expect(watch).toHaveBeenCalledTimes(1)
+      })
+
+      it('connects when an advertisement arrives while waiting', async () => {
+        const { unwatch } = addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        mockGatt.connect.mockResolvedValue(mockGatt)
+
+        await act(async () => {
+          adListener()()
+        })
+
+        expect(result.current.isConnected).toBe(true)
+        expect(unwatch).toHaveBeenCalled()
+      })
+
+      it('keeps the saved device and waits instead of forgetting after reconnect exhaustion', async () => {
+        const { watch } = addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await act(async () => {
+          await result.current.connectAndStream()
+        })
+        expect(result.current.isConnected).toBe(true)
+
+        // Mid-session drop; the strap stays quiet through all 8 attempts.
+        mockGatt.connect.mockRejectedValue(
+          new DOMException(
+            'Bluetooth Device is no longer in range.',
+            'NetworkError'
+          )
+        )
+        const onDisconnect = mockDevice.addEventListener.mock.calls.find(
+          ([eventName]: [string, unknown]) =>
+            eventName === 'gattserverdisconnected'
+        )?.[1] as (event: unknown) => void
+        // Separate acts: the status-mirror effect must flush before the
+        // reconnect timers run, or the guard reads stale CONNECTED and
+        // skips every cycle.
+        await act(async () => {
+          onDisconnect({ target: mockDevice })
+        })
+        await act(async () => {
+          // 8 backoff cycles span ~38s max; stay under the 60s safety poll.
+          await jest.advanceTimersByTimeAsync(50000)
+        })
+
+        expect(Cookies.remove).not.toHaveBeenCalledWith('hrm_device_id')
+        expect(result.current.deviceStatus).toContain('Waiting')
+        expect(watch).toHaveBeenCalled()
+      })
+
+      it('slow-polls while waiting when advertisements are unavailable', async () => {
+        // No watch mocks: the device predates watchAdvertisements.
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        expect(result.current.deviceStatus).toContain('Waiting')
+        const attemptsAfterWait = mockGatt.connect.mock.calls.length
+
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(65000)
+        })
+
+        expect(mockGatt.connect.mock.calls.length).toBeGreaterThan(
+          attemptsAfterWait
+        )
+      })
+
+      it('stops waiting on manual disconnect', async () => {
+        const { unwatch } = addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        const attemptsAfterWait = mockGatt.connect.mock.calls.length
+
+        await act(async () => {
+          result.current.disconnect()
+          await jest.advanceTimersByTimeAsync(180000)
+        })
+
+        expect(unwatch).toHaveBeenCalled()
+        expect(mockGatt.connect.mock.calls.length).toBe(attemptsAfterWait)
+      })
     })
 
     it('does not stack heart-rate listeners across reconnects', async () => {
@@ -1225,11 +1360,11 @@ describe('useBluetoothHRM', () => {
       })
 
       // Silent retries (wave-16): a quiet strap gets 4 attempts over ~35s
-      // (the old #9303 fail-fast never caught a waking strap), but the
-      // surfaced banner after exhaustion is unchanged.
+      // (the old #9303 fail-fast never caught a waking strap); exhaustion
+      // now waits for the strap instead of failing dead (issue 9806).
       expect(mockGatt.connect).toHaveBeenCalledTimes(4)
       expect(result.current.deviceStatus).toBe(
-        BLUETOOTH_MESSAGES.connectionFailed
+        BLUETOOTH_MESSAGES.waitingForDevice('Test HRM')
       )
     })
 
@@ -1412,13 +1547,13 @@ describe('useBluetoothHRM', () => {
       expect(result.current.deviceStatus).toBe(
         'Strap is quiet. Retrying... (Attempt 2/3)'
       )
-      // Exhaustion still surfaces the existing final banner.
+      // Exhaustion now waits for the strap instead of failing dead.
       await act(async () => {
         await jest.advanceTimersByTimeAsync(40000)
         await autoPromise
       })
       expect(result.current.deviceStatus).toBe(
-        BLUETOOTH_MESSAGES.connectionFailed
+        BLUETOOTH_MESSAGES.waitingForDevice('Test HRM')
       )
     })
 
@@ -1482,7 +1617,7 @@ describe('useBluetoothHRM', () => {
         await autoPromise
       })
       expect(result.current.deviceStatus).toBe(
-        BLUETOOTH_MESSAGES.connectionFailed
+        BLUETOOTH_MESSAGES.waitingForDevice('Test HRM')
       )
     })
   })

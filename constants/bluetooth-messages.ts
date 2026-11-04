@@ -19,8 +19,8 @@ export const BLUETOOTH_MESSAGES = {
   connectingToDevice: (deviceName: string) =>
     `Connecting to: ${deviceName || 'Device'}...`,
   connectedToDevice: (deviceName: string) => `Connected to: ${deviceName}`,
-  failedToReconnect: (maxAttempts: number) =>
-    `Failed to reconnect after ${maxAttempts} attempts. Resetting device...`,
+  waitingForDevice: (deviceName: string) =>
+    `Waiting for ${deviceName || 'device'} to wake up...`,
   reconnectingAttempt: (reason: string, attempt: number, maxAttempts: number) =>
     `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
   checkingSavedDevices: 'Checking saved devices...',
