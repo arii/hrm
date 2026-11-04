@@ -17,6 +17,7 @@ import TimerModeSelector from './TimerModeSelector'
 import TimerCommandPanel from './TimerCommandPanel'
 import TimerDurationConfig from './TimerDurationConfig'
 import { useTimerCommand } from './useTimerCommand'
+import { useWakeLock } from '@/hooks/useWakeLock'
 
 import { useTheme, alpha } from '@mui/material/styles'
 
@@ -39,6 +40,10 @@ const TimerControls = () => {
     sendData,
     executeSpotify,
   })
+
+  // Controller screen stays awake while the timer runs so the coach
+  // display never sleeps mid-session.
+  useWakeLock(isRunning)
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') return

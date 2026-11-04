@@ -5,6 +5,7 @@ import { useWebSocketConnection } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
+import { useWakeLock } from '@/hooks/useWakeLock'
 import {
   calculateZoneFromMaxHr,
   calculateMaxHr,
@@ -76,6 +77,10 @@ export default function ConnectPage() {
     session?.pauseTime,
     session?.endTime
   )
+
+  // Keep the OS from throttling the page (and its GATT stream) while a
+  // workout runs. Paused/idle holds no lock: no battery drain for dead air.
+  useWakeLock(workoutStatus === 'running')
 
   const handleStartWorkout = useCallback(() => {
     if (workoutStatus === 'idle') {
