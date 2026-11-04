@@ -5,18 +5,28 @@ import Typography from '@mui/material/Typography'
 export interface ResetSectionProps {
   onReset: () => void
   isResetting: boolean
+  /** Inline toolbar rendering: no divider or page margins. */
+  compact?: boolean
 }
 
-const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => (
+const ResetSection = ({
+  onReset,
+  isResetting,
+  compact = false,
+}: ResetSectionProps) => (
   <Box
     data-testid="reset-section"
-    sx={{
-      textAlign: 'center',
-      mt: 4,
-      pt: 4,
-      borderTop: 1,
-      borderColor: 'divider',
-    }}
+    sx={
+      compact
+        ? { textAlign: 'center' }
+        : {
+            textAlign: 'center',
+            mt: 4,
+            pt: 4,
+            borderTop: 1,
+            borderColor: 'divider',
+          }
+    }
   >
     <Button
       variant="contained"

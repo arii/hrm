@@ -100,12 +100,14 @@ describe('ConnectView', () => {
         isConnected={true}
         bluetoothConnected={true}
         hasStarted={true}
+        deviceStatus="Connected"
       />
     )
     const html = container.innerHTML
     const order = [
       'data-testid="hr-tile"',
       'Workout Summary',
+      'data-testid="action-toolbar"',
       'Disconnect',
       'data-testid="reset-section"',
     ].map((marker) => {
@@ -114,6 +116,20 @@ describe('ConnectView', () => {
       return pos
     })
     expect([...order].sort((a, b) => a - b)).toEqual(order)
+  })
+
+  it('shows the metadata strip with live status while connected', () => {
+    render(
+      <ConnectView
+        {...mockProps}
+        isConnected={true}
+        bluetoothConnected={true}
+        hasStarted={true}
+        deviceStatus="Connected to: Test HRM"
+      />
+    )
+    expect(screen.getByText(/Connected as Test User/)).toBeInTheDocument()
+    expect(screen.getByText(/Connected to: Test HRM/)).toBeInTheDocument()
   })
 
   it('displays an error message for invalid age only when ageError is set', () => {
@@ -349,7 +365,6 @@ describe('resolveConnectViewState', () => {
       showUserProfile: true,
       isConnecting: false,
       hasProfile: true,
-      showStatusCaption: true,
       banner: null,
     })
   })
@@ -375,7 +390,6 @@ describe('resolveConnectViewState', () => {
       showUserProfile: false,
       isConnecting: false,
       hasProfile: true,
-      showStatusCaption: false,
       banner: {
         severity: 'success',
         text: 'Connected! Heart rate data is being streamed.',

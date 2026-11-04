@@ -27,4 +27,12 @@ describe('ResetSection', () => {
     const button = screen.getByRole('button', { name: /resetting/i })
     expect(button).toBeDisabled()
   })
+
+  it('renders the same controls in compact toolbar mode', () => {
+    renderSection({ compact: true })
+    expect(screen.getByTestId('reset-section')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /reset permissions/i })
+    ).toBeEnabled()
+  })
 })
