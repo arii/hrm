@@ -8,27 +8,27 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 
 // Mock the WebSocket context to provide default values for child components
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: () => ({
+  useWebSocketConnection: () => ({
     connectionStatus: 'Connected',
     connect: jest.fn(),
     sendData: jest.fn(),
-    timerData: {
-      isRunning: false,
-      isPaused: false,
-      phase: 'IDLE',
-      timeRemaining: 0,
-      totalTime: 0,
-      workIntervals: 0,
-    },
-    spotifyData: {
-      isPlaying: false,
-      trackName: null,
-      artistName: null,
-      albumArtUrl: null,
-      durationMs: 0,
-      progressMs: 0,
-    },
-    // Provide other necessary mock data if components require it
+  }),
+  // TimerControls renders for real (static import); shapes preserved.
+  useTimerData: () => ({
+    isRunning: false,
+    isPaused: false,
+    phase: 'IDLE',
+    timeRemaining: 0,
+    totalTime: 0,
+    workIntervals: 0,
+  }),
+  useSpotifyData: () => ({
+    isPlaying: false,
+    trackName: null,
+    artistName: null,
+    albumArtUrl: null,
+    durationMs: 0,
+    progressMs: 0,
   }),
 }))
 

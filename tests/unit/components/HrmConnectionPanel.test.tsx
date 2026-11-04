@@ -2,7 +2,11 @@
  * @jest-environment jsdom
  */
 import { render, screen } from '@testing-library/react'
-import { mockUseWebSocket } from '../../mocks/contexts'
+import {
+  mockUseActiveAlerts,
+  mockUseHrmData,
+  mockUseWebSocketConnection,
+} from '../../mocks/contexts'
 import '../../mocks/components.tsx'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
@@ -10,10 +14,10 @@ import { mockHrmData } from '../../fixtures/hrm'
 
 describe('HrmConnectionPanel', () => {
   beforeEach(() => {
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
+    mockUseHrmData.mockReturnValue([])
+    mockUseActiveAlerts.mockReturnValue([])
+    mockUseWebSocketConnection.mockReturnValue({
       connectionStatus: 'Connected',
-      activeAlerts: [],
     })
   })
 
@@ -33,11 +37,7 @@ describe('HrmConnectionPanel', () => {
   })
 
   it('renders HR tiles and no connect link when hrmData is available', () => {
-    mockUseWebSocket.mockReturnValue({
-      hrmData: mockHrmData,
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
+    mockUseHrmData.mockReturnValue(mockHrmData)
     render(
       <UserSettingsProvider>
         <HrmConnectionPanel />
@@ -59,10 +59,8 @@ describe('HrmConnectionPanel', () => {
   })
 
   it('renders a loading indicator when connection is pending', () => {
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
+    mockUseWebSocketConnection.mockReturnValue({
       connectionStatus: 'Connecting...',
-      activeAlerts: [],
     })
     render(
       <UserSettingsProvider>
@@ -78,10 +76,10 @@ describe('HrmConnectionPanel', () => {
   // dropped here — this branch's held redesign uses a CircularProgress
   // spinner for the loading state (asserted above), not a skeleton.
   it('renders no skeleton in the idle empty state (loader is transient-only)', () => {
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
+    mockUseHrmData.mockReturnValue([])
+    mockUseActiveAlerts.mockReturnValue([])
+    mockUseWebSocketConnection.mockReturnValue({
       connectionStatus: 'Connected',
-      activeAlerts: [],
     })
     const { container } = render(
       <UserSettingsProvider>

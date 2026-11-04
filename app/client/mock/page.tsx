@@ -10,7 +10,7 @@ import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -20,7 +20,7 @@ import { calculateZoneFromMaxHr, toHeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 
 export default function MockPage() {
-  const { sendData, connectionStatus } = useWebSocket()
+  const { sendData, connectionStatus } = useWebSocketConnection()
   const [hrValue, setHrValue] = useState(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)

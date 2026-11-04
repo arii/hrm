@@ -9,7 +9,11 @@ import {
   within,
 } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useSpotifyServiceInitialized,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
@@ -51,7 +55,9 @@ jest.mock('next/navigation', () => ({
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+  useSpotifyData: jest.fn(),
+  useWebSocketConnection: jest.fn(),
+  useSpotifyServiceInitialized: jest.fn(),
 }))
 
 // Mock the volume preference hook
@@ -80,12 +86,21 @@ jest.mock('@/constants/spotify', () => ({
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
 
+  const mockWS = (connectionStatus: string, spotifyData: unknown) => {
+    ;(useSpotifyData as jest.Mock).mockReturnValue(spotifyData)
+    ;(useWebSocketConnection as jest.Mock).mockReturnValue({
+      connectionStatus,
+      sendData: mockSendData,
+    })
+    ;(useSpotifyServiceInitialized as jest.Mock).mockReturnValue(true)
+  }
+
   beforeEach(() => {
     mockSendData = jest.fn()
     ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         playback: {
           ...createMockSpotifyData().playback,
           track: {
@@ -103,10 +118,8 @@ describe('components/SpotifyControls', () => {
             volume_percent: 50,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
     ;(useVolumePreference as jest.Mock).mockReturnValue({
       volume: 50,
       muted: false,
@@ -206,7 +219,6 @@ describe('components/SpotifyControls', () => {
   it('prevents volume snap-back during slider drag', async () => {
     const setVolumeMock = jest.fn()
     const mockUseVolumePreference = useVolumePreference as jest.Mock
-    const mockWebSocket = useWebSocket as jest.Mock
 
     // Initial state: volume 50
     mockUseVolumePreference.mockReturnValue({
@@ -224,9 +236,9 @@ describe('components/SpotifyControls', () => {
     fireEvent.change(volumeSlider, { target: { value: '80' } })
 
     // Simulate WebSocket update (server volume is still 50, or changed to 40)
-    mockWebSocket.mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         playback: {
           ...createMockSpotifyData().playback,
           volume_percent: 40,
@@ -238,10 +250,8 @@ describe('components/SpotifyControls', () => {
             volume_percent: 40,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
 
     rerender(<SpotifyControls />)
 
@@ -264,9 +274,9 @@ describe('components/SpotifyControls', () => {
   })
 
   it('selects HRM Web Player by default when no device is active', async () => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         devices: [
           createMockSpotifyDevice({
             id: '1',
@@ -279,10 +289,8 @@ describe('components/SpotifyControls', () => {
             is_active: false,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
 
     render(<SpotifyControls />)
 
@@ -299,12 +307,7 @@ describe('components/SpotifyControls', () => {
     ;(useAppSnackbar as jest.Mock).mockReturnValue({
       showWarning: showWarningMock,
     })
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Disconnected',
-      spotifyData: createMockSpotifyData(),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+    mockWS('Disconnected', createMockSpotifyData())
 
     render(<SpotifyControls />)
 
@@ -320,12 +323,7 @@ describe('components/SpotifyControls', () => {
     ;(useAppSnackbar as jest.Mock).mockReturnValue({
       showWarning: showWarningMock,
     })
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Disconnected',
-      spotifyData: createMockSpotifyData(),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+    mockWS('Disconnected', createMockSpotifyData())
 
     render(<SpotifyControls />)
 
@@ -351,9 +349,9 @@ describe('components/SpotifyControls', () => {
   })
 
   it('uses HRM Web Player as fallback if no device is active or selected', () => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         playback: {
           ...createMockSpotifyData().playback,
           track: {
@@ -372,10 +370,8 @@ describe('components/SpotifyControls', () => {
             is_active: false,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
 
     render(<SpotifyControls />)
 
@@ -392,9 +388,9 @@ describe('components/SpotifyControls', () => {
   })
 
   it('shows a working device picker while idle when devices exist', async () => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         playback: {
           ...createMockSpotifyData().playback,
           track: {
@@ -412,10 +408,8 @@ describe('components/SpotifyControls', () => {
             is_active: false,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
 
     render(<SpotifyControls />)
 
@@ -443,9 +437,9 @@ describe('components/SpotifyControls', () => {
   })
 
   it('tolerates devices with null names (#9298)', async () => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      connectionStatus: 'Connected',
-      spotifyData: createMockSpotifyData({
+    mockWS(
+      'Connected',
+      createMockSpotifyData({
         playback: {
           ...createMockSpotifyData().playback,
           track: {
@@ -464,10 +458,8 @@ describe('components/SpotifyControls', () => {
             is_active: true,
           }),
         ],
-      }),
-      sendData: mockSendData,
-      spotifyServiceInitialized: true,
-    })
+      })
+    )
 
     expect(() => render(<SpotifyControls />)).not.toThrow()
     expect(screen.getByTestId('spotify-controls')).toBeInTheDocument()

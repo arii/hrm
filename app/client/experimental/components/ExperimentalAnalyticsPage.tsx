@@ -2,7 +2,7 @@
 'use client'
 import { useEffect, useMemo, useCallback } from 'react'
 import { Container, Box, Button } from '@mui/material'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useHrmData, useWebSocketConnection } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 import { useUserSettings } from '@/context/UserSettingsContext'
@@ -221,7 +221,8 @@ const SessionDetailView = ({
   ) : null
 
 const ExperimentalAnalyticsPage = () => {
-  const { hrmData, sendData, connectionStatus } = useWebSocket()
+  const hrmData = useHrmData()
+  const { sendData, connectionStatus } = useWebSocketConnection()
   const [userSettings] = useUserSettings()
 
   // Use #5110's hooks

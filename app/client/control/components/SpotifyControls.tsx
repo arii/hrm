@@ -5,7 +5,11 @@ import Button from '@mui/material/Button'
 import ControlCard from '@/components/shared/ControlCard'
 import CardContent from '@mui/material/CardContent'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useSpotifyServiceInitialized,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import PlaybackControls from '@/components/shared/PlaybackControls'
 import VolumeSlider from '@/components/shared/VolumeSlider'
@@ -19,8 +23,9 @@ import { useSpotifyControlCommands } from './useSpotifyControlCommands'
 import { useOptimisticPlayPause } from './useOptimisticPlayPause'
 
 const SpotifyControls = () => {
-  const { spotifyData, connectionStatus, sendData, spotifyServiceInitialized } =
-    useWebSocket()
+  const spotifyData = useSpotifyData()
+  const { connectionStatus, sendData } = useWebSocketConnection()
+  const spotifyServiceInitialized = useSpotifyServiceInitialized()
   const { execute: executeSpotify } = useSpotifyCommand()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { showWarning } = useAppSnackbar()

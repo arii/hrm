@@ -12,7 +12,7 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useWebSocketConnection } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
@@ -27,7 +27,7 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus, connect, sendData } = useWebSocket()
+  const { connectionStatus, connect, sendData } = useWebSocketConnection()
 
   // Register this client as a controller
   useEffect(() => {

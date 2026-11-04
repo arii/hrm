@@ -3,12 +3,16 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useSpotifyData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 
-// Mock useWebSocket
+// Mock slice hooks
 jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+  useSpotifyData: jest.fn(),
+  useWebSocketConnection: jest.fn(),
 }))
 
 describe('useSpotifyCommand', () => {
@@ -25,8 +29,11 @@ describe('useSpotifyCommand', () => {
 
   // Helper to setup mock state
   const mockSpotifyState = (devices: unknown[] = []) => {
-    ;(useWebSocket as jest.Mock).mockReturnValue({
-      spotifyData: { ...defaultSpotifyData, devices },
+    ;(useSpotifyData as jest.Mock).mockReturnValue({
+      ...defaultSpotifyData,
+      devices,
+    })
+    ;(useWebSocketConnection as jest.Mock).mockReturnValue({
       sendData: mockSendData,
     })
   }

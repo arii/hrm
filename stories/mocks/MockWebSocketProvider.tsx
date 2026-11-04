@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  WebSocketContext,
-  WebSocketContextType,
+  ActiveAlertsContext,
+  ConnectionContext,
   HrmData, // Import the client-side HrmData type from the context
+  HrmDataContext,
+  SpotifyDataContext,
+  SpotifyInitContext,
+  TimerDataContext,
 } from '@/context/WebSocketContext'
 import {
   ServerMessage,
@@ -161,18 +165,27 @@ export const MockWebSocketProvider = ({
     action('WebSocket')('Disconnect called')
   }, [])
 
-  // 4. Construct Context
-  const contextValue: WebSocketContextType = {
-    ...state,
-    connectionStatus,
-    sendData,
-    connect,
-    disconnect,
-  }
+  // 4. Construct slice contexts (mirrors the real provider fan-out)
+  const connectionValue = useMemo(
+    () => ({ connectionStatus, sendData, connect, disconnect }),
+    [connectionStatus, sendData, connect, disconnect]
+  )
 
   return (
-    <WebSocketContext.Provider value={contextValue}>
-      {children}
-    </WebSocketContext.Provider>
+    <ConnectionContext.Provider value={connectionValue}>
+      <HrmDataContext.Provider value={state.hrmData}>
+        <TimerDataContext.Provider value={state.timerData}>
+          <SpotifyDataContext.Provider value={state.spotifyData}>
+            <ActiveAlertsContext.Provider value={state.activeAlerts}>
+              <SpotifyInitContext.Provider
+                value={state.spotifyServiceInitialized}
+              >
+                {children}
+              </SpotifyInitContext.Provider>
+            </ActiveAlertsContext.Provider>
+          </SpotifyDataContext.Provider>
+        </TimerDataContext.Provider>
+      </HrmDataContext.Provider>
+    </ConnectionContext.Provider>
   )
 }

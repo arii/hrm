@@ -1,13 +1,18 @@
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import TimerControls from '@/app/client/control/components/TimerControls'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 
 jest.mock('@/context/WebSocketContext', () => ({
   ...jest.requireActual('@/context/WebSocketContext'),
-  useWebSocket: jest.fn(),
+  useTimerData: jest.fn(),
+  useWebSocketConnection: jest.fn(),
 }))
 
-const mockUseWebSocket = useWebSocket as jest.Mock
+const mockUseTimerData = useTimerData as jest.Mock
+const mockUseConnection = useWebSocketConnection as jest.Mock
 
 describe('TimerControls Effects', () => {
   it('should revert optimistic state when server state changes', async () => {
@@ -18,8 +23,8 @@ describe('TimerControls Effects', () => {
       mode: 'TABATA',
     }
 
-    mockUseWebSocket.mockReturnValue({
-      timerData: initialTimerData,
+    mockUseTimerData.mockReturnValue(initialTimerData)
+    mockUseConnection.mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
@@ -32,10 +37,9 @@ describe('TimerControls Effects', () => {
 
     // Server sends a delayed response indicating the timer is NOT running
     act(() => {
-      mockUseWebSocket.mockReturnValue({
-        timerData: { ...initialTimerData, isRunning: false },
-        sendData: mockSendData,
-        connectionStatus: 'Connected',
+      mockUseTimerData.mockReturnValue({
+        ...initialTimerData,
+        isRunning: false,
       })
     })
 

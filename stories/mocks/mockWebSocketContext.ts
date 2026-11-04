@@ -1,4 +1,4 @@
-import { WebSocketContextType, HrmData } from '@/context/WebSocketContext'
+import { HrmData } from '@/context/WebSocketContext'
 import { SpotifyData, TimerData } from '@/types/websocket'
 
 export const mockSpotifyData: SpotifyData = {
@@ -56,16 +56,4 @@ export const mockHrmData: HrmData = {
   age: 30,
   calories: 100,
   isConnected: true,
-}
-
-export const mockWebSocketContext: WebSocketContextType = {
-  connectionStatus: 'Connected',
-  timerData: mockTimerData,
-  spotifyData: mockSpotifyData,
-  hrmData: [mockHrmData],
-  activeAlerts: [],
-  spotifyServiceInitialized: true,
-  sendData: () => {},
-  disconnect: () => {},
-  connect: () => {},
 }

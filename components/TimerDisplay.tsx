@@ -1,6 +1,9 @@
 // File: components/TimerDisplay.tsx
 'use client'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -107,7 +110,8 @@ export const resolveWsDotColor = (
       : palette.errorMain
 
 const TimerDisplay = () => {
-  const { connectionStatus, timerData } = useWebSocket()
+  const timerData = useTimerData()
+  const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
   const {
     currentPhase,

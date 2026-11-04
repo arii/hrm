@@ -8,7 +8,7 @@ import ExperimentalAnalyticsPage, {
   computeSummaryStats,
 } from '@/app/client/experimental/components/ExperimentalAnalyticsPage'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useHrmData, useWebSocketConnection } from '@/context/WebSocketContext'
 import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 import { workoutSessionStorage } from '@/lib/workout-session-storage'
 
@@ -42,7 +42,8 @@ jest.mock('@/utils/fit-export', () => ({
 
 describe('ExperimentalAnalyticsPage', () => {
   const mockUseUserSettings = useUserSettings as jest.Mock
-  const mockUseWebSocket = useWebSocket as jest.Mock
+  const mockUseHrmData = useHrmData as jest.Mock
+  const mockUseConnection = useWebSocketConnection as jest.Mock
   const mockUseWorkoutSessionManager = useWorkoutSessionManager as jest.Mock
   const mockGetAllSessions = workoutSessionStorage.getAllSessions as jest.Mock
 
@@ -53,9 +54,8 @@ describe('ExperimentalAnalyticsPage', () => {
       { userAge: 30, userWeight: 70 },
       () => {},
     ])
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
-      timerData: { currentPhase: 'IDLE' },
+    mockUseHrmData.mockReturnValue([])
+    mockUseConnection.mockReturnValue({
       sendData: jest.fn(),
       connectionStatus: 'Disconnected',
     })
@@ -93,9 +93,8 @@ describe('ExperimentalAnalyticsPage', () => {
 
   it('sends HRM_METADATA_UPDATE when WebSocket is connected', async () => {
     const mockSendData = jest.fn()
-    mockUseWebSocket.mockReturnValue({
-      hrmData: [],
-      timerData: null,
+    mockUseHrmData.mockReturnValue([])
+    mockUseConnection.mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
