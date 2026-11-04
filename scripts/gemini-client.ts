@@ -234,6 +234,27 @@ export interface ReviewContext {
   thoughtSignature?: string
 }
 
+export const loadContextFiles = async (files: string[]): Promise<string> => {
+  let contextContent = ''
+  for (const file of files) {
+    const trimmedFile = file.trim()
+    if (!trimmedFile) continue
+    try {
+      const content = await readFile(
+        path.resolve(process.cwd(), trimmedFile),
+        'utf-8'
+      )
+      contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
+    } catch (error) {
+      console.warn(
+        `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
+      )
+      contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
+    }
+  }
+  return contextContent
+}
+
 async function main() {
   let reviewContext: ReviewContext | undefined
   try {
@@ -245,24 +266,7 @@ async function main() {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-
-    let contextContent = ''
-    for (const file of contextFiles) {
-      const trimmedFile = file.trim()
-      if (!trimmedFile) continue
-      try {
-        const content = await readFile(
-          path.resolve(process.cwd(), trimmedFile),
-          'utf-8'
-        )
-        contextContent += `\n\n--- Start of Context File: ${trimmedFile} ---\n${content}\n--- End of Context File: ${trimmedFile} ---\n`
-      } catch (error) {
-        console.warn(
-          `Warning: Could not read context file ${trimmedFile}: ${(error as Error).message}`
-        )
-        contextContent += `\n\n--- Context File: ${trimmedFile} (MISSING/ERROR) ---\n`
-      }
-    }
+    const contextContent = await loadContextFiles(contextFiles)
 
     if (preset === 'review') {
       reviewContext = getReviewContextFromEnv()
@@ -317,6 +321,39 @@ type ExtendedGenerateContentRequest = GenerateContentRequest & {
   thought_signature?: string
 }
 
+const RETRIABLE_MAP: Record<number, string> = {
+  400: 'Invalid Request',
+  404: 'Not Found',
+  429: 'Rate Limited',
+  500: 'Infrastructure Issue',
+  503: 'Infrastructure Issue',
+}
+
+// Matches a failure against the retriable status codes (by status or by
+// code-in-message), first map key wins. Pure: unit-tested.
+export const getRetriableReason = (
+  errorMessage: string,
+  errorStatus: number | undefined
+): string | null => {
+  const code = Object.keys(RETRIABLE_MAP)
+    .map(Number)
+    .find(
+      (candidate) =>
+        errorStatus === candidate || errorMessage.includes(String(candidate))
+    )
+  if (code === undefined) return null
+  return RETRIABLE_MAP[code] || 'Unknown Retriable Error'
+}
+
+export const extractThoughtSignature = (response: {
+  candidates?: unknown[]
+}): string | undefined => {
+  const candidate = response.candidates?.[0] as
+    | { thought_signature?: string }
+    | undefined
+  return candidate?.thought_signature
+}
+
 export async function generateContentWithFallback({
   genAI,
   prompt,
@@ -345,13 +382,7 @@ export async function generateContentWithFallback({
       const text = result.response.text()
 
       // Capture thought signature from the response if present
-      const capturedSignature = (
-        result.response.candidates?.[0] as NonNullable<
-          typeof result.response.candidates
-        >[number] & {
-          thought_signature?: string
-        }
-      )?.thought_signature
+      const capturedSignature = extractThoughtSignature(result.response)
 
       return { text, thoughtSignature: capturedSignature }
     } catch (error: unknown) {
@@ -362,23 +393,9 @@ export async function generateContentWithFallback({
       }
       const errorMessage = (error as Error).message || ''
       const errorStatus = (error as { status?: number }).status
+      const reason = getRetriableReason(errorMessage, errorStatus)
 
-      const RETRIABLE_MAP: Record<number, string> = {
-        400: 'Invalid Request',
-        404: 'Not Found',
-        429: 'Rate Limited',
-        500: 'Infrastructure Issue',
-        503: 'Infrastructure Issue',
-      }
-
-      const retriableCode = Object.keys(RETRIABLE_MAP)
-        .map(Number)
-        .find(
-          (code) => errorStatus === code || errorMessage.includes(String(code))
-        )
-
-      if (retriableCode) {
-        const reason = RETRIABLE_MAP[retriableCode] || 'Unknown Retriable Error'
+      if (reason) {
         console.warn(
           `Model ${modelName} failed (${reason}: ${errorMessage}). Trying next model...`
         )
@@ -529,27 +546,22 @@ const isValidReviewDepth = (depth: string | undefined): depth is ReviewDepth =>
 
 const envInt = (value: string | undefined): number => parseInt(value || '0')
 
-function getReviewContextFromEnv(): ReviewContext {
+export const readPrIdentityFromEnv = () => ({
+  prNumber: process.env.PR_NUMBER || '',
+  prTitle: process.env.PR_TITLE || '',
+  prAuthor: process.env.PR_AUTHOR || '',
+  prDescription: process.env.PR_DESCRIPTION || '',
+  prLabels: process.env.PR_LABELS || '',
+  prBranchName: process.env.PR_BRANCH_NAME || '',
+  commitMessages: process.env.COMMIT_MESSAGES || '',
+  commitHash: process.env.COMMIT_HASH || '',
+})
+
+export const readReviewStateFromEnv = () => {
   const failedChecks = parseFailedChecks(process.env.FAILED_CHECKS_JSON)
   const reviewDepth = process.env.REVIEW_DEPTH
-
-  // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
-  // Ensure process.env values are treated as strings to satisfy TypeScript
-  const baseSha = (process.env.BASE_SHA ?? 'HEAD^') as string
-  const headSha = (process.env.HEAD_SHA ?? 'HEAD') as string
-  const metrics = getContextMetrics(baseSha, headSha)
-
   return {
-    prNumber: process.env.PR_NUMBER || '',
-    prTitle: process.env.PR_TITLE || '',
-    prAuthor: process.env.PR_AUTHOR || '',
-    prDescription: process.env.PR_DESCRIPTION || '',
-    prLabels: process.env.PR_LABELS || '',
-    prBranchName: process.env.PR_BRANCH_NAME || '',
-    filesChanged: metrics.filesChanged,
-    totalLoc: metrics.totalLoc,
     reviewDepth: isValidReviewDepth(reviewDepth) ? reviewDepth : 'standard',
-    changedAreas: metrics.changedAreas,
     reviewCount: envInt(process.env.REVIEW_COUNT),
     resolvedCount: envInt(process.env.RESOLVED_COUNT),
     changesRequested: envInt(process.env.CHANGES_REQUESTED),
@@ -557,14 +569,36 @@ function getReviewContextFromEnv(): ReviewContext {
     linkedIssueBody: process.env.LINKED_ISSUE_BODY,
     issueNumber: process.env.ISSUE_NUMBER,
     issueTitle: process.env.ISSUE_TITLE,
-    commitMessages: process.env.COMMIT_MESSAGES || '',
-    commitHash: process.env.COMMIT_HASH || '',
-    hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
-    missingTests: process.env.MISSING_TESTS === 'true',
-    testFiles: process.env.TEST_FILES,
     failedChecks,
-    slopAnalysis: process.env.SLOP_ANALYSIS || 'Not available.',
-    thoughtSignature: process.env.GEMINI_THOUGHT_SIGNATURE,
+  }
+}
+
+export const readMetricsAndTestsFromEnv = (metrics: {
+  filesChanged: number
+  totalLoc: number
+  changedAreas: string
+}) => ({
+  filesChanged: metrics.filesChanged,
+  totalLoc: metrics.totalLoc,
+  changedAreas: metrics.changedAreas,
+  hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
+  missingTests: process.env.MISSING_TESTS === 'true',
+  testFiles: process.env.TEST_FILES,
+  slopAnalysis: process.env.SLOP_ANALYSIS || 'Not available.',
+  thoughtSignature: process.env.GEMINI_THOUGHT_SIGNATURE,
+})
+
+function getReviewContextFromEnv(): ReviewContext {
+  // Calculate metrics using git directly instead of relying on fragile shell scripts in YAML
+  // Ensure process.env values are treated as strings to satisfy TypeScript
+  const baseSha = (process.env.BASE_SHA ?? 'HEAD^') as string
+  const headSha = (process.env.HEAD_SHA ?? 'HEAD') as string
+  const metrics = getContextMetrics(baseSha, headSha)
+
+  return {
+    ...readPrIdentityFromEnv(),
+    ...readReviewStateFromEnv(),
+    ...readMetricsAndTestsFromEnv(metrics),
   }
 }
 
@@ -607,6 +641,31 @@ const formatPreviousReviews = (previousReviews: string): string => {
   }
 }
 
+export const buildTestCoverageAlert = (input: {
+  missingTests: boolean
+  hasTestChanges: boolean
+  testFiles?: string
+}): string => {
+  if (input.missingTests) {
+    return `\n\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
+  }
+  if (input.hasTestChanges) {
+    return `\n\n✅ **Test Coverage**: Tests were updated (${input.testFiles})\n`
+  }
+  return ''
+}
+
+export const applyPlaceholders = (
+  template: string,
+  placeholders: { [key: string]: string }
+): string => {
+  let result = template
+  for (const [key, value] of Object.entries(placeholders)) {
+    result = result.replace(new RegExp(`{{${key}}}`, 'g'), value)
+  }
+  return result
+}
+
 export async function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
@@ -619,7 +678,7 @@ export async function buildReviewPrompt(
   const templatePath = hasFailures
     ? 'prompts/fix-mode.md'
     : 'prompts/standard-review.md'
-  let promptTemplate = await readFile(templatePath, 'utf-8')
+  const promptTemplate = await readFile(templatePath, 'utf-8')
 
   // --- Base Context Section ---
   const reviewIteration = isReReview
@@ -634,12 +693,7 @@ export async function buildReviewPrompt(
 
   const previousReviews = formatPreviousReviews(context.previousReviews)
 
-  let testCoverageAlert = ''
-  if (context.missingTests) {
-    testCoverageAlert = `\n\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
-  } else if (context.hasTestChanges) {
-    testCoverageAlert = `\n\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
-  }
+  const testCoverageAlert = buildTestCoverageAlert(context)
 
   const truncatedSlopAnalysis = context.slopAnalysis
     ? truncateText(context.slopAnalysis, 2000, '\n...[TRUNCATED]')
@@ -674,14 +728,7 @@ export async function buildReviewPrompt(
     customInstructions,
   }
 
-  for (const [key, value] of Object.entries(placeholders)) {
-    promptTemplate = promptTemplate.replace(
-      new RegExp(`{{${key}}}`, 'g'),
-      value
-    )
-  }
-
-  return promptTemplate
+  return applyPlaceholders(promptTemplate, placeholders)
 }
 
 const REVIEW_RESPONSE_SCHEMA: Schema = {
@@ -765,6 +812,78 @@ const writeSkipResult = async (
   )
 }
 
+// Skip logic: already reviewed or abandoned PRs never re-enter review.
+export const shouldSkipReview = (prLabels: string): boolean =>
+  prLabels.includes('ai-reviewed') || prLabels.includes('abandon')
+
+export const isThinReview = (reviewData: { reviewComment?: string }): boolean =>
+  !reviewData.reviewComment || reviewData.reviewComment.trim().length < 20
+
+interface ParsedReviewData {
+  reviewComment?: string
+  verdict?: string
+  labels?: string[]
+  prContext?: unknown
+  thoughtSignature?: string
+}
+
+interface ReviewPrContext {
+  repo: string | undefined
+  prNumber: string
+  branchName: string
+  commitHash: string
+}
+
+// Fills verdict/label defaults, stamps the commit marker and context,
+// and adds the approved/not-approved status label. Returns a copy;
+// the input is never mutated. Pure: unit-tested.
+export const normalizeReviewData = (
+  reviewData: ParsedReviewData,
+  thoughtSignature: string | undefined,
+  prContext: ReviewPrContext,
+  commitComment: string
+): ParsedReviewData => {
+  const verdict = reviewData.verdict || 'comment'
+  const labels = [...(reviewData.labels || [])]
+  if (!labels.includes('approved') && !labels.includes('not approved')) {
+    labels.push(verdict === 'approve' ? 'approved' : 'not approved')
+  }
+  // Key order mirrors the original in-place mutation sequence so the
+  // serialized output is byte-identical.
+  return {
+    ...reviewData,
+    prContext,
+    thoughtSignature: reviewData.thoughtSignature ?? thoughtSignature,
+    reviewComment: `${reviewData.reviewComment}${commitComment}`,
+    verdict,
+    labels,
+  }
+}
+
+export const buildFallbackReview = (commitComment: string) => ({
+  reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
+  labels: ['ai-reviewed', 'approved'],
+  verdict: 'approve',
+})
+
+export const buildInvalidJsonReview = (
+  rawResponse: string | undefined,
+  details: unknown,
+  commitComment: string
+) => ({
+  error: {
+    category: 'Invalid JSON Response',
+    message:
+      'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
+    details,
+  },
+  reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.${commitComment}\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
+    rawResponse || ''
+  }\n\`\`\`\n\n</details>`,
+  labels: ['ci-failure', 'not reviewed'],
+  verdict: 'comment',
+})
+
 async function runReviewPreset(
   genAI: GoogleGenerativeAI,
   contextContent: string,
@@ -773,10 +892,7 @@ async function runReviewPreset(
   instructions?: string
 ) {
   // Skip logic
-  if (
-    context.prLabels.includes('ai-reviewed') ||
-    context.prLabels.includes('abandon')
-  ) {
+  if (shouldSkipReview(context.prLabels)) {
     console.log('PR is marked as "ai-reviewed" or "abandon". Skipping review.')
     // If it's already ai-reviewed, we don't necessarily want to label it 'not reviewed'
     // but the requirement says "always include one".
@@ -838,73 +954,41 @@ async function runReviewPreset(
   }
 
   if (result.success) {
-    const reviewData = result.data as {
-      reviewComment?: string
-      verdict?: string
-      labels?: string[]
-      prContext?: unknown
-      thoughtSignature?: string
-    }
-    reviewData.prContext = prContext
-    reviewData.thoughtSignature ??= thoughtSignature
+    const reviewData = result.data as ParsedReviewData
     // It's valid JSON, but we should still check if the content is meaningful.
-    if (
-      !reviewData.reviewComment ||
-      reviewData.reviewComment.trim().length < 20
-    ) {
+    if (isThinReview(reviewData)) {
       console.warn(
         'Warning: Parsed JSON has an empty or short review comment. Injecting fallback.'
       )
-      const fallback = {
-        reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.${commitComment}`,
-        labels: ['ai-reviewed', 'approved'],
-        verdict: 'approve',
-      }
-      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
+      await writeOutput(
+        JSON.stringify(buildFallbackReview(commitComment), null, 2),
+        outputFile
+      )
     } else {
-      // Add commit hash to the review comment
-      reviewData.reviewComment += commitComment
-      // Ensure verdict field is present (required by downstream scripts)
-      if (!reviewData.verdict) {
-        reviewData.verdict = 'comment'
-      }
-      // Ensure labels field is present
-      if (!reviewData.labels) {
-        reviewData.labels = []
-      }
-
-      // Add status labels based on verdict if not already present
-      if (
-        !reviewData.labels.includes('approved') &&
-        !reviewData.labels.includes('not approved')
-      ) {
-        if (reviewData.verdict === 'approve') {
-          reviewData.labels.push('approved')
-        } else {
-          reviewData.labels.push('not approved')
-        }
-      }
-
       // Output the original, valid JSON.
-      await writeOutput(JSON.stringify(reviewData, null, 2), outputFile)
+      const normalized = normalizeReviewData(
+        reviewData,
+        thoughtSignature,
+        prContext,
+        commitComment
+      )
+      await writeOutput(JSON.stringify(normalized, null, 2), outputFile)
     }
   } else {
     // The response was not valid JSON. We will format the error.
     console.error('Error: Failed to parse JSON response from the model.')
-    const errorJson = {
-      error: {
-        category: 'Invalid JSON Response',
-        message:
-          'The response from the generative AI was not valid JSON, even after attempting to extract it from markdown.',
-        details: result.data, // Contains the error info from JsonProcessor.
-      },
-      reviewComment: `### ❌ Review Failed: Invalid JSON Response\n\nThe AI response could not be parsed as valid JSON. This is an internal issue with the AI agent.${commitComment}\n\n<details><summary>Raw AI Output</summary>\n\n\`\`\`\n${
-        (result.data as { rawResponse: string }).rawResponse || ''
-      }\n\`\`\`\n\n</details>`,
-      labels: ['ci-failure', 'not reviewed'],
-      verdict: 'comment',
-    }
-    await writeOutput(JSON.stringify(errorJson, null, 2), outputFile)
+    await writeOutput(
+      JSON.stringify(
+        buildInvalidJsonReview(
+          (result.data as { rawResponse: string }).rawResponse,
+          result.data, // Contains the error info from JsonProcessor.
+          commitComment
+        ),
+        null,
+        2
+      ),
+      outputFile
+    )
   }
 }
 
