@@ -49,6 +49,281 @@ interface ConnectViewProps {
   onEndWorkout: () => void
 }
 
+interface ConnectionBannerArgs {
+  deviceStatus: string
+  isConnected: boolean
+  hasStarted: boolean
+  bluetoothConnected: boolean
+}
+
+interface ConnectionBanner {
+  severity: 'error' | 'warning' | 'success' | 'info'
+  text: string
+}
+
+// Exactly one status banner at a time, highest priority first: a named
+// failure beats the workout-paused notice (pause state is also visible in
+// the workout controls), which beats the connected confirmation, which
+// beats transient progress info. Pure: unit-tested.
+export const getConnectionBanner = ({
+  deviceStatus,
+  isConnected,
+  hasStarted,
+  bluetoothConnected,
+}: ConnectionBannerArgs): ConnectionBanner | null => {
+  const failed = deviceStatus && !isConnected && deviceStatus.includes('Failed')
+  if (failed) {
+    return { severity: 'error', text: deviceStatus }
+  }
+  if (hasStarted && !isConnected) {
+    return {
+      severity: 'warning',
+      text: 'Device Disconnected - Workout Paused',
+    }
+  }
+  if (isConnected && bluetoothConnected) {
+    return {
+      severity: 'success',
+      text: 'Connected! Heart rate data is being streamed.',
+    }
+  }
+  if (deviceStatus && !isConnected && !deviceStatus.includes('Disconnected')) {
+    return { severity: 'info', text: deviceStatus }
+  }
+  return null
+}
+
+const BatteryIcon = ({ level }: { level: number }) => {
+  if (level > 90) return <BatteryFullIcon color="success" />
+  if (level > 50) return <BatteryChargingFullIcon color="action" />
+  if (level > 20) return <BatteryStdIcon color="warning" />
+  return <BatteryAlertIcon color="error" />
+}
+
+const ConnectLoading = ({ reducedMotion }: { reducedMotion: boolean }) => (
+  <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+    {reducedMotion ? (
+      <HourglassTopIcon
+        data-testid="connect-loading"
+        sx={{ fontSize: 40, color: 'text.secondary' }}
+      />
+    ) : (
+      <CircularProgress data-testid="connect-loading" />
+    )}
+  </Container>
+)
+
+const BluetoothUnsupported = ({
+  onFullReset,
+  isResetting,
+}: {
+  onFullReset: () => void
+  isResetting: boolean
+}) => (
+  <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+    <BluetoothDisabledIcon
+      sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
+    />
+    <Typography variant="h5" gutterBottom>
+      Bluetooth Not Supported
+    </Typography>
+    <Alert severity="warning" sx={{ mt: 2 }}>
+      Your browser does not support Web Bluetooth. Please use Google Chrome,
+      Edge, or Bluefy (on iOS).
+    </Alert>
+    <ResetSection onReset={onFullReset} isResetting={isResetting} />
+  </Container>
+)
+
+const ConnectedIdentity = ({
+  userName,
+  userAge,
+}: {
+  userName: string
+  userAge: string
+}) => (
+  <Box
+    sx={{
+      mb: 3,
+      textAlign: 'center',
+      p: 2,
+      bgcolor: 'background.paper',
+      borderRadius: 1,
+      boxShadow: 1,
+    }}
+  >
+    <Typography variant="subtitle1" color="text.secondary">
+      Connected as
+    </Typography>
+    <Typography variant="h5" fontWeight="bold">
+      {userName}
+    </Typography>
+    <Typography variant="body2" color="text.secondary">
+      Age: {userAge}
+    </Typography>
+  </Box>
+)
+
+const ConnectButton = ({
+  onConnect,
+  disabled,
+  connecting,
+  reducedMotion,
+}: {
+  onConnect: () => void
+  disabled: boolean
+  connecting: boolean
+  reducedMotion: boolean
+}) => (
+  <Button
+    variant="contained"
+    size="large"
+    onClick={onConnect}
+    disabled={disabled}
+  >
+    {connecting ? (
+      <Stack direction="row" spacing={1} alignItems="center">
+        {reducedMotion ? (
+          <HourglassTopIcon sx={{ fontSize: 20 }} />
+        ) : (
+          <CircularProgress size={20} color="inherit" />
+        )}
+        <span>Connecting...</span>
+      </Stack>
+    ) : (
+      'Connect Bluetooth HRM'
+    )}
+  </Button>
+)
+
+const ProfileSection = ({
+  showUserProfile,
+  userProfile,
+  userName,
+  userAge,
+}: {
+  showUserProfile: boolean
+  userProfile: UserProfileState
+  userName: string
+  userAge: string
+}) =>
+  showUserProfile ? (
+    <UserSettings profile={userProfile} />
+  ) : (
+    <ConnectedIdentity userName={userName} userAge={userAge} />
+  )
+
+const StatusBanner = ({ banner }: { banner: ConnectionBanner | null }) =>
+  banner ? (
+    <Alert
+      data-testid="connection-status-alert"
+      severity={banner.severity}
+      sx={{ mb: 2 }}
+    >
+      {banner.text}
+    </Alert>
+  ) : null
+
+const HrSection = ({
+  isConnected,
+  userName,
+  currentHR,
+  hrZoneData,
+  caloriesBurned,
+  isDataStale,
+}: {
+  isConnected: boolean
+  userName: string
+  currentHR: number
+  hrZoneData: HrZoneData
+  caloriesBurned: number
+  isDataStale: boolean
+}) =>
+  isConnected ? (
+    <Box sx={{ mt: 2 }} data-testid="hr-tile">
+      <HrTile
+        name={userName}
+        value={currentHR}
+        percentage={hrZoneData.percentage}
+        zone={hrZoneData.zone}
+        calories={caloriesBurned}
+        isDataStale={isDataStale}
+      />
+    </Box>
+  ) : null
+
+const HistorySection = ({
+  hasStarted,
+  duration,
+  caloriesBurned,
+}: {
+  hasStarted: boolean
+  duration: string
+  caloriesBurned: number
+}) =>
+  hasStarted ? (
+    <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+  ) : null
+
+const ConnectedPanel = ({
+  batteryLevel,
+  signalPeriodMs,
+  lastPeriodMs,
+  isConnected,
+  onDisconnect,
+  showStatusCaption,
+  deviceStatus,
+}: {
+  batteryLevel: number | null
+  signalPeriodMs: number
+  lastPeriodMs: number
+  isConnected: boolean
+  onDisconnect: () => void
+  showStatusCaption: boolean
+  deviceStatus: string
+}) => (
+  <Stack spacing={2}>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 1,
+      }}
+    >
+      {batteryLevel !== null && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.5}
+          sx={{ color: 'text.secondary' }}
+        >
+          <BatteryIcon level={batteryLevel} />
+          <Typography variant="body2">{batteryLevel}% Battery</Typography>
+        </Stack>
+      )}
+      <SignalQualityIndicator
+        periodMs={signalPeriodMs}
+        lastPeriodMs={lastPeriodMs}
+        isConnected={isConnected}
+      />
+    </Box>
+    <Button
+      variant="outlined"
+      size="large"
+      onClick={onDisconnect}
+      color="error"
+    >
+      Disconnect
+    </Button>
+    {showStatusCaption && (
+      <Typography variant="caption" color="text.secondary">
+        Status: {deviceStatus}
+      </Typography>
+    )}
+  </Stack>
+)
+
 export default function ConnectView({
   duration,
   caloriesBurned,
@@ -91,13 +366,6 @@ export default function ConnectView({
     }
   }, [currentHR, isConnected, data.userName])
 
-  const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />
-    if (level > 50) return <BatteryChargingFullIcon color="action" />
-    if (level > 20) return <BatteryStdIcon color="warning" />
-    return <BatteryAlertIcon color="error" />
-  }
-
   const handleFullReset = async () => {
     setIsResetting(true)
     try {
@@ -115,71 +383,26 @@ export default function ConnectView({
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   if (!mounted) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        {prefersReducedMotion ? (
-          <HourglassTopIcon
-            data-testid="connect-loading"
-            sx={{ fontSize: 40, color: 'text.secondary' }}
-          />
-        ) : (
-          <CircularProgress data-testid="connect-loading" />
-        )}
-      </Container>
-    )
+    return <ConnectLoading reducedMotion={prefersReducedMotion} />
   }
 
   if (!isSupported) {
     return (
-      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
-        <BluetoothDisabledIcon
-          sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
-        />
-        <Typography variant="h5" gutterBottom>
-          Bluetooth Not Supported
-        </Typography>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Your browser does not support Web Bluetooth. Please use Google Chrome,
-          Edge, or Bluefy (on iOS).
-        </Alert>
-        <ResetSection onReset={handleFullReset} isResetting={isResetting} />
-      </Container>
+      <BluetoothUnsupported
+        onFullReset={handleFullReset}
+        isResetting={isResetting}
+      />
     )
   }
 
   const showUserDetails = hasStarted || isConnected
 
-  // Exactly one status banner at a time, highest priority first: a named
-  // failure beats the workout-paused notice (pause state is also visible in
-  // the workout controls), which beats the connected confirmation, which
-  // beats transient progress info.
-  const banner = (() => {
-    const failed =
-      deviceStatus && !isConnected && deviceStatus.includes('Failed')
-    if (failed) {
-      return { severity: 'error' as const, text: deviceStatus }
-    }
-    if (hasStarted && !isConnected) {
-      return {
-        severity: 'warning' as const,
-        text: 'Device Disconnected - Workout Paused',
-      }
-    }
-    if (isConnected && bluetoothConnected) {
-      return {
-        severity: 'success' as const,
-        text: 'Connected! Heart rate data is being streamed.',
-      }
-    }
-    if (
-      deviceStatus &&
-      !isConnected &&
-      !deviceStatus.includes('Disconnected')
-    ) {
-      return { severity: 'info' as const, text: deviceStatus }
-    }
-    return null
-  })()
+  const banner = getConnectionBanner({
+    deviceStatus,
+    isConnected,
+    hasStarted,
+    bluetoothConnected,
+  })
   // Flattened render conditions (#9606): kept for the non-banner branches.
   const showUserProfile = !showUserDetails
   const isConnecting = deviceStatus.includes('Connecting')
@@ -193,120 +416,44 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
-        {showUserProfile ? (
-          <UserSettings profile={userProfile} />
-        ) : (
-          <Box
-            sx={{
-              mb: 3,
-              textAlign: 'center',
-              p: 2,
-              bgcolor: 'background.paper',
-              borderRadius: 1,
-              boxShadow: 1,
-            }}
-          >
-            <Typography variant="subtitle1" color="text.secondary">
-              Connected as
-            </Typography>
-            <Typography variant="h5" fontWeight="bold">
-              {data.userName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Age: {data.userAge}
-            </Typography>
-          </Box>
-        )}
+        <ProfileSection
+          showUserProfile={showUserProfile}
+          userProfile={userProfile}
+          userName={data.userName}
+          userAge={data.userAge}
+        />
 
-        {banner && (
-          <Alert
-            data-testid="connection-status-alert"
-            severity={banner.severity}
-            sx={{ mb: 2 }}
-          >
-            {banner.text}
-          </Alert>
-        )}
+        <StatusBanner banner={banner} />
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConnect}
+            <ConnectButton
+              onConnect={onConnect}
               disabled={!hasProfile || isConnecting}
-            >
-              {isConnecting ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                  {prefersReducedMotion ? (
-                    <HourglassTopIcon sx={{ fontSize: 20 }} />
-                  ) : (
-                    <CircularProgress size={20} color="inherit" />
-                  )}
-                  <span>Connecting...</span>
-                </Stack>
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
-            </Button>
+              connecting={isConnecting}
+              reducedMotion={prefersReducedMotion}
+            />
           ) : (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                {batteryLevel !== null && (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {getBatteryIcon(batteryLevel)}
-                    <Typography variant="body2">
-                      {batteryLevel}% Battery
-                    </Typography>
-                  </Stack>
-                )}
-                <SignalQualityIndicator
-                  periodMs={signalPeriodMs}
-                  lastPeriodMs={lastPeriodMs}
-                  isConnected={isConnected}
-                />
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={onDisconnect}
-                color="error"
-              >
-                Disconnect
-              </Button>
-              {showStatusCaption && (
-                <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
-                </Typography>
-              )}
-            </Stack>
+            <ConnectedPanel
+              batteryLevel={batteryLevel}
+              signalPeriodMs={signalPeriodMs}
+              lastPeriodMs={lastPeriodMs}
+              isConnected={isConnected}
+              onDisconnect={onDisconnect}
+              showStatusCaption={showStatusCaption}
+              deviceStatus={deviceStatus}
+            />
           )}
         </Box>
 
-        {isConnected && (
-          <Box sx={{ mt: 2 }} data-testid="hr-tile">
-            <HrTile
-              name={data.userName}
-              value={currentHR}
-              percentage={hrZoneData.percentage}
-              zone={hrZoneData.zone}
-              calories={caloriesBurned}
-              isDataStale={isDataStale}
-            />
-          </Box>
-        )}
+        <HrSection
+          isConnected={isConnected}
+          userName={data.userName}
+          currentHR={currentHR}
+          hrZoneData={hrZoneData}
+          caloriesBurned={caloriesBurned}
+          isDataStale={isDataStale}
+        />
 
         <WorkoutControls
           workoutStatus={workoutStatus}
@@ -317,9 +464,11 @@ export default function ConnectView({
           onResume={onStartWorkout}
         />
 
-        {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
-        )}
+        <HistorySection
+          hasStarted={hasStarted}
+          duration={duration}
+          caloriesBurned={caloriesBurned}
+        />
 
         <Typography
           variant="body2"

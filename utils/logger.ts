@@ -2,8 +2,11 @@
 // This file is for client-side logging.
 // For server-side logging, see `utils/logger.server.ts`
 
-// Define a consistent logger interface
-interface Logger {
+// The consistent logger interface both the client shim (here) and the
+// server pino logger (logger.server.ts) implement. Housed in this
+// dependency-free module so the server can import the type without the
+// client ever pulling in pino.
+export interface Logger {
   debug: (msg: string | object, ...args: unknown[]) => void
   info: (msg: string | object, ...args: unknown[]) => void
   warn: (msg: string | object, ...args: unknown[]) => void

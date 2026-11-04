@@ -47,7 +47,7 @@ export const getAutoConnectFailureMessage = (error: unknown): string | null => {
   if (error instanceof DOMException && error.name === 'AbortError') return null
   if (
     (error instanceof DOMException && error.name === 'NetworkError') ||
-    /no longer in range|device not found/i.test(errorMsg)
+    isQuietStrapMiss(errorMsg)
   ) {
     return BLUETOOTH_MESSAGES.connectionFailed
   }
@@ -95,6 +95,26 @@ const parseHeartRate = (value: DataView): number => {
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
+
+/**
+ * Busy-radio classifier for the GATT connect retry loop: a radio that is
+ * mid-operation (or a generic link NetworkError) is worth a fast retry.
+ * Instant misses ("no longer in range") are excluded — hammering
+ * gatt.connect() cannot summon an absent device and risks wedging the
+ * adapter. Pure: unit-tested.
+ */
+export const isBusyRadioError = (errorText: string): boolean =>
+  !errorText.includes('no longer in range') &&
+  (errorText.includes('busy') || errorText.includes('NetworkError'))
+
+/**
+ * Quiet-strap classifier: the first radio op often fails fast while the
+ * adapter/strap wakes. These misses qualify for the staggered quiet-strap
+ * schedule; timeouts (a full radio engagement already consumed) do not.
+ * Pure: unit-tested.
+ */
+export const isQuietStrapMiss = (errorText: string): boolean =>
+  /no longer in range|device not found/i.test(errorText)
 
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
@@ -170,6 +190,81 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSignalPeriodMs(Math.round(average))
   }, [])
 
+  /**
+   * Signal half of the watchdog interval: folds over-threshold gaps into
+   * the signal-period average and slow-packet counters. Extracted from the
+   * interval tick; ref- and setter-only besides the period updater.
+   */
+  const checkSignalStability = useCallback(() => {
+    if (
+      currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
+      lastDataTime.current > 0
+    ) {
+      const now = Date.now()
+      const timeSinceLastData = now - lastDataTime.current
+
+      const threshold = Math.max(
+        avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
+        MIN_MISSED_PACKET_THRESHOLD_MS
+      )
+
+      if (timeSinceLastData > threshold) {
+        updateSignalPeriod(timeSinceLastData)
+
+        // Only increment slow count if we've crossed a new stability window
+        // and haven't already marked this window.
+        const currentStabilityWindows = Math.floor(
+          timeSinceLastData / STABILITY_THRESHOLD_MS
+        )
+        const lastMarkedWindows = Math.floor(
+          lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+        )
+
+        if (currentStabilityWindows > lastMarkedWindows) {
+          setSignalStatus((s) => ({
+            last: timeSinceLastData,
+            slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
+          }))
+          lastWatchdogMark.current = timeSinceLastData
+        } else {
+          setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
+        }
+      }
+    }
+  }, [updateSignalPeriod])
+
+  /**
+   * Liveness half of the watchdog interval: force-cycles a link that has
+   * gone quiet past the timeout. The timeout arrives as a parameter (prop
+   * value), so this callback stays ref- and setter-only. Extracted from
+   * the interval tick.
+   */
+  const checkDataLiveness = useCallback((livenessTimeoutMs: number) => {
+    if (
+      currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
+      lastDataTime.current > 0
+    ) {
+      const timeSinceLastData = Date.now() - lastDataTime.current
+
+      if (timeSinceLastData > livenessTimeoutMs) {
+        // Fix Race Condition: Don't force a disconnect/reconnect if we are already in a connection state transition
+        if (isConnecting.current) {
+          logger.warn(
+            { timeSinceLastData },
+            'Watchdog: Connection is in progress. Skipping forced disconnect.'
+          )
+          return
+        }
+
+        setStatus(BluetoothConnectionStatus.RECONNECTING)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
+        isTimeoutDisconnect.current = true
+        if (connectedDeviceRef.current?.gatt)
+          connectedDeviceRef.current.gatt.disconnect()
+      }
+    }
+  }, [])
+
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     | ((device: BluetoothDevice, isReconnect?: boolean) => Promise<boolean>)
@@ -214,72 +309,24 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     let checkCounter = 0
     const interval = setInterval(() => {
-      if (
-        currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
-        lastDataTime.current > 0
-      ) {
-        const now = Date.now()
-        const timeSinceLastData = now - lastDataTime.current
-
-        const threshold = Math.max(
-          avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
-          MIN_MISSED_PACKET_THRESHOLD_MS
-        )
-
-        if (timeSinceLastData > threshold) {
-          updateSignalPeriod(timeSinceLastData)
-
-          // Only increment slow count if we've crossed a new stability window
-          // and haven't already marked this window.
-          const currentStabilityWindows = Math.floor(
-            timeSinceLastData / STABILITY_THRESHOLD_MS
-          )
-          const lastMarkedWindows = Math.floor(
-            lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-          )
-
-          if (currentStabilityWindows > lastMarkedWindows) {
-            setSignalStatus((s) => ({
-              last: timeSinceLastData,
-              slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
-            }))
-            lastWatchdogMark.current = timeSinceLastData
-          } else {
-            setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
-          }
-        }
-      }
+      // Every tick folds gaps into the signal stats; every other tick
+      // also probes liveness (counter gating is scheduling, the checks
+      // themselves live in the callbacks above).
+      checkSignalStability()
 
       checkCounter++
       if (checkCounter % 2 === 0 && dataLivenessTimeoutMs > 0) {
-        if (
-          currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
-          lastDataTime.current > 0
-        ) {
-          const timeSinceLastData = Date.now() - lastDataTime.current
-
-          if (timeSinceLastData > dataLivenessTimeoutMs) {
-            // Fix Race Condition: Don't force a disconnect/reconnect if we are already in a connection state transition
-            if (isConnecting.current) {
-              logger.warn(
-                { timeSinceLastData },
-                'Watchdog: Connection is in progress. Skipping forced disconnect.'
-              )
-              return
-            }
-
-            setStatus(BluetoothConnectionStatus.RECONNECTING)
-            setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
-            isTimeoutDisconnect.current = true
-            if (connectedDeviceRef.current?.gatt)
-              connectedDeviceRef.current.gatt.disconnect()
-          }
-        }
+        checkDataLiveness(dataLivenessTimeoutMs)
       }
     }, heartbeatInterval)
 
     return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs, updateSignalPeriod, heartbeatInterval])
+  }, [
+    dataLivenessTimeoutMs,
+    checkSignalStability,
+    checkDataLiveness,
+    heartbeatInterval,
+  ])
 
   const disconnect = useCallback(() => {
     claimConnectionAttempt()
@@ -504,6 +551,155 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /**
+   * Moves the GATT disconnect listener onto the newly connected device,
+   * detaching it from any previous device first. Extracted from
+   * connectToGatt's post-connect wiring.
+   */
+  const swapDisconnectListener = useCallback(
+    (device: BluetoothDevice) => {
+      if (activeDisconnectListenerRef.current) {
+        // If we are connecting to a new device, we should remove the listener from the OLD device (connectedDeviceRef.current)
+        // or the current device if it's a reconnect. To be safe, try removing from both if they differ.
+        const oldDevice = connectedDeviceRef.current
+        if (oldDevice) {
+          oldDevice.removeEventListener(
+            'gattserverdisconnected',
+            activeDisconnectListenerRef.current
+          )
+        }
+        // Also try removing from the new device just in case
+        if (device !== oldDevice) {
+          device.removeEventListener(
+            'gattserverdisconnected',
+            activeDisconnectListenerRef.current
+          )
+        }
+      }
+      device.addEventListener('gattserverdisconnected', onDisconnected)
+      activeDisconnectListenerRef.current = onDisconnected
+    },
+    [onDisconnected]
+  )
+
+  /**
+   * Heart-rate notification handler, extracted from connectToGatt's
+   * subscription wiring. All state flows through refs and stable setters,
+   * so this callback only depends on the signal-period updater.
+   */
+  const handleHrMeasurement = useCallback(
+    (event: unknown) => {
+      const now = Date.now()
+      if (lastDataTime.current > 0) {
+        const delta = now - lastDataTime.current
+        updateSignalPeriod(delta)
+
+        const isSlow = delta > STABILITY_THRESHOLD_MS
+        const watchdogWindows = Math.floor(
+          lastWatchdogMark.current / STABILITY_THRESHOLD_MS
+        )
+
+        setSignalStatus((s) => {
+          // If the packet arrived and was slow, but the watchdog already counted it,
+          // we don't increment again. If it's fast, we reset the slow counter.
+          let nextSlow = isSlow ? s.slow : 0
+          if (isSlow && watchdogWindows === 0) {
+            nextSlow = s.slow + 1
+          }
+
+          return {
+            last: delta,
+            slow: nextSlow,
+          }
+        })
+
+        // Synchronize watchdog mark with arrival to prevent double-counting
+        // when the watchdog timer next fires.
+        lastWatchdogMark.current = delta
+      }
+
+      const e = event as Event
+      const target = e.target as BluetoothRemoteGATTCharacteristic
+      const value = target.value
+      if (!value) {
+        logger.warn(
+          'Received characteristic value changed event with no value.'
+        )
+        return
+      }
+      const heartRate = parseHeartRate(value)
+      lastDataTime.current = now // Update timestamp for next delta
+      lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
+      logger.debug({ heartRate }, 'Heart rate data received from Bluetooth')
+      onHeartRateUpdateRef.current?.(heartRate)
+    },
+    [updateSignalPeriod]
+  )
+
+  /**
+   * Failure path for connectToGatt: severs half-open links (zombie killer),
+   * classifies the error, and writes the matching status, then hands the
+   * error back so the caller rethrows from the original site (preserving
+   * the throw stack). Extracted verbatim from the catch block; ref- and
+   * setter-only.
+   */
+  const handleGattFailure = useCallback(
+    (device: BluetoothDevice, error: unknown): unknown => {
+      // Zombie killer (#9154): sever any half-open GATT link so the next
+      // attempt meets a free radio instead of tripping over our own
+      // previous session. Safe when already down; never masks the error.
+      try {
+        device.gatt?.disconnect()
+      } catch {
+        // Link was already down - nothing to sever.
+      }
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      const errorName = error instanceof DOMException ? error.name : 'Error'
+
+      const isIntentionalAbort =
+        errorName === 'AbortError' && abortControllerRef.current?.signal.aborted
+
+      const isGattDisconnected =
+        errorMsg.includes('GATT Server is disconnected') ||
+        errorMsg.includes('GATT operation failed')
+
+      if (!isIntentionalAbort) {
+        logger.error(
+          { errorName, errorMsg, device: device.name },
+          'GATT Connection failed'
+        )
+      }
+
+      if (errorMsg.includes('timeout')) {
+        // Timeout is NOT revoked permissions: the strap was likely asleep
+        // or the adapter slow. Keep the saved device and cookie so a
+        // one-touch retry works; only explicit denial (NotFoundError /
+        // SecurityError) touches permissions. Previously this branch
+        // wiped the cookie and blamed revoked permissions, forcing a
+        // full re-pair for a strap that was just slow.
+        logger.warn(
+          { device: device.name },
+          'GATT connection timed out; keeping saved device for retry.'
+        )
+        setStatus(BluetoothConnectionStatus.ERROR)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeout)
+        reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
+        connectedDeviceRef.current = null
+      } else if (isGattDisconnected) {
+        logger.warn(
+          { device: device.name },
+          'Device disconnected during connection. Will attempt auto-reconnect.'
+        )
+        connectedDeviceRef.current = null
+      } else if (!isIntentionalAbort) {
+        connectedDeviceRef.current = null
+      }
+
+      return error
+    },
+    []
+  )
+
   const connectToGatt = useCallback(
     async (
       device: BluetoothDevice,
@@ -581,9 +777,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             // path: instant misses get the quiet-strap schedule below, since
             // hammering gatt.connect() cannot summon an absent device and the
             // extra radio ops risk wedging the adapter (self-inflicted busy).
-            const isBusy =
-              !errorText.includes('no longer in range') &&
-              (errorText.includes('busy') || errorText.includes('NetworkError'))
+            const isBusy = isBusyRadioError(errorText)
             if (isBusy && attempt < FAST_RECONNECT_MAX_ATTEMPTS) {
               logger.warn(
                 { device: device.name, attempt },
@@ -620,7 +814,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (
               retryQuietStrap &&
               quietDelay !== undefined &&
-              /no longer in range|device not found/i.test(errorText) &&
+              isQuietStrapMiss(errorText) &&
               !isManualDisconnect.current &&
               !isUnmountedRef.current &&
               connectionAttemptRef.current === connectAttemptToken
@@ -673,26 +867,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         // Attach disconnect listener immediately after successful GATT connection
         // This ensures we catch disconnections that might occur during service discovery
-        if (activeDisconnectListenerRef.current) {
-          // If we are connecting to a new device, we should remove the listener from the OLD device (connectedDeviceRef.current)
-          // or the current device if it's a reconnect. To be safe, try removing from both if they differ.
-          const oldDevice = connectedDeviceRef.current
-          if (oldDevice) {
-            oldDevice.removeEventListener(
-              'gattserverdisconnected',
-              activeDisconnectListenerRef.current
-            )
-          }
-          // Also try removing from the new device just in case
-          if (device !== oldDevice) {
-            device.removeEventListener(
-              'gattserverdisconnected',
-              activeDisconnectListenerRef.current
-            )
-          }
-        }
-        device.addEventListener('gattserverdisconnected', onDisconnected)
-        activeDisconnectListenerRef.current = onDisconnected
+        swapDisconnectListener(device)
 
         const service = await server!.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
@@ -705,54 +880,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
-          (event: unknown) => {
-            const now = Date.now()
-            if (lastDataTime.current > 0) {
-              const delta = now - lastDataTime.current
-              updateSignalPeriod(delta)
-
-              const isSlow = delta > STABILITY_THRESHOLD_MS
-              const watchdogWindows = Math.floor(
-                lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-              )
-
-              setSignalStatus((s) => {
-                // If the packet arrived and was slow, but the watchdog already counted it,
-                // we don't increment again. If it's fast, we reset the slow counter.
-                let nextSlow = isSlow ? s.slow : 0
-                if (isSlow && watchdogWindows === 0) {
-                  nextSlow = s.slow + 1
-                }
-
-                return {
-                  last: delta,
-                  slow: nextSlow,
-                }
-              })
-
-              // Synchronize watchdog mark with arrival to prevent double-counting
-              // when the watchdog timer next fires.
-              lastWatchdogMark.current = delta
-            }
-
-            const e = event as Event
-            const target = e.target as BluetoothRemoteGATTCharacteristic
-            const value = target.value
-            if (!value) {
-              logger.warn(
-                'Received characteristic value changed event with no value.'
-              )
-              return
-            }
-            const heartRate = parseHeartRate(value)
-            lastDataTime.current = now // Update timestamp for next delta
-            lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
-            logger.debug(
-              { heartRate },
-              'Heart rate data received from Bluetooth'
-            )
-            onHeartRateUpdateRef.current?.(heartRate)
-          }
+          handleHrMeasurement
         )
 
         setStatus(BluetoothConnectionStatus.CONNECTED)
@@ -771,58 +899,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         onConnectRef.current?.()
         return true
       } catch (error) {
-        // Zombie killer (#9154): sever any half-open GATT link so the next
-        // attempt meets a free radio instead of tripping over our own
-        // previous session. Safe when already down; never masks the error.
-        try {
-          device.gatt?.disconnect()
-        } catch {
-          // Link was already down - nothing to sever.
-        }
-        const errorMsg = error instanceof Error ? error.message : String(error)
-        const errorName = error instanceof DOMException ? error.name : 'Error'
-
-        const isIntentionalAbort =
-          errorName === 'AbortError' &&
-          abortControllerRef.current?.signal.aborted
-
-        const isGattDisconnected =
-          errorMsg.includes('GATT Server is disconnected') ||
-          errorMsg.includes('GATT operation failed')
-
-        if (!isIntentionalAbort) {
-          logger.error(
-            { errorName, errorMsg, device: device.name },
-            'GATT Connection failed'
-          )
-        }
-
-        if (errorMsg.includes('timeout')) {
-          // Timeout is NOT revoked permissions: the strap was likely asleep
-          // or the adapter slow. Keep the saved device and cookie so a
-          // one-touch retry works; only explicit denial (NotFoundError /
-          // SecurityError) touches permissions. Previously this branch
-          // wiped the cookie and blamed revoked permissions, forcing a
-          // full re-pair for a strap that was just slow.
-          logger.warn(
-            { device: device.name },
-            'GATT connection timed out; keeping saved device for retry.'
-          )
-          setStatus(BluetoothConnectionStatus.ERROR)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.connectionTimeout)
-          reconnectAttempts.current = BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-          connectedDeviceRef.current = null
-        } else if (isGattDisconnected) {
-          logger.warn(
-            { device: device.name },
-            'Device disconnected during connection. Will attempt auto-reconnect.'
-          )
-          connectedDeviceRef.current = null
-        } else if (!isIntentionalAbort) {
-          connectedDeviceRef.current = null
-        }
-
-        throw error
+        throw handleGattFailure(device, error)
       } finally {
         isConnecting.current = false
         // Clear the settled controller so a later fresh attempt never
@@ -831,12 +908,69 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current = null
       }
     },
-    [onDisconnected, updateSignalPeriod]
+    [swapDisconnectListener, handleHrMeasurement, handleGattFailure]
   )
 
   useEffect(() => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
+
+  /**
+   * Resolves the previously paired device via the saved cookie and
+   * WebBluetooth's getDevices(), or null when none is available (silent
+   * attempts without a saved ID throw to prevent looping). Extracted from
+   * connectAndStream's device-resolution branch.
+   */
+  const findSavedDevice = useCallback(
+    async (silent: boolean): Promise<BluetoothDevice | null> => {
+      setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
+      const savedDeviceId = Cookies.get('hrm_device_id')
+
+      // Abort silent connection if no device ID is found, to prevent looping.
+      if (silent && !savedDeviceId) {
+        logger.warn(
+          { savedDeviceId },
+          'Aborting silent connect: No saved device ID.'
+        )
+        throw new Error('No saved device ID for silent connection.')
+      }
+
+      logger.info(
+        { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
+        'Looking for saved device'
+      )
+      if (savedDeviceId && navigator.bluetooth?.getDevices) {
+        const devices = await navigator.bluetooth.getDevices()
+        logger.info(
+          { count: devices.length, savedDeviceId },
+          'Available devices'
+        )
+        const foundDevice = devices.find((d) => d.id === savedDeviceId)
+
+        if (foundDevice) {
+          logger.info(
+            { device: foundDevice.name },
+            'Found saved device, connecting'
+          )
+          return foundDevice
+        }
+        logger.info(
+          { savedDeviceId },
+          'Saved device not found in available devices'
+        )
+        return null
+      }
+      logger.info(
+        {
+          savedDeviceId,
+          hasGetDevices: !!navigator.bluetooth?.getDevices,
+        },
+        'Cannot get saved device'
+      )
+      return null
+    },
+    []
+  )
 
   /**
    * Scans for a Bluetooth device, connects to it, and starts streaming heart rate data.
@@ -889,51 +1023,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         let device = savedDevice
 
         if (!device) {
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.checkingSavedDevices)
-          const savedDeviceId = Cookies.get('hrm_device_id')
-
-          // Abort silent connection if no device ID is found, to prevent looping.
-          if (silent && !savedDeviceId) {
-            logger.warn(
-              { savedDeviceId },
-              'Aborting silent connect: No saved device ID.'
-            )
-            throw new Error('No saved device ID for silent connection.')
-          }
-
-          logger.info(
-            { savedDeviceId, hasGetDevices: !!navigator.bluetooth?.getDevices },
-            'Looking for saved device'
-          )
-          if (savedDeviceId && navigator.bluetooth?.getDevices) {
-            const devices = await navigator.bluetooth.getDevices()
-            logger.info(
-              { count: devices.length, savedDeviceId },
-              'Available devices'
-            )
-            const foundDevice = devices.find((d) => d.id === savedDeviceId)
-
-            if (foundDevice) {
-              logger.info(
-                { device: foundDevice.name },
-                'Found saved device, connecting'
-              )
-              if (!(await connectToGatt(foundDevice, false, true))) return false
-              return true
-            } else {
-              logger.info(
-                { savedDeviceId },
-                'Saved device not found in available devices'
-              )
-            }
-          } else {
-            logger.info(
-              {
-                savedDeviceId,
-                hasGetDevices: !!navigator.bluetooth?.getDevices,
-              },
-              'Cannot get saved device'
-            )
+          const found = await findSavedDevice(silent)
+          if (found) {
+            if (!(await connectToGatt(found, false, true))) return false
+            return true
           }
         }
 
@@ -956,28 +1049,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
         return false // Silent mode: no device available
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error)
         if (error instanceof DOMException && error.name === 'AbortError') {
           throw error
         }
         if (!silent) {
           handleConnectionError(error)
-        } else {
-          logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
-          // Reset the status to allow for a manual connection attempt.
-          setStatus(BluetoothConnectionStatus.DISCONNECTED)
           throw error
         }
-        if (!silent) {
-          throw error
-        }
-        return false
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        logger.info({ error, errorMsg }, 'Silent auto-connect failed.')
+        // Reset the status to allow for a manual connection attempt.
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        throw error
       }
     },
     [
       connectionStatus,
       savedDevice,
       connectToGatt,
+      findSavedDevice,
       handleConnectionError,
       userName,
       userAge,

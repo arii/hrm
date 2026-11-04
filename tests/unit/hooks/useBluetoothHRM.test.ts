@@ -5,6 +5,8 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, {
   HEARTBEAT_INTERVAL_MS,
   getAutoConnectFailureMessage,
+  isBusyRadioError,
+  isQuietStrapMiss,
 } from '@/hooks/useBluetoothHRM'
 import logger from '@/utils/logger'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
@@ -787,6 +789,30 @@ describe('useBluetoothHRM', () => {
       [new Error('Connection failed'), BLUETOOTH_MESSAGES.autoConnectFailed],
     ])('maps %p to %p', (error, expected) => {
       expect(getAutoConnectFailureMessage(error)).toBe(expected)
+    })
+  })
+
+  describe('retry-loop error classifiers', () => {
+    it.each([
+      ['NetworkError: GATT operation failed', true],
+      ['Failed: GATT busy', true],
+      ['Bluetooth Device is no longer in range.', false],
+      ['busy radio, device no longer in range', false],
+      ['GATT connection timeout', false],
+      ['Connection aborted', false],
+    ])('isBusyRadioError(%p) is %p', (text, expected) => {
+      expect(isBusyRadioError(text)).toBe(expected)
+    })
+
+    it.each([
+      ['Bluetooth Device is no longer in range.', true],
+      ['NetworkError: Device not found', true],
+      ['DEVICE NOT FOUND', true],
+      ['GATT connection timeout', false],
+      ['Failed: GATT busy', false],
+      ['Connection aborted', false],
+    ])('isQuietStrapMiss(%p) is %p', (text, expected) => {
+      expect(isQuietStrapMiss(text)).toBe(expected)
     })
   })
 
