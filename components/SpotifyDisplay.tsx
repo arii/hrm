@@ -245,6 +245,7 @@ const DeviceColumn = ({
         alignItems: 'center',
         justifySelf: 'end',
         gap: 1,
+        minWidth: 0,
       }}
     >
       <VolumeSlider
@@ -362,6 +363,8 @@ const SpotifyDisplay = () => {
           boxShadow: 3,
           width: '100%',
           minHeight: '64px',
+          maxHeight: '96px',
+          overflow: 'hidden',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -413,6 +416,8 @@ const SpotifyDisplay = () => {
         boxShadow: 3,
         width: '100%',
         minHeight: '64px',
+        maxHeight: '120px',
+        overflow: 'hidden',
       }}
     >
       <StatusColumn

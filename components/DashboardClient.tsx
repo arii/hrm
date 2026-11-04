@@ -100,6 +100,9 @@ const DashboardClient = ({
         onClick={handleInteraction}
         sx={{
           py: { xs: 2, sm: 3 },
+          // Reserve space for the fixed footer stack (56px bottom nav +
+          // ~64px Spotify bar) so trailing content never slides under it.
+          paddingBottom: '140px',
           minHeight: '100vh',
         }}
       >
