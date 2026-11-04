@@ -1,7 +1,11 @@
 /** @jest-environment jsdom */
 
 import { jest } from '@jest/globals'
-import TimerDisplay from '@/components/TimerDisplay'
+import TimerDisplay, {
+  resolveTimerPhaseVisual,
+  resolveWsDotColor,
+  type TimerPhasePalette,
+} from '@/components/TimerDisplay'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
@@ -88,6 +92,120 @@ describe('TimerDisplay', () => {
     expect(screen.getByTestId('timer-phase')).toHaveTextContent('GET READY')
     // Prepare phase shows seconds only
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('03')
+  })
+
+  describe('resolveTimerPhaseVisual', () => {
+    const palette: TimerPhasePalette = {
+      warningDark: 'W',
+      infoMain: 'I',
+      errorMain: 'E',
+      successMain: 'S',
+      textSecondary: 'T',
+    }
+
+    it.each([
+      [
+        'PREPARE shows countdown seconds',
+        {
+          mode: 'TABATA',
+          currentPhase: 'PREPARE',
+          timeRemaining: 3,
+          timeElapsed: 0,
+        },
+        { displayTime: '03', phaseColor: 'W', phaseLabel: 'GET READY' },
+      ],
+      [
+        'STOPWATCH shows elapsed MM:SS',
+        {
+          mode: 'STOPWATCH',
+          currentPhase: 'RUNNING',
+          timeRemaining: 0,
+          timeElapsed: 125,
+        },
+        { displayTime: '02:05', phaseColor: 'I', phaseLabel: 'RUNNING' },
+      ],
+      [
+        'TABATA WORK shows remaining MM:SS',
+        {
+          mode: 'TABATA',
+          currentPhase: 'WORK',
+          timeRemaining: 15,
+          timeElapsed: 5,
+        },
+        { displayTime: '00:15', phaseColor: 'E', phaseLabel: 'WORK' },
+      ],
+      [
+        'TABATA REST shows remaining MM:SS',
+        {
+          mode: 'TABATA',
+          currentPhase: 'REST',
+          timeRemaining: 5,
+          timeElapsed: 15,
+        },
+        { displayTime: '00:05', phaseColor: 'S', phaseLabel: 'REST' },
+      ],
+      [
+        'TABATA COOLDOWN shows remaining MM:SS',
+        {
+          mode: 'TABATA',
+          currentPhase: 'COOLDOWN',
+          timeRemaining: 9,
+          timeElapsed: 51,
+        },
+        { displayTime: '00:09', phaseColor: 'I', phaseLabel: 'COOLDOWN' },
+      ],
+      [
+        'IDLE renders ready copy',
+        {
+          mode: 'TABATA',
+          currentPhase: 'IDLE',
+          timeRemaining: 0,
+          timeElapsed: 0,
+        },
+        { displayTime: '00:00', phaseColor: 'T', phaseLabel: 'READY' },
+      ],
+      [
+        'RUNNING outside stopwatch mode falls back to ready',
+        {
+          mode: 'TABATA',
+          currentPhase: 'RUNNING',
+          timeRemaining: 7,
+          timeElapsed: 7,
+        },
+        { displayTime: '00:00', phaseColor: 'T', phaseLabel: 'READY' },
+      ],
+      [
+        'WORK outside tabata mode falls back to ready',
+        {
+          mode: 'STOPWATCH',
+          currentPhase: 'WORK',
+          timeRemaining: 7,
+          timeElapsed: 7,
+        },
+        { displayTime: '00:00', phaseColor: 'T', phaseLabel: 'READY' },
+      ],
+    ])('%s', (_name, input, expected) => {
+      expect(resolveTimerPhaseVisual(input, palette)).toEqual(expected)
+    })
+  })
+
+  describe('resolveWsDotColor', () => {
+    const palette: TimerPhasePalette = {
+      warningDark: 'W',
+      infoMain: 'I',
+      errorMain: 'E',
+      successMain: 'S',
+      textSecondary: 'T',
+    }
+
+    it.each([
+      ['Connected', 'S'],
+      ['Reconnecting...', 'W'],
+      ['Disconnected', 'E'],
+      ['', 'E'],
+    ])('%p resolves to %p', (status, expected) => {
+      expect(resolveWsDotColor(status, palette)).toBe(expected)
+    })
   })
 
   describe('Layout Structure', () => {
