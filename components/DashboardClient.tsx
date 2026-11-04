@@ -55,7 +55,7 @@ const mainGridStyles: SxProps = {
     xs: '1fr',
     lg: '1fr 1fr',
   },
-  gap: 2,
+  gap: 1.5,
   // The timer row never squeezes: the workout section below absorbs all
   // flex (and scrolls internally when its content runs tall).
   flexShrink: 0,
@@ -120,7 +120,7 @@ const DashboardClient = ({
         maxWidth="xl"
         onClick={handleInteraction}
         sx={{
-          py: { xs: 2, sm: 3 },
+          py: { xs: 1, sm: 2 },
           // Reserve space for the fixed footer stack (bottom nav + Spotify
           // bar + gap) so trailing content never slides under it.
           paddingBottom: 'calc(3.5rem + 3rem + 1.25rem)',
@@ -140,7 +140,7 @@ const DashboardClient = ({
         <Box
           sx={{
             width: '100%',
-            mt: 2,
+            mt: 1.5,
             flex: 1,
             minHeight: 0,
             overflowY: 'auto',

@@ -19,6 +19,7 @@ const IdentityTier = ({ name }: { name: string }) => (
       variant="h4"
       sx={{
         fontWeight: 900,
+        fontSize: '1.5rem',
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -46,9 +47,9 @@ const HeroTier = ({ percentage }: { percentage: number }) => (
       component="div"
       sx={{
         fontSize: {
-          xs: 'clamp(3rem, 10vw, 4rem)',
-          sm: 'clamp(4rem, 12vw, 5rem)',
-          md: 'clamp(5rem, 15vw, 6rem)',
+          xs: 'clamp(2.25rem, 10vw, 3rem)',
+          sm: 'clamp(3rem, 12vw, 3.75rem)',
+          md: 'clamp(3.75rem, 15vw, 4.5rem)',
         },
         fontWeight: 900,
         lineHeight: 1,
@@ -69,12 +70,16 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+  <Typography
+    data-testid={testId}
+    variant="h4"
+    sx={{ fontWeight: 800, fontSize: '1.5rem' }}
+  >
     {value}{' '}
     <Typography
       component="span"
       variant="caption"
-      sx={{ fontSize: '1.2rem', fontWeight: 700, opacity: 0.9 }}
+      sx={{ fontSize: '1rem', fontWeight: 700, opacity: 0.9 }}
     >
       {label}
     </Typography>
@@ -208,7 +213,7 @@ const HrTile = ({
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            p: 2,
+            p: 1.5,
           }}
         >
           {showName && <IdentityTier name={name} />}
@@ -240,7 +245,7 @@ const HrTile = ({
           </Box>
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: 'common.black', py: 1, textAlign: 'center' }}>
           <Typography
             variant="h6"
             sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}

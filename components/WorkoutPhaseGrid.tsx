@@ -62,7 +62,7 @@ export default function WorkoutPhaseGrid({
           display="flex"
           justifyContent="center"
           alignItems="center"
-          sx={{ minHeight: 200 }}
+          sx={{ minHeight: '12.5rem' }}
         >
           <CircularProgress size={32} />
         </Box>
@@ -102,12 +102,12 @@ export default function WorkoutPhaseGrid({
               elevation={2}
               sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             >
-              <CardContent sx={{ p: 3, flexGrow: 1 }}>
+              <CardContent sx={{ p: 2, flexGrow: 1 }}>
                 <Typography
                   component="h3"
                   sx={{
                     fontWeight: 700,
-                    fontSize: 'clamp(1.5rem, 1.25rem + 2vw, 2.25rem)',
+                    fontSize: 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                     lineHeight: 1.15,
                     textAlign: 'center',
                   }}
@@ -116,13 +116,14 @@ export default function WorkoutPhaseGrid({
                 </Typography>
                 {exercises.length > 0 && (
                   <>
-                    <Divider sx={{ my: 2 }} />
-                    <Stack spacing={1.5}>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Stack spacing={1}>
                       {exercises.map((exercise, i) => (
                         <Typography
                           key={i}
                           sx={{
-                            fontSize: 'clamp(1.25rem, 1rem + 1.75vw, 1.75rem)',
+                            fontSize:
+                              'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
                             lineHeight: 1.25,
                           }}
                         >
