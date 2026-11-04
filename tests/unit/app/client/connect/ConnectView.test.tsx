@@ -72,50 +72,16 @@ describe('ConnectView', () => {
     expect(resetButton).toBeInTheDocument()
   })
 
-  it('renders the reset button as enabled when stuck on an error', () => {
-    render(<ConnectView {...mockProps} deviceStatus="Failed: timeout" />)
+  it('renders the reset button as enabled by default', () => {
+    render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
     })
     expect(resetButton).toBeEnabled()
   })
 
-  it('hides the reset button while idle and while connecting', () => {
-    const { rerender } = render(<ConnectView {...mockProps} />)
-    expect(
-      screen.queryByRole('button', { name: /Reset Permissions & Settings/i })
-    ).not.toBeInTheDocument()
-
-    rerender(<ConnectView {...mockProps} deviceStatus="Connecting..." />)
-    expect(
-      screen.queryByRole('button', { name: /Reset Permissions & Settings/i })
-    ).not.toBeInTheDocument()
-
-    rerender(
-      <ConnectView
-        {...mockProps}
-        deviceStatus="Waiting for Test HRM to wake up..."
-      />
-    )
-    expect(
-      screen.queryByRole('button', { name: /Reset Permissions & Settings/i })
-    ).not.toBeInTheDocument()
-  })
-
-  it('shows the reset button once waiting escalates to guidance', () => {
-    render(
-      <ConnectView
-        {...mockProps}
-        deviceStatus="Still waiting for Test HRM. Tap Connect to re-select it."
-      />
-    )
-    expect(
-      screen.getByRole('button', { name: /Reset Permissions & Settings/i })
-    ).toBeInTheDocument()
-  })
-
   it('calls onForgetDevice and onReset when the reset button is clicked', async () => {
-    render(<ConnectView {...mockProps} deviceStatus="Failed: timeout" />)
+    render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {
       name: /Reset Permissions & Settings/i,
     })
@@ -361,7 +327,6 @@ describe('resolveConnectViewState', () => {
       isConnecting: false,
       hasProfile: true,
       showStatusCaption: true,
-      showReset: false,
       banner: null,
     })
   })
@@ -388,7 +353,6 @@ describe('resolveConnectViewState', () => {
       isConnecting: false,
       hasProfile: true,
       showStatusCaption: false,
-      showReset: false,
       banner: {
         severity: 'success',
         text: 'Connected! Heart rate data is being streamed.',
@@ -433,35 +397,5 @@ describe('resolveConnectViewState', () => {
     expect(
       resolveConnectViewState({ ...base, deviceStatus }).isConnecting
     ).toBe(expected)
-  })
-
-  it.each([
-    ['Failed: timeout', true],
-    ['Still waiting for Test HRM. Tap Connect to re-select it.', true],
-    [
-      "Test HRM is nearby but won't connect. It may be used by another app.",
-      true,
-    ],
-    ['Waiting for Test HRM to wake up...', false],
-    ['Strap missed. Reconnecting... (Attempt 3/8)', false],
-    ['Connecting...', false],
-    ['Connection failed. Device might be too far.', false],
-    ['Disconnected', false],
-    ['', false],
-  ])('resolves showReset=%s for %p', (deviceStatus, expected) => {
-    expect(resolveConnectViewState({ ...base, deviceStatus }).showReset).toBe(
-      expected
-    )
-  })
-
-  it('hides reset while connected even with a stale failure text', () => {
-    expect(
-      resolveConnectViewState({
-        ...base,
-        isConnected: true,
-        bluetoothConnected: true,
-        deviceStatus: 'Failed: timeout',
-      }).showReset
-    ).toBe(false)
   })
 })
