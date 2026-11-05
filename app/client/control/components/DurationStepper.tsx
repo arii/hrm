@@ -83,6 +83,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
           </span>
         </Tooltip>
         <Typography
+          role="status"
           sx={{
             color,
             fontWeight: 'bold',

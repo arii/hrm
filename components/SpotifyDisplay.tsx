@@ -34,6 +34,7 @@ import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
 interface StatusColumnProps {
@@ -60,7 +61,7 @@ const StatusColumn = ({
       alignItems: 'center',
       justifySelf: 'start',
       gap: 2,
-      minHeight: '32px',
+      minHeight: '2rem',
       minWidth: 0,
     }}
   >
@@ -245,6 +246,7 @@ const DeviceColumn = ({
         alignItems: 'center',
         justifySelf: 'end',
         gap: 1,
+        minWidth: 0,
       }}
     >
       <VolumeSlider
@@ -292,6 +294,9 @@ const DeviceColumn = ({
 }
 
 const SpotifyDisplay = () => {
+  // Scaled mode pins the target-composition (sm-breakpoint) padding so
+  // the canvas never reflips with the real window size.
+  const isScaledLayout = useIsScaledLayout()
   const { isLoggedIn } = useSpotifyAuth()
   const spotifyData = useSpotifyData()
   const { connectionStatus } = useWebSocketConnection()
@@ -349,19 +354,21 @@ const SpotifyDisplay = () => {
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
-          py: 1.5,
+          py: 0,
           borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'fixed',
-          bottom: 56,
+          bottom: '3.5rem',
           left: 0,
           right: 0,
           zIndex: 1100,
           boxShadow: 3,
           width: '100%',
-          minHeight: '64px',
+          minHeight: '3rem',
+          maxHeight: '6rem',
+          overflow: 'hidden',
         }}
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
@@ -399,20 +406,22 @@ const SpotifyDisplay = () => {
       sx={{
         backgroundColor: 'grey.900',
         color: 'common.white',
-        px: { xs: 2, sm: 3 },
-        py: 1.5,
+        px: isScaledLayout ? 3 : { xs: 2, sm: 3 },
+        py: 0,
         borderRadius: 2,
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         position: 'fixed',
-        bottom: 56,
+        bottom: '3.5rem',
         left: 0,
         right: 0,
         zIndex: 1100,
         boxShadow: 3,
         width: '100%',
-        minHeight: '64px',
+        minHeight: '3rem',
+        maxHeight: '6rem',
+        overflow: 'hidden',
       }}
     >
       <StatusColumn

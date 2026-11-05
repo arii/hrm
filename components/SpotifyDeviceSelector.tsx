@@ -40,6 +40,10 @@ const SpotifyDeviceSelector = ({
         anchorEl={deviceMenuAnchor}
         open={deviceMenuOpen}
         onClose={onMenuClose}
+        // No scroll lock: locking adds body padding for the vanished
+        // scrollbar, visibly shoving the cards sideways while the fixed
+        // footer stays put. A transient dropdown needs no lock.
+        disableScrollLock
         anchorOrigin={{
           vertical: 'top',
           horizontal: 'right',

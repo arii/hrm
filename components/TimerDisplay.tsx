@@ -10,6 +10,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import SideLabel from './SideLabel'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import type { TimerMode, TimerPhase } from '@/types/core'
@@ -113,6 +114,9 @@ const TimerDisplay = () => {
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
+  // Scaled mode pins the target-composition (md-breakpoint) sizes so
+  // the canvas never reflips with the real window size.
+  const isScaledLayout = useIsScaledLayout()
   const {
     currentPhase,
     timeRemaining,
@@ -147,7 +151,9 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         // Ensure the card fills the grid cell height
         height: '100%',
-        minHeight: { xs: 200, sm: 250, md: 300 },
+        minHeight: isScaledLayout
+          ? '16rem'
+          : { xs: '8.5rem', sm: '10.5rem', md: '12.5rem' },
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
@@ -209,11 +215,34 @@ const TimerDisplay = () => {
           />
         )}
       </Box>
+      {/* Right Column: Tabata Durations. Vertical rail keeps the
+          durations out of the digits' vertical budget. */}
+      <Box
+        data-testid="timer-work-rest-badge"
+        sx={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: SIDE_COLUMN_WIDTH,
+        }}
+      >
+        {mode === 'TABATA' && (
+          <SideLabel
+            text={`WORK:${workDuration}s REST:${restDuration}s`}
+            ariaLabel={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
+            rotation="right"
+          />
+        )}
+      </Box>
       <CardContent
         sx={{
           position: 'relative',
           width: '100%',
-          py: { xs: 2, md: 3 },
+          py: isScaledLayout ? 1.5 : { xs: 1, md: 1.5 },
           px: SIDE_COLUMN_WIDTH,
           textAlign: 'center',
           display: 'flex',
@@ -230,7 +259,7 @@ const TimerDisplay = () => {
             variant="h6"
             aria-live="polite"
             sx={{
-              mb: 1,
+              mb: 0.5,
               color: phaseColor,
               fontWeight: 700,
               letterSpacing: 2,
@@ -249,7 +278,9 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
-            fontSize: { xs: '7rem', sm: '10rem', md: '14rem' },
+            fontSize: isScaledLayout
+              ? '13rem'
+              : { xs: '5rem', sm: '7rem', md: '9.5rem' },
             fontWeight: 900,
             lineHeight: 1,
             textAlign: 'center',
@@ -261,29 +292,6 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
-
-        {/* WORK/REST badge: horizontal pill replacing the rotated rail */}
-        {mode === 'TABATA' && (
-          <Box
-            data-testid="timer-work-rest-badge"
-            aria-label={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
-            sx={{
-              mt: 2,
-              px: 2.5,
-              py: 0.75,
-              borderRadius: 999,
-              border: `1px solid ${theme.palette.grey[800]}`,
-              backgroundColor: theme.palette.grey[900],
-              color: theme.palette.common.white,
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {`WORK:${workDuration}s REST:${restDuration}s`}
-          </Box>
-        )}
       </CardContent>
     </Card>
   )

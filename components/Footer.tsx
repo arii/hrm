@@ -2,6 +2,7 @@
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { FOOTER_HEIGHT_PX } from '@/constants/layout'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -12,9 +13,9 @@ export default function Footer() {
       data-testid="footer"
       sx={{
         mt: 'auto',
-        height: 54,
-        minHeight: 54,
-        maxHeight: 54,
+        height: FOOTER_HEIGHT_PX,
+        minHeight: FOOTER_HEIGHT_PX,
+        maxHeight: FOOTER_HEIGHT_PX,
         p: 0,
         m: 0,
         flexShrink: 0,

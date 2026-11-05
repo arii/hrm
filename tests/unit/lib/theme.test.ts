@@ -58,4 +58,22 @@ describe('Phase 1 theme foundation', () => {
     }).filter((entry) => entry.ratio < 3.0)
     expect(failures).toEqual([])
   })
+
+  it('enforces 48px touch targets on buttons and icon buttons', () => {
+    const buttonRoot = theme.components?.MuiButton
+      ?.styleOverrides as unknown as {
+      root: { minHeight: number }
+    }
+    expect(buttonRoot.root.minHeight).toBe(48)
+    const iconButtonRoot = theme.components?.MuiIconButton
+      ?.styleOverrides as unknown as { root: { width: number; height: number } }
+    expect(iconButtonRoot.root.width).toBe(48)
+    expect(iconButtonRoot.root.height).toBe(48)
+  })
+
+  it('pins the bottom nav height in rem for the footer-stack math', () => {
+    const navRoot = theme.components?.MuiBottomNavigation
+      ?.styleOverrides as unknown as { root: { height: string } }
+    expect(navRoot.root.height).toBe('3.5rem')
+  })
 })

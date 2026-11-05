@@ -25,6 +25,8 @@ interface GoogleDocViewerProps {
   onToggleShrink?: () => void // New callback prop
   refreshKey?: number
   onRefresh?: () => void
+  /** Fill the parent height instead of a fixed pixel height. */
+  flexFill?: boolean
 }
 
 const InvalidUrlPlaceholder = ({
@@ -56,10 +58,13 @@ const GoogleDocViewer = ({
   onToggleShrink,
   refreshKey,
   onRefresh,
+  flexFill = false,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
+  // An explicit collapse always wins over fill-parent.
+  const fillParent = flexFill && !isShrunk
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
@@ -88,12 +93,34 @@ const GoogleDocViewer = ({
   }
 
   return (
-    <Card elevation={6} sx={{ position: 'relative' }}>
-      <CardContent sx={{ p: 1 }}>
+    <Card
+      elevation={6}
+      sx={{
+        position: 'relative',
+        ...(fillParent
+          ? { height: '100%', display: 'flex', flexDirection: 'column' }
+          : {}),
+      }}
+    >
+      <CardContent
+        sx={{
+          p: 1,
+          ...(fillParent
+            ? {
+                flex: 1,
+                minHeight: 0,
+                display: 'flex',
+                flexDirection: 'column',
+              }
+            : {}),
+        }}
+      >
         <Box
           sx={{
             width: '100%',
-            height: `${dynamicHeight}px`,
+            height: fillParent ? undefined : `${dynamicHeight}px`,
+            flex: fillParent ? 1 : undefined,
+            minHeight: fillParent ? 0 : undefined,
             overflow: 'hidden',
             borderRadius: 1,
             border: '1px solid',

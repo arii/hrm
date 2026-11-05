@@ -102,13 +102,22 @@ export async function takeScreenshot(
  * Assert that a component maintains fixed dimensions within a tolerance range.
  * Use this to prevent layout regressions where components grow unexpectedly.
  */
+// Chromium's default root font size; the app sets no other html font-size,
+// so rem constraints resolve against this.
+const REM_IN_PX = 16
+
+type CssLength = number | `${number}rem`
+
+const toPx = (value: CssLength): number =>
+  typeof value === 'string' ? parseFloat(value) * REM_IN_PX : value
+
 export async function assertFixedDimensions(
   locator: Locator,
   constraints: {
-    minHeight?: number
-    maxHeight?: number
-    minWidth?: number
-    maxWidth?: number
+    minHeight?: CssLength
+    maxHeight?: CssLength
+    minWidth?: CssLength
+    maxWidth?: CssLength
   }
 ) {
   await locator.waitFor({ state: 'visible', timeout: 5000 })
@@ -119,16 +128,16 @@ export async function assertFixedDimensions(
   }
 
   if (constraints.minHeight !== undefined) {
-    expect(bbox.height).toBeGreaterThanOrEqual(constraints.minHeight)
+    expect(bbox.height).toBeGreaterThanOrEqual(toPx(constraints.minHeight))
   }
   if (constraints.maxHeight !== undefined) {
-    expect(bbox.height).toBeLessThanOrEqual(constraints.maxHeight)
+    expect(bbox.height).toBeLessThanOrEqual(toPx(constraints.maxHeight))
   }
   if (constraints.minWidth !== undefined) {
-    expect(bbox.width).toBeGreaterThanOrEqual(constraints.minWidth)
+    expect(bbox.width).toBeGreaterThanOrEqual(toPx(constraints.minWidth))
   }
   if (constraints.maxWidth !== undefined) {
-    expect(bbox.width).toBeLessThanOrEqual(constraints.maxWidth)
+    expect(bbox.width).toBeLessThanOrEqual(toPx(constraints.maxWidth))
   }
 }
 

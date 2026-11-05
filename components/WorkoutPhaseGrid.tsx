@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import { withBasePath } from '@/utils/urls'
 
 interface WorkoutPhaseGridProps {
@@ -30,6 +31,9 @@ export default function WorkoutPhaseGrid({
   const [data, setData] = useState<WorkoutTableDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Scaled mode: larger fixed text (readable from afar) and cards
+  // stretched to fill the canvas area.
+  const isScaledLayout = useIsScaledLayout()
 
   useEffect(() => {
     if (!docId) {
@@ -62,7 +66,7 @@ export default function WorkoutPhaseGrid({
           display="flex"
           justifyContent="center"
           alignItems="center"
-          sx={{ minHeight: 200 }}
+          sx={{ minHeight: '12.5rem' }}
         >
           <CircularProgress size={32} />
         </Box>
@@ -92,6 +96,7 @@ export default function WorkoutPhaseGrid({
           // halves, 4 share quarters) instead of orphaning a wrapped card.
           gridTemplateColumns:
             'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+          height: isScaledLayout ? '100%' : undefined,
         }}
       >
         {data.headers.map((header, index) => {
@@ -102,12 +107,14 @@ export default function WorkoutPhaseGrid({
               elevation={2}
               sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             >
-              <CardContent sx={{ p: 3, flexGrow: 1 }}>
+              <CardContent sx={{ p: 2, flexGrow: 1 }}>
                 <Typography
                   component="h3"
                   sx={{
                     fontWeight: 700,
-                    fontSize: 'clamp(1.5rem, 1.25rem + 2vw, 2.25rem)',
+                    fontSize: isScaledLayout
+                      ? '2.75rem'
+                      : 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                     lineHeight: 1.15,
                     textAlign: 'center',
                   }}
@@ -116,13 +123,15 @@ export default function WorkoutPhaseGrid({
                 </Typography>
                 {exercises.length > 0 && (
                   <>
-                    <Divider sx={{ my: 2 }} />
-                    <Stack spacing={1.5}>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Stack spacing={1}>
                       {exercises.map((exercise, i) => (
                         <Typography
                           key={i}
                           sx={{
-                            fontSize: 'clamp(1.25rem, 1rem + 1.75vw, 1.75rem)',
+                            fontSize: isScaledLayout
+                              ? '2rem'
+                              : 'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
                             lineHeight: 1.25,
                           }}
                         >
@@ -141,15 +150,19 @@ export default function WorkoutPhaseGrid({
   }
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box
+      sx={{ position: 'relative', height: isScaledLayout ? '100%' : undefined }}
+    >
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
           aria-label="refresh workout table"
           sx={(theme) => ({
             position: 'absolute',
-            top: -8,
-            right: -8,
+            // Docked inside the corner: hanging off the edge (-8)
+            // overflows the scroller and forces a horizontal scrollbar.
+            top: 0,
+            right: 0,
             zIndex: 10,
             width: 48,
             height: 48,

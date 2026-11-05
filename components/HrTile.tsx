@@ -9,6 +9,7 @@ import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import { HrTileProps } from '@/types'
 import { HR_TILE_MIN_HEIGHT, HERO_FONT_FAMILY } from '@/constants/layout'
 
@@ -19,6 +20,7 @@ const IdentityTier = ({ name }: { name: string }) => (
       variant="h4"
       sx={{
         fontWeight: 900,
+        fontSize: '1.5rem',
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -31,34 +33,42 @@ const IdentityTier = ({ name }: { name: string }) => (
   </Box>
 )
 
-const HeroTier = ({ percentage }: { percentage: number }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 0,
-    }}
-  >
-    <Typography
-      data-testid="bpm-percent"
-      variant="h2"
-      component="div"
+const HeroTier = ({ percentage }: { percentage: number }) => {
+  // Scaled mode pins the target-composition (md-breakpoint) size so
+  // the canvas never reflips with the real window size. At scaled
+  // viewports (600px+) the vw term always saturates at the max.
+  const isScaledLayout = useIsScaledLayout()
+  return (
+    <Box
       sx={{
-        fontSize: {
-          xs: 'clamp(3rem, 10vw, 4rem)',
-          sm: 'clamp(4rem, 12vw, 5rem)',
-          md: 'clamp(5rem, 15vw, 6rem)',
-        },
-        fontWeight: 900,
-        lineHeight: 1,
-        fontFamily: HERO_FONT_FAMILY,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: 0,
       }}
     >
-      {percentage}%
-    </Typography>
-  </Box>
-)
+      <Typography
+        data-testid="bpm-percent"
+        variant="h2"
+        component="div"
+        sx={{
+          fontSize: isScaledLayout
+            ? 'clamp(3.75rem, 15vw, 6rem)'
+            : {
+                xs: 'clamp(2.25rem, 10vw, 3rem)',
+                sm: 'clamp(3rem, 12vw, 3.75rem)',
+                md: 'clamp(3.75rem, 15vw, 4.5rem)',
+              },
+          fontWeight: 900,
+          lineHeight: 1,
+          fontFamily: HERO_FONT_FAMILY,
+        }}
+      >
+        {percentage}%
+      </Typography>
+    </Box>
+  )
+}
 
 const MetricItem = ({
   value,
@@ -69,12 +79,16 @@ const MetricItem = ({
   label: string
   testId?: string
 }) => (
-  <Typography data-testid={testId} variant="h4" sx={{ fontWeight: 800 }}>
+  <Typography
+    data-testid={testId}
+    variant="h4"
+    sx={{ fontWeight: 800, fontSize: '1.5rem' }}
+  >
     {value}{' '}
     <Typography
       component="span"
       variant="caption"
-      sx={{ fontSize: '1.2rem', fontWeight: 700, opacity: 0.9 }}
+      sx={{ fontSize: '1rem', fontWeight: 700, opacity: 0.9 }}
     >
       {label}
     </Typography>
@@ -203,22 +217,44 @@ const HrTile = ({
         )}
 
         <Box
-          aria-live="polite"
-          aria-atomic="true"
           sx={{
             flexGrow: 1,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            p: 2,
+            p: 1.5,
           }}
         >
           {showName && <IdentityTier name={name} />}
-          <HeroTier percentage={percentage} />
-          <DataTier value={value} calories={calories} showName={showName} />
+          {/* Ticking digits are visual-only: a live region here would
+              announce every 1Hz update. Zone transitions go to the
+              dedicated announcer below, whose text only changes on
+              transition. */}
+          <Box data-testid="hr-tile-data" aria-hidden="true">
+            <HeroTier percentage={percentage} />
+            <DataTier value={value} calories={calories} showName={showName} />
+          </Box>
+          <Box
+            data-testid="hr-tile-announcer"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              padding: 0,
+              margin: '-1px',
+              overflow: 'hidden',
+              clip: 'rect(0, 0, 0, 0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            {`Zone ${zoneConfig.zoneNumber}: ${zoneConfig.label}`}
+          </Box>
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 2, textAlign: 'center' }}>
+        <Box sx={{ bgcolor: 'common.black', py: 1, textAlign: 'center' }}>
           <Typography
             variant="h6"
             sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}

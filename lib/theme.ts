@@ -346,6 +346,16 @@ const theme = createTheme({
         }),
       },
     },
+    MuiBottomNavigation: {
+      styleOverrides: {
+        root: {
+          // Pinned in rem (not MUI's 56px default) so the fixed footer
+          // stack math (Spotify bar offset, dashboard reserve) scales
+          // with the root font size.
+          height: '3.5rem',
+        },
+      },
+    },
   },
 
   // Breakpoints for responsive design

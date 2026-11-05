@@ -9,6 +9,7 @@ import {
   useWebSocketConnection,
 } from '@/context/WebSocketContext'
 import HrTile from '@/components/HrTile'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import { augmentHrmData } from '@/utils/hrm'
 import { ClientHrmData } from '@/types/websocket'
 
@@ -16,6 +17,9 @@ const HrmConnectionPanel = () => {
   const hrmData = useHrmData()
   const activeAlerts = useActiveAlerts()
   const { connectionStatus } = useWebSocketConnection()
+  // Scaled mode pins the target-composition (sm-breakpoint) tile width
+  // so the canvas never reflips with the real window size.
+  const isScaledLayout = useIsScaledLayout()
   const tileData = useMemo(() => {
     return augmentHrmData(hrmData, activeAlerts)
   }, [hrmData, activeAlerts])
@@ -72,10 +76,19 @@ const HrmConnectionPanel = () => {
             borderRadius: 2,
           }}
         >
-          <Typography variant="h6" gutterBottom>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontSize: isScaledLayout ? '2.5rem' : undefined }}
+          >
             No Heart Rate Data
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center">
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            align="center"
+            sx={{ fontSize: isScaledLayout ? '1.75rem' : undefined }}
+          >
             Heart rate data will be displayed here once a monitor is connected
             and streaming.
           </Typography>
@@ -93,10 +106,12 @@ const HrmConnectionPanel = () => {
               key={user.clientId}
               data-testid="hr-tile-grid-item"
               sx={{
-                width: {
-                  xs: '100%',
-                  sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-                },
+                width: isScaledLayout
+                  ? 'calc(50% - 8px)' // Adjusted for 16px gap (gap: 2)
+                  : {
+                      xs: '100%',
+                      sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+                    },
               }}
             >
               <HrTile {...tileProps} />
