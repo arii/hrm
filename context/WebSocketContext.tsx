@@ -85,15 +85,25 @@ export const useWebSocketConnection = (): WebSocketConnectionValue =>
 export const WebSocketProvider = ({
   children,
   serverUrl,
+  clientId: explicitClientId,
 }: {
   children: ReactNode
   serverUrl?: string
+  clientId?: string
 }) => {
   const [clientId] = useState(() => {
+    if (explicitClientId) {
+      return explicitClientId
+    }
     if (typeof window === 'undefined') {
       return null
     }
     try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const queryClientId = urlParams.get('clientId')
+      if (queryClientId) {
+        return queryClientId
+      }
       let id = localStorage.getItem('clientId')
       if (!id) {
         id = generateClientId()

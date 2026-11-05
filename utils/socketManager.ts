@@ -162,18 +162,7 @@ const initSocketManager = (
     logger.info(logMeta, 'WebSocket client connected')
 
     if (!hrmSessionManager.findById(clientId)) {
-      // Initialize new client
-      const newClient: HrmStreamData = {
-        clientId: extWs.clientId,
-        value: 0,
-        maxHr: 185,
-        age: 30,
-        calories: 0,
-        updatedAt: Date.now(),
-        // Add default name in test env to satisfy server-side filter in existing tests
-        ...(process.env.NODE_ENV === 'test' ? { name: 'Test Athlete' } : {}),
-      }
-      hrmSessionManager.save(newClient)
+      // Initialize new client session state (without creating a premature athlete entry)
       clientSessionState.set(extWs.clientId, {
         lastUpdate: Date.now(),
         accumulatedCalories: 0,
@@ -283,10 +272,18 @@ const handleHrmMetadataUpdate: IncomingMessageHandler = (
   message,
   clientId
 ) => {
-  const existingData = hrmSessionManager.findById(clientId)
+  const metadataMsg = message as HrmMetadataUpdateMessage
+  const targetClientId = metadataMsg.data.clientId || clientId
+  // Clean up old socket connection's default session if this socket previously registered under another ID
+  if (clientId !== targetClientId && hrmSessionManager.findById(clientId)) {
+    hrmSessionManager.deleteById(clientId)
+    clientSessionState.delete(clientId)
+  }
+
+  const existingData = hrmSessionManager.findById(targetClientId)
   if (existingData) {
     const updateData: Partial<HrmStreamData> = objectFromNonNullishEntries(
-      Object.entries((message as HrmMetadataUpdateMessage).data)
+      Object.entries(metadataMsg.data)
     )
 
     if (!isGenericName(existingData.name) && isGenericName(updateData.name)) {
@@ -296,14 +293,31 @@ const handleHrmMetadataUpdate: IncomingMessageHandler = (
     hrmSessionManager.save({
       ...existingData,
       ...updateData,
+      clientId: targetClientId,
       updatedAt: Date.now(),
+    })
+  } else {
+    // If metadata arrives before initial HR stream for a custom deviceId
+    const newClient: HrmStreamData = {
+      clientId: targetClientId,
+      value: 0,
+      maxHr: metadataMsg.data.maxHr ?? 185,
+      name: metadataMsg.data.name,
+      age: metadataMsg.data.age ?? 30,
+      calories: 0,
+      updatedAt: Date.now(),
+    }
+    hrmSessionManager.save(newClient)
+    clientSessionState.set(targetClientId, {
+      lastUpdate: Date.now(),
+      accumulatedCalories: 0,
     })
   }
   broadcastState()
 }
 
 const ensureInputSession = (
-  ws: Parameters<IncomingMessageHandler>[0],
+  _ws: Parameters<IncomingMessageHandler>[0],
   clientId: string
 ) => {
   let existingData = hrmSessionManager.findById(clientId)
@@ -315,16 +329,15 @@ const ensureInputSession = (
       'Recreating orphaned session on incoming HRM_INPUT.'
     )
     const newClient: HrmStreamData = {
-      clientId: ws.clientId,
+      clientId: clientId,
       value: 0,
       maxHr: 185,
       age: 30,
       calories: 0,
       updatedAt: Date.now(),
-      ...(process.env.NODE_ENV === 'test' ? { name: 'Test Athlete' } : {}),
     }
     hrmSessionManager.save(newClient)
-    clientSessionState.set(ws.clientId, {
+    clientSessionState.set(clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
     })
@@ -365,38 +378,61 @@ const resolveClientCalories = (
 
 const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
   const hrmMessage = message as HrmInputMessage
-  const { existingData, inputSessionState } = ensureInputSession(ws, clientId)
+  const targetClientId = hrmMessage.data.clientId || clientId
+  if (clientId !== targetClientId && hrmSessionManager.findById(clientId)) {
+    hrmSessionManager.deleteById(clientId)
+    clientSessionState.delete(clientId)
+  }
+  const { existingData, inputSessionState } = ensureInputSession(
+    ws,
+    targetClientId
+  )
 
   if (existingData && inputSessionState) {
     const now = Date.now()
     inputSessionState.lastUpdate = now
-    let finalCalories = inputSessionState.accumulatedCalories
 
-    // Use the client-provided calories directly
-    if (typeof hrmMessage.data.calories === 'number') {
-      finalCalories = resolveClientCalories(
-        hrmMessage.data.calories,
-        inputSessionState.accumulatedCalories,
-        clientId
+    // If client sends value: null, it indicates the device stopped streaming or disconnected
+    if (hrmMessage.data.value === null) {
+      hrmSessionManager.deleteById(targetClientId)
+      clientSessionState.delete(targetClientId)
+      broadcast(
+        wsServerInstance,
+        {
+          type: 'DEVICE_OFFLINE',
+          payload: { deviceId: targetClientId },
+        },
+        'socketManager.handleHrmInput.stopped'
       )
-      inputSessionState.accumulatedCalories = finalCalories
-    }
+    } else {
+      let finalCalories = inputSessionState.accumulatedCalories
 
-    // Update the manager with the latest data
-    hrmSessionManager.save({
-      ...existingData,
-      name: hrmMessage.data.name ?? existingData.name,
-      age: hrmMessage.data.age ?? existingData.age,
-      maxHr: hrmMessage.data.maxHr ?? existingData.maxHr,
-      value: hrmMessage.data.value ?? existingData.value,
-      calories: roundTo(finalCalories, 4),
-      percentage:
-        hrmMessage.data.percentage !== undefined
-          ? roundTo(hrmMessage.data.percentage, 4)
-          : undefined,
-      zone: hrmMessage.data.zone,
-      updatedAt: now,
-    })
+      // Use the client-provided calories directly
+      if (typeof hrmMessage.data.calories === 'number') {
+        finalCalories = resolveClientCalories(
+          hrmMessage.data.calories,
+          inputSessionState.accumulatedCalories,
+          targetClientId
+        )
+        inputSessionState.accumulatedCalories = finalCalories
+      }
+
+      // Update the manager with the latest data
+      hrmSessionManager.save({
+        ...existingData,
+        name: hrmMessage.data.name ?? existingData.name,
+        age: hrmMessage.data.age ?? existingData.age,
+        maxHr: hrmMessage.data.maxHr ?? existingData.maxHr,
+        value: hrmMessage.data.value ?? existingData.value,
+        calories: roundTo(finalCalories, 4),
+        percentage:
+          hrmMessage.data.percentage !== undefined
+            ? roundTo(hrmMessage.data.percentage, 4)
+            : undefined,
+        zone: hrmMessage.data.zone,
+        updatedAt: now,
+      })
+    }
   }
   broadcastState()
 }

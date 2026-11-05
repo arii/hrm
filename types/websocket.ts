@@ -111,6 +111,7 @@ export type ServerMessage = (
  * cases where the client has not yet calculated a value.
  */
 export interface IncomingHrmData {
+  clientId?: string
   value: number | null
   maxHr?: number
   name?: string
@@ -127,7 +128,7 @@ export interface HrmInputMessage {
 
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
-  'clientId' | 'value' | 'calories'
+  'value' | 'calories'
 > & {
   weight?: number
   height?: number
@@ -201,6 +202,7 @@ import { z } from 'zod'
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 const IncomingHrmDataSchema = z.object({
+  clientId: z.string().optional(),
   value: z.number().nullable(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
@@ -211,6 +213,7 @@ const IncomingHrmDataSchema = z.object({
 })
 
 const HrmMetadataUpdateDataSchema = z.object({
+  clientId: z.string().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
