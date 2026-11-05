@@ -34,6 +34,7 @@ import { signOut } from 'next-auth/react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
 
 interface StatusColumnProps {
@@ -293,6 +294,9 @@ const DeviceColumn = ({
 }
 
 const SpotifyDisplay = () => {
+  // Scaled mode pins the target-composition (sm-breakpoint) padding so
+  // the canvas never reflips with the real window size.
+  const isScaledLayout = useIsScaledLayout()
   const { isLoggedIn } = useSpotifyAuth()
   const spotifyData = useSpotifyData()
   const { connectionStatus } = useWebSocketConnection()
@@ -402,7 +406,7 @@ const SpotifyDisplay = () => {
       sx={{
         backgroundColor: 'grey.900',
         color: 'common.white',
-        px: { xs: 2, sm: 3 },
+        px: isScaledLayout ? 3 : { xs: 2, sm: 3 },
         py: 0,
         borderRadius: 2,
         display: 'grid',

@@ -9,8 +9,9 @@ import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadin
 import { useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
+import { useIsScaledLayout } from '@/components/ScaledStage'
 import { useAudio } from '@/hooks/useAudio'
-import { FOOTER_HEIGHT_PX } from '@/constants/layout'
+import { DASHBOARD_DESIGN_HEIGHT, FOOTER_HEIGHT_PX } from '@/constants/layout'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
@@ -49,17 +50,22 @@ const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
   loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
 
-const mainGridStyles: SxProps = {
+// Target composition (1440px viewport) uses the two-column grid; in
+// scaled mode that composition is fixed so the canvas never reflips
+// with the real window size.
+const getMainGridStyles = (isScaledLayout: boolean): SxProps => ({
   display: 'grid',
-  gridTemplateColumns: {
-    xs: '1fr',
-    lg: '1fr 1fr',
-  },
+  gridTemplateColumns: isScaledLayout
+    ? '1fr 1fr'
+    : {
+        xs: '1fr',
+        lg: '1fr 1fr',
+      },
   gap: 1.5,
   // The timer row never squeezes: the workout section below absorbs all
   // flex (and scrolls internally when its content runs tall).
   flexShrink: 0,
-}
+})
 
 interface DashboardClientProps {
   useNativeTable: boolean
@@ -78,6 +84,13 @@ const DashboardClient = ({
   const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const { initializeAudio } = useAudio()
+  const isScaledLayout = useIsScaledLayout()
+  // Scaled mode fills the fixed canvas (viewport units would resolve
+  // against the real window, breaking canvas proportions); otherwise
+  // the shell fills the viewport as before.
+  const shellHeight = isScaledLayout
+    ? `${DASHBOARD_DESIGN_HEIGHT - FOOTER_HEIGHT_PX}px`
+    : `calc(100vh - ${FOOTER_HEIGHT_PX}px)`
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
@@ -105,10 +118,14 @@ const DashboardClient = ({
         // footer reserve below accounts for the fixed footer stack. The
         // in-flow page Footer below this shell is subtracted so the body
         // never scrolls.
-        height: `calc(100vh - ${FOOTER_HEIGHT_PX}px)`,
-        '@supports (height: 100dvh)': {
-          height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
-        },
+        height: shellHeight,
+        ...(isScaledLayout
+          ? {}
+          : {
+              '@supports (height: 100dvh)': {
+                height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
+              },
+            }),
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -120,7 +137,7 @@ const DashboardClient = ({
         maxWidth="xl"
         onClick={handleInteraction}
         sx={{
-          py: { xs: 1, sm: 2 },
+          py: isScaledLayout ? 2 : { xs: 1, sm: 2 },
           // Reserve space for the fixed footer stack (bottom nav + Spotify
           // bar + gap) so trailing content never slides under it.
           paddingBottom: 'calc(3.5rem + 3rem + 1.25rem)',
@@ -131,7 +148,10 @@ const DashboardClient = ({
           overflow: 'hidden',
         }}
       >
-        <Box sx={mainGridStyles}>
+        <Box
+          data-testid="dashboard-main-grid"
+          sx={getMainGridStyles(isScaledLayout)}
+        >
           <Box sx={{ height: '100%' }}>
             <TimerDisplay />
           </Box>
