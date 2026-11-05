@@ -14,6 +14,7 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocketConnection } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
+import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -71,6 +72,7 @@ const ControlPanel = () => {
         sx={{
           py: 1,
           px: 1,
+          pb: FOOTER_RESERVE_RESPONSIVE,
           minHeight: '100vh',
           background: 'rgba(30, 41, 59, 0.7)',
           backdropFilter: 'blur(20px) saturate(180%)',

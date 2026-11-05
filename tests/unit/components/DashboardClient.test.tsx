@@ -43,11 +43,6 @@ jest.mock('@/components/TimerDisplay', () => {
   TimerDisplay.displayName = 'TimerDisplay'
   return TimerDisplay
 })
-jest.mock('@/components/SpotifyDisplay', () => {
-  const SpotifyDisplay = () => <div data-testid="spotify-display" />
-  SpotifyDisplay.displayName = 'SpotifyDisplay'
-  return SpotifyDisplay
-})
 jest.mock('@/hooks/useAudio', () => ({
   useAudio: () => ({
     initializeAudio: jest.fn(),

@@ -36,6 +36,7 @@ import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import DeviceRecommendation from './Spotify/DeviceRecommendation'
+import { SPOTIFY_BAR_BOTTOM_OFFSET } from '@/constants/layout'
 
 interface StatusColumnProps {
   displayTrackName: string
@@ -360,7 +361,7 @@ const SpotifyDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'fixed',
-          bottom: '3.5rem',
+          bottom: SPOTIFY_BAR_BOTTOM_OFFSET,
           left: 0,
           right: 0,
           zIndex: 1100,
@@ -413,7 +414,7 @@ const SpotifyDisplay = () => {
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         position: 'fixed',
-        bottom: '3.5rem',
+        bottom: SPOTIFY_BAR_BOTTOM_OFFSET,
         left: 0,
         right: 0,
         zIndex: 1100,

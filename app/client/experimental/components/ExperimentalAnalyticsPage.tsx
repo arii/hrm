@@ -10,6 +10,7 @@ import { WorkoutSessionData } from '@/lib/workout-session-storage'
 import { HeartRateZone } from '@/lib/shared/hr-zones'
 import { calculateMaxHr } from '@/utils/hrCalculations'
 import type { WorkoutStatus } from '@/types/workout'
+import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
 // Components
 import WorkoutSummary from './WorkoutSummary'
@@ -314,7 +315,11 @@ const ExperimentalAnalyticsPage = () => {
   const defaultDate = useMemo(() => new Date(), [])
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} data-testid="dashboard">
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, mb: 4, pb: FOOTER_RESERVE_RESPONSIVE }}
+      data-testid="dashboard"
+    >
       <ActiveWorkoutView
         view={view}
         status={status}

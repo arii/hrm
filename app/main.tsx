@@ -2,6 +2,8 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
+import dynamic from 'next/dynamic'
+import Box from '@mui/material/Box'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
@@ -11,6 +13,28 @@ import NotificationProvider from '@/components/NotificationProvider'
 import Providers from '@/components/Providers'
 import ScaledStage from '@/components/ScaledStage'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
+import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
+import { SPOTIFY_BAR_BOTTOM_OFFSET } from '@/constants/layout'
+
+// Dynamically import SpotifyDisplay with SSR disabled.
+const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
+  ssr: false,
+  loading: () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: SPOTIFY_BAR_BOTTOM_OFFSET,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        width: '100%',
+        minHeight: '3rem',
+      }}
+    >
+      <DashboardSectionLoadingSkeleton height="48px" />
+    </Box>
+  ),
+})
 import { pageVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
@@ -47,12 +71,14 @@ export default function Main({ children }: { children: React.ReactNode }) {
                   {isDashboard ? (
                     <ScaledStage>
                       {pageMotion}
+                      <SpotifyDisplay />
                       <Footer />
                       <BottomNavBar />
                     </ScaledStage>
                   ) : (
                     <>
                       {pageMotion}
+                      <SpotifyDisplay />
                       <Footer />
                       <BottomNavBar />
                     </>

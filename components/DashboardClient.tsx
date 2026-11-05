@@ -11,27 +11,12 @@ import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import { useAudio } from '@/hooks/useAudio'
-import { DASHBOARD_DESIGN_HEIGHT, FOOTER_HEIGHT_PX } from '@/constants/layout'
-
-// Dynamically import SpotifyDisplay with SSR disabled.
-const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: '3.5rem',
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        width: '100%',
-        minHeight: '3rem',
-      }}
-    >
-      <DashboardSectionLoadingSkeleton height="48px" />
-    </Box>
-  ),
-})
+import {
+  DASHBOARD_DESIGN_HEIGHT,
+  FOOTER_HEIGHT_PX,
+  FOOTER_RESERVE_RESPONSIVE,
+  FOOTER_RESERVE_SCALED,
+} from '@/constants/layout'
 
 const TestErrorTrigger = dynamic(() => import('./TestErrorTrigger'), {
   ssr: false,
@@ -147,8 +132,8 @@ const DashboardClient = ({
           // Measured: 56px nav + 48px bar; the 16px buffer covers bar
           // growth up to 64px before any overlap.
           paddingBottom: isScaledLayout
-            ? 'calc(3.5rem + 1rem)'
-            : 'calc(3.5rem + 3rem + 1.25rem)',
+            ? FOOTER_RESERVE_SCALED
+            : FOOTER_RESERVE_RESPONSIVE,
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -198,8 +183,6 @@ const DashboardClient = ({
           )}
         </Box>
       </Container>
-
-      <SpotifyDisplay />
     </Box>
   )
 }
