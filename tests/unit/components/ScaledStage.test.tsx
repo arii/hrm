@@ -37,9 +37,9 @@ describe('ScaledStage', () => {
       </ScaledStage>
     )
     expect(screen.getByTestId('scaled-stage')).toHaveStyle({
-      width: '1440px',
+      width: '1600px',
       height: '900px',
-      transform: `scale(${1024 / 1440})`,
+      transform: `scale(${1024 / 1600})`,
     })
   })
 
@@ -64,12 +64,12 @@ describe('ScaledStage', () => {
       </ScaledStage>
     )
     expect(screen.getByTestId('scaled-stage')).toHaveStyle({
-      width: '1440px',
+      width: '1600px',
       height: '900px',
       transform: 'scale(1.2)',
     })
     expect(screen.getByTestId('scaled-stage-sizer')).toHaveStyle({
-      width: '1728px',
+      width: '1920px',
       height: '1080px',
     })
   })
@@ -102,14 +102,14 @@ describe('ScaledStage', () => {
       </ScaledStage>
     )
     expect(screen.getByTestId('scaled-stage')).toHaveStyle({
-      transform: 'scale(1)',
+      transform: 'scale(0.9)',
     })
     act(() => {
       setViewport(2880, 1800)
       fireEvent(window, new Event('resize'))
     })
     expect(screen.getByTestId('scaled-stage')).toHaveStyle({
-      transform: 'scale(2)',
+      transform: 'scale(1.8)',
     })
   })
 })
