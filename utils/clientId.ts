@@ -6,6 +6,52 @@
  * caller. `crypto.getRandomValues()` is available everywhere, so use it to
  * mint an equivalent UUIDv4 when `randomUUID` is missing.
  */
+/**
+ * Routes served by the mock HRM client. Mock tabs must each own a
+ * distinct device session, so identity here is tab-scoped. Suffix
+ * matching keeps this working under any basePath (e.g. `/hrm/...`).
+ */
+const TAB_SCOPED_ID_PATH_SUFFIXES = ['/client/mock', '/mock']
+
+export const isTabScopedIdPath = (pathname: string): boolean =>
+  TAB_SCOPED_ID_PATH_SUFFIXES.some(
+    (suffix) => pathname === suffix || pathname.endsWith(suffix)
+  )
+
+export interface ClientIdStores {
+  local: Pick<Storage, 'getItem' | 'setItem'>
+  session: Pick<Storage, 'getItem' | 'setItem'>
+}
+
+/**
+ * Resolve the WebSocket client id for a page load. Mock pages get a
+ * tab-scoped id (sessionStorage: one device per tab); every other page
+ * keeps the stable browser id (localStorage) so reconnects and reloads
+ * preserve the session. A storage failure falls back to an ephemeral id
+ * rather than crashing the connection setup.
+ */
+export const resolveClientId = (
+  stores: ClientIdStores,
+  pathname: string
+): string => {
+  const store = isTabScopedIdPath(pathname) ? stores.session : stores.local
+  let id: string | null = null
+  try {
+    id = store.getItem('clientId')
+  } catch {
+    id = null
+  }
+  if (!id) {
+    id = generateClientId()
+    try {
+      store.setItem('clientId', id)
+    } catch {
+      // Ephemeral id: the session lasts as long as the page.
+    }
+  }
+  return id
+}
+
 export const generateClientId = (): string => {
   if (typeof window.crypto?.randomUUID === 'function') {
     return window.crypto.randomUUID()

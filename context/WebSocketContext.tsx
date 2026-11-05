@@ -1,7 +1,7 @@
 'use client'
 import throttle from 'lodash.throttle'
 import logger from '@/utils/logger'
-import { generateClientId } from '@/utils/clientId'
+import { resolveClientId } from '@/utils/clientId'
 import {
   Context,
   createContext,
@@ -99,21 +99,36 @@ export const WebSocketProvider = ({
       return null
     }
     try {
-      const urlParams = new URLSearchParams(window.location.search)
-      const queryClientId = urlParams.get('clientId')
+      const queryClientId = new URLSearchParams(window.location.search).get(
+        'clientId'
+      )
       if (queryClientId) {
         return queryClientId
       }
-      let id = localStorage.getItem('clientId')
-      if (!id) {
-        id = generateClientId()
-        localStorage.setItem('clientId', id)
-      }
-      return id
     } catch (error) {
-      logger.error('Failed to access localStorage', error)
-      return generateClientId() // Fallback to in-memory UUID
+      logger.error('Failed to read clientId query override', error)
     }
+    // Reading window.localStorage itself can throw when storage is
+    // blocked, so resolve each store defensively: resolveClientId only
+    // guards getItem/setItem calls, not acquisition of the store.
+    const safeStore = (
+      get: () => Pick<Storage, 'getItem' | 'setItem'>,
+      kind: string
+    ): Pick<Storage, 'getItem' | 'setItem'> => {
+      try {
+        return get()
+      } catch (error) {
+        logger.error(`Failed to access ${kind}Storage`, error)
+        return { getItem: () => null, setItem: () => {} }
+      }
+    }
+    return resolveClientId(
+      {
+        local: safeStore(() => window.localStorage, 'local'),
+        session: safeStore(() => window.sessionStorage, 'session'),
+      },
+      window.location.pathname
+    )
   })
 
   // Memoize the WebSocket URL to prevent re-computation on every render
