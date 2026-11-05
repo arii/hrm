@@ -135,12 +135,20 @@ const DashboardClient = ({
       <Container
         data-testid="dashboard"
         maxWidth="xl"
+        disableGutters={isScaledLayout}
         onClick={handleInteraction}
         sx={{
           py: isScaledLayout ? 2 : { xs: 1, sm: 2 },
+          // Side margins are removed on the fixed canvas via
+          // disableGutters above: every pixel goes to card width
+          // (fewer wrapped lines, larger text).
           // Reserve space for the fixed footer stack (bottom nav + Spotify
-          // bar + gap) so trailing content never slides under it.
-          paddingBottom: 'calc(3.5rem + 3rem + 1.25rem)',
+          // bar + buffer) so trailing content never slides under it.
+          // Measured: 56px nav + 48px bar; the 16px buffer covers bar
+          // growth up to 64px before any overlap.
+          paddingBottom: isScaledLayout
+            ? 'calc(3.5rem + 1rem)'
+            : 'calc(3.5rem + 3rem + 1.25rem)',
           flex: 1,
           minHeight: 0,
           display: 'flex',

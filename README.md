@@ -207,6 +207,42 @@ If you encounter issues during setup:
 
 For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
 
+### Shared Dev URL (dev-onasafari)
+
+The box also exposes the dev server publicly at `https://dev-onasafari.ddns.net:8443/hrm`
+for other agents to check live state. How it is wired:
+
+- Port `8443` on the host runs oauth2-proxy (GitHub login, TLS termination),
+  forwarding to Caddy on `:8080`, which routes `/hrm*` to the dev server on
+  `127.0.0.1:3000` **with the prefix intact** (no `strip_prefix` — see
+  `/srv/remote-server/caddy/Caddyfile`). An unauthenticated `curl` returns `302`
+  to `github.com/login/oauth/...` — that means the proxy is up, not that the app
+  is down.
+- After login the request reaches the dev server, which must run with subpath env
+  vars so Next.js serves the app **under `/hrm`** (root `/` 404s by design in
+  this mode). An earlier `agy` daemon used the same shape (and also overwrote
+  `.env.local` with the `/hrm` values, which was later reverted — inline env
+  wins over `--env-file`, so the daemon was unaffected). Current daemon:
+
+```bash
+NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm NEXT_PUBLIC_BASE_PATH=/hrm \
+  TESTING=false NEXT_PUBLIC_TESTING=false NEXT_PUBLIC_USE_NATIVE_TABLE=true pnpm run dev
+```
+
+- Verify: `curl http://127.0.0.1:3000/hrm` → `200`;
+  `curl -sk https://dev-onasafari.ddns.net:8443/hrm` → `302` to GitHub login
+  (or `200` once authenticated).
+- ⚠️ Do **not** persist `NEXT_PUBLIC_BASE_PATH=/hrm` in `.env.local` — use the
+  inline override above. A committed/stored `/hrm` value breaks Playwright VRT,
+  which probes root paths (see [Testing Guide](docs/TESTING.md)).
+- ⚠️ Run the preview daemon with `TESTING=false NEXT_PUBLIC_TESTING=false`
+  (inline, same as above).
+  With `TESTING=true`, `/api/workout` returns hardcoded mock data (`20/10`,
+  Jumping Jacks / High Knees) instead of the real Google Doc. The preview runs
+  the native table (`NEXT_PUBLIC_USE_NATIVE_TABLE=true`), which reads
+  `GOOGLE_DOC_WORKOUT_URL` — `?native=false` switches one visit back to the
+  doc iframe (`GOOGLE_DOC_IFRAME_URL`).
+
 > **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
 
 ```bash

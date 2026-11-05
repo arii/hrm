@@ -152,7 +152,7 @@ const TimerDisplay = () => {
         // Ensure the card fills the grid cell height
         height: '100%',
         minHeight: isScaledLayout
-          ? '16rem'
+          ? '20rem'
           : { xs: '8.5rem', sm: '10.5rem', md: '12.5rem' },
         display: 'flex',
         borderRadius: 2,
@@ -279,7 +279,7 @@ const TimerDisplay = () => {
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
             fontSize: isScaledLayout
-              ? '13rem'
+              ? '16rem'
               : { xs: '5rem', sm: '7rem', md: '9.5rem' },
             fontWeight: 900,
             lineHeight: 1,

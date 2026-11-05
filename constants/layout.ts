@@ -1,7 +1,10 @@
 export const HR_TILE_MIN_HEIGHT = '8.5rem'
 export const FOOTER_HEIGHT_PX = 54
 // Fixed dashboard design canvas (target display) for scale-to-fit.
-export const DASHBOARD_DESIGN_WIDTH = 1440
+// 16:9: every screen in use (dev machine at 125% scaling, preview
+// tablet) is 16:9, so this avoids letterbox side bars. Revert to 1440
+// if a 16:10 target display ever needs edge-to-edge instead.
+export const DASHBOARD_DESIGN_WIDTH = 1600
 export const DASHBOARD_DESIGN_HEIGHT = 900
 // Viewports at least this wide scale the fixed dashboard canvas;
 // narrower (phone-portrait) ones keep the responsive layout. Tracks

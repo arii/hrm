@@ -15,6 +15,10 @@ import {
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { useIsScaledLayout } from '@/components/ScaledStage'
+import {
+  SCALED_WORKOUT_HEADER_REM,
+  scaledExerciseFontRem,
+} from '@/lib/workoutSizing'
 import { withBasePath } from '@/utils/urls'
 
 interface WorkoutPhaseGridProps {
@@ -85,6 +89,12 @@ export default function WorkoutPhaseGrid({
 
     // columns is tolerant of headers-only payloads (older mocks).
     const columns = data.columns ?? []
+    // Size text from the tallest card so the grid uses all blank space
+    // yet still fits without scrolling on the fixed canvas.
+    const maxRows = columns.reduce(
+      (tallest, column) => Math.max(tallest, column.length),
+      0
+    )
 
     return (
       <Box
@@ -107,16 +117,24 @@ export default function WorkoutPhaseGrid({
               elevation={2}
               sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
             >
-              <CardContent sx={{ p: 2, flexGrow: 1 }}>
+              <CardContent
+                sx={{
+                  p: 2,
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
                 <Typography
                   component="h3"
                   sx={{
                     fontWeight: 700,
                     fontSize: isScaledLayout
-                      ? '2.75rem'
+                      ? `${SCALED_WORKOUT_HEADER_REM}rem`
                       : 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                     lineHeight: 1.15,
                     textAlign: 'center',
+                    textWrap: isScaledLayout ? 'balance' : undefined,
                   }}
                 >
                   {header}
@@ -124,15 +142,23 @@ export default function WorkoutPhaseGrid({
                 {exercises.length > 0 && (
                   <>
                     <Divider sx={{ my: 1.5 }} />
-                    <Stack spacing={1}>
+                    <Stack
+                      spacing={isScaledLayout ? 0.5 : 1}
+                      sx={
+                        isScaledLayout
+                          ? { flexGrow: 1, justifyContent: 'space-evenly' }
+                          : undefined
+                      }
+                    >
                       {exercises.map((exercise, i) => (
                         <Typography
                           key={i}
                           sx={{
                             fontSize: isScaledLayout
-                              ? '2rem'
+                              ? `${scaledExerciseFontRem(maxRows)}rem`
                               : 'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
-                            lineHeight: 1.25,
+                            lineHeight: 1.2,
+                            textWrap: isScaledLayout ? 'balance' : undefined,
                           }}
                         >
                           {exercise}
