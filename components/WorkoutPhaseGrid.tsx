@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -38,6 +38,35 @@ export default function WorkoutPhaseGrid({
   // Scaled mode: larger fixed text (readable from afar) and cards
   // stretched to fill the canvas area.
   const isScaledLayout = useIsScaledLayout()
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  const [fontSizeRem, setFontSizeRem] = useState<number>(3.3)
+
+  useEffect(() => {
+    if (data) {
+      setFontSizeRem(
+        scaledExerciseFontRem(data.columns ?? [], data.headers.length)
+      )
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (!isScaledLayout || !gridRef.current) return
+    const grid = gridRef.current
+    const cards = Array.from(
+      grid.querySelectorAll<HTMLElement>('.MuiCard-root')
+    )
+    const hasOverflow = cards.some((card) => {
+      const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
+      return (
+        (content && content.scrollHeight > content.clientHeight + 1) ||
+        card.scrollHeight > card.clientHeight + 1
+      )
+    })
+    if (hasOverflow && fontSizeRem > 1.0) {
+      setFontSizeRem((prev) => Math.max(1.0, Number((prev - 0.1).toFixed(2))))
+    }
+  }, [data, fontSizeRem, isScaledLayout])
 
   useEffect(() => {
     if (!docId) {
@@ -89,15 +118,10 @@ export default function WorkoutPhaseGrid({
 
     // columns is tolerant of headers-only payloads (older mocks).
     const columns = data.columns ?? []
-    // Size text from the tallest card so the grid uses all blank space
-    // yet still fits without scrolling on the fixed canvas.
-    const maxRows = columns.reduce(
-      (tallest, column) => Math.max(tallest, column.length),
-      0
-    )
 
     return (
       <Box
+        ref={gridRef}
         data-testid="workout-phase-grid"
         sx={{
           display: 'grid',
@@ -155,7 +179,7 @@ export default function WorkoutPhaseGrid({
                           key={i}
                           sx={{
                             fontSize: isScaledLayout
-                              ? `${scaledExerciseFontRem(maxRows)}rem`
+                              ? `${fontSizeRem}rem`
                               : 'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
                             lineHeight: 1.2,
                             textWrap: isScaledLayout ? 'balance' : undefined,
