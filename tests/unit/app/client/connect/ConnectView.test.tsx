@@ -72,6 +72,22 @@ describe('ConnectView', () => {
     expect(resetButton).toBeInTheDocument()
   })
 
+  it('suggests Chrome and provides the Bluetooth flag link when unsupported or disabled', () => {
+    render(<ConnectView {...mockProps} isSupported={false} />)
+    expect(screen.getAllByText(/Google Chrome/i).length).toBeGreaterThan(0)
+    const flagLink = screen.getByRole('link', {
+      name: /chrome:\/\/flags\/#enable-web-bluetooth-new-permissions-backend/i,
+    })
+    expect(flagLink).toBeInTheDocument()
+    expect(flagLink).toHaveAttribute(
+      'href',
+      'chrome://flags/#enable-web-bluetooth-new-permissions-backend'
+    )
+    expect(
+      screen.getByText(/links automatically to enabling Bluetooth in settings/i)
+    ).toBeInTheDocument()
+  })
+
   it('renders the reset button as enabled by default', () => {
     render(<ConnectView {...mockProps} />)
     const resetButton = screen.getByRole('button', {

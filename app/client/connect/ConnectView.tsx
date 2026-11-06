@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
+import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -175,9 +176,22 @@ const BluetoothUnsupported = ({
     <Typography variant="h5" gutterBottom>
       Bluetooth Not Supported
     </Typography>
-    <Alert severity="warning" sx={{ mt: 2 }}>
-      Your browser does not support Web Bluetooth. Please use Google Chrome,
-      Edge, or Bluefy (on iOS).
+    <Alert severity="warning" sx={{ mt: 2, textAlign: 'left' }}>
+      <Typography variant="body2" gutterBottom>
+        Your browser does not support Web Bluetooth or Bluetooth is disabled.
+        Please use Google Chrome, Edge, or Bluefy (on iOS).
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        If Bluetooth is disabled for this browser, we suggest using Google
+        Chrome and checking{' '}
+        <Link
+          href="chrome://flags/#enable-web-bluetooth-new-permissions-backend"
+          sx={{ wordBreak: 'break-all' }}
+        >
+          chrome://flags/#enable-web-bluetooth-new-permissions-backend
+        </Link>
+        , which links automatically to enabling Bluetooth in settings.
+      </Typography>
     </Alert>
     <ResetSection onReset={onFullReset} isResetting={isResetting} />
   </Container>
