@@ -8,19 +8,19 @@
  */
 
 /** Header ceiling size (rem) on the scaled canvas. */
-export const SCALED_WORKOUT_HEADER_REM = 2.6
+export const SCALED_WORKOUT_HEADER_REM = 2.8
 
 /**
  * Calculates proportional header size based on exercise font size.
- * Keeps header slightly larger than exercises (~1.15x) while capping
- * at 2.6rem so 2-word headers fit on a single line, and maintaining
- * balance down to 1.8rem.
+ * Keeps header slightly larger than or equal to exercises (~1.05x) while
+ * capping at 2.85rem so 2-word headers fit cleanly on a single line,
+ * and maintaining balance down to 1.8rem.
  */
 export const scaledWorkoutHeaderRem = (exerciseRem: number): number => {
   if (!Number.isFinite(exerciseRem) || exerciseRem <= 0) {
     return SCALED_WORKOUT_HEADER_REM
   }
-  return Math.max(1.8, Math.min(2.6, Number((exerciseRem * 1.15).toFixed(2))))
+  return Math.max(1.8, Math.min(2.85, Number((exerciseRem * 1.05).toFixed(2))))
 }
 
 /**
@@ -66,12 +66,12 @@ export const scaledExerciseFontRem = (
       ? maxRowsOrColumns
       : estimateEffectiveRows(maxRowsOrColumns, columnCount)
 
-  if (!Number.isFinite(effectiveRows) || effectiveRows <= 2) return 2.6
-  if (effectiveRows === 3) return 2.4
-  if (effectiveRows === 4) return 2.3
-  if (effectiveRows === 5) return 2.2
-  if (effectiveRows === 6) return 2.0
-  if (effectiveRows === 7) return 1.8
-  if (effectiveRows === 8) return 1.6
-  return Math.max(1.4, Number((1.6 - (effectiveRows - 8) * 0.1).toFixed(1)))
+  if (!Number.isFinite(effectiveRows) || effectiveRows <= 2) return 3.0
+  if (effectiveRows === 3) return 2.9
+  if (effectiveRows === 4) return 2.8
+  if (effectiveRows === 5) return 2.7
+  if (effectiveRows === 6) return 2.4
+  if (effectiveRows === 7) return 2.1
+  if (effectiveRows === 8) return 1.9
+  return Math.max(1.6, Number((1.9 - (effectiveRows - 8) * 0.1).toFixed(1)))
 }
