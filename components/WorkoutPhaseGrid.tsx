@@ -16,8 +16,8 @@ import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import {
-  SCALED_WORKOUT_HEADER_REM,
   scaledExerciseFontRem,
+  scaledWorkoutHeaderRem,
 } from '@/lib/workoutSizing'
 import { withBasePath } from '@/utils/urls'
 
@@ -40,7 +40,7 @@ export default function WorkoutPhaseGrid({
   const isScaledLayout = useIsScaledLayout()
   const gridRef = useRef<HTMLDivElement>(null)
 
-  const [fontSizeRem, setFontSizeRem] = useState<number>(3.3)
+  const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)
 
   useEffect(() => {
     if (data) {
@@ -63,8 +63,8 @@ export default function WorkoutPhaseGrid({
         card.scrollHeight > card.clientHeight + 1
       )
     })
-    if (hasOverflow && fontSizeRem > 1.0) {
-      setFontSizeRem((prev) => Math.max(1.0, Number((prev - 0.1).toFixed(2))))
+    if (hasOverflow && fontSizeRem > 1.4) {
+      setFontSizeRem((prev) => Math.max(1.4, Number((prev - 0.1).toFixed(2))))
     }
   }, [data, fontSizeRem, isScaledLayout])
 
@@ -154,7 +154,7 @@ export default function WorkoutPhaseGrid({
                   sx={{
                     fontWeight: 700,
                     fontSize: isScaledLayout
-                      ? `${SCALED_WORKOUT_HEADER_REM}rem`
+                      ? `${scaledWorkoutHeaderRem(fontSizeRem)}rem`
                       : 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                     lineHeight: 1.15,
                     textAlign: 'center',
