@@ -143,7 +143,10 @@ export default function WorkoutPhaseGrid({
             >
               <CardContent
                 sx={{
-                  p: 2,
+                  p: isScaledLayout ? 1.5 : 2,
+                  '&:last-child': {
+                    pb: isScaledLayout ? 1.5 : 2,
+                  },
                   flexGrow: 1,
                   display: 'flex',
                   flexDirection: 'column',
@@ -165,12 +168,12 @@ export default function WorkoutPhaseGrid({
                 </Typography>
                 {exercises.length > 0 && (
                   <>
-                    <Divider sx={{ my: 1.5 }} />
+                    <Divider sx={{ my: isScaledLayout ? 1 : 1.5 }} />
                     <Stack
-                      spacing={isScaledLayout ? 0.5 : 1}
+                      spacing={isScaledLayout ? 0.75 : 1}
                       sx={
                         isScaledLayout
-                          ? { flexGrow: 1, justifyContent: 'space-evenly' }
+                          ? { flexGrow: 1, justifyContent: 'flex-start' }
                           : undefined
                       }
                     >
@@ -181,7 +184,7 @@ export default function WorkoutPhaseGrid({
                             fontSize: isScaledLayout
                               ? `${fontSizeRem}rem`
                               : 'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
-                            lineHeight: 1.2,
+                            lineHeight: isScaledLayout ? 1.15 : 1.2,
                             textWrap: isScaledLayout ? 'balance' : undefined,
                           }}
                         >
