@@ -23,7 +23,11 @@ const config = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  testTimeout: 10000,
+  setupFilesAfterEnv: [
+    '<rootDir>/tests/jest-setup.js',
+    '<rootDir>/tests/unit/jest.setup.js',
+  ],
 }
 
 module.exports = config

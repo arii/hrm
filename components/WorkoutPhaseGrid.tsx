@@ -16,8 +16,8 @@ import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import {
-  SCALED_WORKOUT_HEADER_REM,
   scaledExerciseFontRem,
+  scaledWorkoutHeaderRem,
 } from '@/lib/workoutSizing'
 import { withBasePath } from '@/utils/urls'
 
@@ -40,7 +40,7 @@ export default function WorkoutPhaseGrid({
   const isScaledLayout = useIsScaledLayout()
   const gridRef = useRef<HTMLDivElement>(null)
 
-  const [fontSizeRem, setFontSizeRem] = useState<number>(3.3)
+  const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)
 
   useEffect(() => {
     if (data) {
@@ -63,8 +63,8 @@ export default function WorkoutPhaseGrid({
         card.scrollHeight > card.clientHeight + 1
       )
     })
-    if (hasOverflow && fontSizeRem > 1.0) {
-      setFontSizeRem((prev) => Math.max(1.0, Number((prev - 0.1).toFixed(2))))
+    if (hasOverflow && fontSizeRem > 1.4) {
+      setFontSizeRem((prev) => Math.max(1.4, Number((prev - 0.1).toFixed(2))))
     }
   }, [data, fontSizeRem, isScaledLayout])
 
@@ -143,7 +143,10 @@ export default function WorkoutPhaseGrid({
             >
               <CardContent
                 sx={{
-                  p: 2,
+                  p: isScaledLayout ? 1.5 : 2,
+                  '&:last-child': {
+                    pb: isScaledLayout ? 1.5 : 2,
+                  },
                   flexGrow: 1,
                   display: 'flex',
                   flexDirection: 'column',
@@ -154,7 +157,7 @@ export default function WorkoutPhaseGrid({
                   sx={{
                     fontWeight: 700,
                     fontSize: isScaledLayout
-                      ? `${SCALED_WORKOUT_HEADER_REM}rem`
+                      ? `${scaledWorkoutHeaderRem(fontSizeRem)}rem`
                       : 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                     lineHeight: 1.15,
                     textAlign: 'center',
@@ -165,12 +168,12 @@ export default function WorkoutPhaseGrid({
                 </Typography>
                 {exercises.length > 0 && (
                   <>
-                    <Divider sx={{ my: 1.5 }} />
+                    <Divider sx={{ my: isScaledLayout ? 1 : 1.5 }} />
                     <Stack
-                      spacing={isScaledLayout ? 0.5 : 1}
+                      spacing={isScaledLayout ? 0.75 : 1}
                       sx={
                         isScaledLayout
-                          ? { flexGrow: 1, justifyContent: 'space-evenly' }
+                          ? { flexGrow: 1, justifyContent: 'flex-start' }
                           : undefined
                       }
                     >
@@ -181,7 +184,7 @@ export default function WorkoutPhaseGrid({
                             fontSize: isScaledLayout
                               ? `${fontSizeRem}rem`
                               : 'clamp(1.125rem, 0.875rem + 1.75vw, 1.5rem)',
-                            lineHeight: 1.2,
+                            lineHeight: isScaledLayout ? 1.15 : 1.2,
                             textWrap: isScaledLayout ? 'balance' : undefined,
                           }}
                         >
