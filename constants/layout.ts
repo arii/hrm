@@ -3,8 +3,8 @@ export const FOOTER_HEIGHT_PX = 54
 // Fixed footer stack dimensions and reserve across all pages.
 // Spotify bar sits immediately above the 3.5rem bottom nav bar.
 export const SPOTIFY_BAR_BOTTOM_OFFSET = '3.5rem'
-// Spotify bar measured height: 48px (~3rem), plus 16px (1rem) buffer in scaled mode
-// covers bar growth up to 64px without overlap.
+// 56px bottom nav + 16px buffer; the measured 48px Spotify bar is not
+// covered — confirm the overlay needs no reserve before trusting this.
 export const FOOTER_RESERVE_SCALED = 'calc(3.5rem + 1rem)'
 // Non-scaled viewports reserve 3rem bar + 1.25rem buffer above the 3.5rem bottom nav.
 export const FOOTER_RESERVE_RESPONSIVE = 'calc(3.5rem + 3rem + 1.25rem)'

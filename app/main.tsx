@@ -40,6 +40,19 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
+/** Page content plus the global footer stack, shared by both layout
+ * branches so no route can silently lose the Spotify bar. */
+export function FooterStack({ pageMotion }: { pageMotion: React.ReactNode }) {
+  return (
+    <>
+      {pageMotion}
+      <SpotifyDisplay />
+      <Footer />
+      <BottomNavBar />
+    </>
+  )
+}
+
 export default function Main({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   // Same route check as BottomNavBar's Dashboard tab: under a basePath,
@@ -70,18 +83,10 @@ export default function Main({ children }: { children: React.ReactNode }) {
                 <TimerSoundProvider>
                   {isDashboard ? (
                     <ScaledStage>
-                      {pageMotion}
-                      <SpotifyDisplay />
-                      <Footer />
-                      <BottomNavBar />
+                      <FooterStack pageMotion={pageMotion} />
                     </ScaledStage>
                   ) : (
-                    <>
-                      {pageMotion}
-                      <SpotifyDisplay />
-                      <Footer />
-                      <BottomNavBar />
-                    </>
+                    <FooterStack pageMotion={pageMotion} />
                   )}
                 </TimerSoundProvider>
               </UserSettingsProvider>
