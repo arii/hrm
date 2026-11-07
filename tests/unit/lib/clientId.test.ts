@@ -46,6 +46,12 @@ describe('clientId', () => {
     expect(isTabScopedIdPath('/client/connect')).toBe(false)
   })
 
+  it('does not treat other paths ending in mock as tab-scoped', () => {
+    expect(isTabScopedIdPath('/other/mock')).toBe(false)
+    expect(isTabScopedIdPath('/client/mockery')).toBe(false)
+    expect(isTabScopedIdPath('/client/mock/')).toBe(false)
+  })
+
   it('gives mock tabs distinct ids even when the browser id is shared', () => {
     const sharedLocal = memoryStore({ clientId: 'browser-id' })
     const tabA = memoryStore()

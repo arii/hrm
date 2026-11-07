@@ -11,14 +11,16 @@
  * distinct device session, so identity here is tab-scoped. Suffix
  * matching keeps this working under any basePath (e.g. `/hrm/...`).
  */
-const TAB_SCOPED_ID_PATH_SUFFIXES = ['/client/mock', '/mock']
-
+/**
+ * Only the mock client route is tab-scoped. The suffix form covers any
+ * basePath (e.g. `/hrm/client/mock`); the bare `/mock` exact match is
+ * kept for short-link use. Anything else ending in `/mock` (e.g.
+ * `/other/mock`) stays on the stable browser id.
+ */
 export const isTabScopedIdPath = (pathname: string): boolean =>
-  TAB_SCOPED_ID_PATH_SUFFIXES.some(
-    (suffix) => pathname === suffix || pathname.endsWith(suffix)
-  )
+  pathname === '/mock' || pathname.endsWith('/client/mock')
 
-export interface ClientIdStores {
+interface ClientIdStores {
   local: Pick<Storage, 'getItem' | 'setItem'>
   session: Pick<Storage, 'getItem' | 'setItem'>
 }
