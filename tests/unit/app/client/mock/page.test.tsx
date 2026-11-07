@@ -97,11 +97,20 @@ describe('app/client/mock/page', () => {
     // Check that streaming has stopped
     expect(screen.getByTestId('streaming-start-button')).toBeInTheDocument()
 
+    // Stopping streaming sends an HRM_INPUT packet with value: null to clear device tile
+    expect(mockSendData).toHaveBeenCalledTimes(4)
+    expect(mockSendData).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'HRM_INPUT',
+        data: expect.objectContaining({ value: null }),
+      })
+    )
+
     // Advance time again to ensure no more packets are sent
     act(() => {
       jest.advanceTimersByTime(2000)
     })
-    expect(mockSendData).toHaveBeenCalledTimes(3) // No new calls
+    expect(mockSendData).toHaveBeenCalledTimes(4) // No new calls
 
     jest.useRealTimers()
   })

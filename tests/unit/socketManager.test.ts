@@ -383,6 +383,112 @@ describe('WebSocket Manager', () => {
       expect(clientData!.calories).toBe(10)
     })
 
+    describe('ClientId Spoof Guard', () => {
+      const lastHrmPayload = () => {
+        const mockBroadcast = broadcast as jest.MockedFunction<typeof broadcast>
+        const updateCalls = mockBroadcast.mock.calls.filter(
+          (call) => call[1].type === 'HRM_UPDATE'
+        )
+        const lastCall = updateCalls[updateCalls.length - 1]
+        expect(lastCall).toBeDefined()
+        const message = lastCall![1] as { payload: unknown }
+        return message.payload as HrmData[]
+      }
+
+      const connectSocket = (id: string) => {
+        const ws = new MockWebSocket()
+        ;(mockWss.clients as unknown as Set<MockWebSocket>).add(ws)
+        mockWss.emit('connection', ws, createMockRequest(`/?clientId=${id}`))
+        return ws
+      }
+
+      const sendInput = (ws: MockWebSocket, data: Record<string, unknown>) => {
+        ws.emit('message', JSON.stringify({ type: 'HRM_INPUT', data }))
+      }
+
+      const sendMeta = (ws: MockWebSocket, data: Record<string, unknown>) => {
+        ws.emit(
+          'message',
+          JSON.stringify({ type: 'HRM_METADATA_UPDATE', data })
+        )
+      }
+
+      it('rejects input spoofing another live socket: victim untouched, sender attributed', () => {
+        const victim = connectSocket('victim-1')
+        sendMeta(victim, { name: 'Victim' })
+        sendInput(victim, { value: 100 })
+
+        const attacker = connectSocket('attacker-1')
+        sendMeta(attacker, { name: 'Attacker' })
+        sendInput(attacker, { clientId: 'victim-1', value: 999 })
+
+        const payload = lastHrmPayload()
+        const victimData = payload.find((c) => c.clientId === 'victim-1')
+        const attackerData = payload.find((c) => c.clientId === 'attacker-1')
+        expect(victimData).toBeDefined()
+        expect(victimData!.value).toBe(100)
+        expect(attackerData).toBeDefined()
+        expect(attackerData!.value).toBe(999)
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            clientId: 'attacker-1',
+            targetClientId: 'victim-1',
+          }),
+          'Rejecting clientId claim owned by another live socket.'
+        )
+      })
+
+      it('rejects metadata spoofing another live socket', () => {
+        const victim = connectSocket('victim-2')
+        sendMeta(victim, { name: 'Victim Two' })
+
+        const attacker = connectSocket('attacker-2')
+        sendMeta(attacker, { clientId: 'victim-2', name: 'Pwned' })
+
+        const payload = lastHrmPayload()
+        const victimData = payload.find((c) => c.clientId === 'victim-2')
+        expect(victimData).toBeDefined()
+        expect(victimData!.name).toBe('Victim Two')
+      })
+
+      it('allows migration to a fresh unowned id', () => {
+        const ws = connectSocket('migrator-1')
+        sendMeta(ws, { clientId: 'migrator-2', name: 'Migrator' })
+
+        const payload = lastHrmPayload()
+        expect(payload.find((c) => c.clientId === 'migrator-2')).toBeDefined()
+        expect(payload.find((c) => c.clientId === 'migrator-1')).toBeUndefined()
+      })
+
+      it('broadcasts DEVICE_OFFLINE and deletes the session on value null', () => {
+        const ws = connectSocket('leaver-1')
+        sendMeta(ws, { name: 'Leaver' })
+        sendInput(ws, { value: 80 })
+        sendInput(ws, { value: null })
+
+        const mockBroadcast = broadcast as jest.MockedFunction<typeof broadcast>
+        const offCalls = mockBroadcast.mock.calls.filter(
+          (call) => call[1].type === 'DEVICE_OFFLINE'
+        )
+        expect(offCalls.length).toBeGreaterThan(0)
+        const last = offCalls[offCalls.length - 1]
+        expect(last).toBeDefined()
+        expect(last![1]).toEqual({
+          type: 'DEVICE_OFFLINE',
+          payload: { deviceId: 'leaver-1' },
+        })
+
+        // The deleted session stays gone: a later input from another
+        // client no longer carries it.
+        const other = connectSocket('other-1')
+        sendMeta(other, { name: 'Other' })
+        sendInput(other, { value: 70 })
+        const payload = lastHrmPayload()
+        expect(payload.find((c) => c.clientId === 'leaver-1')).toBeUndefined()
+        expect(payload.find((c) => c.clientId === 'other-1')).toBeDefined()
+      })
+    })
+
     it('should reject an anomalously high initial calorie value', () => {
       // Server's initial calorie state for a new client is 0.
       const initialAnomalyMessage = JSON.stringify({

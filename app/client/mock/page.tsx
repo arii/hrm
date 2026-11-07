@@ -25,6 +25,14 @@ export default function MockPage() {
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
   const [weight, setWeight] = useState(70) // Add weight state
+  const [deviceId, setDeviceId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const qId = params.get('deviceId') || params.get('clientId')
+      if (qId) return qId
+    }
+    return `MOCK-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+  })
   const [height, setHeight] = useState(175) // Add height state
   const [gender, setGender] = useState('FEMALE') // Add gender state
   const [intervalId, setIntervalId] = useState<number | null>(null)
@@ -33,30 +41,33 @@ export default function MockPage() {
   const maxHr = calculateMaxHr(age)
 
   const sendHrPacket = useCallback(
-    (hr: number) => {
-      const { zone, percentage } = calculateZoneFromMaxHr(
-        hr,
-        calculateMaxHr(age)
-      )
+    (hr: number | null) => {
+      const { zone, percentage } =
+        hr !== null
+          ? calculateZoneFromMaxHr(hr, calculateMaxHr(age))
+          : { zone: 0, percentage: 0 }
       const heartRateZone = toHeartRateZone(zone)
 
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
         data: {
+          clientId: deviceId,
+          name: name,
           value: hr,
-          percentage,
-          zone: heartRateZone,
+          percentage: hr !== null ? percentage : 0,
+          zone: hr !== null ? heartRateZone : undefined,
         },
       }
       sendData(message)
     },
-    [sendData, age]
+    [sendData, age, deviceId, name]
   )
 
   const sendMetadataPacket = useCallback(() => {
     const message: HrmMetadataUpdateMessage = {
       type: 'HRM_METADATA_UPDATE',
       data: {
+        clientId: deviceId,
         maxHr: maxHr,
         name: name,
         age: age,
@@ -67,7 +78,7 @@ export default function MockPage() {
       },
     }
     sendData(message)
-  }, [sendData, name, age, maxHr, weight, height, gender])
+  }, [sendData, deviceId, name, age, maxHr, weight, height, gender])
 
   // NOTE: In a real client, metadata would likely be sent once upon connection
   // or when the user explicitly saves settings. For this mock, we send it
@@ -94,6 +105,7 @@ export default function MockPage() {
     if (intervalId) {
       window.clearInterval(intervalId)
       setIntervalId(null)
+      sendHrPacket(null)
     }
   }
 
@@ -153,6 +165,16 @@ export default function MockPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <TextField
+                label="Device ID"
+                placeholder="Device ID"
+                value={deviceId}
+                onChange={(e) => setDeviceId(e.target.value)}
+                fullWidth
+                inputProps={{ 'data-testid': 'device-id-input' }}
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
