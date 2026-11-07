@@ -267,13 +267,49 @@ const handleGetState: IncomingMessageHandler = (ws, _message, _clientId) => {
   sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
 }
 
+/**
+ * Resolve which session a message may mutate (spoof guard).
+ *
+ * The socket's own id (from the connection URL) is trusted; a
+ * client-supplied id is honored only when no *other live socket*
+ * owns it — otherwise the claim is rejected and the socket's own
+ * id is used. This preserves tab rename/migration (fresh ids have
+ * no live owner) while preventing one socket from mutating or
+ * deleting another live socket's session.
+ */
+const resolveTargetClientId = (
+  ws: ExtWebSocket,
+  clientId: string,
+  claimedId: string | undefined | null,
+  context: string
+): string => {
+  const target = claimedId || clientId
+  if (target === clientId) {
+    return target
+  }
+  const owner = clientSockets.get(target)
+  if (owner && owner !== ws) {
+    logger.warn(
+      { clientId, targetClientId: target, context },
+      'Rejecting clientId claim owned by another live socket.'
+    )
+    return clientId
+  }
+  return target
+}
+
 const handleHrmMetadataUpdate: IncomingMessageHandler = (
-  _ws,
+  ws,
   message,
   clientId
 ) => {
   const metadataMsg = message as HrmMetadataUpdateMessage
-  const targetClientId = metadataMsg.data.clientId || clientId
+  const targetClientId = resolveTargetClientId(
+    ws,
+    clientId,
+    metadataMsg.data.clientId,
+    'socketManager.handleHrmMetadataUpdate'
+  )
   // Clean up old socket connection's default session if this socket previously registered under another ID
   if (clientId !== targetClientId && hrmSessionManager.findById(clientId)) {
     hrmSessionManager.deleteById(clientId)
@@ -378,7 +414,12 @@ const resolveClientCalories = (
 
 const handleHrmInput: IncomingMessageHandler = (ws, message, clientId) => {
   const hrmMessage = message as HrmInputMessage
-  const targetClientId = hrmMessage.data.clientId || clientId
+  const targetClientId = resolveTargetClientId(
+    ws,
+    clientId,
+    hrmMessage.data.clientId,
+    'socketManager.handleHrmInput'
+  )
   if (clientId !== targetClientId && hrmSessionManager.findById(clientId)) {
     hrmSessionManager.deleteById(clientId)
     clientSessionState.delete(clientId)

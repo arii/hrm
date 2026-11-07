@@ -90,6 +90,7 @@ export type ServerMessage = (
       payload: HrmData[] // Filtered by the server before broadcast
     }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
+  | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
