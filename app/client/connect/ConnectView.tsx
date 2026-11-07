@@ -24,6 +24,7 @@ import { useFullReset } from '@/hooks/useFullReset'
 import logger from '@/utils/logger'
 import { WorkoutStatus } from '../../../types/workout'
 import { UserProfileState, HrZoneData } from '@/types/connect'
+import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
 interface ConnectViewProps {
   duration: string
@@ -419,7 +420,7 @@ const ConnectMain = ({
   const { data } = view.userProfile
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+      <Container maxWidth="sm" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>

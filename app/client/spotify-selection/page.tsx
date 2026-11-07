@@ -15,6 +15,7 @@ import {
   SpotifyPlayPayload,
 } from '@/hooks/useSpotifyCommand'
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
+import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -76,7 +77,7 @@ const SpotifySelectionPage = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 3 }}>
+    <Container maxWidth="sm" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
