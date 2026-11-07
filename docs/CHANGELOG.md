@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.31.0](https://github.com/arii/hrm/compare/hrm-v0.30.0...hrm-v0.31.0) (2026-11-07)
+
+
+### Features
+
+* **ble:** hold Screen Wake Lock during active workouts ([#9819](https://github.com/arii/hrm/issues/9819)) ([27ccdda](https://github.com/arii/hrm/commit/27ccdda4164db6bcf119cff1a0ac374e27add908))
+* **connect:** suggest Chrome and provide Bluetooth flags link on unsupported screen ([#9834](https://github.com/arii/hrm/issues/9834)) ([89860fb](https://github.com/arii/hrm/commit/89860fbc751ef453522f2aa3c298dc37ccb06160))
+* **dashboard:** maximize scaled-canvas type, reclaim footer and gutter space ([#9822](https://github.com/arii/hrm/issues/9822)) ([aebce66](https://github.com/arii/hrm/commit/aebce66db05ecdc40ce64edde0c03de140c15083))
+* **hrm:** phase-1 UX batch — workout cards, player states, ws limiter, console-error fixes ([#9766](https://github.com/arii/hrm/issues/9766)) ([e4bba9f](https://github.com/arii/hrm/commit/e4bba9fe96dfe48c277bb910b02c0b011f86f139))
+* **hrm:** phase-2 UX batch — player sync, timer, banners, panels ([#9774](https://github.com/arii/hrm/issues/9774)) ([4f8652a](https://github.com/arii/hrm/commit/4f8652a642991652b20f46efee12afa273a717e5))
+* **hrm:** serve app under /hrm subpath behind proxy ([#9764](https://github.com/arii/hrm/issues/9764)) ([4774525](https://github.com/arii/hrm/commit/47745257c952e507def9cbd4bd19f7ef983f8ebc))
+
+
+### Bug Fixes
+
+* **ble:** guard silent failure reset with ownership token ([#9800](https://github.com/arii/hrm/issues/9800)) ([7a69bd1](https://github.com/arii/hrm/commit/7a69bd173ce6237f6ff39b5c1191c0f7d2ec1c01))
+* **ble:** wait for sleeping strap via advertisement watch + slow poll ([#9807](https://github.com/arii/hrm/issues/9807)) ([0388ec9](https://github.com/arii/hrm/commit/0388ec9a87bb470b34bdb58e052a9a38fd3126fe))
+* **dashboard:** dynamically step down exercise font size to prevent card text clipping ([#9830](https://github.com/arii/hrm/issues/9830)) ([c8c61a5](https://github.com/arii/hrm/commit/c8c61a545b1dca65fc748ff1b92db170374ec07b))
+* **dashboard:** scale card header with exercise font to fix text regression ([#9833](https://github.com/arii/hrm/issues/9833)) ([625151a](https://github.com/arii/hrm/commit/625151adcb0a448fb162af2e523021e7b8d5d9ce))
+* **hrm:** allow Spotify spotifycdn hosts in CSP ([#9773](https://github.com/arii/hrm/issues/9773)) ([b3d15bb](https://github.com/arii/hrm/commit/b3d15bb6e03d92006ceec60197cad016bf53d74d))
+* **hrm:** name silent BLE failures, catch connect rejection, clear stale abort ([#9768](https://github.com/arii/hrm/issues/9768)) ([075951d](https://github.com/arii/hrm/commit/075951d6f8a66b35f6fd9e353d952d93d996a90e))
+* **mock:** give each mock tab its own device session ([#9825](https://github.com/arii/hrm/issues/9825)) ([b861c52](https://github.com/arii/hrm/commit/b861c524385e23402bc5563a006ad2a65dfb7226))
+* **spotify:** forward play:false through transfer chain ([#9805](https://github.com/arii/hrm/issues/9805)) ([d6d0afb](https://github.com/arii/hrm/commit/d6d0afb999a7822025534c1ad45fac575f7ccc9f))
+* **spotify:** trust is_playing with null item, keep last track on stop ([#9790](https://github.com/arii/hrm/issues/9790)) ([f15a70e](https://github.com/arii/hrm/commit/f15a70e72e38ce55a9c143585e344c1e97174b15))
+
+
+### Performance Improvements
+
+* **ws:** split WebSocketContext per slice (stacked on [#9802](https://github.com/arii/hrm/issues/9802)) ([#9803](https://github.com/arii/hrm/issues/9803)) ([14046c2](https://github.com/arii/hrm/commit/14046c2e8de5119e0febea9caacc5a2fff9c55f6))
+
 ## [0.30.0](https://github.com/arii/hrm/compare/hrm-v0.29.0...hrm-v0.30.0) (2026-03-27)
 
 
