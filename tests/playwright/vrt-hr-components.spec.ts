@@ -145,6 +145,12 @@ test.describe('Visual Regression Tests', () => {
       // Desktop viewport so the locked md top-row height applies.
       await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
 
+      // Whichever exercise viewer the build serves (native table or
+      // doc iframe), its box must not move as HR tiles connect.
+      const exerciseArea = dashboardPage
+        .getByTestId('workout-phase-grid')
+        .or(dashboardPage.getByTestId('google-doc-viewer-iframe'))
+
       const makeDevice = (n: number) => ({
         clientId: `bbox-user-${n}`,
         name: `Bbox User ${n}`,
@@ -165,9 +171,7 @@ test.describe('Visual Regression Tests', () => {
         )
         // Let the layout settle after the tile count changes.
         await dashboardPage.waitForTimeout(500)
-        boxes.push(
-          await dashboardPage.getByTestId('workout-phase-grid').boundingBox()
-        )
+        boxes.push(await exerciseArea.boundingBox())
       }
 
       const reference = boxes[0]
@@ -177,11 +181,13 @@ test.describe('Visual Regression Tests', () => {
         expect(box?.height).toBe(reference?.height)
       }
 
-      // The top row itself stays at the locked desktop height.
-      const topRow = await dashboardPage
+      // The top row itself stays at the locked desktop height (assert
+      // the computed style, not visual pixels: ScaledStage scales the
+      // fixed canvas, e.g. 340px renders as 408px at a 1920px viewport).
+      const topRowHeight = await dashboardPage
         .getByTestId('dashboard-main-grid')
-        .boundingBox()
-      expect(topRow?.height).toBeCloseTo(340, 0)
+        .evaluate((el) => getComputedStyle(el).height)
+      expect(topRowHeight).toBe('340px')
     })
 
     // NEW: HR device in representative zones (Idle, Middle, Max)

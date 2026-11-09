@@ -1,6 +1,8 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent } from '@testing-library/react'
 import DashboardClient from '@/components/DashboardClient'
+import { HrmDataContext } from '@/context/WebSocketContext'
+import { mockHrmData } from '../../fixtures/hrm'
 
 // Mock child components to isolate the DashboardClient component
 jest.mock('@/components/WorkoutPhaseGrid', () => {
@@ -136,5 +138,27 @@ describe('DashboardClient', () => {
       'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
     )
     expect(screen.queryByTestId('workout-phase-grid')).not.toBeInTheDocument()
+  })
+
+  it('hides the HR panel when no HR clients are connected', async () => {
+    render(
+      <HrmDataContext.Provider value={[]}>
+        <DashboardClient useNativeTable={true} {...mockProps} />
+      </HrmDataContext.Provider>
+    )
+    expect(await screen.findByTestId('workout-phase-grid')).toBeInTheDocument()
+    // Nothing to clip inside the locked top-row height.
+    expect(screen.queryByTestId('hrm-connection-panel')).not.toBeInTheDocument()
+  })
+
+  it('shows the HR panel when HR clients are connected', async () => {
+    render(
+      <HrmDataContext.Provider value={mockHrmData}>
+        <DashboardClient useNativeTable={true} {...mockProps} />
+      </HrmDataContext.Provider>
+    )
+    expect(
+      await screen.findByTestId('hrm-connection-panel')
+    ).toBeInTheDocument()
   })
 })

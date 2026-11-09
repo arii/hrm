@@ -184,7 +184,11 @@ const DashboardClient = ({
           <Box sx={{ height: '100%', minWidth: 0, overflow: 'hidden' }}>
             <TimerDisplay />
           </Box>
-          <HrmConnectionPanel />
+          {/* HR section only mounts with live clients: with 0 tiles the
+              timer takes the full row and no empty placeholder is left to
+              clip inside the locked 340px height. Connection state stays
+              visible via the timer's status indicator. */}
+          {hrCount > 0 && <HrmConnectionPanel />}
         </Box>
         <Box
           sx={{
