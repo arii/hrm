@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.1](https://github.com/arii/hrm/compare/hrm-v0.32.0...hrm-v0.32.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **workout-grid:** deterministic exercise-text fit without refresh clicks ([#9840](https://github.com/arii/hrm/issues/9840)) ([2ab77a0](https://github.com/arii/hrm/commit/2ab77a0d9f42d65b176317e99fd767c201353d07))
+
 ## [0.32.0](https://github.com/arii/hrm/compare/hrm-v0.31.0...hrm-v0.32.0) (2026-11-09)
 
 
