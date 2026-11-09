@@ -144,4 +144,44 @@ describe('HrTile', () => {
       'Zone 4: Cardio'
     )
   })
+
+  it('scales down typography in compact mode for 4+ tile grids', () => {
+    render(
+      <HrTile
+        name="Test"
+        value={120}
+        percentage={65}
+        zone="ZONE_2"
+        calories={100}
+        isCompact
+      />
+    )
+    expect(screen.getByTestId('hr-tile-name')).toHaveStyle({
+      fontSize: '1rem',
+    })
+    expect(screen.getByTestId('bpm-percent')).toHaveStyle({
+      fontSize: '2.75rem',
+    })
+    expect(screen.getByTestId('bpm-value')).toHaveStyle({
+      fontSize: '0.9rem',
+    })
+  })
+
+  it('uses full-size typography by default', () => {
+    render(
+      <HrTile
+        name="Test"
+        value={120}
+        percentage={65}
+        zone="ZONE_2"
+        calories={100}
+      />
+    )
+    expect(screen.getByTestId('hr-tile-name')).toHaveStyle({
+      fontSize: '1.5rem',
+    })
+    expect(screen.getByTestId('bpm-value')).toHaveStyle({
+      fontSize: '1.5rem',
+    })
+  })
 })

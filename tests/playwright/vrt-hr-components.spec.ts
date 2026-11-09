@@ -141,6 +141,49 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
+    test('exercise tiles keep position across 1-4 HR devices', async () => {
+      // Desktop viewport so the locked md top-row height applies.
+      await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
+
+      const makeDevice = (n: number) => ({
+        clientId: `bbox-user-${n}`,
+        name: `Bbox User ${n}`,
+        value: 140 + n * 5,
+        maxHr: 185,
+        calories: 300,
+        zone: `Zone ${(n % 6) + 1}`,
+      })
+
+      const boxes = []
+      for (const count of [1, 2, 3, 4]) {
+        await mockMultipleHrDevices(
+          dashboardPage,
+          Array.from({ length: count }, (_, i) => makeDevice(i + 1))
+        )
+        await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(
+          count
+        )
+        // Let the layout settle after the tile count changes.
+        await dashboardPage.waitForTimeout(500)
+        boxes.push(
+          await dashboardPage.getByTestId('workout-phase-grid').boundingBox()
+        )
+      }
+
+      const reference = boxes[0]
+      expect(reference).not.toBeNull()
+      for (const box of boxes.slice(1)) {
+        expect(box?.y).toBe(reference?.y)
+        expect(box?.height).toBe(reference?.height)
+      }
+
+      // The top row itself stays at the locked desktop height.
+      const topRow = await dashboardPage
+        .getByTestId('dashboard-main-grid')
+        .boundingBox()
+      expect(topRow?.height).toBeCloseTo(340, 0)
+    })
+
     // NEW: HR device in representative zones (Idle, Middle, Max)
     const zones = [0, 3, 6]
     for (const zone of zones) {

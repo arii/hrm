@@ -8,6 +8,7 @@
     "clean:global": "bash scripts/cleanup.sh --global --pnpm-cache",
     "prebuild": "pnpm run clean",
     "dev": "cross-env NODE_ENV=development tsx --env-file=.env.local server.ts | pnpm exec pino-pretty",
+    "dev:preview": "cross-env NODE_ENV=development NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm NEXT_PUBLIC_BASE_PATH=/hrm TESTING=false NEXT_PUBLIC_TESTING=false NEXT_PUBLIC_USE_NATIVE_TABLE=true tsx --env-file=.env.local server.ts | pnpm exec pino-pretty",
     "seed": "tsx scripts/seed-dev-data.ts",
     "deploy": "bash scripts/deploy.sh",
     "build": "pnpm run build:server && next build",

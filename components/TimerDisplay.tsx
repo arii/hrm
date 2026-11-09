@@ -149,8 +149,13 @@ const TimerDisplay = () => {
       sx={{
         backgroundColor: theme.palette.common.black,
         color: phaseColor, // Dynamic color based on phase
+        // Container queries let the digits scale with the timer's
+        // horizontal width when the top row shrinks it to ~38% for 3 tiles.
+        containerType: 'inline-size',
         // Ensure the card fills the grid cell height
         height: '100%',
+        maxHeight: '100%',
+        width: '100%',
         minHeight: isScaledLayout
           ? '20rem'
           : { xs: '8.5rem', sm: '10.5rem', md: '12.5rem' },
@@ -278,11 +283,14 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-digital-7), monospace',
+            // Scale with the timer container width (cqw) so digits never
+            // clip when the top row narrows; clamped to safe bounds.
             fontSize: isScaledLayout
-              ? '16rem'
-              : { xs: '5rem', sm: '7rem', md: '9.5rem' },
+              ? 'clamp(4rem, 26cqw, 16rem)'
+              : 'clamp(4rem, 26cqw, 13rem)',
             fontWeight: 900,
             lineHeight: 1,
+            whiteSpace: 'nowrap',
             textAlign: 'center',
             color: phaseColor,
             textShadow: `0 0 10px ${phaseColor}`,
