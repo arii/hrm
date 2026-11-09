@@ -1,6 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   Alert,
   Box,
@@ -43,21 +49,53 @@ export default function WorkoutPhaseGrid({
 
   const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)
 
-  useEffect(() => {
-    if (data) {
-      setFontSizeRem(
-        scaledExerciseFontRem(data.columns ?? [], data.headers.length)
-      )
-    }
-  }, [data])
+  // Refit generation: bumped by layout-settle signals (ResizeObserver,
+  // webfont resolution) so the single measuring pass below re-runs
+  // post-commit. Settle handlers never step the font themselves — they
+  // only restore the data-driven base and bump this counter — so any
+  // number of overlapping settle signals converges to one deterministic
+  // size instead of ratcheting down once per signal.
+  const [fitEpoch, setFitEpoch] = useState(0)
+  // Data-driven ceiling: the roomiest size the content estimate allows.
+  // Every fit starts here; measurement only ever steps down from it, so
+  // a transient false overflow can never permanently shrink the text.
+  const baseFontRem = data
+    ? scaledExerciseFontRem(data.columns ?? [], data.headers.length)
+    : null
+  // Guards the measuring pass so a repeated run with no new information
+  // (same base, font, epoch, and grid box — e.g. StrictMode double
+  // effects) can never step twice for one layout.
+  const measuredKeyRef = useRef<string | null>(null)
 
-  // Single overflow pass over the rendered cards. Skips unsettled
-  // (zero/near-zero height) layouts so a first-paint measurement can
-  // never lock in a wrong size; the ResizeObserver below re-runs this
-  // once the container settles.
-  const recalculateSizes = useCallback(() => {
-    if (!isScaledLayout || !gridRef.current) return
+  useEffect(() => {
+    if (data && baseFontRem !== null) {
+      setFontSizeRem(baseFontRem)
+    }
+  }, [data, baseFontRem])
+
+  // Restore the data-driven base and schedule exactly one fresh measuring
+  // pass. Called on discrete layout-settle signals only.
+  const requestRefit = useCallback(() => {
+    if (baseFontRem !== null) {
+      setFontSizeRem(baseFontRem)
+    }
+    measuredKeyRef.current = null
+    setFitEpoch((epoch) => epoch + 1)
+  }, [baseFontRem])
+
+  // Single measuring pass over the rendered cards. Runs post-commit
+  // (layout effect: measures the just-committed font before paint) and
+  // converges one 0.1 step per commit from the base toward the largest
+  // size that fits — never upward within a pass, never twice for the
+  // same layout. Skips unsettled (zero/near-zero height) layouts so a
+  // first-paint measurement can never lock in a wrong size; the
+  // ResizeObserver below re-runs this once the container settles.
+  useLayoutEffect(() => {
+    if (!isScaledLayout || !gridRef.current || baseFontRem === null) return
     const grid = gridRef.current
+    if (grid.clientHeight < MIN_SETTLED_CONTAINER_PX) return
+    const key = `${baseFontRem}|${fontSizeRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
+    if (measuredKeyRef.current === key) return
     const cards = Array.from(
       grid.querySelectorAll<HTMLElement>('.MuiCard-root')
     )
@@ -65,25 +103,29 @@ export default function WorkoutPhaseGrid({
     if (cards.some((card) => card.clientHeight < MIN_SETTLED_CONTAINER_PX)) {
       return
     }
-    const hasOverflow = cards.some((card) => {
-      const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
-      return (
-        (content && content.scrollHeight > content.clientHeight + 1) ||
-        card.scrollHeight > card.clientHeight + 1
-      )
-    })
+    measuredKeyRef.current = key
+    // The grid itself is measured too: inside the scrollable workout
+    // section, cards size to their content (no card-level overflow) while
+    // the fixed-height grid overflows — card-only measurement misses that
+    // case entirely and leaves oversized text in place.
+    const hasOverflow =
+      grid.scrollHeight > grid.clientHeight + 1 ||
+      grid.scrollWidth > grid.clientWidth + 1 ||
+      cards.some((card) => {
+        const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
+        return (
+          (content && content.scrollHeight > content.clientHeight + 1) ||
+          card.scrollHeight > card.clientHeight + 1
+        )
+      })
     if (hasOverflow) {
       setFontSizeRem((prev) => Math.max(1.4, Number((prev - 0.1).toFixed(2))))
     }
-  }, [isScaledLayout])
+  }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout])
 
-  useEffect(() => {
-    recalculateSizes()
-  }, [data, fontSizeRem, isScaledLayout, recalculateSizes])
-
-  // Re-measure after web fonts resolve and the frame paints: fallback
-  // font metrics differ from the final ones, so a pass that ran early
-  // can settle on the wrong size.
+  // Refit after web fonts resolve and the frame paints: fallback font
+  // metrics differ from the final ones, so a fit that ran early restores
+  // to base here and re-converges on the real metrics.
   useEffect(() => {
     if (!data) return
     let cancelled = false
@@ -95,21 +137,21 @@ export default function WorkoutPhaseGrid({
       }
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
-          if (!cancelled) recalculateSizes()
+          if (!cancelled) requestRefit()
         })
       } else if (!cancelled) {
-        recalculateSizes()
+        requestRefit()
       }
     }
     runDeferred()
     return () => {
       cancelled = true
     }
-  }, [data, recalculateSizes])
+  }, [data, requestRefit])
 
-  // Re-measure whenever the grid container's own box settles or
-  // changes (initial flex resolution, ScaledStage scaling, viewport
-  // changes). No manual refresh click required.
+  // Refit whenever the grid container's own box settles or changes
+  // (initial flex resolution, ScaledStage scaling, viewport changes).
+  // No manual refresh click required.
   useEffect(() => {
     const grid = gridRef.current
     if (!grid || typeof ResizeObserver === 'undefined') return
@@ -117,10 +159,10 @@ export default function WorkoutPhaseGrid({
     const schedule = () => {
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
-          if (!cancelled) recalculateSizes()
+          if (!cancelled) requestRefit()
         })
       } else if (!cancelled) {
-        recalculateSizes()
+        requestRefit()
       }
     }
     const observer = new ResizeObserver((entries) => {
@@ -135,7 +177,7 @@ export default function WorkoutPhaseGrid({
       cancelled = true
       observer.disconnect()
     }
-  }, [data, recalculateSizes])
+  }, [data, requestRefit])
 
   useEffect(() => {
     if (!docId) {
