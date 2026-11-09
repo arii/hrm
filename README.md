@@ -225,9 +225,12 @@ for other agents to check live state. How it is wired:
   wins over `--env-file`, so the daemon was unaffected). Current daemon:
 
 ```bash
-NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm NEXT_PUBLIC_BASE_PATH=/hrm \
-  TESTING=false NEXT_PUBLIC_TESTING=false NEXT_PUBLIC_USE_NATIVE_TABLE=true pnpm run dev
+pnpm run dev:preview
 ```
+
+(defined in `package.json` — sets `NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm`,
+`NEXT_PUBLIC_BASE_PATH=/hrm`, `TESTING=false`, `NEXT_PUBLIC_TESTING=false`,
+`NEXT_PUBLIC_USE_NATIVE_TABLE=true` inline, so `.env.local` stays clean)
 
 - Verify: `curl http://127.0.0.1:3000/hrm` → `200`;
   `curl -sk https://dev-onasafari.ddns.net:8443/hrm` → `302` to GitHub login

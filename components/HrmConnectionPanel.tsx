@@ -11,6 +11,7 @@ import {
 import HrTile from '@/components/HrTile'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import { augmentHrmData } from '@/utils/hrm'
+import { getHrGridConfig } from '@/constants/layout'
 import { ClientHrmData } from '@/types/websocket'
 
 const HrmConnectionPanel = () => {
@@ -28,14 +29,18 @@ const HrmConnectionPanel = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
+  const hrCount = tileData.length
+  const isCompact = hrCount >= 4
+  const hrGridConfig = getHrGridConfig(hrCount)
+
   return (
     <Box
       data-testid="hrm-connection-panel"
       sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
         height: '100%',
+        minHeight: 0,
+        minWidth: 0,
+        overflow: 'hidden',
       }}
     >
       {isLoading ? (
@@ -94,30 +99,47 @@ const HrmConnectionPanel = () => {
           </Typography>
         </Box>
       ) : (
-        tileData.map((user: ClientHrmData) => {
-          // Destructure to remove volatile timestamps causing re-renders
-          const {
-            updatedAt: _updatedAt,
-            lastUpdated: _lastUpdated,
-            ...tileProps
-          } = user
-          return (
-            <Box
-              key={user.clientId}
-              data-testid="hr-tile-grid-item"
-              sx={{
-                width: isScaledLayout
-                  ? 'calc(50% - 8px)' // Adjusted for 16px gap (gap: 2)
-                  : {
-                      xs: '100%',
-                      sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-                    },
-              }}
-            >
-              <HrTile {...tileProps} />
-            </Box>
-          )
-        })
+        <Box
+          data-testid="hr-tiles-container"
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: isScaledLayout
+              ? hrGridConfig.gridTemplateColumns
+              : {
+                  xs: '1fr',
+                  sm: hrGridConfig.gridTemplateColumns,
+                },
+            gridTemplateRows: isScaledLayout
+              ? hrGridConfig.gridTemplateRows
+              : {
+                  xs: 'auto',
+                  sm: hrGridConfig.gridTemplateRows,
+                },
+            gap: isCompact ? 1.5 : 2,
+            height: '100%',
+            minHeight: 0,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          {tileData.map((user: ClientHrmData) => {
+            // Destructure to remove volatile timestamps causing re-renders
+            const {
+              updatedAt: _updatedAt,
+              lastUpdated: _lastUpdated,
+              ...tileProps
+            } = user
+            return (
+              <Box
+                key={user.clientId}
+                data-testid="hr-tile-grid-item"
+                sx={{ minHeight: 0, minWidth: 0, overflow: 'hidden' }}
+              >
+                <HrTile {...tileProps} isCompact={isCompact} />
+              </Box>
+            )
+          })}
+        </Box>
       )}
     </Box>
   )

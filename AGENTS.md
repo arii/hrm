@@ -7,7 +7,7 @@
 - `pnpm run build` - build the project
 - `pnpm run lint` - run the lint task
 - `pnpm run format` - run prettier formatting
-- Dev server: `NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm NEXT_PUBLIC_BASE_PATH=/hrm TESTING=false NEXT_PUBLIC_TESTING=false NEXT_PUBLIC_USE_NATIVE_TABLE=true pnpm run dev`
+- Dev server: `pnpm run dev:preview` (preview env for `https://dev-onasafari.ddns.net:8443/hrm` lives inline in that `package.json` script)
 
 ## Code Map
 
@@ -33,3 +33,4 @@
 - Use ESM `import`/`export` syntax for modules.
 - Name Jest unit tests `*.test.ts`.
 - Name Playwright tests `*.spec.ts`.
+- Use `.ts` or `.tsx` extensions for TypeScript files.

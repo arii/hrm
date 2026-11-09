@@ -141,6 +141,55 @@ test.describe('Visual Regression Tests', () => {
       })
     })
 
+    test('exercise tiles keep position across 1-4 HR devices', async () => {
+      // Desktop viewport so the locked md top-row height applies.
+      await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
+
+      // Whichever exercise viewer the build serves (native table or
+      // doc iframe), its box must not move as HR tiles connect.
+      const exerciseArea = dashboardPage
+        .getByTestId('workout-phase-grid')
+        .or(dashboardPage.getByTestId('google-doc-viewer-iframe'))
+
+      const makeDevice = (n: number) => ({
+        clientId: `bbox-user-${n}`,
+        name: `Bbox User ${n}`,
+        value: 140 + n * 5,
+        maxHr: 185,
+        calories: 300,
+        zone: `Zone ${(n % 6) + 1}`,
+      })
+
+      const boxes = []
+      for (const count of [1, 2, 3, 4]) {
+        await mockMultipleHrDevices(
+          dashboardPage,
+          Array.from({ length: count }, (_, i) => makeDevice(i + 1))
+        )
+        await expect(dashboardPage.getByTestId('hr-tile-card')).toHaveCount(
+          count
+        )
+        // Let the layout settle after the tile count changes.
+        await dashboardPage.waitForTimeout(500)
+        boxes.push(await exerciseArea.boundingBox())
+      }
+
+      const reference = boxes[0]
+      expect(reference).not.toBeNull()
+      for (const box of boxes.slice(1)) {
+        expect(box?.y).toBe(reference?.y)
+        expect(box?.height).toBe(reference?.height)
+      }
+
+      // The top row itself stays at the locked desktop height (assert
+      // the computed style, not visual pixels: ScaledStage scales the
+      // fixed canvas, e.g. 340px renders as 408px at a 1920px viewport).
+      const topRowHeight = await dashboardPage
+        .getByTestId('dashboard-main-grid')
+        .evaluate((el) => getComputedStyle(el).height)
+      expect(topRowHeight).toBe('340px')
+    })
+
     // NEW: HR device in representative zones (Idle, Middle, Max)
     const zones = [0, 3, 6]
     for (const zone of zones) {

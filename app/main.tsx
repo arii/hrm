@@ -41,12 +41,25 @@ import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 /** Page content plus the global footer stack, shared by both layout
- * branches so no route can silently lose the Spotify bar. */
-export function FooterStack({ pageMotion }: { pageMotion: React.ReactNode }) {
+ * branches so no route can silently lose the Spotify bar. The player
+ * stays mounted on every route (audio persistence); the wrapper hides
+ * its UI off-dashboard so it never overlaps Controls/Stream content. */
+export function FooterStack({
+  pageMotion,
+  isDashboard,
+}: {
+  pageMotion: React.ReactNode
+  isDashboard: boolean
+}) {
   return (
     <>
       {pageMotion}
-      <SpotifyDisplay />
+      <Box
+        data-testid="global-spotify-footer-wrapper"
+        sx={{ display: isDashboard ? 'block' : 'none' }}
+      >
+        <SpotifyDisplay />
+      </Box>
       <Footer />
       <BottomNavBar />
     </>
@@ -83,10 +96,16 @@ export default function Main({ children }: { children: React.ReactNode }) {
                 <TimerSoundProvider>
                   {isDashboard ? (
                     <ScaledStage>
-                      <FooterStack pageMotion={pageMotion} />
+                      <FooterStack
+                        pageMotion={pageMotion}
+                        isDashboard={isDashboard}
+                      />
                     </ScaledStage>
                   ) : (
-                    <FooterStack pageMotion={pageMotion} />
+                    <FooterStack
+                      pageMotion={pageMotion}
+                      isDashboard={isDashboard}
+                    />
                   )}
                 </TimerSoundProvider>
               </UserSettingsProvider>

@@ -13,6 +13,8 @@ export interface HrTileProps {
   isDataStale?: boolean
   isAlerting?: boolean
   alertMessage?: string
+  /** Compact mode for 4+ tiles sharing the locked top-row height. */
+  isCompact?: boolean
 }
 
 export interface DashboardSectionLoadingSkeletonProps {

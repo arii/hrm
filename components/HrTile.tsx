@@ -13,14 +13,20 @@ import { useIsScaledLayout } from '@/components/ScaledStage'
 import { HrTileProps } from '@/types'
 import { HR_TILE_MIN_HEIGHT, HERO_FONT_FAMILY } from '@/constants/layout'
 
-const IdentityTier = ({ name }: { name: string }) => (
-  <Box sx={{ pt: 1, textAlign: 'center' }}>
+const IdentityTier = ({
+  name,
+  isCompact = false,
+}: {
+  name: string
+  isCompact?: boolean
+}) => (
+  <Box sx={{ pt: isCompact ? 0.5 : 1, textAlign: 'center' }}>
     <Typography
       data-testid="hr-tile-name"
       variant="h4"
       sx={{
         fontWeight: 900,
-        fontSize: '1.5rem',
+        fontSize: isCompact ? '1rem' : '1.5rem',
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
@@ -33,7 +39,13 @@ const IdentityTier = ({ name }: { name: string }) => (
   </Box>
 )
 
-const HeroTier = ({ percentage }: { percentage: number }) => {
+const HeroTier = ({
+  percentage,
+  isCompact = false,
+}: {
+  percentage: number
+  isCompact?: boolean
+}) => {
   // Scaled mode pins the target-composition (md-breakpoint) size so
   // the canvas never reflips with the real window size. At scaled
   // viewports (600px+) the vw term always saturates at the max.
@@ -52,13 +64,15 @@ const HeroTier = ({ percentage }: { percentage: number }) => {
         variant="h2"
         component="div"
         sx={{
-          fontSize: isScaledLayout
-            ? 'clamp(3.75rem, 15vw, 6rem)'
-            : {
-                xs: 'clamp(2.25rem, 10vw, 3rem)',
-                sm: 'clamp(3rem, 12vw, 3.75rem)',
-                md: 'clamp(3.75rem, 15vw, 4.5rem)',
-              },
+          fontSize: isCompact
+            ? '2.75rem'
+            : isScaledLayout
+              ? 'clamp(3.75rem, 15vw, 6rem)'
+              : {
+                  xs: 'clamp(2.25rem, 10vw, 3rem)',
+                  sm: 'clamp(3rem, 12vw, 3.75rem)',
+                  md: 'clamp(3.75rem, 15vw, 4.5rem)',
+                },
           fontWeight: 900,
           lineHeight: 1,
           fontFamily: HERO_FONT_FAMILY,
@@ -74,21 +88,27 @@ const MetricItem = ({
   value,
   label,
   testId,
+  isCompact = false,
 }: {
   value: React.ReactNode
   label: string
   testId?: string
+  isCompact?: boolean
 }) => (
   <Typography
     data-testid={testId}
     variant="h4"
-    sx={{ fontWeight: 800, fontSize: '1.5rem' }}
+    sx={{ fontWeight: 800, fontSize: isCompact ? '0.9rem' : '1.5rem' }}
   >
     {value}{' '}
     <Typography
       component="span"
       variant="caption"
-      sx={{ fontSize: '1rem', fontWeight: 700, opacity: 0.9 }}
+      sx={{
+        fontSize: isCompact ? '0.75rem' : '1rem',
+        fontWeight: 700,
+        opacity: 0.9,
+      }}
     >
       {label}
     </Typography>
@@ -99,25 +119,33 @@ const DataTier = ({
   value,
   calories,
   showName,
+  isCompact = false,
 }: {
   value: number | null
   calories: number
   showName: boolean
+  isCompact?: boolean
 }) => (
   <Box
     sx={{
-      pb: 1,
+      pb: isCompact ? 0.5 : 1,
       pt: showName ? 0 : 1,
       display: 'flex',
       justifyContent: 'center',
-      gap: 4,
+      gap: isCompact ? 2 : 4,
     }}
   >
-    <MetricItem value={value ?? '---'} label="BPM" testId="bpm-value" />
+    <MetricItem
+      value={value ?? '---'}
+      label="BPM"
+      testId="bpm-value"
+      isCompact={isCompact}
+    />
     <MetricItem
       value={Math.floor(calories)}
       label="KCAL"
       testId="calories-value"
+      isCompact={isCompact}
     />
   </Box>
 )
@@ -136,6 +164,7 @@ const HrTile = ({
   isConnected = true,
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  isCompact = false,
 }: HrTileProps) => {
   const theme = useTheme()
 
@@ -176,7 +205,11 @@ const HrTile = ({
         sx={{
           bgcolor: zoneConfig.color,
           color: zoneConfig.textColor,
-          minHeight: HR_TILE_MIN_HEIGHT,
+          minHeight: isCompact ? 0 : HR_TILE_MIN_HEIGHT,
+          // Strictly obey the grid cell: inline-size containment keeps
+          // width queries honest without collapsing stacked (auto-row)
+          // layouts the way full size containment would.
+          containerType: 'inline-size',
           // Ensure the tile fills the container height in the grid
           height: '100%',
           display: 'flex',
@@ -222,17 +255,23 @@ const HrTile = ({
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            p: 1.5,
+            minHeight: 0,
+            p: isCompact ? 0.75 : 1.5,
           }}
         >
-          {showName && <IdentityTier name={name} />}
+          {showName && <IdentityTier name={name} isCompact={isCompact} />}
           {/* Ticking digits are visual-only: a live region here would
               announce every 1Hz update. Zone transitions go to the
               dedicated announcer below, whose text only changes on
               transition. */}
           <Box data-testid="hr-tile-data" aria-hidden="true">
-            <HeroTier percentage={percentage} />
-            <DataTier value={value} calories={calories} showName={showName} />
+            <HeroTier percentage={percentage} isCompact={isCompact} />
+            <DataTier
+              value={value}
+              calories={calories}
+              showName={showName}
+              isCompact={isCompact}
+            />
           </Box>
           <Box
             data-testid="hr-tile-announcer"
@@ -254,10 +293,21 @@ const HrTile = ({
           </Box>
         </Box>
 
-        <Box sx={{ bgcolor: 'common.black', py: 1, textAlign: 'center' }}>
+        <Box
+          sx={{
+            bgcolor: 'common.black',
+            py: isCompact ? 0.25 : 1,
+            textAlign: 'center',
+          }}
+        >
           <Typography
             variant="h6"
-            sx={{ color: '#FFF', fontWeight: 900, letterSpacing: '0.3em' }}
+            sx={{
+              color: '#FFF',
+              fontWeight: 900,
+              letterSpacing: '0.3em',
+              fontSize: isCompact ? '0.75rem' : undefined,
+            }}
           >
             {zoneConfig.label.toUpperCase()}
           </Typography>

@@ -31,6 +31,7 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { signOut } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
 import AuthButton from './AuthButton'
 import VolumeSlider from './shared/VolumeSlider'
 import SpotifyDeviceSelector from './SpotifyDeviceSelector'
@@ -330,6 +331,12 @@ const SpotifyDisplay = () => {
   // Enable remote Spotify control from controllers
   useDashboardRegistration(player)
 
+  // Dashboard-only visibility: the bar stays mounted on every route so
+  // the Web Playback SDK instance never drops, but its UI is hidden
+  // off-dashboard via CSS (no early return — all hooks above run).
+  const pathname = usePathname()
+  const isDashboard = pathname === '/'
+
   const isPlaying = spotifyData.playback?.is_playing ?? false
   // Displayed state: shared optimistic value while fresh so every surface
   // (dashboard, control page) flips instantly and in sync. Guards keep
@@ -351,13 +358,14 @@ const SpotifyDisplay = () => {
     return (
       <Box
         data-testid="spotify-auth-container"
+        aria-hidden={!isDashboard}
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
           px: 3,
           py: 0,
           borderRadius: 2,
-          display: 'flex',
+          display: isDashboard ? 'flex' : 'none',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'fixed',
@@ -401,6 +409,7 @@ const SpotifyDisplay = () => {
   return (
     <Box
       data-testid="spotify-display-container"
+      aria-hidden={!isDashboard}
       aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
         displayPlaying ? 'Playing' : 'Paused'
       }${isReady ? ', Browser player ready' : ''}`}
@@ -410,7 +419,7 @@ const SpotifyDisplay = () => {
         px: isScaledLayout ? 3 : { xs: 2, sm: 3 },
         py: 0,
         borderRadius: 2,
-        display: 'grid',
+        display: isDashboard ? 'grid' : 'none',
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         position: 'fixed',

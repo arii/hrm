@@ -9,8 +9,19 @@ import {
 } from '../../mocks/contexts'
 import '../../mocks/components.tsx'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import HrTile from '@/components/HrTile'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import { mockHrmData } from '../../fixtures/hrm'
+
+const MockedHrTile = HrTile as unknown as jest.Mock
+
+const makeHrmDevice = (clientId: string, name: string) => ({
+  clientId,
+  name,
+  value: 120,
+  maxHr: 190,
+  calories: 100,
+})
 
 describe('HrmConnectionPanel', () => {
   beforeEach(() => {
@@ -91,5 +102,46 @@ describe('HrmConnectionPanel', () => {
     expect(screen.getByText('No Heart Rate Data')).toBeInTheDocument()
     expect(screen.queryByTestId('hr-tile-grid-item')).not.toBeInTheDocument()
     expect(container.querySelector('.MuiSkeleton-root')).toBeNull()
+  })
+
+  it('renders 3 HR tiles in a single-row container without compact mode', () => {
+    mockUseHrmData.mockReturnValue([
+      makeHrmDevice('1', 'Alpha'),
+      makeHrmDevice('2', 'Bravo'),
+      makeHrmDevice('3', 'Charlie'),
+    ])
+    MockedHrTile.mockClear()
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    expect(screen.getByTestId('hr-tiles-container')).toBeInTheDocument()
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(3)
+    expect(MockedHrTile).toHaveBeenCalledTimes(3)
+    MockedHrTile.mock.calls.forEach((call) => {
+      expect(call[0].isCompact).toBe(false)
+    })
+  })
+
+  it('passes compact mode to tiles when 4 HR devices are connected', () => {
+    mockUseHrmData.mockReturnValue([
+      makeHrmDevice('1', 'Alpha'),
+      makeHrmDevice('2', 'Bravo'),
+      makeHrmDevice('3', 'Charlie'),
+      makeHrmDevice('4', 'Delta'),
+    ])
+    MockedHrTile.mockClear()
+    render(
+      <UserSettingsProvider>
+        <HrmConnectionPanel />
+      </UserSettingsProvider>
+    )
+    expect(screen.getByTestId('hr-tiles-container')).toBeInTheDocument()
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(4)
+    expect(MockedHrTile).toHaveBeenCalledTimes(4)
+    MockedHrTile.mock.calls.forEach((call) => {
+      expect(call[0].isCompact).toBe(true)
+    })
   })
 })
