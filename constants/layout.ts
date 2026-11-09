@@ -41,7 +41,7 @@ export const getTopRowGridColumns = (count: number) => {
   return { xs: '1fr', md: '50fr 50fr' }
 }
 
-export interface HrGridConfig {
+interface HrGridConfig {
   gridTemplateColumns: string
   gridTemplateRows: string
 }
