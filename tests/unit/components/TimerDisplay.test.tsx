@@ -12,7 +12,8 @@ import {
 } from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { audioManager } from '@/utils/audioManager'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -239,6 +240,53 @@ describe('TimerDisplay', () => {
       // if it's set via MUI sx props and not in actual CSS, but we can check the presence of the text
       expect(flexContainer).toHaveTextContent('TABATA')
       expect(flexContainer).toHaveTextContent('WORK:30s REST:15s')
+    })
+  })
+
+  describe('Timer beep volume control', () => {
+    const idleMock = {
+      currentPhase: 'IDLE',
+      timeRemaining: 0,
+      timeElapsed: 0,
+      mode: 'TABATA',
+    } as Partial<TimerData>
+
+    beforeEach(() => {
+      window.localStorage.clear()
+      audioManager.setMuted(false)
+      audioManager.setVolume(70)
+    })
+
+    it('restores the mute button and volume slider', () => {
+      setupMock(idleMock)
+      render(<TimerDisplay />)
+      expect(screen.getByTestId('timer-volume-mute-button')).toBeInTheDocument()
+      expect(screen.getByTestId('timer-volume-slider')).toBeInTheDocument()
+    })
+
+    it('mutes and unmutes beeps via the mute button', () => {
+      setupMock(idleMock)
+      render(<TimerDisplay />)
+      const muteButton = screen.getByTestId('timer-volume-mute-button')
+      fireEvent.click(muteButton)
+      expect(audioManager.getMuted()).toBe(true)
+      fireEvent.click(muteButton)
+      expect(audioManager.getMuted()).toBe(false)
+    })
+
+    it('sets beep volume via the slider without touching music keys', () => {
+      window.localStorage.setItem('hrm-preferred-volume', '42')
+      setupMock(idleMock)
+      render(<TimerDisplay />)
+      const sliderInput = screen
+        .getByTestId('timer-volume-slider')
+        .querySelector('input')
+      expect(sliderInput).not.toBeNull()
+      fireEvent.change(sliderInput!, { target: { value: '30' } })
+      expect(audioManager.getVolume()).toBe(30)
+      // Beep preference persists under its own keys only.
+      expect(window.localStorage.getItem('hrm-timer-volume')).toBe('30')
+      expect(window.localStorage.getItem('hrm-preferred-volume')).toBe('42')
     })
   })
 })

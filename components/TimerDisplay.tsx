@@ -7,16 +7,55 @@ import {
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import IconButton from '@mui/material/IconButton'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import VolumeDown from '@mui/icons-material/VolumeDown'
+import VolumeOff from '@mui/icons-material/VolumeOff'
+import VolumeUp from '@mui/icons-material/VolumeUp'
+import { memo, useEffect, useRef, useState } from 'react'
 import SideLabel from './SideLabel'
 import { useIsScaledLayout } from '@/components/ScaledStage'
+import { clampVolume } from '@/hooks/useVolumePreference'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
+import { audioManager } from '@/utils/audioManager'
 import type { TimerMode, TimerPhase } from '@/types/core'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
+
+// Timer beep volume persistence. Separate keys from the Spotify music
+// volume (useVolumePreference): beeps and music are independent outputs
+// and must never move each other.
+const TIMER_VOLUME_KEY = 'hrm-timer-volume'
+const TIMER_MUTED_KEY = 'hrm-timer-muted'
+const DEFAULT_BEEP_VOLUME = 70
+
+// Persisted beep preference readers (SSR-safe: defaults on the server).
+const readPreferredBeepVolume = (): number => {
+  if (typeof window === 'undefined') return DEFAULT_BEEP_VOLUME
+  try {
+    const storedVol = window.localStorage.getItem(TIMER_VOLUME_KEY)
+    const preferred =
+      storedVol === null
+        ? Math.round(audioManager.getVolume())
+        : clampVolume(Number(storedVol))
+    return preferred === 0 ? DEFAULT_BEEP_VOLUME : preferred
+  } catch {
+    return DEFAULT_BEEP_VOLUME
+  }
+}
+
+const readBeepsMuted = (): boolean => {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(TIMER_MUTED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
 
 // Theme colors the phase policy needs, passed in so the policy stays
 // pure (no private hex values; the timer shares the dashboard palette).
@@ -141,6 +180,56 @@ const TimerDisplay = () => {
   )
 
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
+
+  // Timer beep volume: local persisted state driving audioManager
+  // directly. Deliberately not useVolumePreference — that hook's state
+  // is shared with (and synced from) the Spotify music volume.
+  // Initialized lazily (SSR-safe: defaults on the server) so no
+  // mount effect has to cascade state into existence.
+  const [beepVolume, setBeepVolume] = useState<number>(() =>
+    readBeepsMuted() ? 0 : readPreferredBeepVolume()
+  )
+  const [beepsMuted, setBeepsMuted] = useState<boolean>(readBeepsMuted)
+  const lastBeepVolumeRef = useRef<number>(readPreferredBeepVolume())
+
+  // audioManager is the live output: keep it in sync with React state.
+  useEffect(() => {
+    audioManager.setMuted(beepsMuted)
+    audioManager.setVolume(beepVolume)
+  }, [beepVolume, beepsMuted])
+
+  const persistBeepPreference = (preferred: number, muted: boolean) => {
+    try {
+      window.localStorage.setItem(TIMER_VOLUME_KEY, String(preferred))
+      window.localStorage.setItem(TIMER_MUTED_KEY, String(muted))
+    } catch {
+      // localStorage unavailable: volume still applies for this session.
+    }
+  }
+
+  const handleBeepVolumeChange = (_: Event, value: number | number[]) => {
+    const next = clampVolume(value as number)
+    if (next > 0) {
+      lastBeepVolumeRef.current = next
+    }
+    setBeepVolume(next)
+    setBeepsMuted(next === 0)
+    audioManager.setVolume(next)
+    audioManager.setMuted(next === 0)
+    persistBeepPreference(lastBeepVolumeRef.current, next === 0)
+  }
+
+  const handleToggleBeepsMuted = () => {
+    const muting = !beepsMuted
+    if (muting && beepVolume > 0) {
+      lastBeepVolumeRef.current = beepVolume
+    }
+    const restored = muting ? 0 : lastBeepVolumeRef.current
+    setBeepsMuted(muting)
+    setBeepVolume(restored)
+    audioManager.setMuted(muting)
+    persistBeepPreference(lastBeepVolumeRef.current, muting)
+  }
 
   return (
     <Card
@@ -300,6 +389,40 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
+
+        {/* Timer beep volume — independent of Spotify music volume.
+            Compact by design: the top row is height-locked, so this row
+            stays out of the digits' vertical budget. */}
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ mt: 0.5, width: '100%', maxWidth: 260 }}
+        >
+          <IconButton
+            onClick={handleToggleBeepsMuted}
+            aria-label={
+              beepsMuted ? 'Unmute timer sounds' : 'Mute timer sounds'
+            }
+            data-testid="timer-volume-mute-button"
+            sx={{ color: theme.palette.common.white }}
+          >
+            {beepsMuted || beepVolume === 0 ? <VolumeOff /> : <VolumeDown />}
+          </IconButton>
+          <Slider
+            aria-label="Timer volume"
+            value={beepsMuted ? 0 : beepVolume}
+            onChange={handleBeepVolumeChange}
+            data-testid="timer-volume-slider"
+            sx={{
+              color: theme.palette.common.white,
+              '& .MuiSlider-thumb': {
+                color: phaseColor,
+              },
+            }}
+          />
+          <VolumeUp sx={{ color: theme.palette.common.white }} />
+        </Stack>
       </CardContent>
     </Card>
   )

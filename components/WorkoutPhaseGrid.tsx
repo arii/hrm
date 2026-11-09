@@ -125,10 +125,16 @@ export default function WorkoutPhaseGrid({
 
   // Refit after web fonts resolve and the frame paints: fallback font
   // metrics differ from the final ones, so a fit that ran early restores
-  // to base here and re-converges on the real metrics.
+  // to base here and re-converges on the real metrics. Plus a bounded
+  // settle window: after data arrives, layout keeps settling (flex
+  // resolution, late webfonts, WS-driven tiles) without changing the
+  // grid box — which no observer can see. Refitting from base on a short
+  // schedule guarantees the final pass measures settled layout, so every
+  // load converges to the same size. All timers die with the effect.
   useEffect(() => {
     if (!data) return
     let cancelled = false
+    const timers: ReturnType<typeof setTimeout>[] = []
     const runDeferred = async () => {
       try {
         await document.fonts?.ready
@@ -144,8 +150,16 @@ export default function WorkoutPhaseGrid({
       }
     }
     runDeferred()
+    for (const delayMs of [500, 1500, 3000]) {
+      timers.push(
+        setTimeout(() => {
+          if (!cancelled) requestRefit()
+        }, delayMs)
+      )
+    }
     return () => {
       cancelled = true
+      timers.forEach(clearTimeout)
     }
   }, [data, requestRefit])
 
