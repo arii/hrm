@@ -22,6 +22,7 @@ import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
+import { usePathname } from 'next/navigation'
 import React from 'react'
 import { SpotifyData } from '@/types/websocket'
 
@@ -72,6 +73,9 @@ jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   __esModule: true,
   default: jest.fn(),
 }))
+jest.mock('next/navigation', () => ({
+  usePathname: jest.fn(),
+}))
 
 const mockedUseSpotifyData = useSpotifyData as jest.Mock
 const mockedUseConnection = useWebSocketConnection as jest.Mock
@@ -81,6 +85,7 @@ const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 const mockedUseSpotifyCommand = useSpotifyCommand as jest.MockedFunction<
   typeof useSpotifyCommand
 >
+const mockedUsePathname = usePathname as jest.Mock
 
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -120,6 +125,7 @@ describe('SpotifyDisplay', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
+    mockedUsePathname.mockReturnValue('/')
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isReady: true,
       deviceId: 'mock-device-id',
@@ -586,6 +592,68 @@ describe('SpotifyDisplay', () => {
       expect(
         screen.queryByText(/Browser Player Active/)
       ).not.toBeInTheDocument()
+    })
+  })
+
+  describe('dashboard-only visibility', () => {
+    const loggedInData = {
+      devices: [],
+      playback: {
+        track: {
+          id: 't1',
+          name: 'Song',
+          artist: 'Artist',
+          albumName: '',
+          albumArtUrl: '',
+        },
+        is_playing: false,
+        isMuted: false,
+        volume_percent: 0,
+        progress_ms: 0,
+      },
+    }
+
+    beforeEach(() => {
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
+      mockedUseSpotifyData.mockReturnValue(loggedInData)
+      mockedUseConnection.mockReturnValue({
+        connectionStatus: 'Connected',
+      })
+    })
+
+    it('shows the footer bar on the dashboard route', () => {
+      mockedUsePathname.mockReturnValue('/')
+      renderWithProviders(<SpotifyDisplay />)
+      const bar = screen.getByTestId('spotify-display-container')
+      expect(bar).toBeVisible()
+      expect(bar).toHaveAttribute('aria-hidden', 'false')
+    })
+
+    it('hides the footer bar on Controls/Stream routes but keeps it mounted', () => {
+      mockedUsePathname.mockReturnValue('/client/control')
+      renderWithProviders(<SpotifyDisplay />)
+      const bar = screen.getByTestId('spotify-display-container')
+      // Mounted so the Web Playback SDK instance never drops, but
+      // visually hidden so it cannot overlap page content.
+      expect(bar).toBeInTheDocument()
+      expect(bar).not.toBeVisible()
+      expect(bar).toHaveAttribute('aria-hidden', 'true')
+      expect(mockedUseSpotifyWebPlayback).toHaveBeenCalled()
+    })
+
+    it('hides the logged-out bar off-dashboard', () => {
+      mockedUseSession.mockReturnValue({
+        data: null,
+        status: 'unauthenticated',
+      })
+      mockedUsePathname.mockReturnValue('/client/connect')
+      renderWithProviders(<SpotifyDisplay />)
+      const bar = screen.getByTestId('spotify-auth-container')
+      expect(bar).toBeInTheDocument()
+      expect(bar).not.toBeVisible()
     })
   })
 })

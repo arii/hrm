@@ -38,6 +38,13 @@ test.describe('Visual Regression Tests for /client/connect Page', () => {
     await connectPage.waitForTimeout(2500)
   })
 
+  test('spotify footer hidden on stream page', async ({ connectPage }) => {
+    // Dashboard-only bar must not sit at the bottom of /client/connect.
+    await expect(
+      connectPage.getByTestId('global-spotify-footer-wrapper')
+    ).toBeHidden()
+  })
+
   test('scanning state', async ({ connectPage }) => {
     await connectPage.evaluate((status) => {
       window.__TEST_CONTROLS__!.setHrmStatus!(status)

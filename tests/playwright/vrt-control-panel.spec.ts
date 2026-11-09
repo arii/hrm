@@ -39,5 +39,18 @@ test.describe('Visual Regression Tests', () => {
 
       await takeScreenshot(controlPanel, 'control-panel.png')
     })
+
+    test('spotify footer hidden, playlist action reachable', async () => {
+      // Dashboard-only bar must not overlay Controls content.
+      await expect(
+        controlPage.getByTestId('global-spotify-footer-wrapper')
+      ).toBeHidden()
+
+      const playlistAction = controlPage.getByTestId(
+        /spotify-select-(playlist|music)-button/
+      )
+      await expect(playlistAction).toBeVisible()
+      await expect(playlistAction).toBeEnabled()
+    })
   })
 })
