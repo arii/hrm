@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -16,6 +16,7 @@ import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import {
+  MIN_SETTLED_CONTAINER_PX,
   scaledExerciseFontRem,
   scaledWorkoutHeaderRem,
 } from '@/lib/workoutSizing'
@@ -50,12 +51,20 @@ export default function WorkoutPhaseGrid({
     }
   }, [data])
 
-  useEffect(() => {
+  // Single overflow pass over the rendered cards. Skips unsettled
+  // (zero/near-zero height) layouts so a first-paint measurement can
+  // never lock in a wrong size; the ResizeObserver below re-runs this
+  // once the container settles.
+  const recalculateSizes = useCallback(() => {
     if (!isScaledLayout || !gridRef.current) return
     const grid = gridRef.current
     const cards = Array.from(
       grid.querySelectorAll<HTMLElement>('.MuiCard-root')
     )
+    if (cards.length === 0) return
+    if (cards.some((card) => card.clientHeight < MIN_SETTLED_CONTAINER_PX)) {
+      return
+    }
     const hasOverflow = cards.some((card) => {
       const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
       return (
@@ -63,10 +72,70 @@ export default function WorkoutPhaseGrid({
         card.scrollHeight > card.clientHeight + 1
       )
     })
-    if (hasOverflow && fontSizeRem > 1.4) {
+    if (hasOverflow) {
       setFontSizeRem((prev) => Math.max(1.4, Number((prev - 0.1).toFixed(2))))
     }
-  }, [data, fontSizeRem, isScaledLayout])
+  }, [isScaledLayout])
+
+  useEffect(() => {
+    recalculateSizes()
+  }, [data, fontSizeRem, isScaledLayout, recalculateSizes])
+
+  // Re-measure after web fonts resolve and the frame paints: fallback
+  // font metrics differ from the final ones, so a pass that ran early
+  // can settle on the wrong size.
+  useEffect(() => {
+    if (!data) return
+    let cancelled = false
+    const runDeferred = async () => {
+      try {
+        await document.fonts?.ready
+      } catch {
+        // Font API unavailable (jsdom/tests): fall through to rAF.
+      }
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          if (!cancelled) recalculateSizes()
+        })
+      } else if (!cancelled) {
+        recalculateSizes()
+      }
+    }
+    runDeferred()
+    return () => {
+      cancelled = true
+    }
+  }, [data, recalculateSizes])
+
+  // Re-measure whenever the grid container's own box settles or
+  // changes (initial flex resolution, ScaledStage scaling, viewport
+  // changes). No manual refresh click required.
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid || typeof ResizeObserver === 'undefined') return
+    let cancelled = false
+    const schedule = () => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          if (!cancelled) recalculateSizes()
+        })
+      } else if (!cancelled) {
+        recalculateSizes()
+      }
+    }
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          schedule()
+        }
+      }
+    })
+    observer.observe(grid)
+    return () => {
+      cancelled = true
+      observer.disconnect()
+    }
+  }, [data, recalculateSizes])
 
   useEffect(() => {
     if (!docId) {
@@ -180,6 +249,7 @@ export default function WorkoutPhaseGrid({
                       {exercises.map((exercise, i) => (
                         <Typography
                           key={i}
+                          data-testid="workout-exercise-text"
                           sx={{
                             fontSize: isScaledLayout
                               ? `${fontSizeRem}rem`

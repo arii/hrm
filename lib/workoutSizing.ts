@@ -11,6 +11,14 @@
 export const SCALED_WORKOUT_HEADER_REM = 2.8
 
 /**
+ * Minimum card container height (px) treated as a settled layout.
+ * Anything below this (including 0 on first paint while flex parents
+ * and fonts are still resolving) must not be measured: a zero-height
+ * card reads as "no overflow" and would lock in an oversized font.
+ */
+export const MIN_SETTLED_CONTAINER_PX = 50
+
+/**
  * Calculates proportional header size based on exercise font size.
  * Keeps header slightly larger than or equal to exercises (~1.05x) while
  * capping at 2.85rem so 2-word headers fit cleanly on a single line,
