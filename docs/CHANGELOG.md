@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.32.0](https://github.com/arii/hrm/compare/hrm-v0.31.0...hrm-v0.32.0) (2026-11-09)
+
+
+### Features
+
+* **dashboard:** lock top-row height and scale HR tiles dynamically ([#9837](https://github.com/arii/hrm/issues/9837)) ([be2b365](https://github.com/arii/hrm/commit/be2b365375e1a659d4316f7ae225bb632abf76f1))
+
+
+### Bug Fixes
+
+* **workout-grid:** re-measure text sizing on layout settle and font load ([#9839](https://github.com/arii/hrm/issues/9839)) ([8713168](https://github.com/arii/hrm/commit/87131687b94a5a059469a586a9bfb2843e907796))
+
 ## [0.31.0](https://github.com/arii/hrm/compare/hrm-v0.30.0...hrm-v0.31.0) (2026-11-07)
 
 
