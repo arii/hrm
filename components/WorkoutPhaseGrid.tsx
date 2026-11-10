@@ -137,14 +137,32 @@ export default function WorkoutPhaseGrid({
   // never probes twice for one layout.
   const measuredKeyRef = useRef<string | null>(null)
 
+  // Reveal gate: the grid stays invisible until two consecutive passes
+  // agree on the fit (or a timeout forces it). Intermediate commits then
+  // never paint, so loads converge invisibly behind the spinner instead
+  // of oscillating through sizes on screen.
+  const [revealed, setRevealed] = useState(false)
+  const revealedRef = useRef(false)
+  const agreeRef = useRef<number | null>(null)
+  const reveal = useCallback(() => {
+    if (!revealedRef.current) {
+      revealedRef.current = true
+      setRevealed(true)
+    }
+  }, [])
+
   // Seed the data-driven base when the payload changes. A layout effect
   // (not passive) declared before the probe below, so both run pre-paint:
   // the probe converges from this base in the same commit and the base
   // itself never paints. Runs once per payload — never on settle
-  // signals, which is what keeps refits from oscillating.
+  // signals — and re-hides the grid so the new payload converges
+  // invisibly too.
   useLayoutEffect(() => {
     if (data && baseFontRem !== null) {
       setFontSizeRem(baseFontRem)
+      revealedRef.current = false
+      setRevealed(false)
+      agreeRef.current = null
     }
   }, [data, baseFontRem])
 
@@ -170,7 +188,7 @@ export default function WorkoutPhaseGrid({
     if (!isScaledLayout || !gridRef.current || baseFontRem === null) return
     const grid = gridRef.current
     if (grid.clientHeight < MIN_SETTLED_CONTAINER_PX) return
-    const key = `${baseFontRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
+    const key = `${baseFontRem}|${fontSizeRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
     if (measuredKeyRef.current === key) return
     const cards = Array.from(
       grid.querySelectorAll<HTMLElement>('.MuiCard-root')
@@ -226,10 +244,26 @@ export default function WorkoutPhaseGrid({
     headers.forEach((el) => {
       el.style.removeProperty('font-size')
     })
-    if (fit !== fontSizeRem) {
+    if (!revealedRef.current) {
+      if (fit === fontSizeRem || fit === agreeRef.current) {
+        // Current paint already correct, or two consecutive passes
+        // agree: reveal. The agreed size commits below when needed, so
+        // the first visible paint is final.
+        agreeRef.current = fit
+        if (fit !== fontSizeRem) {
+          setFontSizeRem(fit)
+        }
+        reveal()
+      } else {
+        // First sighting of this fit: converge invisibly and wait for
+        // the re-render below to confirm before revealing.
+        agreeRef.current = fit
+        setFontSizeRem(fit)
+      }
+    } else if (fit !== fontSizeRem) {
       setFontSizeRem(fit)
     }
-  }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout])
+  }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout, reveal])
 
   // First-paint gate: hold the loading spinner until webfonts resolve
   // (plus one frame) so the first probe measures real metrics and the
@@ -280,11 +314,18 @@ export default function WorkoutPhaseGrid({
         }, delayMs)
       )
     }
+    // Agreement usually lands in the same frame cascade; this only bounds
+    // pathological never-settling layouts so content always appears.
+    timers.push(
+      setTimeout(() => {
+        if (!cancelled) reveal()
+      }, 2500)
+    )
     return () => {
       cancelled = true
       timers.forEach(clearTimeout)
     }
-  }, [data, requestRefit])
+  }, [data, requestRefit, reveal])
 
   // Refit whenever the grid container's own box settles or changes
   // (initial flex resolution, ScaledStage scaling, viewport changes).
@@ -376,6 +417,7 @@ export default function WorkoutPhaseGrid({
       <Box
         ref={gridRef}
         data-testid="workout-phase-grid"
+        aria-hidden={!revealed}
         sx={{
           display: 'grid',
           gap: 2,
@@ -384,6 +426,9 @@ export default function WorkoutPhaseGrid({
           gridTemplateColumns:
             'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
           height: isScaledLayout ? '100%' : undefined,
+          // Invisible until two passes agree: convergence commits never
+          // paint. Visibility flips paint only — layout is already final.
+          visibility: revealed ? 'visible' : 'hidden',
         }}
       >
         {data.headers.map((header, index) => {
@@ -498,6 +543,20 @@ export default function WorkoutPhaseGrid({
         />
       )}
       {renderContent()}
+      {!revealed && data !== null && (
+        <Box
+          data-testid="workout-grid-settle-spinner"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress size={32} />
+        </Box>
+      )}
     </Box>
   )
 }

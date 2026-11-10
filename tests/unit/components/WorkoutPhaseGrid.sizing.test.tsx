@@ -179,6 +179,41 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     unmount()
   })
 
+  it('keeps the grid hidden until revealed, then shows settled content', async () => {
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        headers: ['tall'],
+        columns: [['a', 'b']],
+      }),
+    })
+
+    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
+    await waitFor(() => {
+      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    })
+
+    // Convergence commits stay invisible behind the settle spinner…
+    expect(screen.getByTestId('workout-phase-grid')).not.toBeVisible()
+    expect(
+      screen.getByTestId('workout-grid-settle-spinner')
+    ).toBeInTheDocument()
+
+    // …until the reveal lands (bounded by the settle timeout in jsdom,
+    // where zero layout never lets passes agree).
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('workout-phase-grid')).toBeVisible()
+      },
+      { timeout: 5000 }
+    )
+    expect(
+      screen.queryByTestId('workout-grid-settle-spinner')
+    ).not.toBeInTheDocument()
+
+    unmount()
+  })
+
   it('steps down when the grid overflows even if cards report no overflow', async () => {
     // Same 8-row payload: base size is 1.9rem.
     ;(fetch as jest.Mock).mockResolvedValueOnce({
