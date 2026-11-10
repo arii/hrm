@@ -99,10 +99,26 @@ function FitDebugOverlay({
                   1
           )
         : null
+      const gridSH = grid ? grid.scrollHeight : null
+      let topCard: string | null = null
+      if (grid) {
+        let tallest = -1
+        for (const card of cards) {
+          const content = card.querySelector<HTMLElement>(
+            '.MuiCardContent-root'
+          )
+          const sh = content ? content.scrollHeight : card.scrollHeight
+          if (sh > tallest) {
+            tallest = sh
+            const h = card.querySelector('h3')
+            topCard = `${h ? h.textContent : '?'}:sh${sh}/ch${card.clientHeight}`
+          }
+        }
+      }
       setText(
         `base=${baseFontRem} cur=${fontSizeRem} rendered=${ex ? getComputedStyle(ex).fontSize : '—'} epoch=${fitEpoch} ` +
-          `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'} ` +
-          `cards=${cards.length} overflow=${overflow} minSlack=${minSlack ?? '—'} fam=${fam || '—'} ` +
+          `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'}/sh${gridSH ?? '—'} ` +
+          `cards=${cards.length} overflow=${overflow} minSlack=${minSlack ?? '—'} fam=${fam || '—'} top=${topCard ?? '—'} ` +
           `vp=${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`
       )
     }, 500)
