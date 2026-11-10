@@ -62,6 +62,31 @@ function FitDebugOverlay({
       const ex = document.querySelector<HTMLElement>(
         '[data-testid="workout-exercise-text"]'
       )
+      let minSlack: number | null = null
+      let fam = ''
+      if (grid) {
+        for (const card of cards) {
+          const r = card.getBoundingClientRect()
+          const texts = Array.from(
+            card.querySelectorAll<HTMLElement>(
+              '[data-testid="workout-exercise-text"]'
+            )
+          )
+          const last = texts[texts.length - 1]
+          if (last) {
+            const slack = Math.round(
+              r.bottom - last.getBoundingClientRect().bottom
+            )
+            minSlack = minSlack === null ? slack : Math.min(minSlack, slack)
+            if (!fam && ex) {
+              fam =
+                getComputedStyle(ex)
+                  .fontFamily.split(',')[0]
+                  ?.replace(/["']/g, '') ?? ''
+            }
+          }
+        }
+      }
       const overflow = grid
         ? grid.scrollHeight > grid.clientHeight + 1 ||
           cards.some(
@@ -77,7 +102,7 @@ function FitDebugOverlay({
       setText(
         `base=${baseFontRem} cur=${fontSizeRem} rendered=${ex ? getComputedStyle(ex).fontSize : '—'} epoch=${fitEpoch} ` +
           `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'} ` +
-          `cards=${cards.length} overflow=${overflow} ` +
+          `cards=${cards.length} overflow=${overflow} minSlack=${minSlack ?? '—'} fam=${fam || '—'} ` +
           `vp=${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`
       )
     }, 500)
