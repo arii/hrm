@@ -38,6 +38,72 @@ interface WorkoutPhaseGridProps {
 const FIT_FLOOR_REM = 1.4
 const FIT_STEP_REM = 0.1
 
+// Diagnostic overlay (?fontdebug=1): reports the live fit state so a
+// target machine its developer cannot reach can still report ground
+// truth. Self-contained polling; inert unless the query flag is set.
+function FitDebugOverlay({
+  baseFontRem,
+  fontSizeRem,
+  fitEpoch,
+}: {
+  baseFontRem: number | null
+  fontSizeRem: number
+  fitEpoch: number
+}) {
+  const [text, setText] = useState('fitdbg…')
+  useEffect(() => {
+    const id = setInterval(() => {
+      const grid = document.querySelector<HTMLElement>(
+        '[data-testid="workout-phase-grid"]'
+      )
+      const cards = grid
+        ? Array.from(grid.querySelectorAll<HTMLElement>('.MuiCard-root'))
+        : []
+      const ex = document.querySelector<HTMLElement>(
+        '[data-testid="workout-exercise-text"]'
+      )
+      const overflow = grid
+        ? grid.scrollHeight > grid.clientHeight + 1 ||
+          cards.some(
+            (card) =>
+              card.scrollHeight > card.clientHeight + 1 ||
+              (card.querySelector<HTMLElement>('.MuiCardContent-root')
+                ?.scrollHeight ?? 0) >
+                (card.querySelector<HTMLElement>('.MuiCardContent-root')
+                  ?.clientHeight ?? 0) +
+                  1
+          )
+        : null
+      setText(
+        `base=${baseFontRem} cur=${fontSizeRem} rendered=${ex ? getComputedStyle(ex).fontSize : '—'} epoch=${fitEpoch} ` +
+          `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'} ` +
+          `cards=${cards.length} overflow=${overflow} ` +
+          `vp=${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`
+      )
+    }, 500)
+    return () => clearInterval(id)
+  }, [baseFontRem, fontSizeRem, fitEpoch])
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        left: 8,
+        bottom: 8,
+        zIndex: 9999,
+        backgroundColor: 'black',
+        color: '#0f0',
+        fontFamily: 'monospace',
+        fontSize: 12,
+        p: 1,
+        borderRadius: 1,
+        maxWidth: '90vw',
+      }}
+    >
+      {text}
+    </Box>
+  )
+}
+
 export default function WorkoutPhaseGrid({
   docId,
   refreshKey,
@@ -391,10 +457,25 @@ export default function WorkoutPhaseGrid({
     )
   }
 
+  // Debug overlay flag (?fontdebug=1). Read once per mount; the URL
+  // does not change under the component.
+  const [showFitDebug] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('fontdebug')
+  )
+
   return (
     <Box
       sx={{ position: 'relative', height: isScaledLayout ? '100%' : undefined }}
     >
+      {showFitDebug && (
+        <FitDebugOverlay
+          baseFontRem={baseFontRem}
+          fontSizeRem={fontSizeRem}
+          fitEpoch={fitEpoch}
+        />
+      )}
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
