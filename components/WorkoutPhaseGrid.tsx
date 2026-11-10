@@ -89,6 +89,7 @@ function FitDebugOverlay({
       }
       const overflow = grid
         ? grid.scrollHeight > grid.clientHeight + 1 ||
+          grid.scrollWidth > grid.clientWidth + 1 ||
           cards.some(
             (card) =>
               card.scrollHeight > card.clientHeight + 1 ||
@@ -100,6 +101,12 @@ function FitDebugOverlay({
           )
         : null
       const gridSH = grid ? grid.scrollHeight : null
+      const gridSW = grid ? grid.scrollWidth : null
+      // Last probe's per-candidate verdicts (V=vertical, W=horizontal,
+      // C=card, .=fit), written by the measuring pass below. Settles
+      // WHICH predicate fires on machines this developer cannot reach.
+      const trace =
+        (window as unknown as { __fitTrace?: string }).__fitTrace ?? ''
       let topCard: string | null = null
       if (grid) {
         let tallest = -1
@@ -117,8 +124,9 @@ function FitDebugOverlay({
       }
       setText(
         `base=${baseFontRem} cur=${fontSizeRem} rendered=${ex ? getComputedStyle(ex).fontSize : '—'} epoch=${fitEpoch} ` +
-          `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'}/sh${gridSH ?? '—'} ` +
+          `grid=${grid ? `${grid.clientWidth}x${grid.clientHeight}` : '—'}/sh${gridSH ?? '—'}/sw${gridSW ?? '—'} ` +
           `cards=${cards.length} overflow=${overflow} minSlack=${minSlack ?? '—'} fam=${fam || '—'} top=${topCard ?? '—'} ` +
+          `trace=${trace || '—'} ` +
           `vp=${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`
       )
     }, 500)
@@ -252,18 +260,25 @@ export default function WorkoutPhaseGrid({
     // section, cards size to their content (no card-level overflow) while
     // the fixed-height grid overflows — card-only measurement misses that
     // case entirely and leaves oversized text in place.
-    const hasOverflow = (): boolean =>
-      grid.scrollHeight > grid.clientHeight + 1 ||
-      grid.scrollWidth > grid.clientWidth + 1 ||
-      cards.some((card) => {
+    // Returns '' on fit, otherwise which predicate fired: V (grid
+    // vertical), W (grid horizontal), C (card). The per-candidate verdict
+    // string is stashed for the ?fontdebug=1 overlay so a remote machine
+    // can report exactly what each size measured.
+    const overflowKind = (): '' | 'V' | 'W' | 'C' => {
+      if (grid.scrollHeight > grid.clientHeight + 1) return 'V'
+      if (grid.scrollWidth > grid.clientWidth + 1) return 'W'
+      const cardOverflow = cards.some((card) => {
         const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
         return (
           (content && content.scrollHeight > content.clientHeight + 1) ||
           card.scrollHeight > card.clientHeight + 1
         )
       })
+      return cardOverflow ? 'C' : ''
+    }
     let fit = FIT_FLOOR_REM
     let candidate = baseFontRem
+    let trace = ''
     for (let i = 0; i < 40 && candidate >= FIT_FLOOR_REM - 1e-9; i += 1) {
       const rounded = Number(candidate.toFixed(2))
       const headerRem = scaledWorkoutHeaderRem(rounded)
@@ -273,12 +288,15 @@ export default function WorkoutPhaseGrid({
       headers.forEach((el) => {
         el.style.fontSize = `${headerRem}rem`
       })
-      if (!hasOverflow()) {
+      const kind = overflowKind()
+      trace += `${rounded}${kind || '.'} `
+      if (!kind) {
         fit = rounded
         break
       }
       candidate = rounded - FIT_STEP_REM
     }
+    ;(window as unknown as { __fitTrace?: string }).__fitTrace = trace.trim()
     exercises.forEach((el) => {
       el.style.removeProperty('font-size')
     })
@@ -356,11 +374,14 @@ export default function WorkoutPhaseGrid({
       )
     }
     // Agreement usually lands in the same frame cascade; this only bounds
-    // pathological never-settling layouts so content always appears.
+    // pathological never-settling layouts so content always appears. It
+    // fires AFTER the last settle pass (3000ms) so the spinner covers the
+    // whole convergence window: no pass can commit a visible resize after
+    // reveal. Only a real grid-box change (ResizeObserver) refits later.
     timers.push(
       setTimeout(() => {
         if (!cancelled) reveal()
-      }, 2500)
+      }, 3500)
     )
     return () => {
       cancelled = true

@@ -214,6 +214,80 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     unmount()
   })
 
+  it('steps down on grid horizontal overflow and records W verdicts', async () => {
+    // Same 8-row payload: base size is 1.9rem.
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        headers: ['tall'],
+        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
+      }),
+    })
+
+    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
+    await waitFor(() => {
+      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
+        fontSize: '1.9rem',
+      })
+    })
+
+    // Horizontal-only overflow: vertical metrics are clean, but the grid
+    // scrolls sideways (wide tracks/content). The fit must still step
+    // down, and the verdict trace must record W (not V/C) so remote
+    // triage can tell horizontal from vertical overflow.
+    delete (window as unknown as { __fitTrace?: string }).__fitTrace
+    await waitFor(() => {
+      expect(resizeCallback).not.toBeNull()
+    })
+    const card = document.querySelector('.MuiCard-root') as HTMLElement
+    Object.defineProperty(card, 'clientHeight', {
+      value: 500,
+      configurable: true,
+    })
+    Object.defineProperty(card, 'scrollHeight', {
+      value: 500,
+      configurable: true,
+    })
+    const grid = screen.getByTestId('workout-phase-grid')
+    Object.defineProperty(grid, 'clientHeight', {
+      value: 400,
+      configurable: true,
+    })
+    Object.defineProperty(grid, 'scrollHeight', {
+      value: 400,
+      configurable: true,
+    })
+    Object.defineProperty(grid, 'clientWidth', {
+      value: 1600,
+      configurable: true,
+    })
+    Object.defineProperty(grid, 'scrollWidth', {
+      value: 1700,
+      configurable: true,
+    })
+    act(() => {
+      resizeCallback?.([{ contentRect: { width: 1600, height: 400 } }])
+    })
+    // Horizontal overflow never clears in the mock, so the fit converges
+    // to the 1.4 floor.
+    await waitFor(() => {
+      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
+        fontSize: '1.4rem',
+      })
+    })
+    expect((window as unknown as { __fitTrace?: string }).__fitTrace).toMatch(
+      /1\.9W/
+    )
+    expect(
+      (window as unknown as { __fitTrace?: string }).__fitTrace
+    ).not.toMatch(/V|C/)
+
+    unmount()
+  })
+
   it('steps down when the grid overflows even if cards report no overflow', async () => {
     // Same 8-row payload: base size is 1.9rem.
     ;(fetch as jest.Mock).mockResolvedValueOnce({
