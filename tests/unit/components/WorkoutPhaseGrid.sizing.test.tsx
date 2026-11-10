@@ -60,7 +60,11 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
 
     // jsdom lays out at 0px: the guard must skip, never locking in a size
     // from unsettled dimensions. Firing a zero rect changes nothing.
-    expect(resizeCallback).not.toBeNull()
+    // The observer attaches in a later flush than the grid paint (the
+    // grid waits on the font gate), so wait for it.
+    await waitFor(() => {
+      expect(resizeCallback).not.toBeNull()
+    })
     expect(observe).toHaveBeenCalledWith(
       screen.getByTestId('workout-phase-grid')
     )
@@ -128,6 +132,9 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     // Transient overflow while layout/fonts settle steps the font down
     // (any amount — the exact depth is timing, the drop itself is not).
     // (The grid box itself is settled at 400px; only the card overflows.)
+    await waitFor(() => {
+      expect(resizeCallback).not.toBeNull()
+    })
     const grid = screen.getByTestId('workout-phase-grid')
     Object.defineProperty(grid, 'clientHeight', {
       value: 400,
@@ -194,6 +201,9 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
 
     // Scroll-parent absorption: cards size to content (no card-level
     // overflow) but the fixed-height grid itself overflows.
+    await waitFor(() => {
+      expect(resizeCallback).not.toBeNull()
+    })
     const card = document.querySelector('.MuiCard-root') as HTMLElement
     Object.defineProperty(card, 'clientHeight', {
       value: 500,

@@ -34,6 +34,10 @@ interface WorkoutPhaseGridProps {
   onRefresh?: () => void
 }
 
+// Fit probe bounds (rem) for the synchronous pre-paint measuring pass.
+const FIT_FLOOR_REM = 1.4
+const FIT_STEP_REM = 0.1
+
 export default function WorkoutPhaseGrid({
   docId,
   refreshKey,
@@ -50,11 +54,11 @@ export default function WorkoutPhaseGrid({
   const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)
 
   // Refit generation: bumped by layout-settle signals (ResizeObserver,
-  // webfont resolution) so the single measuring pass below re-runs
-  // post-commit. Settle handlers never step the font themselves — they
-  // only restore the data-driven base and bump this counter — so any
-  // number of overlapping settle signals converges to one deterministic
-  // size instead of ratcheting down once per signal.
+  // webfont resolution, settle window) so the single measuring pass below
+  // re-runs post-commit. Settle handlers never touch the font themselves —
+  // they only bump this counter — and each pass commits at most one
+  // pre-computed size, so overlapping signals converge instead of
+  // oscillating.
   const [fitEpoch, setFitEpoch] = useState(0)
   // Data-driven ceiling: the roomiest size the content estimate allows.
   // Every fit starts here; measurement only ever steps down from it, so
@@ -63,38 +67,44 @@ export default function WorkoutPhaseGrid({
     ? scaledExerciseFontRem(data.columns ?? [], data.headers.length)
     : null
   // Guards the measuring pass so a repeated run with no new information
-  // (same base, font, epoch, and grid box — e.g. StrictMode double
-  // effects) can never step twice for one layout.
+  // (same base, epoch, and grid box — e.g. StrictMode double effects)
+  // never probes twice for one layout.
   const measuredKeyRef = useRef<string | null>(null)
 
-  useEffect(() => {
+  // Seed the data-driven base when the payload changes. A layout effect
+  // (not passive) declared before the probe below, so both run pre-paint:
+  // the probe converges from this base in the same commit and the base
+  // itself never paints. Runs once per payload — never on settle
+  // signals, which is what keeps refits from oscillating.
+  useLayoutEffect(() => {
     if (data && baseFontRem !== null) {
       setFontSizeRem(baseFontRem)
     }
   }, [data, baseFontRem])
 
-  // Restore the data-driven base and schedule exactly one fresh measuring
-  // pass. Called on discrete layout-settle signals only.
+  // Schedule exactly one fresh measuring pass. Called on discrete
+  // layout-settle signals only. The pass probes from the base itself,
+  // so no reset is needed — and none happens, which is what keeps
+  // refits from visibly oscillating.
   const requestRefit = useCallback(() => {
-    if (baseFontRem !== null) {
-      setFontSizeRem(baseFontRem)
-    }
     measuredKeyRef.current = null
     setFitEpoch((epoch) => epoch + 1)
-  }, [baseFontRem])
+  }, [])
 
-  // Single measuring pass over the rendered cards. Runs post-commit
-  // (layout effect: measures the just-committed font before paint) and
-  // converges one 0.1 step per commit from the base toward the largest
-  // size that fits — never upward within a pass, never twice for the
-  // same layout. Skips unsettled (zero/near-zero height) layouts so a
-  // first-paint measurement can never lock in a wrong size; the
-  // ResizeObserver below re-runs this once the container settles.
+  // Single measuring pass over the rendered cards. Probes candidate
+  // sizes SYNCHRONOUSLY — pre-paint DOM writes plus forced reflows, so
+  // intermediate candidates never render — from the base down to the
+  // floor, then commits the largest fitting size with ONE setState. A
+  // pass therefore paints at most one font change (and usually none),
+  // so refits can never visibly oscillate. Skips unsettled
+  // (zero/near-zero height) layouts so a first-paint measurement can
+  // never lock in a wrong size; the settle signals below re-run this on
+  // settled layout.
   useLayoutEffect(() => {
     if (!isScaledLayout || !gridRef.current || baseFontRem === null) return
     const grid = gridRef.current
     if (grid.clientHeight < MIN_SETTLED_CONTAINER_PX) return
-    const key = `${baseFontRem}|${fontSizeRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
+    const key = `${baseFontRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
     if (measuredKeyRef.current === key) return
     const cards = Array.from(
       grid.querySelectorAll<HTMLElement>('.MuiCard-root')
@@ -103,12 +113,21 @@ export default function WorkoutPhaseGrid({
     if (cards.some((card) => card.clientHeight < MIN_SETTLED_CONTAINER_PX)) {
       return
     }
+    const exercises = Array.from(
+      grid.querySelectorAll<HTMLElement>(
+        '[data-testid="workout-exercise-text"]'
+      )
+    )
+    const headers = Array.from(
+      grid.querySelectorAll<HTMLElement>('[data-testid="workout-phase-header"]')
+    )
+    if (exercises.length === 0) return
     measuredKeyRef.current = key
     // The grid itself is measured too: inside the scrollable workout
     // section, cards size to their content (no card-level overflow) while
     // the fixed-height grid overflows — card-only measurement misses that
     // case entirely and leaves oversized text in place.
-    const hasOverflow =
+    const hasOverflow = (): boolean =>
       grid.scrollHeight > grid.clientHeight + 1 ||
       grid.scrollWidth > grid.clientWidth + 1 ||
       cards.some((card) => {
@@ -118,11 +137,40 @@ export default function WorkoutPhaseGrid({
           card.scrollHeight > card.clientHeight + 1
         )
       })
-    if (hasOverflow) {
-      setFontSizeRem((prev) => Math.max(1.4, Number((prev - 0.1).toFixed(2))))
+    let fit = FIT_FLOOR_REM
+    let candidate = baseFontRem
+    for (let i = 0; i < 40 && candidate >= FIT_FLOOR_REM - 1e-9; i += 1) {
+      const rounded = Number(candidate.toFixed(2))
+      const headerRem = scaledWorkoutHeaderRem(rounded)
+      exercises.forEach((el) => {
+        el.style.fontSize = `${rounded}rem`
+      })
+      headers.forEach((el) => {
+        el.style.fontSize = `${headerRem}rem`
+      })
+      if (!hasOverflow()) {
+        fit = rounded
+        break
+      }
+      candidate = rounded - FIT_STEP_REM
+    }
+    exercises.forEach((el) => {
+      el.style.removeProperty('font-size')
+    })
+    headers.forEach((el) => {
+      el.style.removeProperty('font-size')
+    })
+    if (fit !== fontSizeRem) {
+      setFontSizeRem(fit)
     }
   }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout])
 
+  // First-paint gate: hold the loading spinner until webfonts resolve
+  // (plus one frame) so the first probe measures real metrics and the
+  // first paint is already the final size. Refresh refetches skip the
+  // wait: layout is settled by then. The timeout forces the gate so slow
+  // fonts can delay content, never block it.
+  const [fontsReady, setFontsReady] = useState(false)
   // Refit after web fonts resolve and the frame paints: fallback font
   // metrics differ from the final ones, so a fit that ran early restores
   // to base here and re-converges on the real metrics. Plus a bounded
@@ -135,6 +183,11 @@ export default function WorkoutPhaseGrid({
     if (!data) return
     let cancelled = false
     const timers: ReturnType<typeof setTimeout>[] = []
+    timers.push(
+      setTimeout(() => {
+        if (!cancelled) setFontsReady(true)
+      }, 1500)
+    )
     const runDeferred = async () => {
       try {
         await document.fonts?.ready
@@ -143,9 +196,13 @@ export default function WorkoutPhaseGrid({
       }
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
-          if (!cancelled) requestRefit()
+          if (!cancelled) {
+            setFontsReady(true)
+            requestRefit()
+          }
         })
       } else if (!cancelled) {
+        setFontsReady(true)
         requestRefit()
       }
     }
@@ -165,7 +222,9 @@ export default function WorkoutPhaseGrid({
 
   // Refit whenever the grid container's own box settles or changes
   // (initial flex resolution, ScaledStage scaling, viewport changes).
-  // No manual refresh click required.
+  // No manual refresh click required. Depends on the font gate: the
+  // grid only mounts once fonts resolve, and this effect must re-run
+  // for that commit or the observer never attaches.
   useEffect(() => {
     const grid = gridRef.current
     if (!grid || typeof ResizeObserver === 'undefined') return
@@ -191,7 +250,7 @@ export default function WorkoutPhaseGrid({
       cancelled = true
       observer.disconnect()
     }
-  }, [data, requestRefit])
+  }, [data, fontsReady, requestRefit])
 
   useEffect(() => {
     if (!docId) {
@@ -218,7 +277,10 @@ export default function WorkoutPhaseGrid({
   }, [docId, refreshKey])
 
   const renderContent = () => {
-    if (loading) {
+    // Gated on fontsReady once data exists: first paint then measures
+    // real font metrics. Skipped when there is no data (config errors
+    // must still render) and irrelevant on refetches (already true).
+    if (loading || (data !== null && !fontsReady)) {
       return (
         <Box
           display="flex"
@@ -279,6 +341,7 @@ export default function WorkoutPhaseGrid({
               >
                 <Typography
                   component="h3"
+                  data-testid="workout-phase-header"
                   sx={{
                     fontWeight: 700,
                     fontSize: isScaledLayout
