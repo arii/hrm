@@ -120,5 +120,29 @@ describe('API Route: /api/workout', () => {
       )
       expect(mockedParseGoogleDocTable).toHaveBeenCalledWith(mockHtml)
     })
+
+    it('should bypass the cache when fresh=1 is requested', async () => {
+      const mockHtml = '<table><tr><td>Mock Data</td></tr></table>'
+      const mockParsedData = { headers: ['Mock Data'] }
+
+      mockedFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(mockHtml),
+      } as Response)
+      mockedParseGoogleDocTable.mockReturnValue(mockParsedData)
+
+      const request = new NextRequest(
+        'http://localhost/api/workout?docId=test-doc-id&fresh=1'
+      )
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toEqual(mockParsedData)
+      expect(mockedFetch).toHaveBeenCalledWith(
+        'https://docs.google.com/document/d/test-doc-id/export?format=html',
+        { cache: 'no-store' }
+      )
+    })
   })
 })

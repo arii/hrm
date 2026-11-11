@@ -29,9 +29,14 @@ export async function GET(request: Request) {
     // NOTE: The Google Doc must be shared as "Anyone with the link can view"
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`
 
-    const response = await fetch(exportUrl, {
-      next: { revalidate: 60 }, // Cache to avoid hitting Google limits
-    })
+    // Explicit user refreshes (?fresh=1) bypass the cache so the latest
+    // Google Doc edit always lands on demand. Plain loads keep the 60s
+    // cache to avoid hitting Google rate limits.
+    const fresh = searchParams.get('fresh') === '1'
+    const response = await fetch(
+      exportUrl,
+      fresh ? { cache: 'no-store' } : { next: { revalidate: 60 } }
+    )
 
     if (!response.ok) {
       if (response.status === 404) {

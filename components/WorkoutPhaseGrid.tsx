@@ -146,6 +146,8 @@ function FitDebugOverlay({
         p: 1,
         borderRadius: 1,
         maxWidth: '90vw',
+        whiteSpace: 'pre-wrap',
+        overflowWrap: 'anywhere',
       }}
     >
       {text}
@@ -233,10 +235,40 @@ export default function WorkoutPhaseGrid({
   // (zero/near-zero height) layouts so a first-paint measurement can
   // never lock in a wrong size; the settle signals below re-run this on
   // settled layout.
+  // One-shot confirmation timer for post-reveal shrinks (see below).
+  // A staged shrink only commits when a later pass agrees with it, so a
+  // single pass that measures transient layout can never lock in small
+  // text. At most one confirmation is ever pending.
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduleConfirm = useCallback(() => {
+    if (confirmTimerRef.current !== null) return
+    confirmTimerRef.current = setTimeout(() => {
+      confirmTimerRef.current = null
+      measuredKeyRef.current = null
+      setFitEpoch((epoch) => epoch + 1)
+    }, 400)
+  }, [])
+  useEffect(
+    () => () => {
+      if (confirmTimerRef.current !== null) {
+        clearTimeout(confirmTimerRef.current)
+        confirmTimerRef.current = null
+      }
+    },
+    []
+  )
+
   useLayoutEffect(() => {
     if (!isScaledLayout || !gridRef.current || baseFontRem === null) return
     const grid = gridRef.current
-    if (grid.clientHeight < MIN_SETTLED_CONTAINER_PX) return
+    // Both axes must look settled: a pass that runs while the stage is
+    // still resolving width measures transiently narrow cards (tall
+    // content) and would ratchet every candidate down to the floor.
+    if (
+      grid.clientHeight < MIN_SETTLED_CONTAINER_PX ||
+      grid.clientWidth < MIN_SETTLED_CONTAINER_PX
+    )
+      return
     const key = `${baseFontRem}|${fontSizeRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
     if (measuredKeyRef.current === key) return
     const cards = Array.from(
@@ -260,21 +292,36 @@ export default function WorkoutPhaseGrid({
     // section, cards size to their content (no card-level overflow) while
     // the fixed-height grid overflows — card-only measurement misses that
     // case entirely and leaves oversized text in place.
-    // Returns '' on fit, otherwise which predicate fired: V (grid
-    // vertical), W (grid horizontal), C (card). The per-candidate verdict
-    // string is stashed for the ?fontdebug=1 overlay so a remote machine
-    // can report exactly what each size measured.
-    const overflowKind = (): '' | 'V' | 'W' | 'C' => {
-      if (grid.scrollHeight > grid.clientHeight + 1) return 'V'
-      if (grid.scrollWidth > grid.clientWidth + 1) return 'W'
-      const cardOverflow = cards.some((card) => {
+    // Returns the firing predicate — V (grid vertical), W (grid
+    // horizontal), C (card, with the card index) — plus measured numbers.
+    // The per-candidate verdict string is stashed for the ?fontdebug=1
+    // overlay so a remote machine can report exactly what each size
+    // measured, including WHICH card overflowed.
+    const overflowKind = (): { kind: '' | 'V' | 'W' | 'C'; detail: string } => {
+      if (grid.scrollHeight > grid.clientHeight + 1)
+        return {
+          kind: 'V',
+          detail: `:sh${grid.scrollHeight}/ch${grid.clientHeight}`,
+        }
+      if (grid.scrollWidth > grid.clientWidth + 1)
+        return {
+          kind: 'W',
+          detail: `:sw${grid.scrollWidth}/cw${grid.clientWidth}`,
+        }
+      for (let i = 0; i < cards.length; i += 1) {
+        const card = cards[i]
+        if (!card) continue
         const content = card.querySelector<HTMLElement>('.MuiCardContent-root')
-        return (
+        if (
           (content && content.scrollHeight > content.clientHeight + 1) ||
           card.scrollHeight > card.clientHeight + 1
         )
-      })
-      return cardOverflow ? 'C' : ''
+          return {
+            kind: 'C',
+            detail: `${i}:sh${card.scrollHeight}/ch${card.clientHeight}`,
+          }
+      }
+      return { kind: '', detail: '' }
     }
     let fit = FIT_FLOOR_REM
     let candidate = baseFontRem
@@ -288,8 +335,8 @@ export default function WorkoutPhaseGrid({
       headers.forEach((el) => {
         el.style.fontSize = `${headerRem}rem`
       })
-      const kind = overflowKind()
-      trace += `${rounded}${kind || '.'} `
+      const { kind, detail } = overflowKind()
+      trace += kind ? `${rounded}${kind}${detail} ` : `${rounded}. `
       if (!kind) {
         fit = rounded
         break
@@ -320,9 +367,34 @@ export default function WorkoutPhaseGrid({
         setFontSizeRem(fit)
       }
     } else if (fit !== fontSizeRem) {
-      setFontSizeRem(fit)
+      if (fit < fontSizeRem) {
+        // Post-reveal shrink: stage it and confirm on a later pass
+        // instead of committing. A lone pass that measures transient
+        // layout (mid-settle card widths, late font swap) stages a small
+        // size; the confirmation re-measures settled layout and only
+        // commits on agreement, so transient garbage can never lock in
+        // small text. Growth restores immediately — oversized text is
+        // corrected by the next pass, while undersized text would stick.
+        if (agreeRef.current === fit) {
+          agreeRef.current = null
+          setFontSizeRem(fit)
+        } else {
+          agreeRef.current = fit
+          scheduleConfirm()
+        }
+      } else {
+        agreeRef.current = null
+        setFontSizeRem(fit)
+      }
     }
-  }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout, reveal])
+  }, [
+    baseFontRem,
+    fitEpoch,
+    fontSizeRem,
+    isScaledLayout,
+    reveal,
+    scheduleConfirm,
+  ])
 
   // First-paint gate: hold the loading spinner until webfonts resolve
   // (plus one frame) so the first probe measures real metrics and the
@@ -389,23 +461,24 @@ export default function WorkoutPhaseGrid({
     }
   }, [data, requestRefit, reveal])
 
-  // Refit whenever the grid container's own box settles or changes
+  // Refit once the grid container's own box QUIESCES after changes
   // (initial flex resolution, ScaledStage scaling, viewport changes).
-  // No manual refresh click required. Depends on the font gate: the
-  // grid only mounts once fonts resolve, and this effect must re-run
+  // No manual refresh click required. The debounce means passes only run
+  // on stable layout: probing mid-transition measures transiently narrow
+  // cards and ratchets text down for no reason. Depends on the font gate:
+  // the grid only mounts once fonts resolve, and this effect must re-run
   // for that commit or the observer never attaches.
   useEffect(() => {
     const grid = gridRef.current
     if (!grid || typeof ResizeObserver === 'undefined') return
     let cancelled = false
+    let debounce: ReturnType<typeof setTimeout> | null = null
     const schedule = () => {
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(() => {
-          if (!cancelled) requestRefit()
-        })
-      } else if (!cancelled) {
-        requestRefit()
-      }
+      if (debounce !== null) clearTimeout(debounce)
+      debounce = setTimeout(() => {
+        debounce = null
+        if (!cancelled) requestRefit()
+      }, 350)
     }
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -417,6 +490,7 @@ export default function WorkoutPhaseGrid({
     observer.observe(grid)
     return () => {
       cancelled = true
+      if (debounce !== null) clearTimeout(debounce)
       observer.disconnect()
     }
   }, [data, fontsReady, requestRefit])
@@ -431,7 +505,13 @@ export default function WorkoutPhaseGrid({
       try {
         setLoading(true)
         setError(null) // Reset error on re-fetch
-        const res = await fetch(withBasePath(`/api/workout?docId=${docId}`))
+        // Explicit refresh-button clicks (refreshKey > 0) bypass the
+        // server data cache so the latest Google Doc edit lands. Initial
+        // loads use the cached path to respect Google rate limits.
+        const fresh = refreshKey != null && refreshKey > 0 ? '&fresh=1' : ''
+        const res = await fetch(
+          withBasePath(`/api/workout?docId=${docId}${fresh}`)
+        )
         if (!res.ok) throw new Error('Failed to load workout data')
         const json = await res.json()
         setData(json)
