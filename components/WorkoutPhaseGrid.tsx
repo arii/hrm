@@ -170,9 +170,9 @@ export default function WorkoutPhaseGrid({
 
   const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)
 
-  // Refit generation: bumped by layout-settle signals (ResizeObserver,
-  // webfont resolution, settle window) so the single measuring pass below
-  // re-runs post-commit. Settle handlers never touch the font themselves —
+  // Refit generation: bumped by quiescence signals (debounced
+  // ResizeObserver, webfont resolution) so the single measuring pass
+  // below re-runs post-commit. Settle handlers never touch the font themselves —
   // they only bump this counter — and each pass commits at most one
   // pre-computed size, so overlapping signals converge instead of
   // oscillating.
@@ -217,10 +217,10 @@ export default function WorkoutPhaseGrid({
     }
   }, [data, baseFontRem])
 
-  // Schedule exactly one fresh measuring pass. Called on discrete
-  // layout-settle signals only. The pass probes from the base itself,
-  // so no reset is needed — and none happens, which is what keeps
-  // refits from visibly oscillating.
+  // Schedule exactly one fresh measuring pass. Called on quiescent
+  // layout only (debounced box changes, font resolution). The pass
+  // probes from the base itself, so no reset is needed — and none
+  // happens, which is what keeps refits from visibly oscillating.
   const requestRefit = useCallback(() => {
     measuredKeyRef.current = null
     setFitEpoch((epoch) => epoch + 1)
@@ -233,42 +233,12 @@ export default function WorkoutPhaseGrid({
   // pass therefore paints at most one font change (and usually none),
   // so refits can never visibly oscillate. Skips unsettled
   // (zero/near-zero height) layouts so a first-paint measurement can
-  // never lock in a wrong size; the settle signals below re-run this on
-  // settled layout.
-  // One-shot confirmation timer for post-reveal shrinks (see below).
-  // A staged shrink only commits when a later pass agrees with it, so a
-  // single pass that measures transient layout can never lock in small
-  // text. At most one confirmation is ever pending.
-  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const scheduleConfirm = useCallback(() => {
-    if (confirmTimerRef.current !== null) return
-    confirmTimerRef.current = setTimeout(() => {
-      confirmTimerRef.current = null
-      measuredKeyRef.current = null
-      setFitEpoch((epoch) => epoch + 1)
-    }, 400)
-  }, [])
-  useEffect(
-    () => () => {
-      if (confirmTimerRef.current !== null) {
-        clearTimeout(confirmTimerRef.current)
-        confirmTimerRef.current = null
-      }
-    },
-    []
-  )
-
+  // never lock in a wrong size; the quiescence triggers below re-run
+  // this once layout is stable.
   useLayoutEffect(() => {
     if (!isScaledLayout || !gridRef.current || baseFontRem === null) return
     const grid = gridRef.current
-    // Both axes must look settled: a pass that runs while the stage is
-    // still resolving width measures transiently narrow cards (tall
-    // content) and would ratchet every candidate down to the floor.
-    if (
-      grid.clientHeight < MIN_SETTLED_CONTAINER_PX ||
-      grid.clientWidth < MIN_SETTLED_CONTAINER_PX
-    )
-      return
+    if (grid.clientHeight < MIN_SETTLED_CONTAINER_PX) return
     const key = `${baseFontRem}|${fontSizeRem}|${fitEpoch}|${grid.clientWidth}x${grid.clientHeight}`
     if (measuredKeyRef.current === key) return
     const cards = Array.from(
@@ -367,34 +337,13 @@ export default function WorkoutPhaseGrid({
         setFontSizeRem(fit)
       }
     } else if (fit !== fontSizeRem) {
-      if (fit < fontSizeRem) {
-        // Post-reveal shrink: stage it and confirm on a later pass
-        // instead of committing. A lone pass that measures transient
-        // layout (mid-settle card widths, late font swap) stages a small
-        // size; the confirmation re-measures settled layout and only
-        // commits on agreement, so transient garbage can never lock in
-        // small text. Growth restores immediately — oversized text is
-        // corrected by the next pass, while undersized text would stick.
-        if (agreeRef.current === fit) {
-          agreeRef.current = null
-          setFontSizeRem(fit)
-        } else {
-          agreeRef.current = fit
-          scheduleConfirm()
-        }
-      } else {
-        agreeRef.current = null
-        setFontSizeRem(fit)
-      }
+      // Post-reveal refits only run on quiescent layout (see the trigger
+      // model below), so their verdicts commit directly — no transient
+      // measurement exists to guard against anymore.
+      agreeRef.current = null
+      setFontSizeRem(fit)
     }
-  }, [
-    baseFontRem,
-    fitEpoch,
-    fontSizeRem,
-    isScaledLayout,
-    reveal,
-    scheduleConfirm,
-  ])
+  }, [baseFontRem, fitEpoch, fontSizeRem, isScaledLayout, reveal])
 
   // First-paint gate: hold the loading spinner until webfonts resolve
   // (plus one frame) so the first probe measures real metrics and the
@@ -402,14 +351,16 @@ export default function WorkoutPhaseGrid({
   // wait: layout is settled by then. The timeout forces the gate so slow
   // fonts can delay content, never block it.
   const [fontsReady, setFontsReady] = useState(false)
-  // Refit after web fonts resolve and the frame paints: fallback font
-  // metrics differ from the final ones, so a fit that ran early restores
-  // to base here and re-converges on the real metrics. Plus a bounded
-  // settle window: after data arrives, layout keeps settling (flex
-  // resolution, late webfonts, WS-driven tiles) without changing the
-  // grid box — which no observer can see. Refitting from base on a short
-  // schedule guarantees the final pass measures settled layout, so every
-  // load converges to the same size. All timers die with the effect.
+  // Trigger model: a measuring pass runs only on quiescent layout —
+  // the ResizeObserver below fires 350ms after the grid box stops
+  // changing, webfont resolution refits once via `document.fonts.ready`,
+  // and new payloads re-probe automatically through the data-driven
+  // base. There are deliberately NO time-based settle passes: every
+  // measurement-relevant change (box, fonts, content) is already
+  // observed, so blind timers can only re-measure identical layout
+  // (useless) or catch layout mid-transition and ratchet text down to
+  // the floor (the collapse this replaces). The timeout forces the font
+  // gate so slow fonts can delay content, never block it.
   useEffect(() => {
     if (!data) return
     let cancelled = false
@@ -438,22 +389,14 @@ export default function WorkoutPhaseGrid({
       }
     }
     runDeferred()
-    for (const delayMs of [500, 1500, 3000]) {
-      timers.push(
-        setTimeout(() => {
-          if (!cancelled) requestRefit()
-        }, delayMs)
-      )
-    }
     // Agreement usually lands in the same frame cascade; this only bounds
-    // pathological never-settling layouts so content always appears. It
-    // fires AFTER the last settle pass (3000ms) so the spinner covers the
-    // whole convergence window: no pass can commit a visible resize after
-    // reveal. Only a real grid-box change (ResizeObserver) refits later.
+    // pathological never-settling layouts so content always appears.
+    // With no time-based passes left, nothing can commit after reveal
+    // except a real grid-box change (ResizeObserver).
     timers.push(
       setTimeout(() => {
         if (!cancelled) reveal()
-      }, 3500)
+      }, 2500)
     )
     return () => {
       cancelled = true

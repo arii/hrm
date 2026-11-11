@@ -87,12 +87,6 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
       value: 400,
       configurable: true,
     })
-    // jsdom reports 0 widths: the width-settled guard needs an explicit
-    // mock or every pass skips.
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 1600,
-      configurable: true,
-    })
     const card = document.querySelector('.MuiCard-root') as HTMLElement
     Object.defineProperty(card, 'clientHeight', {
       value: 400,
@@ -144,12 +138,6 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     const grid = screen.getByTestId('workout-phase-grid')
     Object.defineProperty(grid, 'clientHeight', {
       value: 400,
-      configurable: true,
-    })
-    // jsdom reports 0 widths: the width-settled guard needs an explicit
-    // mock or every pass skips.
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 1600,
       configurable: true,
     })
     const card = document.querySelector('.MuiCard-root') as HTMLElement
@@ -247,175 +235,6 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(expect.stringContaining('fresh=1'))
     })
-
-    unmount()
-  })
-
-  it('skips measuring while the grid width is unsettled', async () => {
-    // Same 8-row payload: base size is 1.9rem.
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        headers: ['tall'],
-        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
-      }),
-    })
-
-    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
-    await waitFor(() => {
-      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
-    })
-
-    // Card overflows, but the grid width is still resolving: the pass
-    // must not measure (narrow cards read tall and would ratchet to the
-    // floor), so no probe trace is written and the base size holds.
-    delete (window as unknown as { __fitTrace?: string }).__fitTrace
-    await waitFor(() => {
-      expect(resizeCallback).not.toBeNull()
-    })
-    const card = document.querySelector('.MuiCard-root') as HTMLElement
-    Object.defineProperty(card, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 500,
-      configurable: true,
-    })
-    const grid = screen.getByTestId('workout-phase-grid')
-    Object.defineProperty(grid, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'scrollHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 0,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 1600, height: 400 } }])
-    })
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    expect(
-      (window as unknown as { __fitTrace?: string }).__fitTrace
-    ).toBeUndefined()
-    expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-      fontSize: '1.9rem',
-    })
-
-    // Once the width settles, the same overflow steps down as usual.
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 1600,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 1600, height: 400 } }])
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.4rem',
-      })
-    })
-
-    unmount()
-  })
-
-  it('stages post-reveal shrinks and commits only on confirmation', async () => {
-    // Same 8-row payload: base size is 1.9rem.
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        headers: ['tall'],
-        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
-      }),
-    })
-
-    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
-    await waitFor(() => {
-      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
-    })
-
-    // Settle clean so passes agree and the grid reveals.
-    await waitFor(() => {
-      expect(resizeCallback).not.toBeNull()
-    })
-    const card = document.querySelector('.MuiCard-root') as HTMLElement
-    Object.defineProperty(card, 'clientHeight', {
-      value: 500,
-      configurable: true,
-    })
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 500,
-      configurable: true,
-    })
-    const grid = screen.getByTestId('workout-phase-grid')
-    Object.defineProperty(grid, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'scrollHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 1600,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'scrollWidth', {
-      value: 1600,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 1600, height: 400 } }])
-    })
-    await waitFor(
-      () => {
-        expect(
-          screen.queryByTestId('workout-grid-settle-spinner')
-        ).not.toBeInTheDocument()
-      },
-      { timeout: 5000 }
-    )
-
-    // Let the blind data-settle timers (500/1500/3000ms) exhaust while
-    // clean so the only later signals are the ones this test fires.
-    await new Promise((resolve) => setTimeout(resolve, 3500))
-
-    // Overflow appears after reveal: the shrink stages but does NOT
-    // commit on the lone pass — the size holds through the staging
-    // window, then the scheduled confirmation pass agrees and commits.
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 600,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 1600, height: 400 } }])
-    })
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-      fontSize: '1.9rem',
-    })
-    await waitFor(
-      () => {
-        expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-          fontSize: '1.4rem',
-        })
-      },
-      { timeout: 4000 }
-    )
 
     unmount()
   })
@@ -535,16 +354,6 @@ describe('WorkoutPhaseGrid initial-load sizing', () => {
     })
     Object.defineProperty(grid, 'scrollHeight', {
       value: 600,
-      configurable: true,
-    })
-    // jsdom reports 0 widths: the width-settled guard needs explicit
-    // mocks (vertical-only overflow here, so sw == cw).
-    Object.defineProperty(grid, 'clientWidth', {
-      value: 1600,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'scrollWidth', {
-      value: 1600,
       configurable: true,
     })
     act(() => {
