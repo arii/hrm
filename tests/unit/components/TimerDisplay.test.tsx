@@ -13,6 +13,7 @@ import {
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { audioManager } from '@/utils/audioManager'
 
 // Mock the WebSocket context
@@ -272,6 +273,29 @@ describe('TimerDisplay', () => {
       expect(audioManager.getMuted()).toBe(true)
       fireEvent.click(muteButton)
       expect(audioManager.getMuted()).toBe(false)
+    })
+
+    it('renders SSR defaults ignoring storage (no hydration mismatch)', () => {
+      // Stored preference must not leak into the first render: the
+      // server has no localStorage, so any storage read during render
+      // hydrates differently on the client (slider 62 vs SSR 70).
+      window.localStorage.setItem('hrm-timer-volume', '62')
+      window.localStorage.setItem('hrm-timer-muted', 'true')
+      setupMock(idleMock)
+      const html = renderToString(<TimerDisplay />)
+      expect(html).toContain('aria-valuenow="70"')
+      expect(html).not.toContain('aria-valuenow="62"')
+    })
+
+    it('hydrates the stored preference after mount', async () => {
+      window.localStorage.setItem('hrm-timer-volume', '62')
+      setupMock(idleMock)
+      render(<TimerDisplay />)
+      const sliderInput = screen
+        .getByTestId('timer-volume-slider')
+        .querySelector('input')
+      expect(sliderInput).not.toBeNull()
+      expect(sliderInput!).toHaveAttribute('aria-valuenow', '62')
     })
 
     it('sets beep volume via the slider without touching music keys', () => {

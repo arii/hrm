@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography'
 import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import VolumeUp from '@mui/icons-material/VolumeUp'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useSyncExternalStore } from 'react'
 import SideLabel from './SideLabel'
 import { useIsScaledLayout } from '@/components/ScaledStage'
 import { clampVolume } from '@/hooks/useVolumePreference'
@@ -55,6 +55,65 @@ const readBeepsMuted = (): boolean => {
   } catch {
     return false
   }
+}
+
+// Persisted beep preference as an external store. useSyncExternalStore
+// reads storage during render without hydrating mismatched: the server
+// snapshot is the default, and the client snapshot matches it unless
+// the user actually stored a preference. Same-tab writes notify
+// manually ('storage' events only fire cross-tab).
+interface BeepPreference {
+  volume: number
+  muted: boolean
+}
+const BEEP_DEFAULTS: BeepPreference = {
+  volume: DEFAULT_BEEP_VOLUME,
+  muted: false,
+}
+let beepSnapshot: BeepPreference = BEEP_DEFAULTS
+const beepListeners = new Set<() => void>()
+const readBeepSnapshot = (): BeepPreference => {
+  const muted = readBeepsMuted()
+  const preferred = readPreferredBeepVolume()
+  return { volume: muted ? 0 : preferred, muted }
+}
+function subscribeBeepPreference(listener: () => void): () => void {
+  beepListeners.add(listener)
+  const onStorage = (): void => {
+    beepSnapshot = readBeepSnapshot()
+    listener()
+  }
+  window.addEventListener('storage', onStorage)
+  return () => {
+    beepListeners.delete(listener)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+function getBeepSnapshot(): BeepPreference {
+  const fresh = readBeepSnapshot()
+  if (
+    fresh.volume !== beepSnapshot.volume ||
+    fresh.muted !== beepSnapshot.muted
+  ) {
+    beepSnapshot = fresh
+  }
+  return beepSnapshot
+}
+function getBeepServerSnapshot(): BeepPreference {
+  return BEEP_DEFAULTS
+}
+const persistBeepPreference = (preferred: number, muted: boolean): void => {
+  try {
+    window.localStorage.setItem(TIMER_VOLUME_KEY, String(preferred))
+    window.localStorage.setItem(TIMER_MUTED_KEY, String(muted))
+  } catch {
+    // localStorage unavailable: volume still applies for this session.
+  }
+}
+function writeBeepPreference(volume: number, muted: boolean): void {
+  persistBeepPreference(volume, muted)
+  beepSnapshot = { volume, muted }
+  beepListeners.forEach((listener) => listener())
 }
 
 // Theme colors the phase policy needs, passed in so the policy stays
@@ -181,15 +240,19 @@ const TimerDisplay = () => {
 
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
 
-  // Timer beep volume: local persisted state driving audioManager
-  // directly. Deliberately not useVolumePreference — that hook's state
-  // is shared with (and synced from) the Spotify music volume.
-  // Initialized lazily (SSR-safe: defaults on the server) so no
-  // mount effect has to cascade state into existence.
-  const [beepVolume, setBeepVolume] = useState<number>(() =>
-    readBeepsMuted() ? 0 : readPreferredBeepVolume()
+  // Timer beep volume: persisted store driving audioManager directly.
+  // Deliberately not useVolumePreference — that hook's state is shared
+  // with (and synced from) the Spotify music volume. useSyncExternalStore
+  // (not render-time reads, not mount-effect hydration) so SSR and the
+  // first client render agree. Ref init may read storage: refs never
+  // render, so they cannot mismatch hydration.
+  const beepPref = useSyncExternalStore(
+    subscribeBeepPreference,
+    getBeepSnapshot,
+    getBeepServerSnapshot
   )
-  const [beepsMuted, setBeepsMuted] = useState<boolean>(readBeepsMuted)
+  const beepVolume = beepPref.volume
+  const beepsMuted = beepPref.muted
   const lastBeepVolumeRef = useRef<number>(readPreferredBeepVolume())
 
   // audioManager is the live output: keep it in sync with React state.
@@ -198,25 +261,16 @@ const TimerDisplay = () => {
     audioManager.setVolume(beepVolume)
   }, [beepVolume, beepsMuted])
 
-  const persistBeepPreference = (preferred: number, muted: boolean) => {
-    try {
-      window.localStorage.setItem(TIMER_VOLUME_KEY, String(preferred))
-      window.localStorage.setItem(TIMER_MUTED_KEY, String(muted))
-    } catch {
-      // localStorage unavailable: volume still applies for this session.
-    }
-  }
-
   const handleBeepVolumeChange = (_: Event, value: number | number[]) => {
     const next = clampVolume(value as number)
     if (next > 0) {
       lastBeepVolumeRef.current = next
     }
-    setBeepVolume(next)
-    setBeepsMuted(next === 0)
+    // Persist the last nonzero volume (mute-restore memory), not the
+    // possibly-zero slider position — same contract as before.
+    writeBeepPreference(lastBeepVolumeRef.current, next === 0)
     audioManager.setVolume(next)
     audioManager.setMuted(next === 0)
-    persistBeepPreference(lastBeepVolumeRef.current, next === 0)
   }
 
   const handleToggleBeepsMuted = () => {
@@ -224,11 +278,10 @@ const TimerDisplay = () => {
     if (muting && beepVolume > 0) {
       lastBeepVolumeRef.current = beepVolume
     }
-    const restored = muting ? 0 : lastBeepVolumeRef.current
-    setBeepsMuted(muting)
-    setBeepVolume(restored)
+    // The store snapshot (last nonzero volume + muted flag) drives the
+    // slider directly — no separate restore step needed.
+    writeBeepPreference(lastBeepVolumeRef.current, muting)
     audioManager.setMuted(muting)
-    persistBeepPreference(lastBeepVolumeRef.current, muting)
   }
 
   return (
