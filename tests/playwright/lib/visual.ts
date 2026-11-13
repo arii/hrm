@@ -30,7 +30,11 @@ export const SCREENSHOT_OPTIONS = {
   animations: 'disabled' as const,
   caret: 'hide' as const,
   threshold: 0.2,
-  maxDiffPixelRatio: 0.1,
+  // Tight default (spec art_uI0w7D6m D7): masked, mostly-static element
+  // snapshots must not hide text-region regressions. Pages whose masks
+  // cannot isolate genuinely dynamic pixels (full dashboards with live
+  // WebSocket re-renders) override this to 0.1/0.15 explicitly.
+  maxDiffPixelRatio: 0.02,
 }
 
 /**

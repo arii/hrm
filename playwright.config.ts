@@ -7,7 +7,10 @@ import {
   devices,
   type ReporterDescription,
 } from '@playwright/test'
-import { DESKTOP_VIEWPORT } from './tests/playwright/lib/viewports'
+import {
+  DESKTOP_VIEWPORT,
+  SCALED_CANVAS_VIEWPORT,
+} from './tests/playwright/lib/viewports'
 
 // Define the port for the test server
 const port = process.env.PORT || 3000
@@ -67,11 +70,19 @@ export default defineConfig({
 
   retries: 0,
 
+  // Include the project name so per-project baselines (desktop vs the
+  // scaled-canvas tablet project) cannot collide on the same file.
+  snapshotPathTemplate:
+    '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-platform}{-testSuffix}',
+
   // Test execution optimizations - Fail Fast Strategy
   expect: {
     timeout: 5000, // Assertions fail after 5s
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.1, // Relaxed to 0.1 for stability (0.02 was too flaky)
+      // Per-snapshot floor; masked text-bearing regions run tighter via
+      // tests/playwright/lib/visual.ts SCREENSHOT_OPTIONS (0.02). 0.1 stays
+      // as the fallback for pages where masks cannot isolate dynamics.
+      maxDiffPixelRatio: 0.1,
     },
   },
 
@@ -139,6 +150,33 @@ export default defineConfig({
           },
         ]
       : []),
+    // Scaled-canvas presentation at native width (OD-6 D7): the 1600x900
+    // dashboard canvas is the primary wall-display presentation and was
+    // previously only tested scaled up to 1920x1080. Restricted to the VRT
+    // suites; behavior tests stay single-project to keep CI cost flat.
+    {
+      name: 'tablet-canvas',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=TranslateUI',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            // Hide scrollbars for consistent VRT snapshots
+            '--hide-scrollbars',
+          ],
+        },
+        viewport: SCALED_CANVAS_VIEWPORT,
+        video: {
+          mode: 'retain-on-failure',
+          size: SCALED_CANVAS_VIEWPORT,
+        },
+      },
+      testMatch: '**/vrt-*.spec.ts',
+    },
   ],
 
   // Web Server Configuration
