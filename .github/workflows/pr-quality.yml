@@ -693,15 +693,24 @@ jobs:
         run: pnpm run kill-all || true
 
   visual-tests:
-    name: 🧪 Visual Tests
+    name: 🧪 Visual Tests (shard ${{ matrix.shard }}/4)
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
       SKIP_BUILD: 'true'
+      # Cross-runner sharding: each shard runs its own local webServer with
+      # workers:1, so the WebSocket cross-talk constraint stays per-runner.
+      SHARD_INDEX: ${{ matrix.shard }}
+      SHARD_TOTAL: '4'
+      PLAYWRIGHT_JUNIT_OUTPUT_NAME: test-results/results-shard-${{ matrix.shard }}.xml
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -738,6 +747,7 @@ jobs:
           fi
 
       - name: Check for Orphaned Snapshots
+        if: matrix.shard == 1
         run: pnpm run test:vrt:check-orphans
 
       - name: Run Visual Tests (Playwright)
@@ -751,8 +761,8 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() && steps.visual-tests.outcome != 'skipped'
         with:
-          name: Visual Tests Report
-          path: test-results/results.xml
+          name: Visual Tests Report (shard ${{ matrix.shard }}/4)
+          path: test-results/results-shard-${{ matrix.shard }}.xml
           reporter: java-junit
         continue-on-error: true
 
@@ -772,7 +782,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: visual-test-logs-${{ env.SESSION_ID }}
+          name: visual-test-logs-${{ env.SESSION_ID }}-shard${{ matrix.shard }}
           path: |
             logs/visual-output.log
             test-results/
@@ -928,7 +938,9 @@ jobs:
             local log_file=$3
             local log_content
             # Ensure log_content is a valid JSON string even if log file is missing or empty
-            log_content=$(tail -n 50 "$log_file" 2>/dev/null | jq -s -R . || echo '""')
+            # Unquoted $log_file so shard globs (visual-test-logs-*-shard*) expand;
+            # all path components are sanitized ids, so no word-splitting risk.
+            log_content=$(tail -n 50 $log_file 2>/dev/null | jq -s -R . || echo '""')
             FAILURE_REPORT_JSON=$(echo "$FAILURE_REPORT_JSON" | jq \
               --arg name "$name" \
               --arg conclusion "$conclusion" \
@@ -965,7 +977,7 @@ jobs:
                 "unit-tests") log_file="artifacts/unit-test-logs-${SESSION_ID}/logs/unit-output.log" ;;
                 "component-tests") log_file="artifacts/component-test-logs-${SESSION_ID}/logs/component-output.log" ;;
                 "perf-tests") log_file="artifacts/perf-test-logs-${SESSION_ID}/logs/perf-output.log" ;;
-                "visual-tests") log_file="artifacts/visual-test-logs-${SESSION_ID}/logs/visual-output.log" ;;
+                "visual-tests") log_file="artifacts/visual-test-logs-${SESSION_ID}-shard*/logs/visual-output.log" ;;
               esac
               add_failure "$test_suite_name" "$result" "$log_file"
             fi
