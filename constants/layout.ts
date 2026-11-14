@@ -2,13 +2,13 @@ export const HR_TILE_MIN_HEIGHT = '8.5rem'
 // Named footer-stack tokens. The bottom nav and the Spotify bar are
 // fixed overlays; every layout that needs room for them reserves space
 // by composing these instead of restating rem values.
-export const BOTTOM_NAV_HEIGHT = '3.5rem'
-export const SPOTIFY_BAR_MEASURED_HEIGHT = '3rem'
+const BOTTOM_NAV_HEIGHT = '3.5rem'
+const SPOTIFY_BAR_MEASURED_HEIGHT = '3rem'
 // Spotify bar growth headroom on the scaled canvas.
-export const SPOTIFY_BAR_RESERVE = '1rem'
+const SPOTIFY_BAR_RESERVE = '1rem'
 // Extra buffer on responsive viewports, where the bar has no measured
 // reserve of its own.
-export const RESPONSIVE_FOOTER_BUFFER = '1.25rem'
+const RESPONSIVE_FOOTER_BUFFER = '1.25rem'
 
 export const FOOTER_HEIGHT_PX = 54
 // Fixed footer stack dimensions and reserve across all pages.
