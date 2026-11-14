@@ -40,7 +40,6 @@ export { resolveConnectDevice } from './useBluetoothHRM/deviceScan'
 export { setupBatteryNotifications } from './useBluetoothHRM/batteryNotifications'
 export { teardownTestControls } from './useBluetoothHRM/testControls'
 export type { GattConnectRetryState } from './useBluetoothHRM/gattClassification'
-export type { ConnectDeviceResolver } from './useBluetoothHRM/deviceScan'
 export type { HrmTestControls } from './useBluetoothHRM/testControls'
 
 interface UseBluetoothHRMProps {

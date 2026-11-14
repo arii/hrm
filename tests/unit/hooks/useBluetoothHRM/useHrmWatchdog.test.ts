@@ -19,7 +19,6 @@ const setup = ({
   dataLivenessTimeoutMs?: number
   checkSignalStability?: jest.Mock
 } = {}) => {
-  let renderHookResult: ReturnType<typeof renderHook<unknown, unknown>>
   const connectedDeviceRef = {
     current: {
       gatt: { disconnect: jest.fn() },
@@ -31,7 +30,7 @@ const setup = ({
   const setStatus = jest.fn()
   const setCustomStatusMessage = jest.fn()
 
-  renderHookResult = renderHook(() =>
+  const renderHookResult = renderHook(() =>
     useHrmWatchdog({
       currentStatusRef: { current: status },
       lastDataTime,
@@ -78,14 +77,21 @@ describe('useHrmWatchdog', () => {
   })
 
   it('force-cycles a link gone quiet past the liveness timeout', () => {
-    const { lastDataTime, connectedDeviceRef, isTimeoutDisconnect, setStatus, setCustomStatusMessage } =
-      setup()
+    const {
+      lastDataTime,
+      connectedDeviceRef,
+      isTimeoutDisconnect,
+      setStatus,
+      setCustomStatusMessage,
+    } = setup()
     lastDataTime.current = Date.now() - 31_000
 
     // Liveness is probed on every other tick.
     act(() => jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 2))
 
-    expect(setStatus).toHaveBeenCalledWith(BluetoothConnectionStatus.RECONNECTING)
+    expect(setStatus).toHaveBeenCalledWith(
+      BluetoothConnectionStatus.RECONNECTING
+    )
     expect(setCustomStatusMessage).toHaveBeenCalledWith(
       BLUETOOTH_MESSAGES.unstableConnection
     )

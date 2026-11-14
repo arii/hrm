@@ -87,7 +87,11 @@ describe('classifyGattConnectError', () => {
 
   it('schedules an escalating busy retry while the schedule has entries', () => {
     const action = classifyGattConnectError('busy', baseRetryState)
-    expect(action).toEqual({ kind: 'busy-retry', delayMs: 1000, retryNumber: 1 })
+    expect(action).toEqual({
+      kind: 'busy-retry',
+      delayMs: 1000,
+      retryNumber: 1,
+    })
 
     const later = classifyGattConnectError('NetworkError', {
       ...baseRetryState,
@@ -198,11 +202,8 @@ describe('applyGattFailure', () => {
   })
 
   it('on a dropped link: keeps the device slot but does not halt reconnects', () => {
-    const {
-      connectedDeviceRef,
-      reconnectHaltedRef,
-      setCustomStatusMessage,
-    } = setup('dropped')
+    const { connectedDeviceRef, reconnectHaltedRef, setCustomStatusMessage } =
+      setup('dropped')
     expect(connectedDeviceRef.current).toBeNull()
     expect(reconnectHaltedRef.current).toBe(false)
     expect(setCustomStatusMessage).not.toHaveBeenCalled()
@@ -245,7 +246,9 @@ describe('applyGattFailure', () => {
 describe('getAutoConnectFailureMessage', () => {
   it('stays silent when there was no saved device', () => {
     expect(
-      getAutoConnectFailureMessage(new Error('No saved device ID for silent connection.'))
+      getAutoConnectFailureMessage(
+        new Error('No saved device ID for silent connection.')
+      )
     ).toBeNull()
   })
 

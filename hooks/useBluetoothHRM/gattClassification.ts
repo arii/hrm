@@ -151,11 +151,8 @@ const quietRetryOrFail = (
   }
 }
 
-// Keep the kinds importable for consumers that switch on them.
-export type { GattFailureKind, GattConnectRetryAction }
-
 /** Refs and setters applyGattFailure writes through; all stable. */
-export interface GattFailureOutcomeParams {
+interface GattFailureOutcomeParams {
   device: BluetoothDevice
   error: unknown
   aborted: boolean

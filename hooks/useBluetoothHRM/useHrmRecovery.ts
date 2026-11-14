@@ -364,5 +364,3 @@ export const useHrmRecovery = ({
     waitingDeviceRef,
   }
 }
-
-export type UseHrmRecovery = ReturnType<typeof useHrmRecovery>

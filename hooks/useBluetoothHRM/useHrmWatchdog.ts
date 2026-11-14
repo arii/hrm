@@ -107,5 +107,3 @@ export const useHrmWatchdog = ({
 
   return { checkDataLiveness }
 }
-
-export type UseHrmWatchdog = ReturnType<typeof useHrmWatchdog>

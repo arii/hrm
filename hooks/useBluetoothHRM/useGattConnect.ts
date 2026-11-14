@@ -381,5 +381,3 @@ export const useGattConnect = ({
     removeDisconnectListener,
   }
 }
-
-export type UseGattConnect = ReturnType<typeof useGattConnect>

@@ -24,9 +24,7 @@ const fireMeasurement = (
   characteristic: FakeCharacteristic,
   heartRate: number
 ) => {
-  characteristic.value = new DataView(
-    new Uint8Array([0x00, heartRate]).buffer
-  )
+  characteristic.value = new DataView(new Uint8Array([0x00, heartRate]).buffer)
   const listener = characteristic.addEventListener.mock.calls.find(
     ([type]) => type === 'characteristicvaluechanged'
   )?.[1] as (event: unknown) => void
@@ -111,7 +109,10 @@ describe('useHrSignalStats', () => {
     jest.useFakeTimers()
     jest.setSystemTime(3_000_000)
     try {
-      const { result } = setup(undefined, BluetoothConnectionStatus.DISCONNECTED)
+      const { result } = setup(
+        undefined,
+        BluetoothConnectionStatus.DISCONNECTED
+      )
       act(() => {
         result.current.lastDataTime.current = 3_000_000 - 10_000
       })

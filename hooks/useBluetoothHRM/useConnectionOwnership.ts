@@ -34,5 +34,3 @@ export const useConnectionOwnership = () => {
     isUnmountedRef,
   }
 }
-
-export type UseConnectionOwnership = ReturnType<typeof useConnectionOwnership>

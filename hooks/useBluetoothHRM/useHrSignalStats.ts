@@ -212,5 +212,3 @@ export const useHrSignalStats = ({
     resetSignalStats,
   }
 }
-
-export type UseHrSignalStats = ReturnType<typeof useHrSignalStats>

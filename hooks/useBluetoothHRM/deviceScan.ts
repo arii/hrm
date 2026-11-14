@@ -86,5 +86,3 @@ export const findSavedDevice = async (
   )
   return null
 }
-
-export type { ConnectDeviceResolver }
