@@ -47,7 +47,8 @@ describe('BottomNavBar', () => {
     expect(screen.getByText('Controls')).toBeInTheDocument()
     expect(screen.getByText('Stream')).toBeInTheDocument()
     expect(screen.getByText('Spotify')).toBeInTheDocument()
-    expect(screen.getByText('Analytics')).toBeInTheDocument()
+    expect(screen.getByText('Experiments')).toBeInTheDocument()
+    expect(screen.getByText('Profile')).toBeInTheDocument()
   })
 
   it('highlights Dashboard when on the root path', () => {
@@ -69,26 +70,40 @@ describe('BottomNavBar', () => {
     expect(spotifyAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
-  it('highlights Analytics when on /client/experimental', () => {
+  it('highlights Experiments when on /client/experimental', () => {
     ;(usePathname as jest.Mock).mockReturnValue('/client/experimental')
     renderWithTheme(<BottomNavBar />)
 
-    const analyticsAction = screen.getByLabelText(
-      'Navigate to Experimental Analytics page'
+    const experimentsAction = screen.getByLabelText(
+      'Navigate to Experiments page'
     )
-    expect(analyticsAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
+    expect(experimentsAction).toHaveStyle(
+      `color: ${theme.palette.primary.main}`
+    )
   })
 
-  it('highlights Analytics when on a subpath of /client/experimental', () => {
+  it('highlights Experiments when on a subpath of /client/experimental', () => {
     ;(usePathname as jest.Mock).mockReturnValue(
       '/client/experimental/deep-dive'
     )
     renderWithTheme(<BottomNavBar />)
 
-    const analyticsAction = screen.getByLabelText(
-      'Navigate to Experimental Analytics page'
+    const experimentsAction = screen.getByLabelText(
+      'Navigate to Experiments page'
     )
-    expect(analyticsAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
+    expect(experimentsAction).toHaveStyle(
+      `color: ${theme.palette.primary.main}`
+    )
+  })
+
+  it('highlights Profile when on /client/settings', () => {
+    ;(usePathname as jest.Mock).mockReturnValue('/client/settings')
+    renderWithTheme(<BottomNavBar />)
+
+    const profileAction = screen.getByLabelText(
+      'Navigate to Profile Settings page'
+    )
+    expect(profileAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
   it('does not highlight any item when path does not match any items', () => {
