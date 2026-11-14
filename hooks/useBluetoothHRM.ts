@@ -6,13 +6,7 @@ import { useHrmMetadataSync } from '@/hooks/useHrmMetadataSync'
 import { clientEnv } from '@/lib/env-client'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
-import {
-  STABILITY_THRESHOLD_MS,
-  MISSED_PACKET_THRESHOLD_BUFFER_MS,
-  MIN_MISSED_PACKET_THRESHOLD_MS,
-  ROLLING_AVG_HISTORY_LENGTH,
-  DATA_LIVENESS_TIMEOUT_MS,
-} from '@/constants/bluetooth'
+import { DATA_LIVENESS_TIMEOUT_MS } from '@/constants/bluetooth'
 import {
   HEARTBEAT_INTERVAL_MS,
   statusMessageMap,
@@ -27,6 +21,7 @@ import {
   type HrmTestControls,
 } from './useBluetoothHRM/testControls'
 import { useConnectionOwnership } from './useBluetoothHRM/useConnectionOwnership'
+import { useHrSignalStats } from './useBluetoothHRM/useHrSignalStats'
 import { useHrmRecovery } from './useBluetoothHRM/useHrmRecovery'
 import { useGattConnect } from './useBluetoothHRM/useGattConnect'
 
@@ -47,15 +42,6 @@ export type { GattConnectRetryState } from './useBluetoothHRM/gattClassification
 export type { ConnectDeviceResolver } from './useBluetoothHRM/deviceScan'
 export type { HrmTestControls } from './useBluetoothHRM/testControls'
 
-/** Parses a heart-rate measurement payload: the flags byte selects 8- or
- * 16-bit little-endian rate. (Extracted to its own module in the next
- * commit of this decomposition.) */
-const parseHeartRate = (value: DataView): number => {
-  const flags = value.getUint8(0)
-  const is16Bit = flags & 0x1
-  return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
-}
-
 interface UseBluetoothHRMProps {
   dataLivenessTimeoutMs?: number
   throttleMs?: number
@@ -73,6 +59,7 @@ interface UseBluetoothHRMProps {
  * focused slices:
  *
  * - useConnectionOwnership: ownership token + radio guard flags
+ * - useHrSignalStats: measurement parsing + signal statistics
  * - useHrmRecovery: reconnect backoff + waiting-for-device fallback
  * - useGattConnect: the GATT connect retry loop + failure handling
  * - deviceScan/gattClassification/batteryNotifications: pure helpers
@@ -95,8 +82,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   )
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
-  const [signalPeriodMs, setSignalPeriodMs] = useState(0)
-  const [signalStatus, setSignalStatus] = useState({ last: 0, slow: 0 })
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
@@ -104,11 +89,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const deviceStatus = customStatusMessage ?? statusMessageMap[status]
 
   const currentStatusRef = useRef(status)
-  const lastDataTime = useRef<number>(0)
-  const lastWatchdogMark = useRef<number>(0)
   const connectedDeviceRef = useRef<BluetoothDevice | null>(null)
-  const periodHistory = useRef<number[]>([])
-  const avgPeriodMs = useRef<number>(0)
   const connectToGattRef = useRef<
     | ((
         device: BluetoothDevice,
@@ -125,15 +106,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // manual disconnect, and successful connect.
   const reconnectHaltedRef = useRef(false)
   const onConnectRef = useRef(onConnect)
-  const onHeartRateUpdateRef = useRef(onHeartRateUpdate)
-  const activeHrSubscriptionRef = useRef<{
-    characteristic: BluetoothRemoteGATTCharacteristic
-    listener: (event: unknown) => void
-  } | null>(null)
-
-  useEffect(() => {
-    onHeartRateUpdateRef.current = onHeartRateUpdate
-  }, [onHeartRateUpdate])
 
   useEffect(() => {
     onConnectRef.current = onConnect
@@ -175,59 +147,16 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isUnmountedRef,
   } = useConnectionOwnership()
 
-  const updateSignalPeriod = useCallback((newPeriod: number) => {
-    periodHistory.current.push(newPeriod)
-    if (periodHistory.current.length > ROLLING_AVG_HISTORY_LENGTH) {
-      periodHistory.current.shift()
-    }
-    const total = periodHistory.current.reduce((sum, val) => sum + val, 0)
-    const average = total / periodHistory.current.length
-    avgPeriodMs.current = average
-    setSignalPeriodMs(Math.round(average))
-  }, [])
-
-  /**
-   * Signal half of the watchdog interval: folds over-threshold gaps into
-   * the signal-period average and slow-packet counters. Extracted from the
-   * interval tick; ref- and setter-only besides the period updater.
-   */
-  const checkSignalStability = useCallback(() => {
-    if (
-      currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
-      lastDataTime.current > 0
-    ) {
-      const now = Date.now()
-      const timeSinceLastData = now - lastDataTime.current
-
-      const threshold = Math.max(
-        avgPeriodMs.current + MISSED_PACKET_THRESHOLD_BUFFER_MS,
-        MIN_MISSED_PACKET_THRESHOLD_MS
-      )
-
-      if (timeSinceLastData > threshold) {
-        updateSignalPeriod(timeSinceLastData)
-
-        // Only increment slow count if we've crossed a new stability window
-        // and haven't already marked this window.
-        const currentStabilityWindows = Math.floor(
-          timeSinceLastData / STABILITY_THRESHOLD_MS
-        )
-        const lastMarkedWindows = Math.floor(
-          lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-        )
-
-        if (currentStabilityWindows > lastMarkedWindows) {
-          setSignalStatus((s) => ({
-            last: timeSinceLastData,
-            slow: s.slow + (currentStabilityWindows - lastMarkedWindows),
-          }))
-          lastWatchdogMark.current = timeSinceLastData
-        } else {
-          setSignalStatus((s) => ({ ...s, last: timeSinceLastData }))
-        }
-      }
-    }
-  }, [updateSignalPeriod])
+  const {
+    signalPeriodMs,
+    setSignalStatus,
+    signalStatus,
+    lastDataTime,
+    checkSignalStability,
+    swapHrListener,
+    removeHrListener,
+    resetSignalStats,
+  } = useHrSignalStats({ currentStatusRef, onHeartRateUpdate })
 
   /**
    * Liveness half of the watchdog interval: force-cycles a link that has
@@ -261,7 +190,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       }
     },
-    [isConnecting, isTimeoutDisconnect]
+    [isConnecting, isTimeoutDisconnect, lastDataTime]
   )
 
   useEffect(() => {
@@ -285,88 +214,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     checkDataLiveness,
     heartbeatInterval,
   ])
-
-  /**
-   * Heart-rate notification handler, extracted from connectToGatt's
-   * subscription wiring. All state flows through refs and stable setters,
-   * so this callback only depends on the signal-period updater.
-   */
-  const handleHrMeasurement = useCallback(
-    (event: unknown) => {
-      const now = Date.now()
-      if (lastDataTime.current > 0) {
-        const delta = now - lastDataTime.current
-        updateSignalPeriod(delta)
-
-        const isSlow = delta > STABILITY_THRESHOLD_MS
-        const watchdogWindows = Math.floor(
-          lastWatchdogMark.current / STABILITY_THRESHOLD_MS
-        )
-
-        setSignalStatus((s) => {
-          // If the packet arrived and was slow, but the watchdog already counted it,
-          // we don't increment again. If it's fast, we reset the slow counter.
-          let nextSlow = isSlow ? s.slow : 0
-          if (isSlow && watchdogWindows === 0) {
-            nextSlow = s.slow + 1
-          }
-
-          return {
-            last: delta,
-            slow: nextSlow,
-          }
-        })
-
-        // Synchronize watchdog mark with arrival to prevent double-counting
-        // when the watchdog timer next fires.
-        lastWatchdogMark.current = delta
-      }
-
-      const e = event as Event
-      const target = e.target as BluetoothRemoteGATTCharacteristic
-      const value = target.value
-      if (!value) {
-        logger.warn(
-          'Received characteristic value changed event with no value.'
-        )
-        return
-      }
-      const heartRate = parseHeartRate(value)
-      lastDataTime.current = now // Update timestamp for next delta
-      lastWatchdogMark.current = 0 // Reset watchdog mark for new packet
-      logger.debug({ heartRate }, 'Heart rate data received from Bluetooth')
-      onHeartRateUpdateRef.current?.(heartRate)
-    },
-    [updateSignalPeriod]
-  )
-
-  /**
-   * Moves the heart-rate notification subscription onto the current
-   * characteristic, unsubscribing the previous one first. Without this a
-   * reconnect to an already-seen characteristic object stacks duplicate
-   * listeners and every beat is counted twice (HR callbacks and the
-   * signal-period stats). Mirrors swapDisconnectListener.
-   */
-  const swapHrListener = useCallback(
-    (characteristic: BluetoothRemoteGATTCharacteristic) => {
-      const active = activeHrSubscriptionRef.current
-      if (active) {
-        active.characteristic.removeEventListener(
-          'characteristicvaluechanged',
-          active.listener
-        )
-      }
-      characteristic.addEventListener(
-        'characteristicvaluechanged',
-        handleHrMeasurement
-      )
-      activeHrSubscriptionRef.current = {
-        characteristic,
-        listener: handleHrMeasurement,
-      }
-    },
-    [handleHrMeasurement]
-  )
 
   const {
     onDisconnected,
@@ -432,10 +279,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setBatteryLevel(null)
     setConnectionAttempted(false)
     connectedDeviceRef.current = null
-    periodHistory.current = []
-    avgPeriodMs.current = 0
-    setSignalPeriodMs(0)
-    setSignalStatus({ last: 0, slow: 0 })
+    resetSignalStats()
   }, [
     claimConnectionAttempt,
     abortInFlightConnect,
@@ -444,6 +288,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isManualDisconnect,
     isTimeoutDisconnect,
     setConnectionAttempted,
+    resetSignalStats,
   ])
 
   const forgetDevice = useCallback(async () => {
@@ -531,14 +376,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     return () => {
       isUnmountedRef.current = true
       removeDisconnectListener()
-      if (activeHrSubscriptionRef.current) {
-        const { characteristic, listener } = activeHrSubscriptionRef.current
-        characteristic.removeEventListener(
-          'characteristicvaluechanged',
-          listener
-        )
-        activeHrSubscriptionRef.current = null
-      }
+      removeHrListener()
       // Ref-stability caveat acknowledged: the timeout handle read at cleanup
       // time is the one to clear; eslint-disable for the ref-in-cleanup rule.
       // eslint-disable-next-line react-hooks/exhaustive-deps
