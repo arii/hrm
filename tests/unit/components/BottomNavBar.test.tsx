@@ -48,6 +48,7 @@ describe('BottomNavBar', () => {
     expect(screen.getByText('Stream')).toBeInTheDocument()
     expect(screen.getByText('Spotify')).toBeInTheDocument()
     expect(screen.getByText('Experiments')).toBeInTheDocument()
+    expect(screen.getByText('Profile')).toBeInTheDocument()
   })
 
   it('highlights Dashboard when on the root path', () => {
@@ -93,6 +94,16 @@ describe('BottomNavBar', () => {
     expect(experimentsAction).toHaveStyle(
       `color: ${theme.palette.primary.main}`
     )
+  })
+
+  it('highlights Profile when on /client/settings', () => {
+    ;(usePathname as jest.Mock).mockReturnValue('/client/settings')
+    renderWithTheme(<BottomNavBar />)
+
+    const profileAction = screen.getByLabelText(
+      'Navigate to Profile Settings page'
+    )
+    expect(profileAction).toHaveStyle(`color: ${theme.palette.primary.main}`)
   })
 
   it('does not highlight any item when path does not match any items', () => {

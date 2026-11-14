@@ -3,6 +3,7 @@
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
+import PersonIcon from '@mui/icons-material/Person'
 import ScienceIcon from '@mui/icons-material/Science'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
@@ -40,6 +41,12 @@ const NAV_ITEMS = [
     href: '/client/experimental',
     icon: <ScienceIcon />,
     ariaLabel: 'Navigate to Experiments page',
+  },
+  {
+    label: 'Profile',
+    href: '/client/settings',
+    icon: <PersonIcon />,
+    ariaLabel: 'Navigate to Profile Settings page',
   },
 ]
 
