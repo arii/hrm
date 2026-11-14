@@ -1,4 +1,5 @@
 import { debugAccessDenied } from '@/lib/debug-guard'
+import { isDebugBlocked } from '@/lib/debug-gate'
 import { env } from '@/lib/env'
 
 jest.mock('@/lib/env', () => ({
@@ -31,5 +32,17 @@ describe('debugAccessDenied', () => {
   it('allows non-production without any bypass', () => {
     mockEnv.NODE_ENV = 'development'
     expect(debugAccessDenied()).toBeNull()
+  })
+})
+
+describe('isDebugBlocked', () => {
+  it.each([
+    ['production', undefined, true],
+    ['production', 'false', true],
+    ['production', 'true', false],
+    ['development', undefined, false],
+    ['test', 'false', false],
+  ])('NODE_ENV=%s TESTING=%s -> blocked=%s', (nodeEnv, testing, expected) => {
+    expect(isDebugBlocked(nodeEnv, testing)).toBe(expected)
   })
 })

@@ -1,0 +1,71 @@
+'use client'
+
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import { Session } from 'next-auth'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
+import { withBasePath } from '@/utils/urls'
+
+interface ServerTokenStatus {
+  status: string
+  userId?: string
+  accessToken?: string
+  refreshToken?: string
+  expiresIn?: number
+  obtainedAt?: string
+  expiresAt?: string
+  isExpired?: boolean
+  willExpireSoon?: boolean
+}
+
+export default function SpotifyDebugContent() {
+  const { data: session } = useSession() as { data: Session | null }
+  const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
+
+  const fetchServerToken = async () => {
+    const res = await fetch(withBasePath(API_DEBUG_SPOTIFY_TOKEN))
+    if (res.ok) {
+      const data = await res.json()
+      setServerToken(data.token)
+    }
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchServerToken()
+  }, [])
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h4" gutterBottom>
+        Spotify Debug
+      </Typography>
+
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6">NextAuth Session</Typography>
+        {session ? (
+          <>
+            <pre>{JSON.stringify(session, null, 2)}</pre>
+            <Button onClick={() => signOut()}>Sign Out</Button>
+          </>
+        ) : (
+          <Button onClick={() => signIn('spotify')}>
+            Sign In with Spotify
+          </Button>
+        )}
+      </Paper>
+
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h6">Server Token Status</Typography>
+        <Button onClick={fetchServerToken} sx={{ mb: 2 }}>
+          Refresh
+        </Button>
+        <pre>{JSON.stringify(serverToken, null, 2)}</pre>
+      </Paper>
+    </Box>
+  )
+}
