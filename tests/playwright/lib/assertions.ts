@@ -10,6 +10,7 @@
  */
 import type { Locator, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
+import { SCREENSHOT_OPTIONS as DEFAULT_SCREENSHOT_OPTIONS } from './visual'
 
 /**
  * Assert that a page matches its expected screenshot with standard masking.

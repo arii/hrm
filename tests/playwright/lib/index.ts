@@ -108,6 +108,7 @@ export {
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
+  resetAndSettleHrm,
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,
@@ -131,6 +132,7 @@ export {
   SMALL_DESKTOP_VIEWPORT,
   TABLET_VIEWPORT,
   MOBILE_VIEWPORT,
+  SCALED_CANVAS_VIEWPORT,
 } from './viewports'
 
 // ============================================================================

@@ -2,6 +2,7 @@ import { expect } from '@playwright/test'
 import { test } from './fixtures'
 import {
   getDynamicContentMasks,
+  resetAndSettleHrm,
   setupMinimalVisualRegressionTest,
   HRM_ROUTES,
   MOBILE_VIEWPORT,
@@ -12,8 +13,11 @@ import { VRT_TIMEOUTS } from './lib/timeouts'
 // Test suite for VRT
 test.describe('Dashboard Visual Regression Tests', () => {
   test.describe('Dashboard Component', () => {
-    test('initial, empty state', async ({ dashboardPage }) => {
+    test('initial, empty state', async ({ dashboardPage, request }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      // Clear any HR session left on the stateful server by an earlier suite
+      // and wait for the dashboard to render the cleared state.
+      await resetAndSettleHrm(dashboardPage, request)
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-empty.png', {
         mask: getDynamicContentMasks(dashboardPage),
@@ -25,9 +29,13 @@ test.describe('Dashboard Visual Regression Tests', () => {
     test('active timer without HR data', async ({
       dashboardPage,
       controlPage,
+      request,
     }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
       await setupMinimalVisualRegressionTest(controlPage, HRM_ROUTES.CONTROL)
+      // Clear any HR session left on the stateful server by an earlier suite
+      // and wait for the dashboard to render the cleared state.
+      await resetAndSettleHrm(dashboardPage, request)
 
       // Ensure dashboard is ready
       const timerContainer = dashboardPage.getByTestId(
@@ -83,6 +91,12 @@ test.describe('Dashboard Visual Regression Tests', () => {
         }
       )
 
+      // Wait for the mock client's HR tile to render before capturing,
+      // so the baseline cannot race the WS data arrival.
+      await expect(
+        dashboardPage.getByTestId('hr-tile-card').first()
+      ).toBeVisible()
+
       // Assert grid row height is stable
       const topRow = dashboardPage
         .locator('[data-testid="dashboard"] > div')
@@ -98,8 +112,11 @@ test.describe('Dashboard Visual Regression Tests', () => {
       })
     })
 
-    test('large desktop viewport', async ({ dashboardPage }) => {
+    test('large desktop viewport', async ({ dashboardPage, request }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      // Clear any HR session left on the stateful server by an earlier suite
+      // and wait for the dashboard to render the cleared state.
+      await resetAndSettleHrm(dashboardPage, request)
       await dashboardPage.setViewportSize({ width: 2560, height: 1440 })
       const dashboard = dashboardPage.getByTestId('dashboard')
       await takeScreenshot(dashboard, 'dashboard-large-desktop.png', {
@@ -108,8 +125,11 @@ test.describe('Dashboard Visual Regression Tests', () => {
       })
     })
 
-    test('mobile viewport', async ({ dashboardPage }) => {
+    test('mobile viewport', async ({ dashboardPage, request }) => {
       await setupMinimalVisualRegressionTest(dashboardPage, '/')
+      // Clear any HR session left on the stateful server by an earlier suite
+      // and wait for the dashboard to render the cleared state.
+      await resetAndSettleHrm(dashboardPage, request)
       await dashboardPage.setViewportSize(MOBILE_VIEWPORT)
       await dashboardPage.evaluate(() => window.scrollTo(0, 0))
       const dashboard = dashboardPage.getByTestId('dashboard')
