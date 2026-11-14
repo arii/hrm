@@ -693,7 +693,10 @@ jobs:
         run: pnpm run kill-all || true
 
   visual-tests:
-    name: 🧪 Visual Tests (shard ${{ matrix.shard }}/4)
+    # Name must stay EXACTLY "🧪 Visual Tests": the branch ruleset requires this
+    # check context, and matrix legs share one check name. Shard identity lives
+    # in artifact/report names instead.
+    name: 🧪 Visual Tests
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
