@@ -13,8 +13,6 @@ import {
 } from './connectViewState'
 import type { ConnectViewProps } from './ConnectViewProps'
 
-export type { ConnectViewProps }
-
 // Public view-state resolvers for existing consumers and tests; the
 // implementation lives in connectViewState.ts.
 export { getConnectionBanner, resolveConnectViewState }

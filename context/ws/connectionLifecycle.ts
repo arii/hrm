@@ -24,7 +24,7 @@ const INITIAL_RECONNECT_DELAY = 1000 // 1 second
 // The factor by which the reconnection delay is randomized to prevent clients from reconnecting simultaneously.
 const JITTER_FACTOR = 0.2 // 20% jitter
 
-export interface ConnectionLifecycle {
+interface ConnectionLifecycle {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
