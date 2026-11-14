@@ -108,6 +108,7 @@ export {
   // Full setup functions
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,
+  resetAndSettleHrm,
   setupComprehensiveTest,
   setupCoreTest,
   resetServerState,

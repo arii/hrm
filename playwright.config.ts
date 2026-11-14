@@ -63,7 +63,10 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: false,
   workers: 1, // Restricted to 1 worker globally to prevent parallel test cross-talk on the single stateful WebSocket server
-  timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
+  // 60s per test: connect-page hydration and dashboard data waits can consume
+  // most of a 30s budget on the tablet-canvas project, and teardown must
+  // still fit inside the same deadline.
+  timeout: 60 * 1000,
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -73,7 +76,7 @@ export default defineConfig({
   // Include the project name so per-project baselines (desktop vs the
   // scaled-canvas tablet project) cannot collide on the same file.
   snapshotPathTemplate:
-    '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-platform}{-testSuffix}',
+    '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-platform}{ext}',
 
   // Test execution optimizations - Fail Fast Strategy
   expect: {
