@@ -58,7 +58,7 @@ env:
 jobs:
   prepare-env:
     name: 📝 Prepare Environment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       session_id: ${{ steps.sanitize_id.outputs.sanitized-value }}
       pr_number: ${{ steps.determine-context.outputs.pr_number }}
@@ -94,7 +94,7 @@ jobs:
   script-tests:
     name: 🧪 Script Tests
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -131,7 +131,7 @@ jobs:
   knip-check:
     name: 🎒 Knip Check
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -164,7 +164,7 @@ jobs:
   lint-check:
     name: 🔍 Lint Check
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -205,7 +205,7 @@ jobs:
   slop-check:
     name: 🧹 Slop Check
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -250,7 +250,7 @@ jobs:
   type-check:
     name: ⌨️ Type Check
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -300,7 +300,7 @@ jobs:
   build-check:
     name: 🏗️ Build Check
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -446,7 +446,7 @@ jobs:
   infra-tests:
     name: 🧪 Infrastructure Tests
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -520,7 +520,7 @@ jobs:
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -565,7 +565,7 @@ jobs:
   component-tests:
     name: 🧪 Component Tests
     needs: [prepare-env]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -610,7 +610,7 @@ jobs:
   perf-tests:
     name: 🧪 Performance Tests
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -695,7 +695,7 @@ jobs:
   visual-tests:
     name: 🧪 Visual Tests
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
@@ -793,7 +793,7 @@ jobs:
         perf-tests,
         visual-tests,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       script-tests-outcome: ${{ needs.script-tests.result }}
       infra-tests-outcome: ${{ needs.infra-tests.result }}
@@ -848,7 +848,7 @@ jobs:
         script-tests,
         integration-tests,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
     outputs:
