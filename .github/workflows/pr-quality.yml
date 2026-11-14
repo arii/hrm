@@ -693,10 +693,10 @@ jobs:
         run: pnpm run kill-all || true
 
   visual-tests:
-    # Name must stay EXACTLY "🧪 Visual Tests": the branch ruleset requires this
-    # check context, and matrix legs share one check name. Shard identity lives
-    # in artifact/report names instead.
-    name: 🧪 Visual Tests
+    # Check-name caveat: matrix legs report as "🧪 Visual Tests (N)" regardless of
+    # this name, so the branch ruleset's required context is satisfied by the
+    # visual-tests-summary aggregate job below, named exactly "🧪 Visual Tests".
+    name: 🧪 Visual Tests Shards
     needs: [prepare-env, knip-check, lint-check, type-check, build-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -792,6 +792,24 @@ jobs:
             playwright-report/
           if-no-files-found: warn
           retention-days: 2
+
+  # Aggregate check named exactly "🧪 Visual Tests" — the context required by the
+  # branch ruleset (matrix legs report shard-suffixed names GitHub appends).
+  visual-tests-summary:
+    name: 🧪 Visual Tests
+    needs: visual-tests
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all Visual Tests shards to succeed
+        run: |
+          result="${{ needs.visual-tests.result }}"
+          echo "visual-tests result: ${result}"
+          if [ "${result}" != "success" ]; then
+            echo "One or more Visual Tests shards did not succeed."
+            exit 1
+          fi
 
   integration-tests:
     name: 📊 Integration Tests Summary
