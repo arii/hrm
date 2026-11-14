@@ -76,6 +76,20 @@ const exerciseFontSize = async (page: Page): Promise<string> =>
     .first()
     .evaluate((el) => getComputedStyle(el).fontSize)
 
+// Chromium snaps fractional layout between frames (observed: y
+// 367.887… → 368 across two rAF frames); sub-pixel settling is not a
+// layout step, so the stability check tolerates it while still failing
+// a real move.
+type Box = { x: number; y: number; width: number; height: number }
+const expectBoxStable = (before: Box | null, after: Box | null): void => {
+  expect(before).not.toBeNull()
+  expect(after).not.toBeNull()
+  if (!before || !after) return
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expect(Math.abs(after[key] - before[key])).toBeLessThan(1)
+  }
+}
+
 const twoAnimationFrames = (page: Page): Promise<void> =>
   page.evaluate(
     () =>
@@ -131,7 +145,7 @@ test.describe('Workout grid deterministic text fit (scaled canvas)', () => {
     // step-down loop shipped four times; two stable frames prove the
     // one-shot fit does not move after paint.
     expect(sizeAfter).toBe(sizeBefore)
-    expect(boxAfter).toEqual(boxBefore)
+    expectBoxStable(boxBefore, boxAfter)
     await expectGridFits(dashboardPage)
   })
 
