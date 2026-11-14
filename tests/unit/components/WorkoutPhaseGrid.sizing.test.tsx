@@ -1,17 +1,33 @@
 /**
  * @jest-environment jsdom
  *
- * Regression test for the initial-load sizing race: workout phase text
- * must rescale when the card containers settle, without requiring a
- * manual refresh click.
+ * OD-5: the grid's sizing behavior contract. The old step-down loop
+ * converged from observed overflow across timing-sensitive signals;
+ * the replacement runs exactly one pure, idempotent computation per
+ * trigger and applies the result through CSS custom properties. These
+ * tests pin: one computation per content change, idempotent recompute
+ * on resize (no ratchet), zero-area boxes ignored, and cleanup.
  */
 import { act, render, screen, waitFor } from '@testing-library/react'
 import WorkoutPhaseGrid from '@/components/WorkoutPhaseGrid'
+import { computeWorkoutFit } from '@/lib/workoutSizing'
+
+jest.mock('@/lib/workoutSizing', () => {
+  const actual = jest.requireActual<typeof import('@/lib/workoutSizing')>(
+    '@/lib/workoutSizing'
+  )
+  return {
+    ...actual,
+    computeWorkoutFit: jest.fn(actual.computeWorkoutFit),
+  }
+})
+
+const computeFitMock = computeWorkoutFit as unknown as jest.Mock
 
 global.fetch = jest.fn()
 
 jest.mock('@/components/ScaledStage', () => ({
-  useIsScaledLayout: () => true,
+  useInScaledStage: () => true,
 }))
 
 // jsdom has no ResizeObserver: capture the callback so tests can fire
@@ -34,195 +50,126 @@ afterAll(() => {
   delete (global as unknown as Record<string, unknown>).ResizeObserver
 })
 
-describe('WorkoutPhaseGrid initial-load sizing', () => {
+// jsdom lays out at 0px: give the grid a settled box so the fit guard
+// passes, the way a real browser reports it.
+const settleGridBox = () => {
+  const grid = screen.getByTestId('workout-phase-grid')
+  Object.defineProperty(grid, 'clientWidth', {
+    value: 300,
+    configurable: true,
+  })
+  Object.defineProperty(grid, 'clientHeight', {
+    value: 400,
+    configurable: true,
+  })
+  return grid
+}
+
+const fireResize = (width = 300, height = 400) => {
+  act(() => {
+    resizeCallback?.([{ contentRect: { width, height } }])
+  })
+}
+
+const latestFit = () =>
+  computeFitMock.mock.results[computeFitMock.mock.results.length - 1].value as {
+    exerciseRem: number
+    headerRem: number
+  }
+
+describe('WorkoutPhaseGrid deterministic fit', () => {
+  const payload = {
+    headers: ['tall'],
+    columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
+  }
+
   beforeEach(() => {
     ;(fetch as jest.Mock).mockClear()
+    ;(fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => payload,
+    })
+    computeFitMock.mockClear()
     observe.mockClear()
     disconnect.mockClear()
     resizeCallback = null
   })
 
-  it('recalculates font size when the container settles after mounting at 0 height', async () => {
-    // 8 single-char exercises: tallest card holds 8 effective rows,
-    // so the data-driven base size is 1.9rem.
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        headers: ['tall'],
-        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
-      }),
-    })
-
+  it('runs the fit exactly once per content change and applies it through CSS custom properties', async () => {
     const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
     await waitFor(() => {
       expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
     })
+    settleGridBox()
+    fireResize()
 
-    // jsdom lays out at 0px: the guard must skip, never locking in a size
-    // from unsettled dimensions. Firing a zero rect changes nothing.
-    expect(resizeCallback).not.toBeNull()
-    expect(observe).toHaveBeenCalledWith(
-      screen.getByTestId('workout-phase-grid')
-    )
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 0, height: 0 } }])
-    })
-    // Data-driven base size lands after the fetch commit flushes.
     await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
+      expect(computeFitMock).toHaveBeenCalledTimes(1)
     })
-
-    // Container settles with overflowing content: no refresh click, the
-    // settle pass steps the font down on its own. The mocks report
-    // overflow permanently, so repeated passes converge to the 1.4 floor.
-    // (The grid box itself is settled at 400px; only the card overflows.)
+    const fit = latestFit()
     const grid = screen.getByTestId('workout-phase-grid')
-    Object.defineProperty(grid, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    const card = document.querySelector('.MuiCard-root') as HTMLElement
-    Object.defineProperty(card, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 500,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 300, height: 400 } }])
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.4rem',
-      })
-    })
+    expect(grid.style.getPropertyValue('--workout-exercise-font-rem')).toBe(
+      `${fit.exerciseRem}rem`
+    )
+    expect(grid.style.getPropertyValue('--workout-header-font-rem')).toBe(
+      `${fit.headerRem}rem`
+    )
 
+    unmount()
+  })
+
+  it('recomputes from scratch on every resize trigger and never ratchets', async () => {
+    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
+    await waitFor(() => {
+      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    })
+    settleGridBox()
+    fireResize()
+    await waitFor(() => {
+      expect(computeFitMock).toHaveBeenCalledTimes(1)
+    })
+    const first = latestFit()
+    const grid = screen.getByTestId('workout-phase-grid')
+    const firstVar = grid.style.getPropertyValue('--workout-exercise-font-rem')
+
+    // Repeated settle signals re-run the full computation; the result
+    // is identical, so the painted size can never step down.
+    fireResize()
+    fireResize()
+    await waitFor(() => {
+      expect(computeFitMock).toHaveBeenCalledTimes(3)
+    })
+    expect(latestFit()).toEqual(first)
+    expect(grid.style.getPropertyValue('--workout-exercise-font-rem')).toBe(
+      firstVar
+    )
+
+    unmount()
+  })
+
+  it('ignores zero-area resize events instead of fitting into nothing', async () => {
+    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
+    await waitFor(() => {
+      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    })
+    fireResize(0, 0)
+    // Let the rAF pass flush; no computation may run for a 0x0 box.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(computeFitMock).not.toHaveBeenCalled()
+    const grid = screen.getByTestId('workout-phase-grid')
+    expect(grid.style.getPropertyValue('--workout-exercise-font-rem')).toBe('')
+
+    unmount()
+  })
+
+  it('disconnects the observer on unmount', async () => {
+    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
+    await waitFor(() => {
+      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    })
     unmount()
     expect(disconnect).toHaveBeenCalled()
-  })
-
-  it('recovers the data-driven size on settle after transient overflow (no refresh click)', async () => {
-    // Same 8-row payload: base size is 1.9rem.
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        headers: ['tall'],
-        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
-      }),
-    })
-
-    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
-    await waitFor(() => {
-      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
-    })
-
-    // Transient overflow while layout/fonts settle steps the font down
-    // (any amount — the exact depth is timing, the drop itself is not).
-    // (The grid box itself is settled at 400px; only the card overflows.)
-    const grid = screen.getByTestId('workout-phase-grid')
-    Object.defineProperty(grid, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    const card = document.querySelector('.MuiCard-root') as HTMLElement
-    Object.defineProperty(card, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 500,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 300, height: 400 } }])
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).not.toHaveStyle(
-        {
-          fontSize: '1.9rem',
-        }
-      )
-    })
-
-    // Layout settles and the content fits at base size: the next settle
-    // event must restore 1.9rem on its own — a manual refresh click must
-    // never be required.
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 400,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 300, height: 400 } }])
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
-    })
-
-    unmount()
-  })
-
-  it('steps down when the grid overflows even if cards report no overflow', async () => {
-    // Same 8-row payload: base size is 1.9rem.
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        headers: ['tall'],
-        columns: [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']],
-      }),
-    })
-
-    const { unmount } = render(<WorkoutPhaseGrid docId="test-doc-id" />)
-    await waitFor(() => {
-      expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
-    })
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.9rem',
-      })
-    })
-
-    // Scroll-parent absorption: cards size to content (no card-level
-    // overflow) but the fixed-height grid itself overflows.
-    const card = document.querySelector('.MuiCard-root') as HTMLElement
-    Object.defineProperty(card, 'clientHeight', {
-      value: 500,
-      configurable: true,
-    })
-    Object.defineProperty(card, 'scrollHeight', {
-      value: 500,
-      configurable: true,
-    })
-    const grid = screen.getByTestId('workout-phase-grid')
-    Object.defineProperty(grid, 'clientHeight', {
-      value: 400,
-      configurable: true,
-    })
-    Object.defineProperty(grid, 'scrollHeight', {
-      value: 600,
-      configurable: true,
-    })
-    act(() => {
-      resizeCallback?.([{ contentRect: { width: 300, height: 400 } }])
-    })
-    // Grid overflow never clears in the mock, so the fit converges to the
-    // 1.4 floor.
-    await waitFor(() => {
-      expect(screen.getAllByTestId('workout-exercise-text')[0]).toHaveStyle({
-        fontSize: '1.4rem',
-      })
-    })
-
-    unmount()
   })
 })

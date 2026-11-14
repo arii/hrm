@@ -22,3 +22,14 @@ export const TABLET_VIEWPORT: ViewportSize = {
   width: 768,
   height: 1000,
 }
+
+/**
+ * Native size of the fixed dashboard canvas (`constants/layout.ts`
+ * DASHBOARD_DESIGN_WIDTH/HEIGHT). At exactly this viewport the ScaledStage
+ * renders at scale 1 — the wall-display presentation, previously untested
+ * by VRT at native width (spec art_uI0w7D6m D7).
+ */
+export const SCALED_CANVAS_VIEWPORT: ViewportSize = {
+  width: 1600,
+  height: 900,
+}

@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import ScaledStage, { useIsScaledLayout } from '@/components/ScaledStage'
+import ScaledStage from '@/components/ScaledStage'
 
 const setViewport = (width: number, height: number) => {
   Object.defineProperty(window, 'innerWidth', {
@@ -13,15 +13,6 @@ const setViewport = (width: number, height: number) => {
     writable: true,
     value: height,
   })
-}
-
-const ScaledProbe = () => {
-  const isScaledLayout = useIsScaledLayout()
-  return (
-    <div data-testid="scaled-probe">
-      {isScaledLayout ? 'scaled' : 'responsive'}
-    </div>
-  )
 }
 
 describe('ScaledStage', () => {
@@ -74,24 +65,37 @@ describe('ScaledStage', () => {
     })
   })
 
-  it('exposes the scaled flag through context', () => {
+  it('exposes the scaled-canvas attribute in scaled mode', () => {
     setViewport(1920, 1080)
     render(
       <ScaledStage>
-        <ScaledProbe />
+        <div data-testid="child" />
       </ScaledStage>
     )
-    expect(screen.getByTestId('scaled-probe')).toHaveTextContent('scaled')
+    // SCALED_CANVAS_SELECTOR scopes canvas overrides to this attribute:
+    // it must be present exactly when the stage is scaled.
+    expect(screen.getByTestId('scaled-stage')).toHaveAttribute(
+      'data-scaled-canvas',
+      ''
+    )
   })
 
-  it('reports responsive through context below the minimum width', () => {
+  it('renders no scaled-canvas attribute below the minimum width', () => {
     setViewport(375, 1000)
     render(
       <ScaledStage>
-        <ScaledProbe />
+        <div data-testid="child" />
       </ScaledStage>
     )
-    expect(screen.getByTestId('scaled-probe')).toHaveTextContent('responsive')
+    // display:contents removes the box and the attribute, so
+    // [data-scaled-canvas] descendant selectors cannot match and
+    // responsive base styles hold.
+    expect(screen.getByTestId('scaled-stage')).not.toHaveAttribute(
+      'data-scaled-canvas'
+    )
+    expect(screen.getByTestId('scaled-stage').getAttribute('style')).toContain(
+      'display: contents'
+    )
   })
 
   it('updates the scale on window resize', () => {

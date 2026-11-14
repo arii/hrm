@@ -33,12 +33,9 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const LiveSimulation: Story = {
-  args: {
-    useNativeTable: false,
-  },
-  render: (args) => (
+  render: () => (
     <MockWebSocketProvider scenario={RACE_SCENARIO} interval={800}>
-      <Dashboard {...args} />
+      <Dashboard />
     </MockWebSocketProvider>
   ),
 }

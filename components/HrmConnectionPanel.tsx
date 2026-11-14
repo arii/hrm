@@ -9,18 +9,14 @@ import {
   useWebSocketConnection,
 } from '@/context/WebSocketContext'
 import HrTile from '@/components/HrTile'
-import { useIsScaledLayout } from '@/components/ScaledStage'
 import { augmentHrmData } from '@/utils/hrm'
-import { getHrGridConfig } from '@/constants/layout'
+import { SCALED_CANVAS_SELECTOR, getHrGridConfig } from '@/constants/layout'
 import { ClientHrmData } from '@/types/websocket'
 
 const HrmConnectionPanel = () => {
   const hrmData = useHrmData()
   const activeAlerts = useActiveAlerts()
   const { connectionStatus } = useWebSocketConnection()
-  // Scaled mode pins the target-composition (sm-breakpoint) tile width
-  // so the canvas never reflips with the real window size.
-  const isScaledLayout = useIsScaledLayout()
   const tileData = useMemo(() => {
     return augmentHrmData(hrmData, activeAlerts)
   }, [hrmData, activeAlerts])
@@ -84,7 +80,9 @@ const HrmConnectionPanel = () => {
           <Typography
             variant="h6"
             gutterBottom
-            sx={{ fontSize: isScaledLayout ? '2.5rem' : undefined }}
+            // Canvas-size text on the scaled canvas; default size on
+            // responsive viewports.
+            sx={{ [SCALED_CANVAS_SELECTOR]: { fontSize: '2.5rem' } }}
           >
             No Heart Rate Data
           </Typography>
@@ -92,7 +90,7 @@ const HrmConnectionPanel = () => {
             variant="body1"
             color="text.secondary"
             align="center"
-            sx={{ fontSize: isScaledLayout ? '1.75rem' : undefined }}
+            sx={{ [SCALED_CANVAS_SELECTOR]: { fontSize: '1.75rem' } }}
           >
             Heart rate data will be displayed here once a monitor is connected
             and streaming.
@@ -103,18 +101,22 @@ const HrmConnectionPanel = () => {
           data-testid="hr-tiles-container"
           sx={{
             display: 'grid',
-            gridTemplateColumns: isScaledLayout
-              ? hrGridConfig.gridTemplateColumns
-              : {
-                  xs: '1fr',
-                  sm: hrGridConfig.gridTemplateColumns,
-                },
-            gridTemplateRows: isScaledLayout
-              ? hrGridConfig.gridTemplateRows
-              : {
-                  xs: 'auto',
-                  sm: hrGridConfig.gridTemplateRows,
-                },
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: hrGridConfig.gridTemplateColumns,
+            },
+            gridTemplateRows: {
+              xs: 'auto',
+              sm: hrGridConfig.gridTemplateRows,
+            },
+            // The canvas pin rides the canvas selector: scaled viewports
+            // are always ≥ SCALE_TO_FIT_MIN_WIDTH (the sm breakpoint),
+            // but the selector keeps the pin explicit and above the
+            // breakpoint rules.
+            [SCALED_CANVAS_SELECTOR]: {
+              gridTemplateColumns: hrGridConfig.gridTemplateColumns,
+              gridTemplateRows: hrGridConfig.gridTemplateRows,
+            },
             gap: isCompact ? 1.5 : 2,
             height: '100%',
             minHeight: 0,

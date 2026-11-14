@@ -7,33 +7,24 @@ import { mockHrmData } from '../../fixtures/hrm'
 // Mock child components to isolate the DashboardClient component
 jest.mock('@/components/WorkoutPhaseGrid', () => {
   const WorkoutPhaseGrid = ({
+    docId,
     refreshKey,
     onRefresh,
   }: {
+    docId: string
     refreshKey: number
     onRefresh?: () => void
   }) => (
-    <div data-testid="workout-phase-grid" data-refresh-key={refreshKey}>
+    <div
+      data-testid="workout-phase-grid"
+      data-doc-id={docId}
+      data-refresh-key={refreshKey}
+    >
       <button aria-label="refresh workout table" onClick={onRefresh} />
     </div>
   )
   WorkoutPhaseGrid.displayName = 'WorkoutPhaseGrid'
   return WorkoutPhaseGrid
-})
-jest.mock('@/components/GoogleDocViewer', () => {
-  const GoogleDocViewer = ({
-    refreshKey,
-    onRefresh,
-  }: {
-    refreshKey: number
-    onRefresh?: () => void
-  }) => (
-    <div data-testid="google-doc-viewer" data-refresh-key={refreshKey}>
-      <button aria-label="refresh workout table" onClick={onRefresh} />
-    </div>
-  )
-  GoogleDocViewer.displayName = 'GoogleDocViewer'
-  return GoogleDocViewer
 })
 jest.mock('@/components/HrmConnectionPanel', () => {
   const HrmConnectionPanel = () => <div data-testid="hrm-connection-panel" />
@@ -45,33 +36,25 @@ jest.mock('@/components/TimerDisplay', () => {
   TimerDisplay.displayName = 'TimerDisplay'
   return TimerDisplay
 })
-jest.mock('@/hooks/useAudio', () => ({
-  useAudio: () => ({
-    initializeAudio: jest.fn(),
-  }),
-}))
 
 describe('DashboardClient', () => {
   const mockProps = {
     docId: 'mock-doc-id',
-    iframeUrl:
-      'https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true',
   }
 
-  it('renders GoogleDocViewer when useNativeTable is false', async () => {
-    render(<DashboardClient useNativeTable={false} {...mockProps} />)
-    expect(await screen.findByTestId('google-doc-viewer')).toBeInTheDocument()
-    expect(screen.queryByTestId('workout-phase-grid')).not.toBeInTheDocument()
+  it('always renders the native WorkoutPhaseGrid with the doc id', async () => {
+    render(<DashboardClient {...mockProps} />)
+    const grid = await screen.findByTestId('workout-phase-grid')
+    expect(grid).toBeInTheDocument()
+    expect(grid.getAttribute('data-doc-id')).toBe('mock-doc-id')
+    // No iframe fallback exists anymore.
+    expect(
+      document.querySelector('iframe[title="Today\'s Training Regimen"]')
+    ).not.toBeInTheDocument()
   })
 
-  it('renders WorkoutPhaseGrid when useNativeTable is true', async () => {
-    render(<DashboardClient useNativeTable={true} {...mockProps} />)
-    expect(await screen.findByTestId('workout-phase-grid')).toBeInTheDocument()
-    expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
-  })
-
-  it('passes a new refreshKey to child components when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={true} {...mockProps} />)
+  it('passes a new refreshKey to WorkoutPhaseGrid when refresh button is clicked', async () => {
+    render(<DashboardClient {...mockProps} />)
 
     const workoutTableHeader = await screen.findByTestId('workout-phase-grid')
     const initialRefreshKey =
@@ -93,45 +76,8 @@ describe('DashboardClient', () => {
     )
   })
 
-  it('passes a new refreshKey to GoogleDocViewer when refresh button is clicked', async () => {
-    render(<DashboardClient useNativeTable={false} {...mockProps} />)
-
-    const googleDocViewer = await screen.findByTestId('google-doc-viewer')
-    const initialRefreshKey = googleDocViewer.getAttribute('data-refresh-key')
-
-    const refreshButton = screen.getByRole('button', {
-      name: /refresh workout table/i,
-    })
-    fireEvent.click(refreshButton)
-
-    const updatedGoogleDocViewer =
-      await screen.findByTestId('google-doc-viewer')
-    const updatedRefreshKey =
-      updatedGoogleDocViewer.getAttribute('data-refresh-key')
-
-    expect(updatedRefreshKey).not.toBe(initialRefreshKey)
-    expect(parseInt(updatedRefreshKey as string)).toBe(
-      parseInt(initialRefreshKey as string) + 1
-    )
-  })
-
-  it('renders an Alert when configuration is missing (useNativeTable=false, missing iframeUrl)', async () => {
-    render(<DashboardClient useNativeTable={false} docId="mock-doc-id" />)
-    const alert = await screen.findByRole('alert')
-    expect(alert).toBeInTheDocument()
-    expect(alert).toHaveTextContent(
-      'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
-    )
-    expect(screen.queryByTestId('google-doc-viewer')).not.toBeInTheDocument()
-  })
-
-  it('renders an Alert when configuration is missing (useNativeTable=true, missing docId)', async () => {
-    render(
-      <DashboardClient
-        useNativeTable={true}
-        iframeUrl="https://docs.google.com/document/d/e/mock-iframe-id/pub?embedded=true"
-      />
-    )
+  it('renders an Alert when the Google Doc ID is missing', async () => {
+    render(<DashboardClient />)
     const alert = await screen.findByRole('alert')
     expect(alert).toBeInTheDocument()
     expect(alert).toHaveTextContent(
@@ -143,7 +89,7 @@ describe('DashboardClient', () => {
   it('hides the HR panel when no HR clients are connected', async () => {
     render(
       <HrmDataContext.Provider value={[]}>
-        <DashboardClient useNativeTable={true} {...mockProps} />
+        <DashboardClient {...mockProps} />
       </HrmDataContext.Provider>
     )
     expect(await screen.findByTestId('workout-phase-grid')).toBeInTheDocument()
@@ -154,7 +100,7 @@ describe('DashboardClient', () => {
   it('shows the HR panel when HR clients are connected', async () => {
     render(
       <HrmDataContext.Provider value={mockHrmData}>
-        <DashboardClient useNativeTable={true} {...mockProps} />
+        <DashboardClient {...mockProps} />
       </HrmDataContext.Provider>
     )
     expect(

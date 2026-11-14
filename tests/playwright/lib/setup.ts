@@ -12,6 +12,7 @@ import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { MOCK_IMAGE, mockGoogleDocIframe } from './mocks'
 import { APIRequestContext } from '@playwright/test'
+import { VRT_TIMEOUTS } from './timeouts'
 import {
   waitForFontsLoaded,
   waitForPageReady,
@@ -194,12 +195,28 @@ export async function resetServerState(
 }
 
 /**
- * Comprehensive setup for visual regression tests.
- * Creates a clean browser context, initializes all required pages,
- * and prepares them for snapshot testing.
+ * Resets the server-side HRM state and waits until the dashboard page
+ * reflects the cleared state. The stateful server keeps client sessions
+ * alive for a grace window after their socket closes, so a screenshot
+ * taken immediately after a reset can capture a stale HR tile from a
+ * previous test. Waiting for the empty render makes the dashboard
+ * snapshots deterministic.
  *
- * @param browser - The Playwright Browser fixture
- * @returns An object containing the context and all created pages.
+ * @param page - The dashboard page to observe.
+ * @param request - The Playwright APIRequestContext object.
+ */
+export async function resetAndSettleHrm(
+  page: Page,
+  request: APIRequestContext
+): Promise<void> {
+  await resetServerState(request)
+  await expect(page.getByTestId('hr-tile-card')).toHaveCount(0, {
+    timeout: VRT_TIMEOUTS.EXTENDED,
+  })
+}
+
+/**
+ * Mocks the Spotify auth API and blocks the real SDK for stable VRT.
  */
 export async function mockSpotifyEnvironment(
   contextOrPage: BrowserContext | Page

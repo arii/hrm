@@ -229,8 +229,8 @@ pnpm run dev:preview
 ```
 
 (defined in `package.json` — sets `NEXTAUTH_URL=https://dev-onasafari.ddns.net:8443/hrm`,
-`NEXT_PUBLIC_BASE_PATH=/hrm`, `TESTING=false`, `NEXT_PUBLIC_TESTING=false`,
-`NEXT_PUBLIC_USE_NATIVE_TABLE=true` inline, so `.env.local` stays clean)
+`NEXT_PUBLIC_BASE_PATH=/hrm`, `TESTING=false`, `NEXT_PUBLIC_TESTING=false`
+inline, so `.env.local` stays clean)
 
 - Verify: `curl http://127.0.0.1:3000/hrm` → `200`;
   `curl -sk https://dev-onasafari.ddns.net:8443/hrm` → `302` to GitHub login
@@ -241,10 +241,9 @@ pnpm run dev:preview
 - ⚠️ Run the preview daemon with `TESTING=false NEXT_PUBLIC_TESTING=false`
   (inline, same as above).
   With `TESTING=true`, `/api/workout` returns hardcoded mock data (`20/10`,
-  Jumping Jacks / High Knees) instead of the real Google Doc. The preview runs
-  the native table (`NEXT_PUBLIC_USE_NATIVE_TABLE=true`), which reads
-  `GOOGLE_DOC_WORKOUT_URL` — `?native=false` switches one visit back to the
-  doc iframe (`GOOGLE_DOC_IFRAME_URL`).
+  Jumping Jacks / High Knees) instead of the real Google Doc. The dashboard
+  always renders the native parsed table, which reads
+  `GOOGLE_DOC_WORKOUT_URL`.
 
 > **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
 

@@ -10,9 +10,9 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import SideLabel from './SideLabel'
-import { useIsScaledLayout } from '@/components/ScaledStage'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
+import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import type { TimerMode, TimerPhase } from '@/types/core'
 
 // Define a constant for the side column width to avoid magic numbers
@@ -114,9 +114,6 @@ const TimerDisplay = () => {
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
-  // Scaled mode pins the target-composition (md-breakpoint) sizes so
-  // the canvas never reflips with the real window size.
-  const isScaledLayout = useIsScaledLayout()
   const {
     currentPhase,
     timeRemaining,
@@ -156,9 +153,12 @@ const TimerDisplay = () => {
         height: '100%',
         maxHeight: '100%',
         width: '100%',
-        minHeight: isScaledLayout
-          ? '20rem'
-          : { xs: '8.5rem', sm: '10.5rem', md: '12.5rem' },
+        // Responsive floor only. The canvas floor (20rem) rides the
+        // canvas selector; inside the scaled canvas the top row is
+        // locked at DASHBOARD_TOP_ROW_HEIGHT_MD and the card fills it,
+        // so neither floor is active there regardless of breakpoint.
+        minHeight: { xs: '8.5rem', sm: '10.5rem', md: '12.5rem' },
+        [SCALED_CANVAS_SELECTOR]: { minHeight: '20rem' },
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
@@ -247,7 +247,10 @@ const TimerDisplay = () => {
         sx={{
           position: 'relative',
           width: '100%',
-          py: isScaledLayout ? 1.5 : { xs: 1, md: 1.5 },
+          // The sm value is the target-composition pin: scaled viewports
+          // are always ≥ SCALE_TO_FIT_MIN_WIDTH, which tracks the sm
+          // breakpoint, so the canvas never sees the xs value.
+          py: { xs: 1, sm: 1.5 },
           px: SIDE_COLUMN_WIDTH,
           textAlign: 'center',
           display: 'flex',
@@ -285,9 +288,13 @@ const TimerDisplay = () => {
             fontFamily: 'var(--font-digital-7), monospace',
             // Scale with the timer container width (cqw) so digits never
             // clip when the top row narrows; clamped to safe bounds.
-            fontSize: isScaledLayout
-              ? 'clamp(4rem, 26cqw, 16rem)'
-              : 'clamp(4rem, 26cqw, 13rem)',
+            // The responsive cap fits the one-column phone layout; the
+            // scaled canvas (full-width timer with no HR tiles) allows
+            // the larger target-composition cap.
+            fontSize: 'clamp(4rem, 26cqw, 13rem)',
+            [SCALED_CANVAS_SELECTOR]: {
+              fontSize: 'clamp(4rem, 26cqw, 16rem)',
+            },
             fontWeight: 900,
             lineHeight: 1,
             whiteSpace: 'nowrap',

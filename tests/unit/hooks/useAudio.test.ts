@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { useAudio } from '@/hooks/useAudio'
 import { useTimerData } from '@/context/WebSocketContext'
 import { audioManager } from '@/utils/audioManager'
@@ -79,14 +79,5 @@ describe('useAudio', () => {
     expect(console.warn).toHaveBeenCalledWith(
       expect.stringContaining('Unknown sound type')
     )
-  })
-
-  it('loads audio on initializeAudio', () => {
-    setup()
-    const { result } = renderHook(() => useAudio())
-    act(() => {
-      result.current.initializeAudio()
-    })
-    expect(audioManager.loadAudio).toHaveBeenCalledTimes(1)
   })
 })

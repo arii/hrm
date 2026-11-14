@@ -1,13 +1,23 @@
 export const HR_TILE_MIN_HEIGHT = '8.5rem'
+// Named footer-stack tokens. The bottom nav and the Spotify bar are
+// fixed overlays; every layout that needs room for them reserves space
+// by composing these instead of restating rem values.
+const BOTTOM_NAV_HEIGHT = '3.5rem'
+const SPOTIFY_BAR_MEASURED_HEIGHT = '3rem'
+// Spotify bar growth headroom on the scaled canvas.
+const SPOTIFY_BAR_RESERVE = '1rem'
+// Extra buffer on responsive viewports, where the bar has no measured
+// reserve of its own.
+const RESPONSIVE_FOOTER_BUFFER = '1.25rem'
+
 export const FOOTER_HEIGHT_PX = 54
 // Fixed footer stack dimensions and reserve across all pages.
-// Spotify bar sits immediately above the 3.5rem bottom nav bar.
-export const SPOTIFY_BAR_BOTTOM_OFFSET = '3.5rem'
-// 56px bottom nav + 16px buffer; the measured 48px Spotify bar is not
-// covered — confirm the overlay needs no reserve before trusting this.
-export const FOOTER_RESERVE_SCALED = 'calc(3.5rem + 1rem)'
-// Non-scaled viewports reserve 3rem bar + 1.25rem buffer above the 3.5rem bottom nav.
-export const FOOTER_RESERVE_RESPONSIVE = 'calc(3.5rem + 3rem + 1.25rem)'
+// Spotify bar sits immediately above the bottom nav.
+export const SPOTIFY_BAR_BOTTOM_OFFSET = BOTTOM_NAV_HEIGHT
+export const FOOTER_RESERVE_SCALED = `calc(${BOTTOM_NAV_HEIGHT} + ${SPOTIFY_BAR_RESERVE})`
+// Responsive viewports reserve the measured bar plus buffer above the
+// bottom nav.
+export const FOOTER_RESERVE_RESPONSIVE = `calc(${BOTTOM_NAV_HEIGHT} + ${SPOTIFY_BAR_MEASURED_HEIGHT} + ${RESPONSIVE_FOOTER_BUFFER})`
 
 // Fixed dashboard design canvas (target display) for scale-to-fit.
 // 16:9: every screen in use (dev machine at 125% scaling, preview
@@ -20,6 +30,28 @@ export const DASHBOARD_DESIGN_HEIGHT = 900
 // the sm breakpoint: anything tablet-sized or larger shows the
 // target composition scaled to fit.
 export const SCALE_TO_FIT_MIN_WIDTH = 600
+
+// Stage attribute that scopes canvas overrides. ScaledStage sets it on
+// the stage box only in scaled mode, and components pick the
+// target-composition (canvas) styles through SCALED_CANVAS_SELECTOR
+// while keeping their responsive styles as the base. In responsive mode
+// the stage is display:contents with no attribute, so the selector
+// never matches.
+// Why an attribute selector and not @container: MUI's sx pipeline
+// silently drops nested @container at-rules in the browser (verified:
+// zero @container rules reach the document), so canvas overrides ride
+// on this plain ancestor selector instead. Specificity (0,2,0) also
+// beats every breakpoint/media rule on the element, so the override
+// never depends on cascade order.
+export const SCALED_CANVAS_SELECTOR = '[data-scaled-canvas] &'
+
+/**
+ * Dashboard shell height on the scaled canvas: the fixed canvas minus
+ * the in-flow page footer below the shell. Canvas-relative px — viewport
+ * units would resolve against the real window and break the canvas
+ * proportions when the stage is scaled.
+ */
+export const DASHBOARD_SHELL_HEIGHT = `${DASHBOARD_DESIGN_HEIGHT - FOOTER_HEIGHT_PX}px`
 export const HERO_FONT_FAMILY =
   'var(--font-roboto-mono), "Courier New", monospace'
 

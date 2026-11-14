@@ -145,11 +145,9 @@ test.describe('Visual Regression Tests', () => {
       // Desktop viewport so the locked md top-row height applies.
       await dashboardPage.setViewportSize({ width: 1920, height: 1080 })
 
-      // Whichever exercise viewer the build serves (native table or
-      // doc iframe), its box must not move as HR tiles connect.
-      const exerciseArea = dashboardPage
-        .getByTestId('workout-phase-grid')
-        .or(dashboardPage.getByTestId('google-doc-viewer-iframe'))
+      // The native parsed workout grid's box must not move as HR
+      // tiles connect.
+      const exerciseArea = dashboardPage.getByTestId('workout-phase-grid')
 
       const makeDevice = (n: number) => ({
         clientId: `bbox-user-${n}`,
