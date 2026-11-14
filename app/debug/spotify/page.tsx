@@ -1,71 +1,25 @@
-'use client'
+import { notFound } from 'next/navigation'
+import { isDebugBlocked } from '@/lib/debug-gate'
+import { env } from '@/lib/env'
+import SpotifyDebugContent from './SpotifyDebugContent'
 
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import { Session } from 'next-auth'
-import { signIn, signOut, useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
-import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
-import { withBasePath } from '@/utils/urls'
+/**
+ * The gate must run per-request: with static prerendering the build-time
+ * TESTING value would be baked in (the VRT build sets TESTING=true, which
+ * would otherwise ship the debug page to production). (OQ-3a)
+ */
+export const dynamic = 'force-dynamic'
 
-interface ServerTokenStatus {
-  status: string
-  userId?: string
-  accessToken?: string
-  refreshToken?: string
-  expiresIn?: number
-  obtainedAt?: string
-  expiresAt?: string
-  isExpired?: boolean
-  willExpireSoon?: boolean
-}
-
+/**
+ * Deliberately gated debug surface (spec art_uI0w7D6m D5 / OQ-3a): it exposes
+ * token state and has no owner in the nav, so it renders 404 in production
+ * builds. The VRT web server boots production with TESTING=true and keeps
+ * exercising it (same convention as lib/debug-guard's API endpoints).
+ */
 export default function SpotifyDebugPage() {
-  const { data: session } = useSession() as { data: Session | null }
-  const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
-
-  const fetchServerToken = async () => {
-    const res = await fetch(withBasePath(API_DEBUG_SPOTIFY_TOKEN))
-    if (res.ok) {
-      const data = await res.json()
-      setServerToken(data.token)
-    }
+  if (isDebugBlocked(env.NODE_ENV, env.TESTING)) {
+    notFound()
   }
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchServerToken()
-  }, [])
-
-  return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Spotify Debug
-      </Typography>
-
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6">NextAuth Session</Typography>
-        {session ? (
-          <>
-            <pre>{JSON.stringify(session, null, 2)}</pre>
-            <Button onClick={() => signOut()}>Sign Out</Button>
-          </>
-        ) : (
-          <Button onClick={() => signIn('spotify')}>
-            Sign In with Spotify
-          </Button>
-        )}
-      </Paper>
-
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6">Server Token Status</Typography>
-        <Button onClick={fetchServerToken} sx={{ mb: 2 }}>
-          Refresh
-        </Button>
-        <pre>{JSON.stringify(serverToken, null, 2)}</pre>
-      </Paper>
-    </Box>
-  )
+  return <SpotifyDebugContent />
 }

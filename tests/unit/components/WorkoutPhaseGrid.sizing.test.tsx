@@ -11,7 +11,7 @@ import WorkoutPhaseGrid from '@/components/WorkoutPhaseGrid'
 global.fetch = jest.fn()
 
 jest.mock('@/components/ScaledStage', () => ({
-  useIsScaledLayout: () => true,
+  useInScaledStage: () => true,
 }))
 
 // jsdom has no ResizeObserver: capture the callback so tests can fire

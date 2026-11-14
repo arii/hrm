@@ -8,16 +8,16 @@ import Alert from '@mui/material/Alert'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 import { useContext, useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import { useInScaledStage } from '@/components/ScaledStage'
 import TimerDisplay from '@/components/TimerDisplay'
-import { useIsScaledLayout } from '@/components/ScaledStage'
-import { useAudio } from '@/hooks/useAudio'
 import { HrmDataContext } from '@/context/WebSocketContext'
 import {
-  DASHBOARD_DESIGN_HEIGHT,
+  DASHBOARD_SHELL_HEIGHT,
   DASHBOARD_TOP_ROW_HEIGHT_MD,
   FOOTER_HEIGHT_PX,
   FOOTER_RESERVE_RESPONSIVE,
   FOOTER_RESERVE_SCALED,
+  SCALED_CANVAS_SELECTOR,
   getTopRowGridColumns,
 } from '@/constants/layout'
 
@@ -38,43 +38,45 @@ const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
   loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
 })
 
-// Target composition (1440px viewport) uses the two-column grid; in
-// scaled mode that composition is fixed so the canvas never reflips
-// with the real window size.
+// Target composition: the two-column grid with the fixed top-row
+// height. The responsive base stacks phones (xs) and applies the
+// two-column composition from md up; inside the scaled canvas
+// SCALED_CANVAS_SELECTOR pins that composition at every scaled viewport
+// (including 600–899px windows, where the md media query would not
+// fire), so the canvas never reflips with the real window size.
 //
 // The top row has a strict fixed height on desktop so connecting a 3rd
 // or 4th HR client never stretches the timer vertically or pushes the
 // exercise tiles below. HR count only changes the horizontal split:
 // 3 tiles shrink the timer to ~38%, every other count uses 50/50.
-const getMainGridStyles = (
-  isScaledLayout: boolean,
-  hrCount: number
-): SxProps => {
-  // Single source of truth for the Timer/HR split; scaled mode pins
-  // the md composition so the canvas never reflips with window size.
+const getMainGridStyles = (hrCount: number): SxProps => {
+  // Single source of truth for the Timer/HR split.
   const topRowColumns = getTopRowGridColumns(hrCount)
   return {
     display: 'grid',
-    gridTemplateColumns: isScaledLayout
-      ? topRowColumns.md
-      : {
-          xs: '1fr',
-          // Two-column top row from md up so the fixed height applies on
-          // desktop; phones keep the stacked (auto-height) layout.
-          md: topRowColumns.md,
-        },
+    gridTemplateColumns: {
+      xs: '1fr',
+      // Two-column top row from md up so the fixed height applies on
+      // desktop; phones keep the stacked (auto-height) layout.
+      md: topRowColumns.md,
+    },
     gap: 1.5,
     // Fixed height on desktop prevents Timer from growing vertically and
     // prevents pushing Exercise tiles. xs stays auto (stacked layout).
-    height: isScaledLayout
-      ? DASHBOARD_TOP_ROW_HEIGHT_MD
-      : { xs: 'auto', md: DASHBOARD_TOP_ROW_HEIGHT_MD },
-    minHeight: isScaledLayout
-      ? DASHBOARD_TOP_ROW_HEIGHT_MD
-      : { md: DASHBOARD_TOP_ROW_HEIGHT_MD },
-    maxHeight: isScaledLayout
-      ? DASHBOARD_TOP_ROW_HEIGHT_MD
-      : { md: DASHBOARD_TOP_ROW_HEIGHT_MD },
+    height: {
+      xs: 'auto',
+      md: DASHBOARD_TOP_ROW_HEIGHT_MD,
+    },
+    minHeight: { md: DASHBOARD_TOP_ROW_HEIGHT_MD },
+    maxHeight: { md: DASHBOARD_TOP_ROW_HEIGHT_MD },
+    // The canvas pin rides one selector so all three row constraints
+    // (and the columns) flip together, above any breakpoint rule.
+    [SCALED_CANVAS_SELECTOR]: {
+      gridTemplateColumns: topRowColumns.md,
+      height: DASHBOARD_TOP_ROW_HEIGHT_MD,
+      minHeight: DASHBOARD_TOP_ROW_HEIGHT_MD,
+      maxHeight: DASHBOARD_TOP_ROW_HEIGHT_MD,
+    },
     // The timer row never squeezes: the workout section below absorbs all
     // flex (and scrolls internally when its content runs tall).
     flexShrink: 0,
@@ -97,31 +99,19 @@ const DashboardClient = ({
   triggerError,
 }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
+  // Only CSS-inexpressible decisions read the regime in JS: this prop
+  // gate and nothing else (styles go through SCALED_CANVAS_SELECTOR
+  // below). The stage context defaults to false outside ScaledStage.
+  const isScaledLayout = useInScaledStage()
   const [refreshKey, setRefreshKey] = useState(0)
-  const { initializeAudio } = useAudio()
-  const isScaledLayout = useIsScaledLayout()
   // Active HR client count drives the top-row horizontal split (timer
   // shrinks to ~38% for exactly 3 tiles). Reads the raw context so the
   // component still renders without a provider (unit tests, stories).
   const hrmData = useContext(HrmDataContext)
   const hrCount = Array.isArray(hrmData) ? hrmData.length : 0
-  // Scaled mode fills the fixed canvas (viewport units would resolve
-  // against the real window, breaking canvas proportions); otherwise
-  // the shell fills the viewport as before.
-  const shellHeight = isScaledLayout
-    ? `${DASHBOARD_DESIGN_HEIGHT - FOOTER_HEIGHT_PX}px`
-    : `calc(100vh - ${FOOTER_HEIGHT_PX}px)`
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
-  }
-
-  const handleInteraction = () => {
-    if (!audioInitialized) {
-      initializeAudio()
-      setAudioInitialized(true)
-    }
   }
 
   const hasValidConfig = useNativeTable ? !!docId : !!iframeUrl
@@ -138,15 +128,15 @@ const DashboardClient = ({
         // remaining space (scrolling internally when tall), and the
         // footer reserve below accounts for the fixed footer stack. The
         // in-flow page Footer below this shell is subtracted so the body
-        // never scrolls.
-        height: shellHeight,
-        ...(isScaledLayout
-          ? {}
-          : {
-              '@supports (height: 100dvh)': {
-                height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
-              },
-            }),
+        // never scrolls. On the scaled canvas the shell height is
+        // canvas-relative px (DASHBOARD_SHELL_HEIGHT) — viewport units
+        // would resolve against the real window, not the canvas. The
+        // selector's (0,2,0) specificity beats the @supports rule below.
+        height: `calc(100vh - ${FOOTER_HEIGHT_PX}px)`,
+        '@supports (height: 100dvh)': {
+          height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
+        },
+        [SCALED_CANVAS_SELECTOR]: { height: DASHBOARD_SHELL_HEIGHT },
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -157,19 +147,23 @@ const DashboardClient = ({
         data-testid="dashboard"
         maxWidth="xl"
         disableGutters={isScaledLayout}
-        onClick={handleInteraction}
         sx={{
-          py: isScaledLayout ? 2 : { xs: 1, sm: 2 },
+          // The sm value is the target-composition pin: scaled viewports
+          // are always ≥ SCALE_TO_FIT_MIN_WIDTH, which tracks the sm
+          // breakpoint, so the canvas never sees the xs value.
+          py: { xs: 1, sm: 2 },
           // Side margins are removed on the fixed canvas via
           // disableGutters above: every pixel goes to card width
           // (fewer wrapped lines, larger text).
           // Reserve space for the fixed footer stack (bottom nav + Spotify
           // bar + buffer) so trailing content never slides under it.
           // Measured: 56px nav + 48px bar; the 16px buffer covers bar
-          // growth up to 64px before any overlap.
-          paddingBottom: isScaledLayout
-            ? FOOTER_RESERVE_SCALED
-            : FOOTER_RESERVE_RESPONSIVE,
+          // growth up to 64px before any overlap. The canvas reserve
+          // (nav + measured bar headroom) rides the canvas selector:
+          // (0,2,0) specificity beats the py media rule above, which
+          // would otherwise clobber a plain paddingBottom.
+          paddingBottom: FOOTER_RESERVE_RESPONSIVE,
+          [SCALED_CANVAS_SELECTOR]: { paddingBottom: FOOTER_RESERVE_SCALED },
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -177,10 +171,7 @@ const DashboardClient = ({
           overflow: 'hidden',
         }}
       >
-        <Box
-          data-testid="dashboard-main-grid"
-          sx={getMainGridStyles(isScaledLayout, hrCount)}
-        >
+        <Box data-testid="dashboard-main-grid" sx={getMainGridStyles(hrCount)}>
           <Box sx={{ height: '100%', minWidth: 0, overflow: 'hidden' }}>
             <TimerDisplay />
           </Box>

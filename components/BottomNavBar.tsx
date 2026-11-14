@@ -3,6 +3,7 @@
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import MusicNoteIcon from '@mui/icons-material/MusicNote'
+import PersonIcon from '@mui/icons-material/Person'
 import ScienceIcon from '@mui/icons-material/Science'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
@@ -36,10 +37,16 @@ const NAV_ITEMS = [
     ariaLabel: 'Navigate to Spotify Selection page',
   },
   {
-    label: 'Analytics',
+    label: 'Experiments',
     href: '/client/experimental',
     icon: <ScienceIcon />,
-    ariaLabel: 'Navigate to Experimental Analytics page',
+    ariaLabel: 'Navigate to Experiments page',
+  },
+  {
+    label: 'Profile',
+    href: '/client/settings',
+    icon: <PersonIcon />,
+    ariaLabel: 'Navigate to Profile Settings page',
   },
 ]
 
