@@ -36,10 +36,10 @@ const NAV_ITEMS = [
     ariaLabel: 'Navigate to Spotify Selection page',
   },
   {
-    label: 'Analytics',
+    label: 'Experiments',
     href: '/client/experimental',
     icon: <ScienceIcon />,
-    ariaLabel: 'Navigate to Experimental Analytics page',
+    ariaLabel: 'Navigate to Experiments page',
   },
 ]
 
