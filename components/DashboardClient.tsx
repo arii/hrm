@@ -10,7 +10,6 @@ import { useContext, useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useIsScaledLayout } from '@/components/ScaledStage'
-import { useAudio } from '@/hooks/useAudio'
 import { HrmDataContext } from '@/context/WebSocketContext'
 import {
   DASHBOARD_DESIGN_HEIGHT,
@@ -97,9 +96,7 @@ const DashboardClient = ({
   triggerError,
 }: DashboardClientProps) => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  const { initializeAudio } = useAudio()
   const isScaledLayout = useIsScaledLayout()
   // Active HR client count drives the top-row horizontal split (timer
   // shrinks to ~38% for exactly 3 tiles). Reads the raw context so the
@@ -115,13 +112,6 @@ const DashboardClient = ({
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
-  }
-
-  const handleInteraction = () => {
-    if (!audioInitialized) {
-      initializeAudio()
-      setAudioInitialized(true)
-    }
   }
 
   const hasValidConfig = useNativeTable ? !!docId : !!iframeUrl
@@ -157,7 +147,6 @@ const DashboardClient = ({
         data-testid="dashboard"
         maxWidth="xl"
         disableGutters={isScaledLayout}
-        onClick={handleInteraction}
         sx={{
           py: isScaledLayout ? 2 : { xs: 1, sm: 2 },
           // Side margins are removed on the fixed canvas via

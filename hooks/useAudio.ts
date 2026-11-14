@@ -32,14 +32,4 @@ export const useAudio = () => {
       }
     }
   }, [timerData.soundToPlay, timerData.soundEventId])
-
-  // Initialize audio on first user interaction
-  const initializeAudio = () => {
-    logger.debug('[useAudio] initializeAudio called')
-    audioManager.loadAudio()
-  }
-
-  return {
-    initializeAudio,
-  }
 }

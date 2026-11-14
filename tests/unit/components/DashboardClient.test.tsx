@@ -45,11 +45,6 @@ jest.mock('@/components/TimerDisplay', () => {
   TimerDisplay.displayName = 'TimerDisplay'
   return TimerDisplay
 })
-jest.mock('@/hooks/useAudio', () => ({
-  useAudio: () => ({
-    initializeAudio: jest.fn(),
-  }),
-}))
 
 describe('DashboardClient', () => {
   const mockProps = {
