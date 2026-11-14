@@ -22,6 +22,7 @@ import {
 } from './useBluetoothHRM/testControls'
 import { useConnectionOwnership } from './useBluetoothHRM/useConnectionOwnership'
 import { useHrSignalStats } from './useBluetoothHRM/useHrSignalStats'
+import { useHrmWatchdog } from './useBluetoothHRM/useHrmWatchdog'
 import { useHrmRecovery } from './useBluetoothHRM/useHrmRecovery'
 import { useGattConnect } from './useBluetoothHRM/useGattConnect'
 
@@ -60,6 +61,7 @@ interface UseBluetoothHRMProps {
  *
  * - useConnectionOwnership: ownership token + radio guard flags
  * - useHrSignalStats: measurement parsing + signal statistics
+ * - useHrmWatchdog: signal-stability/liveness heartbeat
  * - useHrmRecovery: reconnect backoff + waiting-for-device fallback
  * - useGattConnect: the GATT connect retry loop + failure handling
  * - deviceScan/gattClassification/batteryNotifications: pure helpers
@@ -158,62 +160,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     resetSignalStats,
   } = useHrSignalStats({ currentStatusRef, onHeartRateUpdate })
 
-  /**
-   * Liveness half of the watchdog interval: force-cycles a link that has
-   * gone quiet past the timeout. The timeout arrives as a parameter (prop
-   * value), so this callback stays ref- and setter-only. Extracted from
-   * the interval tick.
-   */
-  const checkDataLiveness = useCallback(
-    (livenessTimeoutMs: number) => {
-      if (
-        currentStatusRef.current === BluetoothConnectionStatus.CONNECTED &&
-        lastDataTime.current > 0
-      ) {
-        const timeSinceLastData = Date.now() - lastDataTime.current
-
-        if (timeSinceLastData > livenessTimeoutMs) {
-          // Fix Race Condition: Don't force a disconnect/reconnect if we are already in a connection state transition
-          if (isConnecting.current) {
-            logger.warn(
-              { timeSinceLastData },
-              'Watchdog: Connection is in progress. Skipping forced disconnect.'
-            )
-            return
-          }
-
-          setStatus(BluetoothConnectionStatus.RECONNECTING)
-          setCustomStatusMessage(BLUETOOTH_MESSAGES.unstableConnection)
-          isTimeoutDisconnect.current = true
-          if (connectedDeviceRef.current?.gatt)
-            connectedDeviceRef.current.gatt.disconnect()
-        }
-      }
-    },
-    [isConnecting, isTimeoutDisconnect, lastDataTime]
-  )
-
-  useEffect(() => {
-    let checkCounter = 0
-    const interval = setInterval(() => {
-      // Every tick folds gaps into the signal stats; every other tick
-      // also probes liveness (counter gating is scheduling, the checks
-      // themselves live in the callbacks above).
-      checkSignalStability()
-
-      checkCounter++
-      if (checkCounter % 2 === 0 && dataLivenessTimeoutMs > 0) {
-        checkDataLiveness(dataLivenessTimeoutMs)
-      }
-    }, heartbeatInterval)
-
-    return () => clearInterval(interval)
-  }, [
-    dataLivenessTimeoutMs,
+  useHrmWatchdog({
+    currentStatusRef,
+    lastDataTime,
+    connectedDeviceRef,
+    isConnecting,
+    isTimeoutDisconnect,
+    setStatus,
+    setCustomStatusMessage,
     checkSignalStability,
-    checkDataLiveness,
+    dataLivenessTimeoutMs,
     heartbeatInterval,
-  ])
+  })
 
   const {
     onDisconnected,
