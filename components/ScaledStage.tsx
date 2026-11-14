@@ -17,19 +17,20 @@ import {
 } from '@/constants/layout'
 import { computeScaleToFit, shouldScaleToFit } from '@/lib/scaleToFit'
 
-const ScaledLayoutContext = createContext(false)
-
-/**
- * Whether the dashboard renders inside the scaled fixed canvas.
- * Components with viewport-relative sizing switch to canvas-relative
- * sizing when true.
- */
-export const useIsScaledLayout = (): boolean => useContext(ScaledLayoutContext)
-
 // Layout effect on the client (measure before paint: no flash of the
 // unscaled layout), plain effect for the server render.
 const useIsomorphicLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect
+
+// Whether the calling component renders inside a ScaledStage that is
+// currently in scaled (fixed-canvas) mode. Defaults to false so
+// standalone mounts (component tests, other pages) read responsive —
+// the same default the retired useIsScaledLayout context had. Only
+// CSS-inexpressible decisions should consume this: pure size changes
+// belong in CSS via SCALED_CANVAS_SELECTOR.
+const ScaledStageContext = createContext(false)
+
+export const useInScaledStage = (): boolean => useContext(ScaledStageContext)
 
 interface ViewportSize {
   width: number
@@ -131,19 +132,30 @@ const ScaledStage = ({ children }: { children: ReactNode }) => {
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
+        // Scopes canvas overrides: components select the
+        // target-composition styles via SCALED_CANVAS_SELECTOR (see
+        // constants/layout.ts). Only rendered in scaled mode — responsive
+        // mode renders display:contents with no attribute, so the
+        // selector never matches and responsive base styles hold.
       }
     : transparent
 
   return (
-    <ScaledLayoutContext.Provider value={scaled}>
+    <ScaledStageContext.Provider value={scaled}>
       <div data-testid="scaled-stage-outer" style={outerStyle}>
         <div data-testid="scaled-stage-sizer" style={sizerStyle}>
-          <div data-testid="scaled-stage" style={stageStyle}>
+          {/* The attribute is a JSX prop, not a style-object key: React
+              renders style-object keys as CSS declarations only. */}
+          <div
+            data-testid="scaled-stage"
+            data-scaled-canvas={scaled ? '' : undefined}
+            style={stageStyle}
+          >
             {children}
           </div>
         </div>
       </div>
-    </ScaledLayoutContext.Provider>
+    </ScaledStageContext.Provider>
   )
 }
 
