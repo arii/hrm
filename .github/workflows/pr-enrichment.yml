@@ -38,7 +38,7 @@ permissions:
 jobs:
   enrich-pr:
     name: Enrich PR Title and Description
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Explicitly define GH_TOKEN at the job level to ensure it's available for all steps.
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
