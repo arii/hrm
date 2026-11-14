@@ -20,7 +20,7 @@ import {
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
-import { useIsScaledLayout } from '@/components/ScaledStage'
+import { useInScaledStage } from '@/components/ScaledStage'
 import {
   MIN_SETTLED_CONTAINER_PX,
   scaledExerciseFontRem,
@@ -43,8 +43,13 @@ export default function WorkoutPhaseGrid({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // Scaled mode: larger fixed text (readable from afar) and cards
-  // stretched to fill the canvas area.
-  const isScaledLayout = useIsScaledLayout()
+  // stretched to fill the canvas area. This is the one honest remaining
+  // regime branch: the canvas presentation runs the JS fit algorithm
+  // (state-driven font rem), which is a different composition per
+  // regime, not a different size — spec D1 reversal condition. The
+  // stage context defaults to false outside ScaledStage, so standalone
+  // mounts read responsive, matching the retired context's semantics.
+  const isScaledLayout = useInScaledStage()
   const gridRef = useRef<HTMLDivElement>(null)
 
   const [fontSizeRem, setFontSizeRem] = useState<number>(2.4)

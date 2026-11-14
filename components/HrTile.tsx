@@ -9,9 +9,12 @@ import { HR_ZONE_CONFIG, HeartRateZone } from '@/lib/shared/hr-zones'
 import { useTheme, alpha } from '@mui/material/styles'
 import { isGenericName } from '@/utils/hrm'
 import ControlCard from '@/components/shared/ControlCard'
-import { useIsScaledLayout } from '@/components/ScaledStage'
 import { HrTileProps } from '@/types'
-import { HR_TILE_MIN_HEIGHT, HERO_FONT_FAMILY } from '@/constants/layout'
+import {
+  HR_TILE_MIN_HEIGHT,
+  HERO_FONT_FAMILY,
+  SCALED_CANVAS_SELECTOR,
+} from '@/constants/layout'
 
 const IdentityTier = ({
   name,
@@ -39,50 +42,56 @@ const IdentityTier = ({
   </Box>
 )
 
+// Hero percentage type scale. The responsive run tracks the viewport
+// breakpoint-by-breakpoint (client pages like /client/connect render
+// these styles at every viewport width); inside the scaled canvas the
+// SCALED_CANVAS_SELECTOR rule pins the target-composition size. Compact
+// tiles keep one regime-independent size in both regimes (plain class,
+// no canvas rule).
+const heroFontSx = (isCompact: boolean) =>
+  isCompact
+    ? { fontSize: '2.75rem' }
+    : {
+        fontSize: {
+          xs: 'clamp(2.25rem, 10vw, 3rem)',
+          sm: 'clamp(3rem, 12vw, 3.75rem)',
+          md: 'clamp(3.75rem, 15vw, 4.5rem)',
+        },
+        [SCALED_CANVAS_SELECTOR]: {
+          fontSize: 'clamp(3.75rem, 15vw, 6rem)',
+        },
+      }
+
 const HeroTier = ({
   percentage,
   isCompact = false,
 }: {
   percentage: number
   isCompact?: boolean
-}) => {
-  // Scaled mode pins the target-composition (md-breakpoint) size so
-  // the canvas never reflips with the real window size. At scaled
-  // viewports (600px+) the vw term always saturates at the max.
-  const isScaledLayout = useIsScaledLayout()
-  return (
-    <Box
+}) => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 0,
+    }}
+  >
+    <Typography
+      data-testid="bpm-percent"
+      variant="h2"
+      component="div"
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: 0,
+        ...heroFontSx(isCompact),
+        fontWeight: 900,
+        lineHeight: 1,
+        fontFamily: HERO_FONT_FAMILY,
       }}
     >
-      <Typography
-        data-testid="bpm-percent"
-        variant="h2"
-        component="div"
-        sx={{
-          fontSize: isCompact
-            ? '2.75rem'
-            : isScaledLayout
-              ? 'clamp(3.75rem, 15vw, 6rem)'
-              : {
-                  xs: 'clamp(2.25rem, 10vw, 3rem)',
-                  sm: 'clamp(3rem, 12vw, 3.75rem)',
-                  md: 'clamp(3.75rem, 15vw, 4.5rem)',
-                },
-          fontWeight: 900,
-          lineHeight: 1,
-          fontFamily: HERO_FONT_FAMILY,
-        }}
-      >
-        {percentage}%
-      </Typography>
-    </Box>
-  )
-}
+      {percentage}%
+    </Typography>
+  </Box>
+)
 
 const MetricItem = ({
   value,
