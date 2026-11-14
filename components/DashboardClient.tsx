@@ -33,11 +33,6 @@ const WorkoutPhaseGrid = dynamic(
   }
 )
 
-const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
-  ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height="500px" />,
-})
-
 // Target composition: the two-column grid with the fixed top-row
 // height. The responsive base stacks phones (xs) and applies the
 // two-column composition from md up; inside the scaled canvas
@@ -86,22 +81,15 @@ const getMainGridStyles = (hrCount: number): SxProps => {
 }
 
 interface DashboardClientProps {
-  useNativeTable: boolean
   docId?: string
-  iframeUrl?: string
   triggerError?: boolean
 }
 
-const DashboardClient = ({
-  useNativeTable,
-  docId,
-  iframeUrl,
-  triggerError,
-}: DashboardClientProps) => {
-  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  // Only CSS-inexpressible decisions read the regime in JS: this prop
-  // gate and nothing else (styles go through SCALED_CANVAS_SELECTOR
-  // below). The stage context defaults to false outside ScaledStage.
+const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
+  // Only CSS-inexpressible decisions read the regime in JS: the
+  // disableGutters prop below and nothing else (styles go through
+  // SCALED_CANVAS_SELECTOR above). The stage context defaults to false
+  // outside ScaledStage.
   const isScaledLayout = useInScaledStage()
   const [refreshKey, setRefreshKey] = useState(0)
   // Active HR client count drives the top-row horizontal split (timer
@@ -114,10 +102,9 @@ const DashboardClient = ({
     setRefreshKey((prevKey) => prevKey + 1)
   }
 
-  const hasValidConfig = useNativeTable ? !!docId : !!iframeUrl
-  const missingConfigMsg = useNativeTable
-    ? 'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
-    : 'Google Doc Iframe URL not configured. Please check GOOGLE_DOC_IFRAME_URL.'
+  const hasValidConfig = !!docId
+  const missingConfigMsg =
+    'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
 
   return (
     <Box
@@ -194,20 +181,9 @@ const DashboardClient = ({
             <Alert severity="warning" sx={{ width: '100%' }}>
               {missingConfigMsg}
             </Alert>
-          ) : useNativeTable ? (
-            <WorkoutPhaseGrid
-              docId={docId || ''}
-              refreshKey={refreshKey}
-              onRefresh={handleRefresh}
-            />
           ) : (
-            <GoogleDocViewer
-              title="Today's Training Regimen"
-              embedUrl={iframeUrl || ''}
-              height={500}
-              flexFill
-              isShrunk={docIsManuallyShrunk}
-              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+            <WorkoutPhaseGrid
+              docId={docId}
               refreshKey={refreshKey}
               onRefresh={handleRefresh}
             />

@@ -289,6 +289,7 @@ export default function WorkoutPhaseGrid({
         <RefreshIconButton
           onClick={onRefresh}
           aria-label="refresh workout table"
+          data-testid="refresh-icon-button"
           sx={(theme) => ({
             position: 'absolute',
             // Docked inside the corner: hanging off the edge (-8)

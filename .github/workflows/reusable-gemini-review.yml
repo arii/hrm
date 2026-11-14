@@ -90,7 +90,7 @@ jobs:
             sudo apt-get update && sudo apt-get install -y jq
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ (github.event.pull_request || github.event.issue.pull_request) && format('refs/pull/{0}/head', inputs.pr_number || github.event.pull_request.number || github.event.issue.number) || github.sha }}
           fetch-depth: 0
@@ -148,7 +148,7 @@ jobs:
       review_performed: ${{ steps.upload_artifact.outcome == 'success' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ (github.event.pull_request || github.event.issue.pull_request) && format('refs/pull/{0}/head', inputs.pr_number || github.event.pull_request.number || github.event.issue.number) || github.sha }}
           fetch-depth: 0
@@ -470,7 +470,7 @@ jobs:
           fi
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ (github.event.pull_request || github.event.issue.pull_request) && format('refs/pull/{0}/head', inputs.pr_number || github.event.pull_request.number || github.event.issue.number) || github.sha }}
           fetch-depth: 0

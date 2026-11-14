@@ -2,37 +2,28 @@ import { resolveDashboardProps } from '@/app/page'
 
 describe('resolveDashboardProps', () => {
   const prodEnv = {
-    NEXT_PUBLIC_USE_NATIVE_TABLE: false,
     NODE_ENV: 'production',
   }
 
-  it('defaults to iframe table with no error in production', () => {
+  it('resolves to the single native renderer (no renderer flags)', () => {
+    // The ?native override and NEXT_PUBLIC_USE_NATIVE_TABLE flag are
+    // retired: the page always renders WorkoutPhaseGrid over
+    // /api/workout, so props carry no renderer selection.
     expect(resolveDashboardProps({}, prodEnv)).toEqual({
-      useNativeTable: false,
       triggerError: false,
     })
   })
 
   it.each([
-    ['native=true forces the native table', { native: 'true' }, true],
-    ['native=false opts out explicitly', { native: 'false' }, false],
-    ['first array value wins', { native: ['true', 'false'] }, true],
-    ['missing native follows the env default (off)', {}, false],
-  ])('%s', (_name, params, expected) => {
-    expect(resolveDashboardProps(params, prodEnv).useNativeTable).toBe(expected)
-  })
-
-  it.each([
-    ['env default on', {}, true],
-    ['explicit false overrides the env default', { native: 'false' }, false],
-    ['explicit true with env default on', { native: 'true' }, true],
-  ])('native table %s', (_name, params, expected) => {
-    expect(
-      resolveDashboardProps(params, {
-        ...prodEnv,
-        NEXT_PUBLIC_USE_NATIVE_TABLE: true,
-      }).useNativeTable
-    ).toBe(expected)
+    ['legacy ?native=true is ignored', { native: 'true' }, false],
+    ['legacy ?native=false is ignored', { native: 'false' }, false],
+    ['legacy array value is ignored', { native: ['true', 'false'] }, false],
+  ])('%s', (_name, params, _expected) => {
+    // Asserting the full shape: the legacy param must not leak into
+    // props under its old key either.
+    expect(resolveDashboardProps(params, prodEnv)).toEqual({
+      triggerError: false,
+    })
   })
 
   it.each([

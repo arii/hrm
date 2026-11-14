@@ -26,7 +26,8 @@
   - Run `pnpm run lint && pnpm run format` before pushing.
   - Submit PRs via `gh pr create --base leader` and watch CI via `gh pr checks <PR> --watch`.
 - **Dashboard & Scaling**:
-  - Native table is active (`NEXT_PUBLIC_USE_NATIVE_TABLE=true`).
+  - Workout content renders through one path: the native parsed
+    `WorkoutPhaseGrid` over `GET /api/workout` (`GOOGLE_DOC_WORKOUT_URL`).
   - Canvas is fixed at 1600×900 via `ScaledStage`.
   - Workout card heights are fixed (~426px); exercise font sizes step down monotonically (`scaledExerciseFontRem`) and are guarded against clipping with client measurement in `WorkoutPhaseGrid.tsx`.
 - **MCP Tool Caveat**: The `boomtick` MCP server is configured for `tech-dancer`. For repo modifications in `hrm`, use standard `git` and `gh` CLI commands.

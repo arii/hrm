@@ -51,19 +51,6 @@ test.describe('Component-Specific VRT', () => {
     })
   })
 
-  test('GoogleDocViewer shrunk state', async ({ dashboardPage }) => {
-    // Ensure we are in non-native mode for this test, and enable testing mode
-    await dashboardPage.goto('/?native=false&testing=true')
-    await waitForPageReady(dashboardPage)
-
-    const toggleButton = dashboardPage.getByLabel('Collapse document')
-    await toggleButton.click()
-    const viewer = dashboardPage
-      .getByTestId('google-doc-viewer-iframe')
-      .locator('..')
-    await takeScreenshot(viewer, 'google-doc-viewer-shrunk.png')
-  })
-
   test('WorkoutPhaseGrid rendering', async ({ dashboardPage }) => {
     // Setup network interception first
     await dashboardPage.route('/api/workout*', async (route) => {
@@ -78,8 +65,7 @@ test.describe('Component-Specific VRT', () => {
       })
     })
 
-    // Ensure we are in native mode for this test, and enable testing mode
-    await dashboardPage.goto('/?native=true&testing=true')
+    await dashboardPage.goto('/?testing=true')
     await waitForPageReady(dashboardPage)
 
     const tableHeader = dashboardPage.getByTestId('workout-phase-grid')

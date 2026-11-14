@@ -15,7 +15,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 jobs:
   release-local:
@@ -28,7 +28,7 @@ jobs:
           echo "  Deploy Directory: ${{ github.event.inputs.deploy_dir }}"
           echo "  Skip Verification: ${{ github.event.inputs.skip_verification }}"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
