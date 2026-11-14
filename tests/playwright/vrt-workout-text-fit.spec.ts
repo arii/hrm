@@ -45,7 +45,7 @@ const blockWebFonts = (page: Page): void => {
   void page.route(/\.woff2?(\?.*)?$/, (route) => route.abort())
 }
 
-const SCALED_ROUTE = '/?native=true&testing=true'
+const SCALED_ROUTE = '/?testing=true'
 
 const openWorkoutGrid = async (page: Page): Promise<void> => {
   await page.goto(SCALED_ROUTE)
