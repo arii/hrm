@@ -169,12 +169,10 @@ export const useHrmRecovery = ({
           })
       }
 
-      // Primary: passive advertisement watcher for instant wake. May be
-      // absent or reject (platform/permission variance) — failure falls
-      // through to the slow poll below, which always arms.
-      // Feature-detect, but invoke as a method: a detached native call
-      // throws "Illegal invocation" and silently leaves only the poll —
-      // which can never wake a strap Chrome hasn't seen in a scan.
+      // Primary: passive advertisement watcher for instant wake. It may
+      // be absent or reject (platform/permission variance); the slow poll
+      // below always arms as the fallback. Invoke it as a method: a
+      // detached native call throws "Illegal invocation".
       const watchable = device as unknown as {
         watchAdvertisements?: (options?: {
           signal?: AbortSignal
@@ -195,14 +193,14 @@ export const useHrmRecovery = ({
           if (started instanceof Promise) {
             started.catch((error: unknown) => {
               if (watchAbort.signal.aborted) return
-              logger.debug(
+              logger.warn(
                 { device: device.name, error },
                 'Advertisement watch rejected; polling only.'
               )
             })
           }
         } catch (error) {
-          logger.debug(
+          logger.warn(
             { device: device.name, error },
             'Advertisement watch threw; polling only.'
           )

@@ -33,6 +33,47 @@ export const resolveConnectDevice = async (
 }
 
 /**
+ * Watches for one advertisement from the device, bounded by timeoutMs.
+ * Chrome refuses gatt.connect() on a getDevices() device until a scan has
+ * seen it in this browser session; the watch is that scan. Resolves true
+ * on an advertisement and false on timeout or when watching is
+ * unsupported or rejected. The watch is always stopped before resolving.
+ */
+export const waitForAdvertisement = (
+  device: BluetoothDevice,
+  timeoutMs: number
+): Promise<boolean> => {
+  if (typeof device.watchAdvertisements !== 'function') {
+    return Promise.resolve(false)
+  }
+  return new Promise((resolve) => {
+    const watchAbort = new AbortController()
+    let settled = false
+    const finish = (seen: boolean) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      device.removeEventListener('advertisementreceived', onAdvertisement)
+      watchAbort.abort()
+      resolve(seen)
+    }
+    const onAdvertisement = () => finish(true)
+    const timer = setTimeout(() => finish(false), timeoutMs)
+    device.addEventListener('advertisementreceived', onAdvertisement)
+    device
+      .watchAdvertisements({ signal: watchAbort.signal })
+      .catch((error: unknown) => {
+        if (watchAbort.signal.aborted) return
+        logger.warn(
+          { device: device.name, error },
+          'Advertisement watch rejected; connecting without a scan.'
+        )
+        finish(false)
+      })
+  })
+}
+
+/**
  * Resolves the previously paired device via the saved cookie and
  * WebBluetooth's getDevices(), or null when none is available (silent
  * attempts without a saved ID throw to prevent looping). Extracted from
