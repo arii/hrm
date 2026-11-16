@@ -32,9 +32,6 @@ runs:
           echo "jq already installed: $(jq --version)"
         fi
 
-    - name: 'Setup pnpm'
-      uses: pnpm/action-setup@v4
-
     - name: 'Setup Node.js'
       uses: actions/setup-node@v7
       with:
@@ -67,8 +64,11 @@ runs:
       shell: bash
       run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-    - name: Cache pnpm store
-      uses: actions/cache@v6
+    # Restore and save are split so a primary-key hit (the common case)
+    # skips the post-job cache step, which costs 4-7s per job even on a hit.
+    - name: Restore pnpm store
+      id: pnpm-cache
+      uses: actions/cache/restore@v6
       with:
         path: ${{ env.STORE_PATH }}
         key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -79,9 +79,17 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
-    - name: Cache Playwright
+    - name: Save pnpm store
+      if: steps.pnpm-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+    - name: Restore Playwright
+      id: playwright-cache
       if: inputs.install-playwright != 'false'
-      uses: actions/cache@v6
+      uses: actions/cache/restore@v6
       with:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -92,6 +100,13 @@ runs:
       if: inputs.install-playwright != 'false'
       shell: bash
       run: pnpm exec playwright install chromium
+
+    - name: Save Playwright
+      if: inputs.install-playwright != 'false' && steps.playwright-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
     - name: Configure Envs
       shell: bash
