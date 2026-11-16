@@ -173,12 +173,7 @@ export const useHrmRecovery = ({
       // be absent or reject (platform/permission variance); the slow poll
       // below always arms as the fallback. Invoke it as a method: a
       // detached native call throws "Illegal invocation".
-      const watchable = device as unknown as {
-        watchAdvertisements?: (options?: {
-          signal?: AbortSignal
-        }) => Promise<void>
-      }
-      if (typeof watchable.watchAdvertisements === 'function') {
+      if (typeof device.watchAdvertisements === 'function') {
         const listener = () => {
           waitAdSeenRef.current = true
           attemptWakeConnect()
@@ -187,7 +182,7 @@ export const useHrmRecovery = ({
         device.addEventListener('advertisementreceived', listener)
         waitingAdvertisementRef.current = { device, listener, watchAbort }
         try {
-          const started: unknown = watchable.watchAdvertisements({
+          const started: unknown = device.watchAdvertisements({
             signal: watchAbort.signal,
           })
           if (started instanceof Promise) {
