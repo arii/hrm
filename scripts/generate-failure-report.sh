@@ -17,6 +17,8 @@ REQUIRED_VARS=(
   "LOG_TRUNCATE_BYTES"
   "LINT_OUTCOME"
   "BUILD_OUTCOME"
+  "INFRA_TESTS_DEV_OUTCOME"
+  "INFRA_TESTS_PROD_OUTCOME"
   "UNIT_TESTS_OUTCOME"
   "VISUAL_TESTS_OUTCOME"
   "PERF_TESTS_OUTCOME"
@@ -49,6 +51,8 @@ mkdir -p test-results
 read -r -d '' CHECKS_DEFINITION <<'EOF'
 LINT_OUTCOME|Lint|logs/lint-output.log
 BUILD_OUTCOME|Build|logs/build-output.log
+INFRA_TESTS_DEV_OUTCOME|Infrastructure (Dev)|logs/infra-dev-output.log
+INFRA_TESTS_PROD_OUTCOME|Infrastructure (Prod)|logs/infra-prod-output.log
 UNIT_TESTS_OUTCOME|Unit Tests|logs/unit-output.log
 VISUAL_TESTS_OUTCOME|Visual Tests|logs/visual-output.log
 PERF_TESTS_OUTCOME|Performance Tests|logs/performance-output.log

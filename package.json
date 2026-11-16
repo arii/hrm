@@ -53,6 +53,9 @@
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+    "test:infra": "cross-env SKIP_WEBSERVER=true playwright test tests/playwright/infrastructure.spec.ts",
+    "test:infra:dev": "cross-env SKIP_WEBSERVER=true playwright test tests/playwright/infrastructure.spec.ts --grep \"pnpm run dev should start and listen\"",
+    "test:infra:prod": "cross-env SKIP_WEBSERVER=true playwright test tests/playwright/infrastructure.spec.ts --grep \"start-production.sh should start successfully\"",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
     "knip": "knip",
@@ -161,7 +164,8 @@
     "tsc-alias": "^1.8.16",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "wait-on": "^9.0.4"
   },
   "engines": {
     "node": ">=20.0.0",
