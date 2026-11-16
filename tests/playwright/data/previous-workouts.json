@@ -1,0 +1,169 @@
+[
+  {
+    "reason": "most text overall",
+    "date": "2025-08-29",
+    "headers": ["Tabata", "30x15x2", "EMOM x 3", "30/15x2"],
+    "columns": [
+      [
+        "Plank reach",
+        "SP Left",
+        "Sp Right",
+        "Hollow hold",
+        "30x10x3",
+        "Band bridge",
+        "Clams L",
+        "Clams R"
+      ],
+      [
+        "1.5 hip thrust L",
+        "Hip flexor mob L",
+        "1.5 hip thrust R",
+        "Hip flexor mob R"
+      ],
+      [
+        "Db bent row 15",
+        "R lunge pass 16",
+        "Kb swing 20",
+        "Basic crunch 60 seconds"
+      ],
+      [
+        "Band face pull",
+        "Thoracic mob L",
+        "Bridge chest press",
+        "Thoraci mob R"
+      ]
+    ]
+  },
+  {
+    "reason": "most exercises in one phase",
+    "date": "2024-01-24",
+    "headers": ["Tabata", "3 x 10", "3 x 10", "2 x 15"],
+    "columns": [
+      [
+        "Reach left",
+        "Hold",
+        "Reach right",
+        "Hold",
+        "Leg lift",
+        "Flutter",
+        "Bikes",
+        "rest",
+        "2 to 6 ladder",
+        "Box jump sq",
+        "Box push up"
+      ],
+      ["Db floor press", "Kb sumos", "Db bent rows", "Knee tucks"],
+      ["Db curl press", "Leg curls", "Db tricep ext"],
+      ["Band facepull", "Band Drag curls", "Pull thru"]
+    ]
+  },
+  {
+    "reason": "most phases",
+    "date": "2025-05-28",
+    "headers": [
+      "Tabata",
+      "Tabata",
+      "Ladder 2 to 6",
+      "3 x 10",
+      "3 x 12",
+      "Chipper 20/15/10"
+    ],
+    "columns": [
+      ["Slider knee tuck", "Obliques L", "Obliques R", "See saw"],
+      ["Band 45 jack", "Band f/b jack", "Band hydrant", "Band bridge"],
+      ["Db push up row", "Kb deadlift to high pull"],
+      ["Bulgarians l/r", "Band straight arm lat pulls", "Db bicep curl"],
+      ["Slider leg curl", "Band chest press", "Db kickbacks"],
+      ["Drop squat", "Double crunch"]
+    ]
+  },
+  {
+    "reason": "longest exercise name",
+    "date": "2025-01-29",
+    "headers": ["25/10x3", "40/10x3", "3 x 8", "3 x 10", "60 sec"],
+    "columns": [
+      ["Plank march", "Side plank RT l", "Side plank RT r"],
+      ["Band deep squat", "Band kickback"],
+      ["Db 1.5 floor press", "Single RDL 8/8", "Coffin 1.5 crunch"],
+      ["Db 1.5 pull over", "Bulgarians 10/10"],
+      ["Wall sit curl", "Plank up, sh tap, dd toe touch"]
+    ]
+  },
+  {
+    "reason": "longest phase header",
+    "date": "2025-01-03",
+    "headers": [
+      "30/10x2",
+      "Chipper 20/15/10",
+      "Lunge matrix 5 per side",
+      "Hip rotations",
+      "12 per side"
+    ],
+    "columns": [
+      [
+        "Single leg drops",
+        "Plank march",
+        "penguins",
+        "T\u2019s, w\u2019s, l\u2019s",
+        "Thoracic mobility",
+        "12 reps per side"
+      ],
+      ["Band full row", "Cross chest press", "Pull thru"],
+      ["3 way push up 5 each"],
+      ["90/90 rotations"],
+      ["Ankle mobility 12 per"]
+    ]
+  },
+  {
+    "reason": "fewest phases",
+    "date": "2024-08-23",
+    "headers": ["Tabata", "Chipper 20/15/10"],
+    "columns": [
+      [
+        "Basic crunch",
+        "Half burpee",
+        "runner sit up",
+        "Wide knee tuck",
+        "Wall thoracic",
+        "Wall sit lat mobility"
+      ],
+      [
+        "Band flye",
+        "Band pull thru",
+        "Band facepull",
+        "Hip flexor",
+        "Hands free hips",
+        "Man maker",
+        "Stretch"
+      ]
+    ]
+  },
+  {
+    "reason": "most exercises total",
+    "date": "2025-07-07",
+    "headers": ["Tabata", "Tabata", "3 x 12", "2 x 15"],
+    "columns": [
+      [
+        "Plank tap",
+        "Hold",
+        "Plank march",
+        "Hold",
+        "Single sh tap",
+        "Hold",
+        "Single sh tap",
+        "hold"
+      ],
+      ["F. lunge", "R. lunge", "Curtsy L", "Curtsy R"],
+      ["Db floor press", "Rdl", "One arm row", "Heels elev. squat"],
+      [
+        "Band curl",
+        "Band oh tricep",
+        "Calf raise",
+        "60 finisher",
+        "L,S,L",
+        "Sh tap to DD toe touch",
+        "Coffin crunch"
+      ]
+    ]
+  }
+]
