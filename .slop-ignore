@@ -6,7 +6,6 @@ scripts/
 socketManager.ts
 network.ts
 git-conflicts.ts
-conflict-resolver.ts
 FooterControls.tsx
 README.md
 ai_slop_words.txt

@@ -358,18 +358,6 @@ Playwright tests live in `tests/playwright/core-functionality.spec.ts`; baseline
 
 **Best practice:** Run `pnpm run test:core` before pushing UI changes and regenerate snapshots only after manual review.
 
-## GitHub Bot Commands
-
-You can interact with the project's automation workflows by using the following commands in pull request or issue comments.
-
-| Command                 | Description                                                                 | Example                 |
-| ----------------------- | --------------------------------------------------------------------------- | ----------------------- |
-| `@create-review-issues` | Creates follow-up issues based on the content of a pull request review.     | `@create-review-issues` |
-| `@gemini-bot`           | Invokes the Gemini AI to perform tasks like code review or code generation. | `@gemini-bot`           |
-| `@gemini-triage`        | Invokes the Gemini AI to perform issue triage (labels, priority, etc.).     | `@gemini-triage`        |
-
-For more details on manual triggers and CLI commands, see the [Manual Trigger Reference](docs/workflows/MANUAL_TRIGGERS.md).
-
 ## VS Code Integration
 
 This workspace is pre-configured for a seamless development experience with VS Code.

@@ -4,9 +4,6 @@ set -eo pipefail
 LOG_DIR="logs"
 SLOP_RAW_LOG="$LOG_DIR/slop-raw.log"
 SLOP_OUTPUT_LOG="$LOG_DIR/slop-output.log"
-GEMINI_SLOP_LOG="$LOG_DIR/gemini-slop.md"
-TASK_FILE="$LOG_DIR/slop-task.txt"
-DIFF_FILE="$LOG_DIR/pr.diff"
 DIFF_MAX_SIZE=100000
 
 mkdir -p "$LOG_DIR"
@@ -45,94 +42,13 @@ if ! LOC_STATS=$(git diff --stat "$DIFF_TARGET" 2>&1); then
 fi
 echo "$LOC_STATS"
 
-if [ "${GEMINI_ENABLE_SLOP_CHECK:-true}" == "false" ]; then
-  echo "⚠️ Gemini slop check disabled via GEMINI_ENABLE_SLOP_CHECK" >&2
-  # We still want to generate the report based on the regex detector if it ran,
-  # but we skip the Gemini API call.
-  {
-    echo "Gemini feedback skipped (disabled via environment variable)."
-    echo ""
-    echo "#### ℹ️ How to run manually"
-    echo "Automatic slop check is currently disabled. To run it manually:"
-    echo "1. Go to **Actions → PR Quality Gate**"
-    echo "2. Click **Run workflow**"
-    echo "3. The slop check will run as part of the quality gate."
-    echo ""
-    echo "Alternatively, use the GitHub CLI:"
-    echo "\`\`\`bash"
-    echo "gh workflow run pr-quality.yml"
-    echo "\`\`\`"
-    echo ""
-    echo "#### 🤖 [Gemini Manual Trigger Guide](${GITHUB_SERVER_URL:-"https://github.com"}/${GITHUB_REPOSITORY}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
-  } > "$GEMINI_SLOP_LOG"
-else
-  echo "Requesting Gemini feedback..."
-
-  # Generate Diff (limit size to 100KB to be safe)
-  if [ -z "$DIFF_ERROR" ]; then
-    # Capture diff to file, respecting size limit
-    if ! git diff "$DIFF_TARGET" | head -c "$DIFF_MAX_SIZE" > "$DIFF_FILE"; then
-      echo "Diff generation failed." > "$DIFF_FILE"
-    else
-      # Check if we hit the limit
-      ACTUAL_SIZE=$(wc -c < "$DIFF_FILE")
-      if [ "$ACTUAL_SIZE" -ge "$DIFF_MAX_SIZE" ]; then
-        echo "⚠️  Warning: Diff truncated to ${DIFF_MAX_SIZE} bytes." >&2
-        echo "... (Diff truncated at ${DIFF_MAX_SIZE} bytes) ..." >> "$DIFF_FILE"
-      fi
-    fi
-  else
-    echo "Diff generation skipped due to previous error: $DIFF_ERROR" > "$DIFF_FILE"
-  fi
-
-  cat > "$TASK_FILE" <<EOF
-Review the following code changes for "slop" (low-quality, repetitive, or filler content).
-We have already run a regex-based detector.
-
-Here is the output of the regex detector:
-\`\`\`
-$(cat "$SLOP_RAW_LOG")
-\`\`\`
-
-Here are the Lines of Code (LOC) statistics:
-\`\`\`
-$LOC_STATS
-\`\`\`
-
-Please provide a concise assessment of the changes.
-1. If the regex detector found issues, verify if they are genuine slop or false positives.
-2. If the LOC count is very high (e.g. > 500 lines) with little substance, flag it.
-3. Provide a brief summary of the code quality regarding "slop".
-
-Keep your response short and focused on quality/slop.
-EOF
-
-  if [ -z "$GEMINI_API_KEY" ]; then
-    echo "⚠️ GEMINI_API_KEY not set. Skipping Gemini feedback." >&2
-    echo "Gemini feedback skipped (missing API key)." > "$GEMINI_SLOP_LOG"
-  else
-    echo "Invoking Gemini client..."
-    GEMINI_EXIT_CODE=0
-    pnpm tsx scripts/gemini-client.ts \
-      --task-file "$TASK_FILE" \
-      --context "$DIFF_FILE" \
-      --output "$GEMINI_SLOP_LOG" || GEMINI_EXIT_CODE=$?
-
-    if [ $GEMINI_EXIT_CODE -ne 0 ]; then
-      echo "⚠️ Gemini client failed. Continuing with available reports." >&2
-      echo "Gemini feedback unavailable (client failed)." > "$GEMINI_SLOP_LOG"
-    fi
-  fi
-fi
 
 echo "Generating final report..."
 {
   echo "### 🧹 AI Slop Detection Report"
   printf "#### Automated Detection Results\n\`\`\`\n"
   cat "$SLOP_RAW_LOG"
-  printf "\`\`\`\n\n#### Gemini Analysis\n"
-  [ -f "$GEMINI_SLOP_LOG" ] && cat "$GEMINI_SLOP_LOG" || echo "No Gemini analysis available."
-  printf "\n#### LOC Stats\n\`\`\`\n$LOC_STATS\n\`\`\`\n"
+  printf "\`\`\`\n\n#### LOC Stats\n\`\`\`\n$LOC_STATS\n\`\`\`\n"
 } > "$SLOP_OUTPUT_LOG"
 
 echo "Report generated at $SLOP_OUTPUT_LOG"
