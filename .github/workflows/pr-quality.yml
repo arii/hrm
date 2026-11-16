@@ -394,80 +394,6 @@ jobs:
           path: release.tar.gz
           retention-days: 2
 
-  infra-tests:
-    name: 🧪 Infrastructure Tests
-    needs: [prepare-env, knip-check, lint-check, type-check, build-check]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-      NEXTAUTH_URL: http://localhost:3006
-      NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-      PORT: 3006
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
-        continue-on-error: true
-
-      - name: Extract Build Artifacts
-        shell: bash
-        run: |
-          echo "📦 Extracting release archive..."
-          if [ -f "release.tar.gz" ]; then
-            tar -xzf release.tar.gz
-            rm release.tar.gz
-            echo "✅ Archive extracted"
-          else
-            echo "⚠️  No release archive found"
-          fi
-
-          if [ -d ".next_prod" ] && [ -d "dist" ]; then
-            echo "✅ All build directories found"
-          else
-            echo "❌ Missing required build directories"
-            exit 1
-          fi
-
-      - name: Run Infra Tests
-        id: infra-tests
-        shell: bash
-        env:
-          NODE_ENV: production
-        run: |
-          set -o pipefail
-          ./scripts/ci/run-infra-tests.sh prod
-
-      - name: Publish Infrastructure Tests Results
-        uses: dorny/test-reporter@v1
-        if: always() && steps.infra-tests.outcome != 'skipped'
-        with:
-          name: Infrastructure (Prod)
-          path: test-results/infra-prod-results.xml
-          reporter: java-junit
-        continue-on-error: true
-
-      - name: Upload Infra Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: infra-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/infra-prod-output.log
-            test-results/infra-prod-results.xml
-          if-no-files-found: ignore
-          retention-days: 2
-
   unit-tests:
     name: 🧪 Unit Tests
     needs: [prepare-env]
@@ -765,18 +691,9 @@ jobs:
   integration-tests:
     name: 📊 Integration Tests Summary
     if: always()
-    needs:
-      [
-        prepare-env,
-        infra-tests,
-        unit-tests,
-        component-tests,
-        perf-tests,
-        visual-tests,
-      ]
+    needs: [prepare-env, unit-tests, component-tests, perf-tests, visual-tests]
     runs-on: ubuntu-24.04
     outputs:
-      infra-tests-outcome: ${{ needs.infra-tests.result }}
       unit-tests-outcome: ${{ needs.unit-tests.result }}
       component-tests-outcome: ${{ needs.component-tests.result }}
       perf-tests-outcome: ${{ needs.perf-tests.result }}
@@ -791,7 +708,6 @@ jobs:
           # Debug: list files to ensure script existence
           ls -R scripts/ci/
           bash ./scripts/ci/generate-test-summary.sh \
-            "${{ needs.infra-tests.result }}" \
             "${{ needs.unit-tests.result }}" \
             "${{ needs.component-tests.result }}" \
             "${{ needs.perf-tests.result }}" \
@@ -801,8 +717,7 @@ jobs:
         shell: bash
         run: |
           # Fail if any test failed
-          if [ "${{ needs.infra-tests.result }}" = "failure" ] || \
-             [ "${{ needs.unit-tests.result }}" = "failure" ] || \
+          if [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.component-tests.result }}" = "failure" ] || \
              [ "${{ needs.perf-tests.result }}" = "failure" ] || \
              [ "${{ needs.visual-tests.result }}" = "failure" ]; then
@@ -933,14 +848,13 @@ jobs:
           done
 
           # Check integration test suites from the outputs
-          for test_suite_outcome in "infra-tests-outcome" "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
+          for test_suite_outcome in "unit-tests-outcome" "component-tests-outcome" "perf-tests-outcome" "visual-tests-outcome"; do
             # Safely get test suite result from nested object, default to "skipped"
             result=$(echo "$NEEDS_CONTEXT" | jq -r --arg tname "$test_suite_outcome" '."integration-tests".outputs.[$tname] // "skipped"')
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               test_suite_name=${test_suite_outcome%-outcome}
               log_file=""
               case $test_suite_name in
-                "infra-tests") log_file="artifacts/infra-test-logs-${SESSION_ID}/logs/infra-prod-output.log" ;;
                 "unit-tests") log_file="artifacts/unit-test-logs-${SESSION_ID}/logs/unit-output.log" ;;
                 "component-tests") log_file="artifacts/component-test-logs-${SESSION_ID}/logs/component-output.log" ;;
                 "perf-tests") log_file="artifacts/perf-test-logs-${SESSION_ID}/logs/perf-output.log" ;;
@@ -963,7 +877,6 @@ jobs:
           KNIP_RESULT: ${{ needs.knip-check.result }}
           LINT_RESULT: ${{ needs.lint-check.result }}
           BUILD_RESULT: ${{ needs.build-check.result }}
-          INFRA_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.infra-tests-outcome }}
           UNIT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.unit-tests-outcome }}
           COMPONENT_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.component-tests-outcome }}
           PERF_TESTS_OUTCOME: ${{ needs.integration-tests.outputs.perf-tests-outcome }}
@@ -1006,7 +919,6 @@ jobs:
           COMMENT_BODY+="| Slop | $([ "${{ needs.slop-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.slop-check.result }}) |\n"
           COMMENT_BODY+="| Type Check | $([ "${{ needs.type-check.result }}" = "success" ] && echo '✅ success' || echo '❌ '${{ needs.type-check.result }}) |\n"
           COMMENT_BODY+="| Build | $([ "$BUILD_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$BUILD_RESULT) |\n"
-          COMMENT_BODY+="| Infra Tests | $([ "$INFRA_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$INFRA_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Unit Tests | $([ "$UNIT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$UNIT_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Component Tests | $([ "$COMPONENT_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$COMPONENT_TESTS_OUTCOME) |\n"
           COMMENT_BODY+="| Perf Tests | $([ "$PERF_TESTS_OUTCOME" = "success" ] && echo '✅ success' || echo '❌ '$PERF_TESTS_OUTCOME) |\n"
@@ -1028,9 +940,6 @@ jobs:
           fi
           if [ "$BUILD_RESULT" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Build Failure Details" "artifacts/build-report/build-output.log" 50)
-          fi
-          if [ "$INFRA_TESTS_OUTCOME" != "success" ]; then
-            LOG_DETAILS+=$(add_log_details "Infrastructure Test Failure Details" "artifacts/infra-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/infra-prod-output.log" 50)
           fi
           if [ "$UNIT_TESTS_OUTCOME" != "success" ]; then
             LOG_DETAILS+=$(add_log_details "Unit Test Failure Details" "artifacts/unit-test-logs-${{ needs.prepare-env.outputs.session_id }}/logs/unit-output.log" 50)

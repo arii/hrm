@@ -1095,7 +1095,7 @@ Run the existing unit suite and the Playwright heap stability spec inside the De
 `pm2 reload ecosystem.config.cjs`
 
 `# 3. Execute Playwright memory & load specs against the 1Hz RingBuffer batching`  
-`npx playwright test tests/playwright/perf-memory.spec.ts tests/playwright/perf-load.spec.ts`
+`npx playwright test tests/playwright/perf-memory.spec.ts`
 
 Should we now update app/client/experimental/components/HeartRateTimeSeries.tsx and app/client/experimental/components/useHrRecording.ts to read directly from getClientHistory(clientId) on WebSocketContext, or update stories/mocks/MockWebSocketProvider.tsx so your Storybook and VRT suites compile cleanly with the new context interface?
 

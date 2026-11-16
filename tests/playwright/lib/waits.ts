@@ -38,7 +38,6 @@ export const WAIT_TIMEOUTS = {
   /** Long timeout for complex operations */
   LONG: 5000,
   /** Infrastructure/server startup timeout */
-  INFRASTRUCTURE: 15000,
 } as const
 
 /**
