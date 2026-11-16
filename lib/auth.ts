@@ -55,23 +55,29 @@ function getCookieDomain(): string | undefined {
 }
 
 /**
- * In-flight rotation: concurrent JWT callbacks at the expiry boundary
- * (polling + Web Playback SDK + playback commands) join one refresh
- * instead of racing duplicate Spotify POSTs that can 401 each other.
+ * In-flight rotations, keyed by refresh token: concurrent JWT callbacks
+ * for the same session at the expiry boundary (polling + Web Playback SDK
+ * + playback commands) join one refresh instead of racing duplicate
+ * Spotify POSTs that can 401 each other. Keyed per refresh token so one
+ * user's rotation is never handed to another user's session.
  */
-let refreshPromise: Promise<JWT> | null = null
+const refreshesInFlight = new Map<string, Promise<JWT>>()
 
 /**
  * Refreshes an expired Spotify access token using the refresh token.
  * Invoked by the NextAuth JWT callback when the access token is expired.
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  if (refreshPromise) return refreshPromise
-  refreshPromise = (async () => {
+  const key = token.refreshToken
+  if (!key) {
+    logger.error('Cannot refresh access token: token has no refresh token')
+    return { ...token, error: 'RefreshAccessTokenError' }
+  }
+  const inFlight = refreshesInFlight.get(key)
+  if (inFlight) return inFlight
+  const refresh = (async (): Promise<JWT> => {
     try {
-      const refreshedTokens = await refreshSpotifyToken(
-        token.refreshToken as string
-      )
+      const refreshedTokens = await refreshSpotifyToken(key)
 
       // Update the token object with new values from Spotify
       return {
@@ -91,10 +97,11 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
         error: 'RefreshAccessTokenError',
       }
     } finally {
-      refreshPromise = null
+      refreshesInFlight.delete(key)
     }
   })()
-  return refreshPromise
+  refreshesInFlight.set(key, refresh)
+  return refresh
 }
 
 // Define scopes required: user-read-playback-state to poll the current track,
