@@ -69,7 +69,10 @@ const refreshesInFlight = new Map<string, Promise<JWT>>()
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   const key = token.refreshToken
-  if (!key) return { ...token, error: 'RefreshAccessTokenError' }
+  if (!key) {
+    logger.error('Cannot refresh access token: token has no refresh token')
+    return { ...token, error: 'RefreshAccessTokenError' }
+  }
   const inFlight = refreshesInFlight.get(key)
   if (inFlight) return inFlight
   const refresh = (async (): Promise<JWT> => {
