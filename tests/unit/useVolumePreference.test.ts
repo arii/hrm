@@ -4,19 +4,26 @@
 import { jest } from '@jest/globals'
 import { act, renderHook } from '@testing-library/react'
 import useVolumePreference from '@/hooks/useVolumePreference'
-
-// Mock the audioManager
-jest.mock('@/utils/audioManager', () => ({
-  audioManager: {
-    setVolume: jest.fn(),
-    setMuted: jest.fn(),
-  },
-}))
+import { audioManager } from '@/utils/audioManager'
 
 describe('hooks/useVolumePreference', () => {
   beforeEach(() => {
     localStorage.clear()
     jest.clearAllMocks()
+  })
+
+  it('never moves the timer beep volume or mute state', () => {
+    audioManager.setMuted(false)
+    audioManager.setVolume(70)
+    const { result } = renderHook(() => useVolumePreference(70))
+    act(() => {
+      result.current.setVolume(20)
+    })
+    act(() => {
+      result.current.toggleMuteAndPersist()
+    })
+    expect(audioManager.getVolume()).toBe(70)
+    expect(audioManager.getMuted()).toBe(false)
   })
 
   it('should initialize with default volume and unmuted state', () => {

@@ -39,6 +39,15 @@ const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
   useEffect(() => {
     const VOLUME_STEP = 5
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Focused controls (the beep slider, text fields) own their keys.
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, [contenteditable="true"], [role="slider"]'
+        )
+      ) {
+        return
+      }
       // Mute Toggle
       if (event.key === 'm') {
         audioManager.toggleMute()

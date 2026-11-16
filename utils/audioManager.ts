@@ -8,15 +8,35 @@
 import { getBasePath } from './urls'
 import logger from './logger'
 
+// Beep preferences persist under their own keys, never the Spotify music
+// volume keys, so beeps and music cannot move each other.
+const BEEP_VOLUME_KEY = 'hrm-timer-volume'
+const BEEP_MUTED_KEY = 'hrm-timer-muted'
+const DEFAULT_BEEP_VOLUME = 70
+
+interface BeepPreference {
+  volume: number
+  muted: boolean
+}
+
+export const DEFAULT_BEEP_PREFERENCE: BeepPreference = {
+  volume: DEFAULT_BEEP_VOLUME,
+  muted: false,
+}
+
+const clampPercent = (value: number): number =>
+  Math.min(100, Math.max(0, Math.round(value)))
+
 class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
-  private isMuted = false
   private loadedAudio = false
-  private volume = 0.7
+  private preference: BeepPreference = DEFAULT_BEEP_PREFERENCE
+  private listeners = new Set<() => void>()
 
   constructor() {
     if (typeof window !== 'undefined') {
+      this.preference = this.readStoredPreference()
       this.initializeAudio()
     }
   }
@@ -25,9 +45,51 @@ class AudioManager {
     const basePath = getBasePath()
     this.shortBeep = new Audio(`${basePath}/assets/beep-07.wav`)
     this.longBeep = new Audio(`${basePath}/assets/beep-01a.wav`)
+    this.applyVolume()
+  }
 
-    this.shortBeep.volume = this.volume
-    this.longBeep.volume = this.volume
+  private readStoredPreference(): BeepPreference {
+    try {
+      const storedVolume = window.localStorage.getItem(BEEP_VOLUME_KEY)
+      const parsed = Number(storedVolume)
+      return {
+        // A stored 0 predates zero-as-mute; read it as muted at the default.
+        volume:
+          storedVolume !== null && Number.isFinite(parsed) && parsed > 0
+            ? clampPercent(parsed)
+            : DEFAULT_BEEP_VOLUME,
+        muted:
+          window.localStorage.getItem(BEEP_MUTED_KEY) === 'true' ||
+          (storedVolume !== null && parsed === 0),
+      }
+    } catch {
+      return DEFAULT_BEEP_PREFERENCE
+    }
+  }
+
+  // Muted elements run at zero so the unlock play() stays silent too.
+  private applyVolume() {
+    const level = this.preference.muted ? 0 : this.preference.volume / 100
+    if (this.shortBeep) this.shortBeep.volume = level
+    if (this.longBeep) this.longBeep.volume = level
+  }
+
+  private updatePreference(next: BeepPreference) {
+    if (
+      next.volume === this.preference.volume &&
+      next.muted === this.preference.muted
+    ) {
+      return
+    }
+    this.preference = next
+    this.applyVolume()
+    try {
+      window.localStorage.setItem(BEEP_VOLUME_KEY, String(next.volume))
+      window.localStorage.setItem(BEEP_MUTED_KEY, String(next.muted))
+    } catch (e) {
+      logger.warn('[AudioManager] Could not persist beep preference:', e)
+    }
+    this.listeners.forEach((listener) => listener())
   }
 
   /**
@@ -68,7 +130,7 @@ class AudioManager {
    * Play short beep (countdown seconds)
    */
   playShort() {
-    if (this.isMuted) {
+    if (this.preference.muted) {
       logger.debug('[AudioManager] Skipped short beep (Muted)')
       return
     }
@@ -87,7 +149,7 @@ class AudioManager {
    * Play long beep (phase transitions)
    */
   playLong() {
-    if (this.isMuted) {
+    if (this.preference.muted) {
       logger.debug('[AudioManager] Skipped long beep (Muted)')
       return
     }
@@ -103,44 +165,59 @@ class AudioManager {
   }
 
   /**
-   * Set volume (0-100)
+   * Set volume (0-100). Zero mutes and keeps the last audible level so
+   * unmuting restores it; any audible volume unmutes.
    */
   setVolume(volumePercent: number) {
-    const newVolume = Math.max(0, Math.min(1, volumePercent / 100))
-    this.volume = newVolume
-    if (this.shortBeep) this.shortBeep.volume = this.volume
-    if (this.longBeep) this.longBeep.volume = this.volume
+    const volume = clampPercent(volumePercent)
+    this.updatePreference(
+      volume === 0
+        ? { ...this.preference, muted: true }
+        : { volume, muted: false }
+    )
   }
 
   /**
    * Get current volume (0-100)
    */
   getVolume() {
-    return this.volume * 100
+    return this.preference.volume
   }
 
   /**
    * Toggle mute state
    */
   toggleMute() {
-    this.isMuted = !this.isMuted
-    logger.debug(`[AudioManager] Muted: ${this.isMuted}`)
-    return this.isMuted
+    this.setMuted(!this.preference.muted)
+    logger.debug(`[AudioManager] Muted: ${this.preference.muted}`)
+    return this.preference.muted
   }
 
   /**
    * Set mute state
    */
   setMuted(muted: boolean) {
-    this.isMuted = muted
+    this.updatePreference({ ...this.preference, muted })
   }
 
   /**
    * Get current mute state
    */
   getMuted() {
-    return this.isMuted
+    return this.preference.muted
   }
+
+  /**
+   * useSyncExternalStore subscription for the beep preference.
+   */
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  getPreference = (): BeepPreference => this.preference
 }
 
 // Global audio manager instance

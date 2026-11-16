@@ -45,4 +45,20 @@ describe('TimerSoundProvider', () => {
     fireEvent.keyDown(window, { key: 'm' })
     expect(audioManager.toggleMute).toHaveBeenCalledTimes(1)
   })
+
+  it('leaves arrow keys and m to a focused slider or text field', () => {
+    render(
+      <TimerSoundProvider>
+        <div role="slider" tabIndex={0} aria-valuenow={35} data-testid="s" />
+        <input data-testid="field" />
+      </TimerSoundProvider>
+    )
+    const slider = document.querySelector('[data-testid="s"]')!
+    fireEvent.keyDown(slider, { key: 'ArrowDown' })
+    fireEvent.keyDown(document.querySelector('[data-testid="field"]')!, {
+      key: 'm',
+    })
+    expect(audioManager.setVolume).not.toHaveBeenCalled()
+    expect(audioManager.toggleMute).not.toHaveBeenCalled()
+  })
 })

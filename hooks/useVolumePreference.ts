@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { audioManager } from '../utils/audioManager'
 import logger from '@/utils/logger'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
@@ -34,13 +33,6 @@ const useVolumePreference = (defaultVolume = 70) => {
       setIsLoaded(true)
     }
   }, [sanitizedDefault])
-
-  useEffect(() => {
-    if (isLoaded) {
-      audioManager.setMuted(muted)
-      audioManager.setVolume(volume)
-    }
-  }, [volume, muted, isLoaded])
 
   const setVolume = useCallback(
     (value: number) => {
