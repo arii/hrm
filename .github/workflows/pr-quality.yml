@@ -316,8 +316,6 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           install-playwright: 'false'
-          use-build-cache: true
-          cache-type: next-build
 
       - name: Register TypeScript Matcher
         run: echo "::add-matcher::.github/tsc-error-matcher.json"
