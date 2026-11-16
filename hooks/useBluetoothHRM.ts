@@ -453,7 +453,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               { device: device.name, seen },
               'Pre-connect advertisement wait finished'
             )
-            if (connectionAttemptRef.current !== waitToken) return false
+            if (
+              isUnmountedRef.current ||
+              connectionAttemptRef.current !== waitToken
+            ) {
+              return false
+            }
           }
           logger.info({ device: device.name }, 'Connecting to device')
           if (!(await connectToGatt(device, false, true))) return false
@@ -493,6 +498,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       connectionStatus,
       savedDevice,
       connectToGatt,
+      isUnmountedRef,
       findSavedDevice,
       handleConnectionError,
       userName,

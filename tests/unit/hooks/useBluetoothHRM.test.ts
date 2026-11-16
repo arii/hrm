@@ -801,6 +801,23 @@ describe('useBluetoothHRM', () => {
         expect(result.current.isConnected).toBe(false)
       })
 
+      it('does not connect when unmounted during the pre-connect wait', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result, unmount } = renderHook(() => useBluetoothHRM())
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          unmount()
+          await jest.advanceTimersByTimeAsync(10000)
+          await pending
+        })
+
+        expect(mockGatt.connect).not.toHaveBeenCalled()
+      })
+
       it('waits (instead of stopping) when silent auto-connect exhausts with a known device', async () => {
         const { watch } = addWatchMocks()
         const { result } = renderHook(() => useBluetoothHRM())
