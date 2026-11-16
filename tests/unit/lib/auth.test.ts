@@ -159,6 +159,46 @@ describe('authOptions.callbacks.jwt', () => {
     }
   })
 
+  it("never hands one session's rotation to another session", async () => {
+    const expiredFor = (user: string): JWT => ({
+      name: user,
+      sub: `${user}-sub`,
+      accessToken: `${user}-expired-access-token`,
+      refreshToken: `${user}-refresh-token`,
+      accessTokenExpires: Date.now() - 1000,
+      providerAccountId: `${user}-spotify-id`,
+    })
+
+    const resolvers = new Map<string, (value: unknown) => void>()
+    ;(spotify.refreshSpotifyToken as jest.Mock).mockImplementation(
+      (refreshToken: string) =>
+        new Promise((resolve) => {
+          resolvers.set(refreshToken, resolve)
+        })
+    )
+    ;(fetch as jest.Mock).mockResolvedValue({ ok: true })
+
+    // Two users' tokens expire while each rotation is still in flight.
+    const alice = jwtCallback({ token: expiredFor('alice'), account: null })
+    const bob = jwtCallback({ token: expiredFor('bob'), account: null })
+    await Promise.resolve()
+    for (const user of ['alice', 'bob']) {
+      resolvers.get(`${user}-refresh-token`)?.({
+        access_token: `${user}-rotated-access-token`,
+        expires_in: 3600,
+      })
+    }
+    const [aliceResult, bobResult] = await Promise.all([alice, bob])
+
+    expect(spotify.refreshSpotifyToken).toHaveBeenCalledTimes(2)
+    expect(aliceResult.sub).toBe('alice-sub')
+    expect(aliceResult.accessToken).toBe('alice-rotated-access-token')
+    expect(aliceResult.refreshToken).toBe('alice-refresh-token')
+    expect(bobResult.sub).toBe('bob-sub')
+    expect(bobResult.accessToken).toBe('bob-rotated-access-token')
+    expect(bobResult.refreshToken).toBe('bob-refresh-token')
+  })
+
   it('should return an error if token refresh fails', async () => {
     const token: JWT = {
       ...baseToken,
