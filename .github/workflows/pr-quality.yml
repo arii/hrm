@@ -34,13 +34,6 @@ on:
         type: boolean
         default: false
 
-    secrets:
-      GH_TOKEN:
-        description: 'GitHub token (optional, uses github.token by default)'
-        required: false
-      GEMINI_API_KEY:
-        description: 'Gemini API Key'
-        required: false
 permissions:
   contents: read
   checks: write
@@ -90,43 +83,6 @@ jobs:
         uses: ./.github/actions/sanitize-string
         with:
           value: ${{ steps.determine-context.outputs.pr_number || github.ref_name || github.run_id }}
-
-  script-tests:
-    name: 🧪 Script Tests
-    needs: [prepare-env]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    env:
-      SESSION_ID: ${{ needs.prepare-env.outputs.session_id }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-
-      - name: Setup Environment
-        uses: ./.github/actions/setup-env
-        with:
-          install-playwright: 'false'
-
-      - name: Run Throttling Logic Integration Test
-        id: script-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          mkdir -p logs
-          # Run the bats tests and tee output to a log file
-          ./node_modules/bats/bin/bats tests/unit/decide-review-strategy.bats > >(tee -a logs/script-output.log) 2> >(tee -a logs/script-output.log >&2)
-
-      - name: Upload Script Test Logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: script-test-logs-${{ env.SESSION_ID }}
-          path: |
-            logs/script-output.log
-          if-no-files-found: ignore
-          retention-days: 2
 
   knip-check:
     name: 🎒 Knip Check
@@ -223,9 +179,6 @@ jobs:
       - name: Run Slop Check
         id: slop
         shell: bash
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_ENABLE_SLOP_CHECK: ${{ vars.GEMINI_ENABLE_SLOP_CHECK }}
         run: |
           chmod +x ./scripts/ci-check-slop.sh
           ./scripts/ci-check-slop.sh
@@ -815,7 +768,6 @@ jobs:
     needs:
       [
         prepare-env,
-        script-tests,
         infra-tests,
         unit-tests,
         component-tests,
@@ -824,7 +776,6 @@ jobs:
       ]
     runs-on: ubuntu-24.04
     outputs:
-      script-tests-outcome: ${{ needs.script-tests.result }}
       infra-tests-outcome: ${{ needs.infra-tests.result }}
       unit-tests-outcome: ${{ needs.unit-tests.result }}
       component-tests-outcome: ${{ needs.component-tests.result }}
@@ -840,7 +791,6 @@ jobs:
           # Debug: list files to ensure script existence
           ls -R scripts/ci/
           bash ./scripts/ci/generate-test-summary.sh \
-            "${{ needs.script-tests.result }}" \
             "${{ needs.infra-tests.result }}" \
             "${{ needs.unit-tests.result }}" \
             "${{ needs.component-tests.result }}" \
@@ -851,8 +801,7 @@ jobs:
         shell: bash
         run: |
           # Fail if any test failed
-          if [ "${{ needs.script-tests.result }}" = "failure" ] || \
-             [ "${{ needs.infra-tests.result }}" = "failure" ] || \
+          if [ "${{ needs.infra-tests.result }}" = "failure" ] || \
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.component-tests.result }}" = "failure" ] || \
              [ "${{ needs.perf-tests.result }}" = "failure" ] || \
@@ -874,12 +823,11 @@ jobs:
         slop-check,
         type-check,
         build-check,
-        script-tests,
         integration-tests,
       ]
     runs-on: ubuntu-24.04
     env:
-      GH_TOKEN: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
     outputs:
       failure-report-json: ${{ steps.generate-failure-report.outputs.failure_report_json }}
     steps:
@@ -1112,10 +1060,7 @@ jobs:
             SUMMARY_MSG="⚠️ **Some checks failed.** Full logs available in [workflow artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
           fi
 
-          # Create manual trigger footer
-          FOOTER="\n\n---\n#### 🤖 [Gemini Manual Trigger Guide](https://github.com/${{ github.repository }}/blob/leader/docs/workflows/MANUAL_TRIGGERS.md)"
-
-          COMMENT_BODY+="\n${SUMMARY_MSG}${FOOTER}\n\n---\n> Report generated for commit: \`${SHA}\`"
+          COMMENT_BODY+="\n${SUMMARY_MSG}\n\n---\n> Report generated for commit: \`${SHA}\`"
 
           # Write the final comment to a file
           echo -e "$COMMENT_BODY" > test-results/pr-comment.md

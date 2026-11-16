@@ -60,23 +60,6 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - Update **documentation** if the changes affect project usage or architecture.
 - Create or update an **ADR** for significant architectural decisions.
 
-### Labeling Conventions
-
-To ensure consistency across the project, we use a standardized set of GitHub labels. These labels are used for issue triage, PR categorization, and automated workflows.
-
-All managed labels are defined in [`.github/pr-labels.json`](../.github/pr-labels.json). Automated workflows ensure these labels exist in the repository.
-
-**Key Label Categories (Strictly Limited to 5 per Category):**
-
-- **Review Status**: `ai-reviewed`, `approved`, `changes-requested`
-- **Change Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`
-- **Scope**: `scope:focused`, `scope:needs-review`
-- **Priority**: `priority:high`, `priority:medium`, `priority:low`
-- **Status**: `needs-info`, `invalid`, `stale`, `duplicate`, `wontfix`
-- **Automation**: `automerge`, `auto-code`, `bot-generated`, `triage-needed`
-
-Obsolete or redundant labels (e.g., variations like `CI` or `workflow`) are automatically removed by the `cleanup-pr-labels.sh` script, as configured in [`.github/automated-labels.json`](../.github/automated-labels.json).
-
 ### Security & Quality Review
 
 The security and quality review process is a critical step in our development lifecycle. It helps us catch potential issues before they make it into production.
@@ -111,13 +94,6 @@ Our CI/CD pipeline automates many aspects of the development process, including 
 ### Deployment Strategy
 
 The project is deployed to a self-hosted production environment using a GitHub Actions workflow. The deployment follows a "hard restart" strategy.
-
-### Review Strategy Inputs
-
-`scripts/decide-review-strategy.sh` decides whether a PR needs a Gemini review. Its key inputs:
-
-- `IGNORE_PATTERN` (defined in the script): an ERE matching changed files that never need a review on their own — `(\.md$|\.png$|\.svg$|pnpm-lock\.yaml$|\.gitignore$)`. A PR touching only these files is skipped as "no significant code changes". Docs, images, lockfiles, and gitignore edits never trigger a review by themselves.
-- `QUALITY_GATE_BOT_USERNAMES` (env, default `github-actions[bot]`): a single username or space-separated list of bot usernames whose quality-gate comments mark a commit as already reviewed. Used to avoid re-reviewing commits the pipeline already passed.
 
 ## Testing
 

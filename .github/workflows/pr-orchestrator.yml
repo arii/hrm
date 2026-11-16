@@ -1,4 +1,4 @@
-name: Gemini Orchestrator
+name: PR Orchestrator
 
 on:
   pull_request:
@@ -34,37 +34,6 @@ permissions:
   actions: read
 
 jobs:
-  welcome:
-    name: 👋 PR Welcome & Reminder
-    if: github.event_name == 'pull_request' && github.event.action == 'opened'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post Welcome Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = '## 👋 Welcome to HRM!\n\n' +
-              'Thanks for your contribution. This repository uses Gemini AI for automated triage, code review, and generation.\n\n' +
-              '#### 🤖 Gemini Manual Trigger Quick Reference\n' +
-              '| Command | Action |\n' +
-              '| :--- | :--- |\n' +
-              '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
-              '| `@gemini-enrich` | Run PR Enrichment (PR only) |\n' +
-              '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
-              '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
-              'For more details and GitHub CLI examples, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: body
-            });
-
   filter:
     name: 🔍 Path Filter
     runs-on: ubuntu-latest
@@ -231,42 +200,3 @@ jobs:
     with:
       pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
       branch: ${{ github.base_ref || inputs.base_branch || inputs.base_ref || 'leader' }}
-    secrets:
-      GH_TOKEN: ${{ secrets.ARI_PAT }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
-  pr-review:
-    name: 🤖 Gemini AI Review
-    needs: [filter, pr-quality, check-diff]
-    # We always want a label ("approved", "not approved", or "not reviewed")
-    # So we run this job if the filter matched, regardless of quality gate result.
-    # We skip only if the filter didn't match (non-source changes).
-    if: |
-      always() &&
-      needs.filter.outputs.should_review == 'true' &&
-      !cancelled()
-    uses: ./.github/workflows/reusable-gemini-review.yml
-    with:
-      pr_quality_result: ${{ needs.pr-quality.result }}
-      trigger_event: 'pull_request'
-      # Path filter handles the diff logic; we pass current HEAD for analysis
-      last_non_empty_commit: ${{ github.event.pull_request.head.sha || github.sha }}
-      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
-      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_ref }}
-      head_sha: ${{ github.event.pull_request.head.sha || inputs.head_ref }}
-    secrets: inherit
-
-  create-review-issues:
-    name: 🚀 Create Review Issues
-    needs: [pr-review]
-    if: |
-      always() &&
-      needs.pr-review.result == 'success' &&
-      needs.pr-review.outputs.review_performed == 'true'
-    uses: ./.github/workflows/reusable-create-review-issues.yml
-    with:
-      pr_number: ${{ github.event.pull_request.number || inputs.pr_number }}
-      base_sha: ${{ github.event.pull_request.base.sha || inputs.base_ref }}
-      run_id: ${{ github.run_id }}
-    secrets:
-      gh_token: ${{ secrets.GITHUB_TOKEN }}

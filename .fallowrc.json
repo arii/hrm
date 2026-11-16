@@ -17,7 +17,7 @@
     "scripts/ws-stress-client.ts"
   ],
   "ignorePatterns": [".next/**", ".next_prod/**", "public/**"],
-  "ignoreDependencies": ["@types/web-bluetooth", "bats"],
+  "ignoreDependencies": ["@types/web-bluetooth"],
   "circularDependencies": { "ignoreLazyImports": true },
   "rules": {
     "unused-exports": "warn",

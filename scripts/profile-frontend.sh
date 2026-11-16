@@ -48,7 +48,11 @@ echo "   - Server running..."
 
 # Wait for the server to be ready
 echo "   - Waiting for server to become available..."
-pnpm exec wait-on http://127.0.0.1:3000 -t 30000 # 30-second timeout
+for _ in $(seq 1 30); do
+  curl -sf -o /dev/null http://127.0.0.1:3000 && break
+  sleep 1
+done
+curl -sf -o /dev/null http://127.0.0.1:3000 || { echo "Server did not start within 30s"; exit 1; }
 
 # --- Execution ---
 echo "   - Running Playwright performance test..."
