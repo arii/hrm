@@ -8,10 +8,9 @@ import { expect, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import { waitForPageReady } from './lib/waits'
 import previousWorkouts from './data/previous-workouts.json' with { type: 'json' }
+import { MIN_EXERCISE_REM } from '../../lib/workoutSizing'
 
 type Workout = (typeof previousWorkouts)[number]
-
-const MIN_EXERCISE_REM = 1.4
 
 const openWorkout = async (page: Page, workout: Workout): Promise<void> => {
   await page.route('**/api/workout*', (route) =>
