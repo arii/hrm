@@ -25,8 +25,7 @@ export const BLUETOOTH_MESSAGES = {
     `Still waiting for ${deviceName || 'device'}. Tap Connect to re-select it.`,
   deviceHeldElsewhere: (deviceName: string) =>
     `${deviceName || 'Device'} is nearby but won't connect. It may be used by another app.`,
-  reconnectingAttempt: (reason: string, attempt: number, maxAttempts: number) =>
-    `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
+  reconnectingAttempt: (reason: string) => `${reason}. Reconnecting...`,
   checkingSavedDevices: 'Checking saved devices...',
   lookingForDevice: (deviceName: string) =>
     `Looking for ${deviceName || 'device'} nearby...`,
@@ -34,10 +33,8 @@ export const BLUETOOTH_MESSAGES = {
   autoConnectFailed:
     'Auto-connect failed. Use Connect button to select device.',
   connectingToSavedDevice: 'Connecting to saved device...',
-  deviceBusy: (delay: number, attempt: number, maxRetries: number) =>
-    `Device busy. Retrying in ${delay / 1000}s... (${attempt}/${maxRetries})`,
-  quietStrapRetry: (retry: number, maxRetries: number) =>
-    `Strap is quiet. Retrying... (Attempt ${retry}/${maxRetries})`,
+  deviceBusy: (delay: number) => `Device busy. Retrying in ${delay / 1000}s...`,
+  quietStrapRetry: 'Strap is quiet. Retrying...',
 
   // Error Messages
   error: 'Error',

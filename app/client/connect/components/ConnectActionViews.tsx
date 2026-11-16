@@ -52,7 +52,7 @@ export const HrSection = ({
 }: {
   isConnected: boolean
   userName: string
-  currentHR: number
+  currentHR: number | null
   hrZoneData: HrZoneData
   caloriesBurned: number
   isDataStale: boolean
