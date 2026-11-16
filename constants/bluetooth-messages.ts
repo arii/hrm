@@ -28,6 +28,8 @@ export const BLUETOOTH_MESSAGES = {
   reconnectingAttempt: (reason: string, attempt: number, maxAttempts: number) =>
     `${reason}. Reconnecting... (Attempt ${attempt}/${maxAttempts})`,
   checkingSavedDevices: 'Checking saved devices...',
+  lookingForDevice: (deviceName: string) =>
+    `Looking for ${deviceName || 'device'} nearby...`,
   scanningForDevices: 'Scanning for devices...',
   autoConnectFailed:
     'Auto-connect failed. Use Connect button to select device.',

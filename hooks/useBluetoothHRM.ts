@@ -7,6 +7,7 @@ import { clientEnv } from '@/lib/env-client'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { DATA_LIVENESS_TIMEOUT_MS } from '@/constants/bluetooth'
+import { PRE_CONNECT_ADVERTISEMENT_WAIT_MS } from '@/constants/bluetooth-reconnection'
 import {
   HEARTBEAT_INTERVAL_MS,
   statusMessageMap,
@@ -15,6 +16,7 @@ import { getAutoConnectFailureMessage } from './useBluetoothHRM/gattClassificati
 import {
   resolveConnectDevice,
   findSavedDevice as findSavedDeviceImpl,
+  waitForAdvertisement,
 } from './useBluetoothHRM/deviceScan'
 import {
   teardownTestControls,
@@ -298,6 +300,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // Cleanup
   useEffect(() => {
     isManualDisconnect.current = false
+    // Strict Mode replays cleanup then this effect on the same instance.
+    isUnmountedRef.current = false
 
     // Identities installed below; the cleanup only removes slots that still
     // hold these exact functions (a remount overwrites them with its own).
@@ -419,6 +423,45 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (device) {
           attemptedDevice = device
+          if (!device.gatt?.connected) {
+            // Same in-flight lock as the GATT handshake: a concurrent
+            // attempt that got this far is skipped, and one that comes
+            // later is skipped at the entry guard.
+            if (isConnecting.current) {
+              logger.info(
+                'connectAndStream skipped: connection already in progress'
+              )
+              return false
+            }
+            if (connectionAttemptRef.current === attemptToken) {
+              setCustomStatusMessage(
+                BLUETOOTH_MESSAGES.lookingForDevice(device.name || '')
+              )
+            }
+            // Capture, don't claim (as connectToGatt does): a disconnect or
+            // newer manual attempt during the wait wins.
+            const waitToken = connectionAttemptRef.current
+            isConnecting.current = true
+            let seen = false
+            try {
+              seen = await waitForAdvertisement(
+                device,
+                PRE_CONNECT_ADVERTISEMENT_WAIT_MS
+              )
+            } finally {
+              isConnecting.current = false
+            }
+            logger.info(
+              { device: device.name, seen },
+              'Pre-connect advertisement wait finished'
+            )
+            if (
+              isUnmountedRef.current ||
+              connectionAttemptRef.current !== waitToken
+            ) {
+              return false
+            }
+          }
           logger.info({ device: device.name }, 'Connecting to device')
           if (!(await connectToGatt(device, false, true))) return false
           return true
@@ -457,6 +500,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       connectionStatus,
       savedDevice,
       connectToGatt,
+      isUnmountedRef,
       findSavedDevice,
       handleConnectionError,
       userName,

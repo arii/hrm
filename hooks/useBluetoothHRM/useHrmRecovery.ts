@@ -62,6 +62,7 @@ export const useHrmRecovery = ({
   const waitingAdvertisementRef = useRef<{
     device: BluetoothDevice
     listener: () => void
+    watchAbort: AbortController
   } | null>(null)
   const lastWakeAttemptAtRef = useRef(0)
   const waitMissesRef = useRef(0)
@@ -75,20 +76,9 @@ export const useHrmRecovery = ({
     const armed = waitingAdvertisementRef.current
     if (armed) {
       armed.device.removeEventListener('advertisementreceived', armed.listener)
-      // DOM types declare unwatchAdvertisements, but platforms vary —
-      // always feature-detect; absence is fine (poll-only mode).
-      const unwatch = (
-        armed.device as unknown as {
-          unwatchAdvertisements?: () => void
-        }
-      ).unwatchAdvertisements
-      if (typeof unwatch === 'function') {
-        try {
-          unwatch()
-        } catch {
-          // Already unwatched or torn down - nothing to release.
-        }
-      }
+      // Web Bluetooth stops a watch via its AbortSignal (there is no
+      // unwatchAdvertisements in Chrome).
+      armed.watchAbort.abort()
       waitingAdvertisementRef.current = null
     }
     waitingDeviceRef.current = null
@@ -179,31 +169,33 @@ export const useHrmRecovery = ({
           })
       }
 
-      // Primary: passive advertisement watcher for instant wake. May be
-      // absent or reject (platform/permission variance) — failure falls
-      // through to the slow poll below, which always arms.
-      const watch = (
-        device as unknown as { watchAdvertisements?: () => Promise<void> }
-      ).watchAdvertisements
-      if (typeof watch === 'function') {
+      // Primary: passive advertisement watcher for instant wake. It may
+      // be absent or reject (platform/permission variance); the slow poll
+      // below always arms as the fallback. Invoke it as a method: a
+      // detached native call throws "Illegal invocation".
+      if (typeof device.watchAdvertisements === 'function') {
         const listener = () => {
           waitAdSeenRef.current = true
           attemptWakeConnect()
         }
+        const watchAbort = new AbortController()
         device.addEventListener('advertisementreceived', listener)
-        waitingAdvertisementRef.current = { device, listener }
+        waitingAdvertisementRef.current = { device, listener, watchAbort }
         try {
-          const started: unknown = watch()
+          const started: unknown = device.watchAdvertisements({
+            signal: watchAbort.signal,
+          })
           if (started instanceof Promise) {
             started.catch((error: unknown) => {
-              logger.debug(
+              if (watchAbort.signal.aborted) return
+              logger.warn(
                 { device: device.name, error },
                 'Advertisement watch rejected; polling only.'
               )
             })
           }
         } catch (error) {
-          logger.debug(
+          logger.warn(
             { device: device.name, error },
             'Advertisement watch threw; polling only.'
           )

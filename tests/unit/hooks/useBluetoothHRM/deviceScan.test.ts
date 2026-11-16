@@ -5,6 +5,7 @@
 import {
   resolveConnectDevice,
   findSavedDevice,
+  waitForAdvertisement,
 } from '@/hooks/useBluetoothHRM/deviceScan'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import Cookies from 'js-cookie'
@@ -141,5 +142,81 @@ describe('findSavedDevice', () => {
     const device = await findSavedDevice(true, jest.fn())
 
     expect(device).toBeNull()
+  })
+})
+
+describe('waitForAdvertisement', () => {
+  const makeWatchableDevice = (watchResult: Promise<void>) => {
+    const target = new EventTarget()
+    const watchAdvertisements = jest.fn(function (
+      this: unknown,
+      options?: { signal?: AbortSignal }
+    ) {
+      if (this !== device) throw new TypeError('Illegal invocation')
+      void options
+      return watchResult
+    })
+    const device = Object.assign(target, {
+      id: 'strap',
+      name: 'Strap',
+      watchAdvertisements,
+    }) as unknown as BluetoothDevice
+    const signal = (): AbortSignal | undefined =>
+      (
+        watchAdvertisements.mock.calls[0] as unknown as [
+          { signal?: AbortSignal }?,
+        ]
+      )[0]?.signal
+    return { device, signal }
+  }
+
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('resolves true on the first advertisement and stops the watch', async () => {
+    const { device, signal } = makeWatchableDevice(Promise.resolve())
+
+    const pending = waitForAdvertisement(device, 10000)
+    device.dispatchEvent(new Event('advertisementreceived'))
+
+    await expect(pending).resolves.toBe(true)
+    expect(signal()?.aborted).toBe(true)
+  })
+
+  it('resolves false at the timeout and stops the watch', async () => {
+    const { device, signal } = makeWatchableDevice(Promise.resolve())
+
+    const pending = waitForAdvertisement(device, 10000)
+    await jest.advanceTimersByTimeAsync(10000)
+
+    await expect(pending).resolves.toBe(false)
+    expect(signal()?.aborted).toBe(true)
+  })
+
+  it('resolves false immediately when the watch rejects', async () => {
+    const { device } = makeWatchableDevice(
+      Promise.reject(new DOMException('Unsupported', 'NotSupportedError'))
+    )
+
+    await expect(waitForAdvertisement(device, 10000)).resolves.toBe(false)
+  })
+
+  it('resolves false and cleans up when the watch throws synchronously', async () => {
+    const device = Object.assign(new EventTarget(), {
+      id: 'strap',
+      name: 'Strap',
+      watchAdvertisements: () => {
+        throw new DOMException('Denied', 'SecurityError')
+      },
+    }) as unknown as BluetoothDevice
+
+    await expect(waitForAdvertisement(device, 10000)).resolves.toBe(false)
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  it('resolves false without watching on platforms lacking the API', async () => {
+    await expect(waitForAdvertisement(makeDevice('old'), 10000)).resolves.toBe(
+      false
+    )
   })
 })

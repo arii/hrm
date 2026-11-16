@@ -28,6 +28,11 @@ export const BUSY_RETRY_DELAYS_MS = [1000, 3000, 5000]
 // not hammering. Reconnect drops keep their own backoff (no quiet retry).
 export const QUIET_STRAP_RETRY_DELAYS_MS = [5000, 10000, 20000]
 
+// Bound on the pre-connect advertisement wait. Chrome only connects a
+// getDevices() device after a scan has seen it this browser session;
+// straps advertise ~1Hz, so an awake strap answers well inside this.
+export const PRE_CONNECT_ADVERTISEMENT_WAIT_MS = 10000
+
 // Slow safety poll while waiting for a sleeping strap to reappear. The
 // advertisement watcher (instant) is primary; this covers platforms
 // without it and missed advertisements. Each miss fails fast.

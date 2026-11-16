@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import { StrictMode } from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, {
   HEARTBEAT_INTERVAL_MS,
@@ -735,30 +736,107 @@ describe('useBluetoothHRM', () => {
         )
         await act(async () => {
           const pending = autoConnect().catch(() => {})
-          // Quiet retries span ~35s; stay under the 60s safety poll.
-          await jest.advanceTimersByTimeAsync(45000)
+          // Pre-connect wait (10s) + quiet retries (~35s); stay under
+          // the 60s safety poll.
+          await jest.advanceTimersByTimeAsync(55000)
           await pending
         })
       }
 
       const addWatchMocks = () => {
-        const watch = jest.fn().mockResolvedValue(undefined)
-        const unwatch = jest.fn()
-        Object.assign(mockDevice, {
-          watchAdvertisements: watch,
-          unwatchAdvertisements: unwatch,
+        // Mirrors the native method: a detached call throws.
+        const watch = jest.fn(function (this: unknown) {
+          if (this !== mockDevice) throw new TypeError('Illegal invocation')
+          return Promise.resolve()
         })
-        return { watch, unwatch }
+        Object.assign(mockDevice, { watchAdvertisements: watch })
+        const watchSignal = (): AbortSignal | undefined =>
+          (watch.mock.calls.at(-1) as unknown as [{ signal?: AbortSignal }?])[0]
+            ?.signal
+        return { watch, watchSignal }
       }
 
       const adListener = (): (() => void) => {
-        const call = mockDevice.addEventListener.mock.calls.find(
+        // Latest registration: the waiting watcher, not the pre-connect one.
+        const call = mockDevice.addEventListener.mock.calls.findLast(
           ([eventName]: [string, unknown]) =>
             eventName === 'advertisementreceived'
         )
         if (!call) throw new Error('no advertisement listener registered')
         return call[1] as () => void
       }
+
+      it('waits for an advertisement before the first silent connect', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          expect(mockGatt.connect).not.toHaveBeenCalled()
+          adListener()()
+          await pending
+        })
+
+        expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+        expect(result.current.isConnected).toBe(true)
+      })
+
+      it('does not connect when disconnected during the pre-connect wait', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result } = renderHook(() => useBluetoothHRM())
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          result.current.disconnect()
+          await jest.advanceTimersByTimeAsync(10000)
+          await pending
+        })
+
+        expect(mockGatt.connect).not.toHaveBeenCalled()
+        expect(result.current.isConnected).toBe(false)
+      })
+
+      it('does not connect when unmounted during the pre-connect wait', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result, unmount } = renderHook(() => useBluetoothHRM())
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          unmount()
+          await jest.advanceTimersByTimeAsync(10000)
+          await pending
+        })
+
+        expect(mockGatt.connect).not.toHaveBeenCalled()
+      })
+
+      it('connects after the pre-connect wait under Strict Mode', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result } = renderHook(() => useBluetoothHRM(), {
+          wrapper: StrictMode,
+        })
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          adListener()()
+          await pending
+        })
+
+        expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+        expect(result.current.isConnected).toBe(true)
+      })
 
       it('waits (instead of stopping) when silent auto-connect exhausts with a known device', async () => {
         const { watch } = addWatchMocks()
@@ -767,14 +845,20 @@ describe('useBluetoothHRM', () => {
         await armWaitingViaSilentFailure(result.current.autoConnect)
 
         expect(result.current.deviceStatus).toContain('Waiting')
-        expect(watch).toHaveBeenCalledTimes(1)
+        // Once before the first connect, once for the wait.
+        expect(watch).toHaveBeenCalledTimes(2)
+        expect(logger.warn as jest.Mock).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.stringContaining('polling only')
+        )
       })
 
       it('connects when an advertisement arrives while waiting', async () => {
-        const { unwatch } = addWatchMocks()
+        const { watchSignal } = addWatchMocks()
         const { result } = renderHook(() => useBluetoothHRM())
 
         await armWaitingViaSilentFailure(result.current.autoConnect)
+        expect(watchSignal()?.aborted).toBe(false)
         mockGatt.connect.mockResolvedValue(mockGatt)
 
         await act(async () => {
@@ -782,7 +866,7 @@ describe('useBluetoothHRM', () => {
         })
 
         expect(result.current.isConnected).toBe(true)
-        expect(unwatch).toHaveBeenCalled()
+        expect(watchSignal()?.aborted).toBe(true)
       })
 
       it('keeps the saved device and waits instead of forgetting after reconnect exhaustion', async () => {
@@ -790,7 +874,10 @@ describe('useBluetoothHRM', () => {
         const { result } = renderHook(() => useBluetoothHRM())
 
         await act(async () => {
-          await result.current.connectAndStream()
+          // No advertisement: the pre-connect wait times out, then connects.
+          const pending = result.current.connectAndStream()
+          await jest.advanceTimersByTimeAsync(10000)
+          await pending
         })
         expect(result.current.isConnected).toBe(true)
 
@@ -845,7 +932,6 @@ describe('useBluetoothHRM', () => {
         )
         Object.assign(mockDevice, {
           watchAdvertisements: jest.fn().mockRejectedValue(rejection),
-          unwatchAdvertisements: jest.fn(),
         })
         const { result } = renderHook(() => useBluetoothHRM())
 
@@ -853,7 +939,7 @@ describe('useBluetoothHRM', () => {
 
         expect(result.current.deviceStatus).toContain('Waiting')
         // The rejection reason must reach the log, not be swallowed.
-        expect(logger.debug as jest.Mock).toHaveBeenCalledWith(
+        expect(logger.warn as jest.Mock).toHaveBeenCalledWith(
           expect.objectContaining({ error: rejection }),
           expect.stringContaining('polling only')
         )
@@ -964,7 +1050,7 @@ describe('useBluetoothHRM', () => {
       })
 
       it('stops waiting on manual disconnect', async () => {
-        const { unwatch } = addWatchMocks()
+        const { watchSignal } = addWatchMocks()
         const { result } = renderHook(() => useBluetoothHRM())
 
         await armWaitingViaSilentFailure(result.current.autoConnect)
@@ -975,7 +1061,7 @@ describe('useBluetoothHRM', () => {
           await jest.advanceTimersByTimeAsync(180000)
         })
 
-        expect(unwatch).toHaveBeenCalled()
+        expect(watchSignal()?.aborted).toBe(true)
         expect(mockGatt.connect.mock.calls.length).toBe(attemptsAfterWait)
       })
     })
