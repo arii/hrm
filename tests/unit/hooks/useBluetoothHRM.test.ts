@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import { StrictMode } from 'react'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM, {
   HEARTBEAT_INTERVAL_MS,
@@ -816,6 +817,25 @@ describe('useBluetoothHRM', () => {
         })
 
         expect(mockGatt.connect).not.toHaveBeenCalled()
+      })
+
+      it('connects after the pre-connect wait under Strict Mode', async () => {
+        addWatchMocks()
+        ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+        mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+        const { result } = renderHook(() => useBluetoothHRM(), {
+          wrapper: StrictMode,
+        })
+
+        await act(async () => {
+          const pending = result.current.autoConnect()
+          await jest.advanceTimersByTimeAsync(100)
+          adListener()()
+          await pending
+        })
+
+        expect(mockGatt.connect).toHaveBeenCalledTimes(1)
+        expect(result.current.isConnected).toBe(true)
       })
 
       it('waits (instead of stopping) when silent auto-connect exhausts with a known device', async () => {

@@ -300,6 +300,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // Cleanup
   useEffect(() => {
     isManualDisconnect.current = false
+    // Strict Mode replays cleanup then this effect on the same instance.
+    isUnmountedRef.current = false
 
     // Identities installed below; the cleanup only removes slots that still
     // hold these exact functions (a remount overwrites them with its own).
