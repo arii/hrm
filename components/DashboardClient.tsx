@@ -10,6 +10,7 @@ import { useContext, useState } from 'react'
 import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useInScaledStage } from '@/components/ScaledStage'
 import TimerDisplay from '@/components/TimerDisplay'
+import { useAudio } from '@/hooks/useAudio'
 import { HrmDataContext } from '@/context/WebSocketContext'
 import {
   DASHBOARD_SHELL_HEIGHT,
@@ -92,6 +93,8 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
   // outside ScaledStage.
   const isScaledLayout = useInScaledStage()
   const [refreshKey, setRefreshKey] = useState(0)
+  // Plays the timer beeps; TimerSoundProvider only unlocks audio.
+  useAudio()
   // Active HR client count drives the top-row horizontal split (timer
   // shrinks to ~38% for exactly 3 tiles). Reads the raw context so the
   // component still renders without a provider (unit tests, stories).

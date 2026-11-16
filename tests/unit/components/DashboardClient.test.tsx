@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import DashboardClient from '@/components/DashboardClient'
 import { HrmDataContext } from '@/context/WebSocketContext'
 import { mockHrmData } from '../../fixtures/hrm'
+import { useAudio } from '@/hooks/useAudio'
 
 // Mock child components to isolate the DashboardClient component
 jest.mock('@/components/WorkoutPhaseGrid', () => {
@@ -37,10 +38,17 @@ jest.mock('@/components/TimerDisplay', () => {
   return TimerDisplay
 })
 
+jest.mock('@/hooks/useAudio', () => ({ useAudio: jest.fn() }))
+
 describe('DashboardClient', () => {
   const mockProps = {
     docId: 'mock-doc-id',
   }
+
+  it('mounts the timer sound hook so beeps play', () => {
+    render(<DashboardClient {...mockProps} />)
+    expect(useAudio).toHaveBeenCalled()
+  })
 
   it('always renders the native WorkoutPhaseGrid with the doc id', async () => {
     render(<DashboardClient {...mockProps} />)
