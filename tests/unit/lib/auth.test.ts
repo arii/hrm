@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import * as spotify from '@/lib/spotify'
 import { Account } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
+import logger from '@/utils/logger'
 
 // Mock the spotify module
 jest.mock('@/lib/spotify', () => ({
@@ -182,6 +183,7 @@ describe('authOptions.callbacks.jwt', () => {
     const alice = jwtCallback({ token: expiredFor('alice'), account: null })
     const bob = jwtCallback({ token: expiredFor('bob'), account: null })
     await Promise.resolve()
+    expect(resolvers.size).toBe(2)
     for (const user of ['alice', 'bob']) {
       resolvers.get(`${user}-refresh-token`)?.({
         access_token: `${user}-rotated-access-token`,
@@ -215,6 +217,22 @@ describe('authOptions.callbacks.jwt', () => {
 
     expect(result.error).toBe('RefreshAccessTokenError')
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('fails a refresh on a token with no refresh token without calling Spotify', async () => {
+    const token: JWT = {
+      ...baseToken,
+      accessToken: 'expired-access-token',
+      accessTokenExpires: Date.now() - 1000,
+    }
+
+    const result = await jwtCallback({ token, account: null })
+
+    expect(result.error).toBe('RefreshAccessTokenError')
+    expect(spotify.refreshSpotifyToken).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(
+      'Cannot refresh access token: token has no refresh token'
+    )
   })
 
   it('should update scope if a new one is returned on refresh', async () => {
