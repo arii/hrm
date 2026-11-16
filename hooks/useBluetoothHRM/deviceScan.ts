@@ -59,17 +59,22 @@ export const waitForAdvertisement = (
     }
     const onAdvertisement = () => finish(true)
     const timer = setTimeout(() => finish(false), timeoutMs)
+    const onWatchFailed = (error: unknown) => {
+      if (watchAbort.signal.aborted) return
+      logger.warn(
+        { device: device.name, error },
+        'Advertisement watch failed; connecting without a scan.'
+      )
+      finish(false)
+    }
     device.addEventListener('advertisementreceived', onAdvertisement)
-    device
-      .watchAdvertisements({ signal: watchAbort.signal })
-      .catch((error: unknown) => {
-        if (watchAbort.signal.aborted) return
-        logger.warn(
-          { device: device.name, error },
-          'Advertisement watch rejected; connecting without a scan.'
-        )
-        finish(false)
-      })
+    try {
+      device
+        .watchAdvertisements({ signal: watchAbort.signal })
+        .catch(onWatchFailed)
+    } catch (error) {
+      onWatchFailed(error)
+    }
   })
 }
 

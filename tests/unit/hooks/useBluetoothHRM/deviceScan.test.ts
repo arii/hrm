@@ -201,6 +201,19 @@ describe('waitForAdvertisement', () => {
     await expect(waitForAdvertisement(device, 10000)).resolves.toBe(false)
   })
 
+  it('resolves false and cleans up when the watch throws synchronously', async () => {
+    const device = Object.assign(new EventTarget(), {
+      id: 'strap',
+      name: 'Strap',
+      watchAdvertisements: () => {
+        throw new DOMException('Denied', 'SecurityError')
+      },
+    }) as unknown as BluetoothDevice
+
+    await expect(waitForAdvertisement(device, 10000)).resolves.toBe(false)
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
   it('resolves false without watching on platforms lacking the API', async () => {
     await expect(waitForAdvertisement(makeDevice('old'), 10000)).resolves.toBe(
       false
