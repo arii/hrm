@@ -125,7 +125,6 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
     audioManager.getPreference,
     getBeepServerSnapshot
   )
-  const silent = muted
 
   const handleVolumeChange = (_: Event, value: number | number[]) => {
     audioManager.setVolume(value as number)
@@ -147,16 +146,16 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
     >
       <IconButton
         onClick={() => audioManager.toggleMute()}
-        aria-label={silent ? 'Unmute timer beeps' : 'Mute timer beeps'}
-        aria-pressed={silent}
+        aria-label={muted ? 'Unmute timer beeps' : 'Mute timer beeps'}
+        aria-pressed={muted}
         data-testid="timer-volume-mute-button"
         sx={{ color: 'inherit', width: 44, height: 44 }}
       >
-        {silent ? <VolumeOff /> : <VolumeUp />}
+        {muted ? <VolumeOff /> : <VolumeUp />}
       </IconButton>
       <Slider
         aria-label="Timer beep volume"
-        value={silent ? 0 : volume}
+        value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         data-testid="timer-volume-slider"
         sx={{
