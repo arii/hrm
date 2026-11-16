@@ -125,15 +125,10 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
     audioManager.getPreference,
     getBeepServerSnapshot
   )
-  const silent = muted || volume === 0
+  const silent = muted
 
   const handleVolumeChange = (_: Event, value: number | number[]) => {
-    const next = value as number
-    if (next === 0) {
-      audioManager.setMuted(true)
-    } else {
-      audioManager.setVolume(next)
-    }
+    audioManager.setVolume(value as number)
   }
 
   return (

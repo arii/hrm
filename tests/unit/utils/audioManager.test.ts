@@ -45,4 +45,37 @@ describe('audioManager beep preference', () => {
       expect(fresh.getPreference()).toEqual({ volume: 25, muted: true })
     })
   })
+
+  it('treats zero as mute and unmute restores the last audible level', () => {
+    audioManager.setVolume(5)
+    audioManager.setVolume(0)
+    expect(audioManager.getPreference()).toEqual({ volume: 5, muted: true })
+    audioManager.toggleMute()
+    expect(audioManager.getPreference()).toEqual({ volume: 5, muted: false })
+  })
+
+  it('reads a stored zero volume as muted at the default level', () => {
+    localStorage.setItem('hrm-timer-volume', '0')
+    localStorage.setItem('hrm-timer-muted', 'false')
+    jest.isolateModules(() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fresh = require('@/utils/audioManager').audioManager
+      expect(fresh.getPreference()).toEqual({ volume: 70, muted: true })
+    })
+  })
+
+  it('keeps the audio elements silent while muted, including unlock', () => {
+    const volumes: number[] = []
+    const play = jest
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockImplementation(function (this: HTMLMediaElement) {
+        volumes.push(this.volume)
+        return Promise.resolve()
+      })
+    audioManager.setVolume(55)
+    audioManager.setMuted(true)
+    audioManager.loadAudio()
+    expect(volumes).toEqual([0, 0])
+    play.mockRestore()
+  })
 })

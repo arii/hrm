@@ -53,19 +53,23 @@ class AudioManager {
       const storedVolume = window.localStorage.getItem(BEEP_VOLUME_KEY)
       const parsed = Number(storedVolume)
       return {
+        // A stored 0 predates zero-as-mute; read it as muted at the default.
         volume:
-          storedVolume !== null && Number.isFinite(parsed)
+          storedVolume !== null && Number.isFinite(parsed) && parsed > 0
             ? clampPercent(parsed)
             : DEFAULT_BEEP_VOLUME,
-        muted: window.localStorage.getItem(BEEP_MUTED_KEY) === 'true',
+        muted:
+          window.localStorage.getItem(BEEP_MUTED_KEY) === 'true' ||
+          (storedVolume !== null && parsed === 0),
       }
     } catch {
       return DEFAULT_BEEP_PREFERENCE
     }
   }
 
+  // Muted elements run at zero so the unlock play() stays silent too.
   private applyVolume() {
-    const level = this.preference.volume / 100
+    const level = this.preference.muted ? 0 : this.preference.volume / 100
     if (this.shortBeep) this.shortBeep.volume = level
     if (this.longBeep) this.longBeep.volume = level
   }
@@ -161,14 +165,16 @@ class AudioManager {
   }
 
   /**
-   * Set volume (0-100). Any audible volume also unmutes.
+   * Set volume (0-100). Zero mutes and keeps the last audible level so
+   * unmuting restores it; any audible volume unmutes.
    */
   setVolume(volumePercent: number) {
     const volume = clampPercent(volumePercent)
-    this.updatePreference({
-      volume,
-      muted: volume === 0 ? this.preference.muted : false,
-    })
+    this.updatePreference(
+      volume === 0
+        ? { ...this.preference, muted: true }
+        : { volume, muted: false }
+    )
   }
 
   /**
