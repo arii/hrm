@@ -44,18 +44,15 @@ jobs:
         with:
           script: |
             const body = '## 👋 Welcome to HRM!\n\n' +
-              'Thanks for your contribution. This repository uses Gemini AI for automated triage, code review, and generation.\n\n' +
+              'Thanks for your contribution. This repository uses Gemini AI for automated triage and code review.\n\n' +
               '#### 🤖 Gemini Manual Trigger Quick Reference\n' +
               '| Command | Action |\n' +
               '| :--- | :--- |\n' +
               '| `@gemini-bot` | Run AI Code Review (PR only) |\n' +
               '| `@gemini-enrich` | Run PR Enrichment (PR only) |\n' +
               '| `@gemini-triage` | Run Issue Triage |\n' +
-              '| `@gemini-coder <task>` | Generate Code |\n' +
               '| `@create-review-issues` | Create issues from review (PR only) |\n' +
-              '| `@gemini-help` | Show this help message |\n' +
-              '| `@pr-squash` | Squash PR commits (PR only) |\n' +
-              '| `@conflict-resolve` | Resolve merge conflicts (PR only) |\n\n' +
+              '| `@gemini-help` | Show this help message |\n\n' +
               'For more details and GitHub CLI examples, see the [Manual Trigger Guide](' + context.payload.repository.html_url + '/blob/leader/docs/workflows/MANUAL_TRIGGERS.md).';
 
             github.rest.issues.createComment({
