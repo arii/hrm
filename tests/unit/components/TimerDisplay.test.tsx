@@ -12,7 +12,8 @@ import {
 } from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { audioManager } from '@/utils/audioManager'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')
@@ -240,5 +241,39 @@ describe('TimerDisplay', () => {
       expect(flexContainer).toHaveTextContent('TABATA')
       expect(flexContainer).toHaveTextContent('WORK:30s REST:15s')
     })
+  })
+})
+
+describe('TimerDisplay beep volume', () => {
+  beforeEach(() => {
+    mockedUseTimerData.mockReturnValue({
+      currentPhase: 'IDLE',
+      timeRemaining: 0,
+      timeElapsed: 0,
+      mode: 'TABATA',
+    })
+    mockedUseConnection.mockReturnValue({ connectionStatus: 'Connected' })
+    audioManager.setMuted(false)
+    audioManager.setVolume(70)
+  })
+
+  it('mute button toggles the beeps and keeps the chosen level', () => {
+    render(<TimerDisplay />)
+    fireEvent.click(screen.getByRole('button', { name: 'Mute timer beeps' }))
+    expect(audioManager.getPreference()).toEqual({ volume: 70, muted: true })
+    expect(
+      screen.getByRole('slider', { name: 'Timer beep volume' })
+    ).toHaveValue('0')
+    fireEvent.click(screen.getByRole('button', { name: 'Unmute timer beeps' }))
+    expect(audioManager.getPreference()).toEqual({ volume: 70, muted: false })
+  })
+
+  it('slider sets the beep volume, and dragging to zero mutes', () => {
+    render(<TimerDisplay />)
+    const slider = screen.getByRole('slider', { name: 'Timer beep volume' })
+    fireEvent.change(slider, { target: { value: 35 } })
+    expect(audioManager.getPreference()).toEqual({ volume: 35, muted: false })
+    fireEvent.change(slider, { target: { value: 0 } })
+    expect(audioManager.getPreference()).toEqual({ volume: 35, muted: true })
   })
 })

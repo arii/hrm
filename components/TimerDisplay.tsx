@@ -7,13 +7,18 @@ import {
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import IconButton from '@mui/material/IconButton'
+import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import VolumeOff from '@mui/icons-material/VolumeOff'
+import VolumeUp from '@mui/icons-material/VolumeUp'
+import { memo, useSyncExternalStore } from 'react'
 import SideLabel from './SideLabel'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import type { TimerMode, TimerPhase } from '@/types/core'
+import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
 
 // Define a constant for the side column width to avoid magic numbers
 const SIDE_COLUMN_WIDTH = '40px'
@@ -110,6 +115,78 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
+const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
+
+// Beep-only volume. Overlaid in the card corner so it never takes space
+// from the digits or changes the locked top-row height.
+const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
+  const { volume, muted } = useSyncExternalStore(
+    audioManager.subscribe,
+    audioManager.getPreference,
+    getBeepServerSnapshot
+  )
+  const silent = muted || volume === 0
+
+  const handleVolumeChange = (_: Event, value: number | number[]) => {
+    const next = value as number
+    if (next === 0) {
+      audioManager.setMuted(true)
+    } else {
+      audioManager.setVolume(next)
+    }
+  }
+
+  return (
+    <Box
+      data-testid="timer-volume-control"
+      sx={{
+        position: 'absolute',
+        top: 4,
+        left: SIDE_COLUMN_WIDTH,
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        color: 'common.white',
+      }}
+    >
+      <IconButton
+        onClick={() => audioManager.toggleMute()}
+        aria-label={silent ? 'Unmute timer beeps' : 'Mute timer beeps'}
+        aria-pressed={silent}
+        data-testid="timer-volume-mute-button"
+        sx={{ color: 'inherit', width: 44, height: 44 }}
+      >
+        {silent ? <VolumeOff /> : <VolumeUp />}
+      </IconButton>
+      <Slider
+        aria-label="Timer beep volume"
+        value={silent ? 0 : volume}
+        onChange={handleVolumeChange}
+        data-testid="timer-volume-slider"
+        sx={{
+          display: { xs: 'none', sm: 'inline-block' },
+          width: 120,
+          color: 'common.white',
+          '& .MuiSlider-thumb': {
+            color: accentColor,
+            // 44px touch target around the small visible thumb.
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              width: 44,
+              height: 44,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            },
+          },
+        }}
+      />
+    </Box>
+  )
+}
+
 const TimerDisplay = () => {
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
@@ -170,6 +247,7 @@ const TimerDisplay = () => {
             : 'none',
       }}
     >
+      <TimerBeepVolume accentColor={phaseColor} />
       {/* Status Indicator */}
       <Box
         sx={{
