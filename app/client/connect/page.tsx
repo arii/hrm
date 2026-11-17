@@ -130,6 +130,7 @@ export default function ConnectPage() {
     lastPeriodMs,
     consecutiveSlowPackets,
     connectionAttempted,
+    showReloadFallback,
   } = useBluetoothHRM({
     userName,
     userAge: userAge || 0,
@@ -227,6 +228,7 @@ export default function ConnectPage() {
       onConnect={handleConnect}
       onDisconnect={disconnect}
       onForgetDevice={forgetDevice}
+      showReloadFallback={showReloadFallback}
       isSupported={isSupported}
       signalPeriodMs={signalPeriodMs}
       lastPeriodMs={lastPeriodMs}

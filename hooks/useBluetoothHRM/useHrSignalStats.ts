@@ -6,7 +6,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import {
   STABILITY_THRESHOLD_MS,
   MISSED_PACKET_THRESHOLD_BUFFER_MS,

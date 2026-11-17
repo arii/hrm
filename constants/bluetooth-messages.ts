@@ -14,8 +14,11 @@ export const BLUETOOTH_MESSAGES = {
 
   // Custom Status Messages
   unstableConnection: 'Connection unstable. Reconnecting...',
-  devicePermissionsRevoked:
-    'Device permissions revoked. Ready for new connection.',
+  deviceForgotten: 'Strap forgotten. Tap Connect and pick it again.',
+  otherTabHoldsDevice: (deviceName: string) =>
+    `${deviceName || 'Device'} is connected in another tab. Tap Connect to use it here.`,
+  deviceMovedToOtherTab: (deviceName: string) =>
+    `${deviceName || 'Device'} moved to another tab.`,
   connectingToDevice: (deviceName: string) =>
     `Connecting to: ${deviceName || 'Device'}...`,
   connectedToDevice: (deviceName: string) => `Connected to: ${deviceName}`,
@@ -39,7 +42,8 @@ export const BLUETOOTH_MESSAGES = {
   // Error Messages
   error: 'Error',
   errorWithDetails: (message: string) => `Failed: ${message}`,
-  errorClearingPermissions: 'Error clearing device permissions.',
+  connectStuck:
+    'Bluetooth connect got stuck twice. Tap Connect to try again, or reload the page.',
   connectionCancelled: 'Connection cancelled. No device selected.',
   securityError: 'Security error. Use HTTPS or localhost.',
   connectionFailed:

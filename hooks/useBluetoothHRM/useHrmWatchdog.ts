@@ -6,7 +6,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 
 interface UseHrmWatchdogParams {

@@ -58,3 +58,26 @@ export const getBackoffDelay = (attempt: number): number => {
   const jitter = Math.random() * RECONNECT_RANDOM_DELAY_MS
   return RECONNECT_BASE_DELAY_MS + increment + jitter
 }
+
+// Retries when the link drops between gatt.connect() and the heart-rate
+// subscription ("GATT Server is disconnected"): a just-woken strap often
+// drops its first link, and the next one holds. Delays before setup
+// attempts 2 and 3.
+export const SETUP_DROP_RETRY_DELAYS_MS = [500, 1500]
+
+// How long a Connect tap or Reset waits for a cancelled attempt to unwind
+// before freeing the radio anyway.
+export const RADIO_TAKEOVER_WAIT_MS = 3000
+
+// How long a tab waits for another tab to release the strap it holds.
+export const OTHER_TAB_RELEASE_WAIT_MS = 3000
+
+// Consecutive failed manual connects in one tab before the page offers a
+// reload as a last resort.
+export const RELOAD_FALLBACK_AFTER_FAILURES = 2
+
+// A connect attempt that reports no progress for this long is stuck: every
+// legitimate step is bounded well below it (10s scan, 20s link timeout,
+// at most 20s retry wait). The detector then runs the internal reset.
+export const STUCK_CONNECT_TIMEOUT_MS = 45000
+export const STUCK_CHECK_INTERVAL_MS = 5000

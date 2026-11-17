@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { cancellablePromise } from '@/utils/promise'
+import { abortableSleep, cancellablePromise } from '@/utils/promise'
 
 describe('cancellablePromise', () => {
   beforeEach(() => {
@@ -63,5 +63,31 @@ describe('cancellablePromise', () => {
     })
     jest.advanceTimersByTime(500)
     await expect(cancellable).resolves.toBe('success')
+  })
+})
+
+describe('abortableSleep', () => {
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('resolves after the delay', async () => {
+    const pending = abortableSleep(1000, new AbortController().signal)
+    await jest.advanceTimersByTimeAsync(1000)
+    await expect(pending).resolves.toBeUndefined()
+  })
+
+  it('rejects with an AbortError as soon as the signal aborts', async () => {
+    const controller = new AbortController()
+    const pending = abortableSleep(20000, controller.signal)
+    controller.abort()
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+  })
+
+  it('rejects at once on an already-aborted signal', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    await expect(abortableSleep(1000, controller.signal)).rejects.toMatchObject(
+      { name: 'AbortError' }
+    )
   })
 })

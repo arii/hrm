@@ -321,12 +321,12 @@ describe('useBluetoothHRM Race Conditions', () => {
     }
   })
 
-  it('returns false for a second call while GATT is in flight', async () => {
-    let releaseConnect!: (server: unknown) => void
+  it('a second tap while GATT is in flight cancels it and restarts', async () => {
+    const releases: ((server: unknown) => void)[] = []
     mockGattConnect.mockImplementation(
       () =>
         new Promise((resolve) => {
-          releaseConnect = resolve as (server: unknown) => void
+          releases.push(resolve as (server: unknown) => void)
         })
     )
     const { result } = renderHook(() => useBluetoothHRM())
@@ -337,13 +337,15 @@ describe('useBluetoothHRM Race Conditions', () => {
     })
     await waitFor(() => expect(mockGattConnect).toHaveBeenCalledTimes(1))
 
-    let secondResult: boolean | undefined
-    await act(async () => {
-      secondResult = await result.current.connectAndStream()
+    let secondPromise!: Promise<boolean>
+    act(() => {
+      secondPromise = result.current.connectAndStream()
     })
-
-    expect(secondResult).toBe(false)
-    expect(mockGattConnect).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      await expect(firstPromise).rejects.toMatchObject({ name: 'AbortError' })
+    })
+    expect(mockAbort).toHaveBeenCalled()
+    await waitFor(() => expect(mockGattConnect).toHaveBeenCalledTimes(2))
 
     const mockCharacteristic = {
       startNotifications: jest.fn().mockResolvedValue(undefined),
@@ -354,11 +356,11 @@ describe('useBluetoothHRM Race Conditions', () => {
       getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
     }
     await act(async () => {
-      releaseConnect({
+      releases[1]({
         getPrimaryService: jest.fn().mockResolvedValue(mockService),
         disconnect: jest.fn(),
       })
-      await expect(firstPromise).resolves.toBe(true)
+      await expect(secondPromise).resolves.toBe(true)
     })
     expect(result.current.isConnected).toBe(true)
   })
