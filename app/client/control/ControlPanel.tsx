@@ -68,7 +68,7 @@ const ControlPanel = () => {
       </Head>
       <Container
         data-testid="control-panel"
-        maxWidth="xs"
+        maxWidth="md"
         sx={{
           py: 1,
           px: 1,
@@ -105,9 +105,19 @@ const ControlPanel = () => {
           </Typography>
         </Box>
 
-        <TimerControls />
-        <Box sx={{ height: 8 }} />
-        <SpotifyControls />
+        {/* Phones stack the cards; from md up they sit side by side
+            instead of a narrow column in the middle of the screen. */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 1,
+            alignItems: 'start',
+          }}
+        >
+          <TimerControls />
+          <SpotifyControls />
+        </Box>
       </Container>
     </>
   )

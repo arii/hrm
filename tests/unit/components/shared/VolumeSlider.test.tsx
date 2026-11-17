@@ -30,6 +30,23 @@ describe('components/shared/VolumeSlider', () => {
     expect(slider).toHaveAttribute('aria-valuetext', '50 percent')
   })
 
+  it('uses a custom accessible name when given one', () => {
+    render(
+      <VolumeSlider
+        volume={50}
+        muted={false}
+        onVolumeChange={() => {}}
+        onToggleMute={() => {}}
+        ariaLabel="Music volume"
+      />
+    )
+
+    expect(screen.getByRole('slider')).toHaveAttribute(
+      'aria-label',
+      'Music volume'
+    )
+  })
+
   it('should have the correct accessibility attributes when muted', () => {
     render(
       <VolumeSlider

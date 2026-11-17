@@ -167,7 +167,7 @@ export default function WorkoutPhaseGrid({
   } as CSSProperties
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && !data) {
       return (
         <Box
           display="flex"
@@ -198,7 +198,12 @@ export default function WorkoutPhaseGrid({
         ref={gridRef}
         data-testid="workout-phase-grid"
         style={fitStyle}
+        aria-busy={loading}
         sx={{
+          // A manual refresh keeps the cards and dims them until the
+          // reload lands, so the tap visibly does something.
+          opacity: loading && data ? 0.5 : 1,
+          transition: 'opacity 0.2s',
           display: 'grid',
           gap: 2,
           // Auto-fit shares the row however many phases the day has (2 share
@@ -288,6 +293,7 @@ export default function WorkoutPhaseGrid({
       {onRefresh && (
         <RefreshIconButton
           onClick={onRefresh}
+          spinning={loading}
           aria-label="refresh workout table"
           data-testid="refresh-icon-button"
           sx={(theme) => ({

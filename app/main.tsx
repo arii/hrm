@@ -14,7 +14,7 @@ import Providers from '@/components/Providers'
 import ScaledStage from '@/components/ScaledStage'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
-import { SPOTIFY_BAR_BOTTOM_OFFSET } from '@/constants/layout'
+import { FOOTER_HEIGHT_PX, SPOTIFY_BAR_BOTTOM_OFFSET } from '@/constants/layout'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
@@ -81,6 +81,16 @@ export default function Main({ children }: { children: React.ReactNode }) {
         exit="out"
         data-testid="main-content-layout"
         role="main"
+        // Short pages keep the footer above the nav (whose height the
+        // Spotify bar offset tracks) instead of floating mid-screen; the
+        // dashboard canvas sizes itself.
+        style={
+          isDashboard
+            ? undefined
+            : {
+                minHeight: `calc(100dvh - ${FOOTER_HEIGHT_PX}px - ${SPOTIFY_BAR_BOTTOM_OFFSET})`,
+              }
+        }
       >
         {children}
       </motion.main>

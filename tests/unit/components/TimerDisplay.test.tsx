@@ -2,6 +2,7 @@
 
 import { jest } from '@jest/globals'
 import TimerDisplay, {
+  resolveTimerSummary,
   resolveTimerPhaseVisual,
   resolveWsDotColor,
   type TimerPhasePalette,
@@ -238,8 +239,9 @@ describe('TimerDisplay', () => {
       // Check for absolute positioned side labels
       // We can't easily use getComputedStyle in this JSDOM environment for absolute positioning
       // if it's set via MUI sx props and not in actual CSS, but we can check the presence of the text
-      expect(flexContainer).toHaveTextContent('TABATA')
-      expect(flexContainer).toHaveTextContent('WORK:30s REST:15s')
+      expect(screen.getByTestId('timer-work-rest-badge')).toHaveTextContent(
+        'TABATA · WORK: 30s · REST: 15s'
+      )
     })
   })
 })
@@ -275,5 +277,29 @@ describe('TimerDisplay beep volume', () => {
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: false })
     fireEvent.change(slider, { target: { value: 0 } })
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: true })
+  })
+})
+
+describe('resolveTimerSummary', () => {
+  it('shows only the intervals before a Tabata starts', () => {
+    expect(
+      resolveTimerSummary({
+        mode: 'TABATA',
+        currentPhase: 'IDLE',
+        workDuration: 20,
+        restDuration: 10,
+      })
+    ).toBe('WORK: 20s · REST: 10s')
+  })
+
+  it('names the mode once running and omits intervals for a stopwatch', () => {
+    expect(
+      resolveTimerSummary({
+        mode: 'STOPWATCH',
+        currentPhase: 'RUNNING',
+        workDuration: 20,
+        restDuration: 10,
+      })
+    ).toBe('STOPWATCH')
   })
 })
