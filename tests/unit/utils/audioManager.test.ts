@@ -8,6 +8,33 @@ describe('audioManager beep preference', () => {
     audioManager.setVolume(70)
   })
 
+  it('adopts a mute or volume change made in another tab', () => {
+    const listener = jest.fn()
+    const unsubscribe = audioManager.subscribe(listener)
+    localStorage.setItem('hrm-timer-muted', 'true')
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'hrm-timer-muted' })
+    )
+    expect(audioManager.getPreference()).toEqual({ volume: 70, muted: true })
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    localStorage.setItem('hrm-timer-volume', '35')
+    localStorage.setItem('hrm-timer-muted', 'false')
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'hrm-timer-volume' })
+    )
+    expect(audioManager.getPreference()).toEqual({ volume: 35, muted: false })
+    unsubscribe()
+  })
+
+  it('ignores storage changes to unrelated keys', () => {
+    localStorage.setItem('hrm-timer-muted', 'true')
+    window.dispatchEvent(
+      new StorageEvent('storage', { key: 'hrm-preferred-volume' })
+    )
+    expect(audioManager.getMuted()).toBe(false)
+  })
+
   it('persists volume and mute under the timer-only keys', () => {
     audioManager.setVolume(40)
     audioManager.setMuted(true)

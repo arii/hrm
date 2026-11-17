@@ -56,4 +56,54 @@ test.describe('Timer audio', () => {
 
     await stopTimer(controlPage, dashboardPage)
   })
+
+  test('muting beeps in one dashboard tab silences the other tabs', async ({
+    dashboardPage,
+    controlPage,
+  }) => {
+    test.setTimeout(60_000)
+
+    const context = dashboardPage.context()
+    await context.addInitScript(() => {
+      const log: PlayLog = { calls: [] }
+      ;(window as unknown as { __audioLog: PlayLog }).__audioLog = log
+      const originalPlay = HTMLMediaElement.prototype.play
+      HTMLMediaElement.prototype.play = function play() {
+        if (!this.muted && this.volume > 0) log.calls.push(this.src)
+        return originalPlay.call(this)
+      }
+    })
+    const otherTab = await context.newPage()
+    for (const tab of [dashboardPage, otherTab]) {
+      await tab.goto('/')
+      await waitForPageReady(tab)
+      await tab.mouse.click(5, 5)
+    }
+    const audiblePlays = () =>
+      otherTab.evaluate(
+        () =>
+          (window as unknown as { __audioLog: PlayLog }).__audioLog.calls.length
+      )
+    await expect.poll(audiblePlays).toBe(2)
+
+    await dashboardPage
+      .getByRole('button', { name: 'Mute timer beeps' })
+      .click()
+    await expect(
+      otherTab.getByRole('button', { name: 'Unmute timer beeps' })
+    ).toBeVisible()
+
+    await controlPage.goto('/client/control')
+    await waitForPageReady(controlPage)
+    await startTimer(controlPage)
+    // The countdown and WORK beeps have both fired once WORK shows.
+    await expect(otherTab.getByTestId('timer-phase')).toHaveText('WORK', {
+      timeout: 30_000,
+    })
+    await otherTab.waitForTimeout(1000)
+    expect(await audiblePlays()).toBe(2)
+
+    await stopTimer(controlPage, dashboardPage)
+    await otherTab.close()
+  })
 })
