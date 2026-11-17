@@ -8,6 +8,7 @@ import type { ConnectToGattFn } from './useGattConnect'
 
 interface UseStuckConnectDetectorParams {
   isConnecting: MutableRefObject<boolean>
+  connectionAttemptRef: MutableRefObject<number>
   radioProgressAtRef: MutableRefObject<number>
   waitingDeviceRef: MutableRefObject<BluetoothDevice | null>
   isManualDisconnect: MutableRefObject<boolean>
@@ -52,7 +53,12 @@ export const useStuckConnectDetector = (
         { device: device?.name, episode: p.stuckResetsRef.current },
         'stuck connect, auto-resetting'
       )
-      void p.hardResetRadio('stuck connect').then(() => {
+      // The reset claims ownership synchronously; a tap or Reset during its
+      // unwind claims again and owns the radio from then on.
+      const reset = p.hardResetRadio('stuck connect')
+      const resetToken = p.connectionAttemptRef.current
+      void reset.then(() => {
+        if (p.connectionAttemptRef.current !== resetToken) return
         if (!firstEpisode) {
           p.onGiveUp()
           return

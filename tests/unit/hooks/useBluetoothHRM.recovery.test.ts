@@ -272,6 +272,9 @@ describe('useBluetoothHRM in-page recovery', () => {
     await act(async () => {
       await jest.advanceTimersByTimeAsync(60000 + STUCK_CONNECT_TIMEOUT_MS * 2)
     })
+    // The 60s poll's wake attempt is the one hanging in service discovery.
+    expect(mockGatt.connect).toHaveBeenCalled()
+    expect(mockGatt.getPrimaryService).toHaveBeenCalled()
     expect(loggedMessages('warn')).not.toContain(
       'stuck connect, auto-resetting'
     )

@@ -467,6 +467,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   useStuckConnectDetector({
     isConnecting,
+    connectionAttemptRef,
     radioProgressAtRef,
     waitingDeviceRef,
     isManualDisconnect,
