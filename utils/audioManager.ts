@@ -38,6 +38,15 @@ class AudioManager {
     if (typeof window !== 'undefined') {
       this.preference = this.readStoredPreference()
       this.initializeAudio()
+      window.addEventListener('storage', this.handleStorage)
+    }
+  }
+
+  // Every open dashboard tab plays the beeps, so a change in one tab
+  // must reach the others or they keep beeping at the old level.
+  private handleStorage = (event: StorageEvent) => {
+    if (event.key === BEEP_VOLUME_KEY || event.key === BEEP_MUTED_KEY) {
+      this.applyPreference(this.readStoredPreference())
     }
   }
 
@@ -69,27 +78,36 @@ class AudioManager {
 
   // Muted elements run at zero so the unlock play() stays silent too.
   private applyVolume() {
-    const level = this.preference.muted ? 0 : this.preference.volume / 100
-    if (this.shortBeep) this.shortBeep.volume = level
-    if (this.longBeep) this.longBeep.volume = level
+    const { muted } = this.preference
+    const level = muted ? 0 : this.preference.volume / 100
+    for (const beep of [this.shortBeep, this.longBeep]) {
+      if (!beep) continue
+      beep.volume = level
+      beep.muted = muted
+    }
   }
 
-  private updatePreference(next: BeepPreference) {
+  private applyPreference(next: BeepPreference): boolean {
     if (
       next.volume === this.preference.volume &&
       next.muted === this.preference.muted
     ) {
-      return
+      return false
     }
     this.preference = next
     this.applyVolume()
+    this.listeners.forEach((listener) => listener())
+    return true
+  }
+
+  private updatePreference(next: BeepPreference) {
+    if (!this.applyPreference(next)) return
     try {
       window.localStorage.setItem(BEEP_VOLUME_KEY, String(next.volume))
       window.localStorage.setItem(BEEP_MUTED_KEY, String(next.muted))
     } catch (e) {
       logger.warn('[AudioManager] Could not persist beep preference:', e)
     }
-    this.listeners.forEach((listener) => listener())
   }
 
   /**
