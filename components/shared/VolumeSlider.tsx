@@ -23,6 +23,8 @@ interface VolumeSliderProps {
   sliderColor?: string
   size?: 'small' | 'medium'
   disabled?: boolean
+  /** Shown as a tooltip while disabled, so the user knows why. */
+  disabledReason?: string
   sx?: SxProps<Theme>
 }
 
@@ -67,6 +69,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   sliderColor,
   size = 'small',
   disabled = false,
+  disabledReason,
   sx,
 }) => {
   const handleVolumeChange = useCallback(
@@ -98,6 +101,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         ...sx,
       }}
       data-testid="volume-slider-container"
+      title={disabled ? disabledReason : undefined}
     >
       <IconButton
         size={size}
