@@ -322,7 +322,6 @@ const TimerDisplay = () => {
               fontWeight: 700,
               fontSize: { xs: '0.9rem', sm: '1rem' },
               letterSpacing: 1,
-              whiteSpace: 'nowrap',
             }}
           >
             {timerSummary}

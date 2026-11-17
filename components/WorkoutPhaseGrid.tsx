@@ -202,7 +202,7 @@ export default function WorkoutPhaseGrid({
         sx={{
           // A manual refresh keeps the cards and dims them until the
           // reload lands, so the tap visibly does something.
-          opacity: loading ? 0.5 : 1,
+          opacity: loading && data ? 0.5 : 1,
           transition: 'opacity 0.2s',
           display: 'grid',
           gap: 2,
