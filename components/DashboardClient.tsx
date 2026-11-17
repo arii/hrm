@@ -11,7 +11,8 @@ import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useInScaledStage } from '@/components/ScaledStage'
 import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
-import { HrmDataContext } from '@/context/WebSocketContext'
+import { ConnectionContext, HrmDataContext } from '@/context/WebSocketContext'
+import { DashboardTimerControlProvider } from '@/components/DashboardTimerControl'
 import {
   DASHBOARD_SHELL_HEIGHT,
   DASHBOARD_TOP_ROW_HEIGHT_MD,
@@ -100,6 +101,9 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
   // component still renders without a provider (unit tests, stories).
   const hrmData = useContext(HrmDataContext)
   const hrCount = Array.isArray(hrmData) ? hrmData.length : 0
+  // Start/Stop controls need the socket; without a provider the timer and
+  // workout cards stay display-only.
+  const hasConnection = useContext(ConnectionContext) !== null
 
   const handleRefresh = () => {
     setRefreshKey((prevKey) => prevKey + 1)
@@ -109,7 +113,7 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
   const missingConfigMsg =
     'Google Doc ID not found. Please check GOOGLE_DOC_WORKOUT_URL.'
 
-  return (
+  const shell = (
     <Box
       sx={{
         backgroundColor: 'background.default',
@@ -194,6 +198,12 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
         </Box>
       </Container>
     </Box>
+  )
+
+  return hasConnection ? (
+    <DashboardTimerControlProvider>{shell}</DashboardTimerControlProvider>
+  ) : (
+    shell
   )
 }
 
