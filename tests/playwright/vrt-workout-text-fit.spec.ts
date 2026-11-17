@@ -12,6 +12,7 @@
 import { expect, type Page } from '@playwright/test'
 import { test } from './fixtures'
 import { waitForPageReady } from './lib/waits'
+import { freezeUIForVRT } from './lib/setup'
 import { takeScreenshot } from './lib/visual'
 
 // Content shapes the fit must handle on one canvas: short names, long
@@ -47,7 +48,11 @@ const blockWebFonts = (page: Page): void => {
 
 const SCALED_ROUTE = '/?testing=true'
 
+// The page-entrance spring (pageVariants y: 20 -> 0) moves the grid for
+// ~400ms after load, which the frame-stability check would read as a
+// layout step.
 const openWorkoutGrid = async (page: Page): Promise<void> => {
+  await freezeUIForVRT(page)
   await page.goto(SCALED_ROUTE)
   await waitForPageReady(page)
   const grid = page.getByTestId('workout-phase-grid')
