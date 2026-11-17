@@ -529,7 +529,11 @@ export async function configureTimer(
  * @param controlPage - The control panel Page object
  */
 export async function startTimer(controlPage: Page): Promise<void> {
-  await controlPage.click('button:has-text("START")', { force: true })
+  // START stays disabled until the control socket connects; a forced click
+  // on the disabled button is silently dropped.
+  const startButton = controlPage.locator('button:has-text("START")')
+  await expect(startButton).toBeEnabled({ timeout: 15_000 })
+  await startButton.click()
 
   // Verify timer started
   const stopButton = controlPage.getByRole('button', {
