@@ -6,18 +6,20 @@ import {
   type SetStateAction,
 } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import { clientEnv } from '@/lib/env-client'
-import { cancellablePromise } from '@/utils/promise'
+import { abortableSleep, cancellablePromise } from '@/utils/promise'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BUSY_RETRY_DELAYS_MS,
   QUIET_STRAP_RETRY_DELAYS_MS,
+  SETUP_DROP_RETRY_DELAYS_MS,
 } from '@/constants/bluetooth-reconnection'
 import {
   applyGattFailure,
   classifyGattConnectError,
+  classifyGattFailure,
 } from './gattClassification'
 import { setupBatteryNotifications } from './batteryNotifications'
 import { HR_CHARACTERISTIC_UUID, HR_SERVICE_UUID } from './constants'
@@ -35,6 +37,8 @@ interface UseGattConnectParams {
   connectionAttemptRef: MutableRefObject<number>
   reconnectHaltedRef: MutableRefObject<boolean>
   isConnecting: MutableRefObject<boolean>
+  beginRadioOp: () => () => void
+  markRadioProgress: () => void
   isManualDisconnect: MutableRefObject<boolean>
   isTimeoutDisconnect: MutableRefObject<boolean>
   isUnmountedRef: MutableRefObject<boolean>
@@ -61,6 +65,8 @@ export const useGattConnect = ({
   connectionAttemptRef,
   reconnectHaltedRef,
   isConnecting,
+  beginRadioOp,
+  markRadioProgress,
   isManualDisconnect,
   isTimeoutDisconnect,
   isUnmountedRef,
@@ -137,11 +143,11 @@ export const useGattConnect = ({
    * setter-only.
    */
   const handleGattFailure = useCallback(
-    (device: BluetoothDevice, error: unknown): unknown =>
+    (device: BluetoothDevice, error: unknown, aborted: boolean): unknown =>
       applyGattFailure({
         device,
         error,
-        aborted: abortControllerRef.current?.signal.aborted ?? false,
+        aborted,
         connectedDeviceRef,
         reconnectHaltedRef,
         setStatus,
@@ -166,12 +172,166 @@ export const useGattConnect = ({
 
       // Capture, don't claim: quiet-retries below yield to newer ops.
       const connectAttemptToken = connectionAttemptRef.current
+      const ownsAttempt = () =>
+        connectionAttemptRef.current === connectAttemptToken
 
-      // Reaching here means no attempt is in flight (guard above) and the
-      // previous controller was cleared in finally: start clean. Mid-flight
-      // cancellation is owned solely by disconnect().
-      isConnecting.current = true
-      abortControllerRef.current = new AbortController()
+      // Per-attempt controller: a Connect tap or Reset that takes over
+      // aborts this one, and the next attempt's controller never shares
+      // its signal.
+      const endRadioOp = beginRadioOp()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+      const { signal } = controller
+      // Every completed step counts as progress for the stuck detector.
+      const throwIfAborted = () => {
+        markRadioProgress()
+        if (signal.aborted) {
+          throw new DOMException('Connection aborted', 'AbortError')
+        }
+      }
+
+      /**
+       * Opens the GATT link: adopts a live one, else connects with the
+       * busy and quiet-strap retry schedules. Resolves undefined when a
+       * quiet retry is cancelled by a newer operation.
+       */
+      const openLink = async (): Promise<
+        BluetoothRemoteGATTServer | undefined
+      > => {
+        // Proactive adoption: a previous attempt (or a previous page load)
+        // may have left the OS link up while this state machine thinks it
+        // is down. Discovery on the live link costs zero radio ops and
+        // cannot collide with anything; only connect() when the link is
+        // down.
+        if (device.gatt?.connected) {
+          logger.info(
+            { device: device.name },
+            'GATT link already up; adopting without a radio call.'
+          )
+          return device.gatt
+        }
+        let busyRetries = 0
+        let quietRetries = 0
+        // Busy retries (up to 3) plus quiet-strap retries (up to 3) share
+        // this loop; each path is bounded by its own counter below.
+        const maxAttempts =
+          1 + BUSY_RETRY_DELAYS_MS.length + QUIET_STRAP_RETRY_DELAYS_MS.length
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          markRadioProgress()
+          try {
+            return await cancellablePromise(device.gatt!.connect(), {
+              timeoutMs: 20000,
+              errorMessage: 'GATT connection timeout',
+              signal,
+            })
+          } catch (error) {
+            // Retry policy is pure (see classifyGattConnectError); this
+            // block only executes the action: UI writes, sleeps, and the
+            // post-sleep re-checks.
+            const action = classifyGattConnectError(String(error), {
+              linkUp: device.gatt?.connected ?? false,
+              aborted: signal.aborted,
+              attempt,
+              busyRetriesUsed: busyRetries,
+              quietRetriesUsed: quietRetries,
+              retryQuietStrap,
+              manualDisconnect: isManualDisconnect.current,
+              unmounted: isUnmountedRef.current,
+              ownershipCurrent: ownsAttempt(),
+            })
+            if (action.kind === 'adopt-live-link') {
+              logger.info(
+                { device: device.name },
+                'GATT link is up despite connect error; adopting it.'
+              )
+              return device.gatt
+            }
+            if (action.kind === 'busy-retry') {
+              busyRetries++
+              logger.warn(
+                {
+                  device: device.name,
+                  attempt,
+                  retry: action.retryNumber,
+                  maxRetries: BUSY_RETRY_DELAYS_MS.length,
+                },
+                'GATT connection busy, retrying with backoff...'
+              )
+              // Progress is UI-owned: only the current attempt may write it,
+              // so a superseded silent retry never clobbers a newer manual
+              // operation's message (same ownership rule as autoConnect).
+              if (ownsAttempt()) {
+                setStatus(BluetoothConnectionStatus.CONNECTING)
+                setCustomStatusMessage(
+                  BLUETOOTH_MESSAGES.deviceBusy(
+                    action.delayMs,
+                    action.retryNumber,
+                    BUSY_RETRY_DELAYS_MS.length
+                  )
+                )
+              }
+              markRadioProgress()
+              await abortableSleep(action.delayMs, signal)
+              continue
+            }
+            if (action.kind === 'quiet-retry') {
+              // Cancelled by a manual disconnect, unmount, or any newer
+              // operation (ownership token); on cancel resolve undefined
+              // ("someone else owns the radio") instead of throwing.
+              quietRetries++
+              logger.info(
+                {
+                  device: device.name,
+                  retry: action.retryNumber,
+                  maxRetries: QUIET_STRAP_RETRY_DELAYS_MS.length,
+                },
+                'Strap quiet, retrying shortly...'
+              )
+              // Surface the wait so the user sees progress instead of a
+              // stuck "Connecting..." (and doesn't tap mid-retry). Gated on
+              // the ownership token like the busy write above.
+              if (ownsAttempt()) {
+                setStatus(BluetoothConnectionStatus.CONNECTING)
+                setCustomStatusMessage(
+                  BLUETOOTH_MESSAGES.quietStrapRetry(
+                    action.retryNumber,
+                    QUIET_STRAP_RETRY_DELAYS_MS.length
+                  )
+                )
+              }
+              markRadioProgress()
+              await abortableSleep(action.delayMs, signal)
+              if (
+                !isManualDisconnect.current &&
+                !isUnmountedRef.current &&
+                ownsAttempt()
+              ) {
+                continue
+              }
+              return undefined
+            }
+            throw error
+          }
+        }
+        // Every retry path above is bounded by the classifier, so running
+        // out of loop iterations means the policy and maxAttempts drifted.
+        throw new Error('GATT connection failed: retry budget exhausted')
+      }
+
+      /** Service discovery through the first HR notification setup. */
+      const subscribe = async (server: BluetoothRemoteGATTServer) => {
+        const service = await server.getPrimaryService(HR_SERVICE_UUID)
+        throwIfAborted()
+        const characteristic = await service.getCharacteristic(
+          HR_CHARACTERISTIC_UUID
+        )
+        throwIfAborted()
+        await setupBatteryNotifications(server, setBatteryLevel)
+        throwIfAborted()
+        await characteristic.startNotifications()
+        throwIfAborted()
+        return characteristic
+      }
 
       try {
         connectedDeviceRef.current = device
@@ -183,151 +343,51 @@ export const useGattConnect = ({
           )
         }
 
-        // Proactive adoption: a previous attempt (or a previous page load)
-        // may have left the OS link up while this state machine thinks it
-        // is down — bluetooth-internals connected, page dead, no data.
-        // Discovery on the live link costs zero radio ops and cannot
-        // collide with anything; only connect() when the link is down.
-        let server: BluetoothRemoteGATTServer | undefined = device.gatt
-          ?.connected
-          ? device.gatt
-          : undefined
-        if (server) {
-          logger.info(
-            { device: device.name },
-            'GATT link already up; adopting without a radio call.'
-          )
-        }
-        let busyRetries = 0
-        let quietRetries = 0
-        let lastError: unknown = null
-        // Busy retries (≤3) plus quiet-strap retries (≤3) share this
-        // loop; each path is bounded by its own counter below.
-        for (
-          let attempt = 1;
-          !server &&
-          attempt <=
-            BUSY_RETRY_DELAYS_MS.length + QUIET_STRAP_RETRY_DELAYS_MS.length;
-          attempt++
-        ) {
+        for (let setupDrops = 0; ; setupDrops++) {
+          const server = await openLink()
+          if (!server) return false
+
+          if (signal.aborted) {
+            server.disconnect()
+            throwIfAborted()
+          }
+
+          // Attach the disconnect listener before discovery so a drop
+          // during setup is seen. While this attempt holds the radio,
+          // onDisconnected leaves the drop to the retry below.
+          swapDisconnectListener(device)
+
           try {
-            server = await cancellablePromise(device.gatt!.connect(), {
-              timeoutMs: 20000,
-              errorMessage: 'GATT connection timeout',
-              signal: abortControllerRef.current.signal,
-            })
+            swapHrListener(await subscribe(server))
             break
           } catch (error) {
-            // Retry policy is pure (see classifyGattConnectError); this
-            // block only executes the action: UI writes, sleeps, and the
-            // post-sleep re-checks.
-            const action = classifyGattConnectError(String(error), {
-              linkUp: device.gatt?.connected ?? false,
-              aborted: abortControllerRef.current?.signal.aborted ?? false,
-              attempt,
-              busyRetriesUsed: busyRetries,
-              quietRetriesUsed: quietRetries,
-              retryQuietStrap,
-              manualDisconnect: isManualDisconnect.current,
-              unmounted: isUnmountedRef.current,
-              ownershipCurrent:
-                connectionAttemptRef.current === connectAttemptToken,
-            })
-            if (action.kind === 'adopt-live-link') {
-              logger.info(
-                { device: device.name },
-                'GATT link is up despite connect error; adopting it.'
-              )
-              server = device.gatt
-              break
+            const delay = SETUP_DROP_RETRY_DELAYS_MS[setupDrops]
+            const retryable =
+              delay !== undefined &&
+              !signal.aborted &&
+              ownsAttempt() &&
+              !isManualDisconnect.current &&
+              !isUnmountedRef.current &&
+              classifyGattFailure(error, false) ===
+                'disconnected-during-connect'
+            if (!retryable) throw error
+            logger.warn(
+              {
+                device: device.name,
+                retry: setupDrops + 1,
+                maxRetries: SETUP_DROP_RETRY_DELAYS_MS.length,
+                error,
+              },
+              'Link dropped during setup; reconnecting'
+            )
+            try {
+              device.gatt?.disconnect()
+            } catch {
+              // Already down: nothing to close.
             }
-            if (action.kind === 'busy-retry') {
-              busyRetries++
-              logger.warn(
-                { device: device.name, attempt },
-                'GATT connection busy, retrying with backoff...'
-              )
-              // Progress is UI-owned: only the current attempt may write it,
-              // so a superseded silent retry never clobbers a newer manual
-              // operation's message (same ownership rule as autoConnect).
-              if (connectionAttemptRef.current === connectAttemptToken) {
-                setStatus(BluetoothConnectionStatus.CONNECTING)
-                setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.deviceBusy(
-                    action.delayMs,
-                    action.retryNumber,
-                    BUSY_RETRY_DELAYS_MS.length
-                  )
-                )
-              }
-              await new Promise((res) => setTimeout(res, action.delayMs))
-              continue
-            }
-            if (action.kind === 'quiet-retry') {
-              // Cancelled by a manual disconnect, unmount, or any newer
-              // operation (ownership token); on cancel return false like
-              // the in-flight guard ("someone else owns the radio")
-              // instead of throwing.
-              quietRetries++
-              logger.info(
-                { device: device.name, attempt: action.retryNumber },
-                'Strap quiet, retrying shortly...'
-              )
-              // Surface the wait so the user sees progress instead of a
-              // stuck "Connecting..." (and doesn't tap mid-retry). Gated on
-              // the ownership token like the busy write above.
-              if (connectionAttemptRef.current === connectAttemptToken) {
-                setStatus(BluetoothConnectionStatus.CONNECTING)
-                setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.quietStrapRetry(
-                    action.retryNumber,
-                    QUIET_STRAP_RETRY_DELAYS_MS.length
-                  )
-                )
-              }
-              await new Promise((res) => setTimeout(res, action.delayMs))
-              if (
-                !isManualDisconnect.current &&
-                !isUnmountedRef.current &&
-                connectionAttemptRef.current === connectAttemptToken
-              ) {
-                continue
-              }
-              return false
-            }
-            lastError = error
-            throw error
+            await abortableSleep(delay, signal)
           }
         }
-
-        // Unreachable in practice (every path above breaks, throws, or
-        // returns), but a silent fall-through with no server would crash
-        // service discovery confusingly — fail loudly instead.
-        if (!server) {
-          throw lastError instanceof Error
-            ? lastError
-            : new Error('GATT connection failed')
-        }
-
-        if (abortControllerRef.current?.signal.aborted) {
-          server?.disconnect()
-          throw new DOMException('Connection aborted', 'AbortError')
-        }
-
-        // Attach disconnect listener immediately after successful GATT connection
-        // This ensures we catch disconnections that might occur during service discovery
-        swapDisconnectListener(device)
-
-        const service = await server!.getPrimaryService(HR_SERVICE_UUID)
-        const characteristic = await service.getCharacteristic(
-          HR_CHARACTERISTIC_UUID
-        )
-
-        await setupBatteryNotifications(server!, setBatteryLevel)
-
-        await characteristic.startNotifications()
-
-        swapHrListener(characteristic)
 
         setStatus(BluetoothConnectionStatus.CONNECTED)
         setCustomStatusMessage(
@@ -346,17 +406,18 @@ export const useGattConnect = ({
         onConnectRef.current?.()
         return true
       } catch (error) {
-        throw handleGattFailure(device, error)
+        throw handleGattFailure(device, error, signal.aborted)
       } finally {
-        isConnecting.current = false
-        // Clear the settled controller so a later fresh attempt never
-        // "aborts" a stale one (the isConnecting guard above is the only
-        // overlap protection needed).
-        abortControllerRef.current = null
+        endRadioOp()
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null
+        }
       }
     },
     [
       isConnecting,
+      beginRadioOp,
+      markRadioProgress,
       connectedDeviceRef,
       setStatus,
       setCustomStatusMessage,

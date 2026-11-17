@@ -27,9 +27,18 @@ describe('Bluetooth Message Constants', () => {
       )
     })
 
-    it('should have the correct string for devicePermissionsRevoked', () => {
-      expect(BLUETOOTH_MESSAGES.devicePermissionsRevoked).toBe(
-        'Device permissions revoked. Ready for new connection.'
+    it('should have the correct string for deviceForgotten', () => {
+      expect(BLUETOOTH_MESSAGES.deviceForgotten).toBe(
+        'Strap forgotten. Tap Connect and pick it again.'
+      )
+    })
+
+    it('names the tab holding the strap', () => {
+      expect(BLUETOOTH_MESSAGES.otherTabHoldsDevice('HR6')).toBe(
+        'HR6 is connected in another tab. Tap Connect to use it here.'
+      )
+      expect(BLUETOOTH_MESSAGES.deviceMovedToOtherTab('HR6')).toBe(
+        'HR6 moved to another tab.'
       )
     })
 
@@ -114,9 +123,9 @@ describe('Bluetooth Message Constants', () => {
       )
     })
 
-    it('should have the correct string for errorClearingPermissions', () => {
-      expect(BLUETOOTH_MESSAGES.errorClearingPermissions).toBe(
-        'Error clearing device permissions.'
+    it('names a stuck connect and the reload fallback', () => {
+      expect(BLUETOOTH_MESSAGES.connectStuck).toBe(
+        'Bluetooth connect got stuck twice. Tap Connect to try again, or reload the page.'
       )
     })
 

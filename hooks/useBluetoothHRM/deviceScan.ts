@@ -1,4 +1,4 @@
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { BATTERY_SERVICE_UUID, HR_SERVICE_UUID } from './constants'
@@ -37,11 +37,13 @@ export const resolveConnectDevice = async (
  * Chrome refuses gatt.connect() on a getDevices() device until a scan has
  * seen it in this browser session; the watch is that scan. Resolves true
  * on an advertisement and false on timeout or when watching is
- * unsupported or rejected. The watch is always stopped before resolving.
+ * unsupported or rejected, and false as soon as signal aborts. The watch is
+ * always stopped before resolving.
  */
 export const waitForAdvertisement = (
   device: BluetoothDevice,
-  timeoutMs: number
+  timeoutMs: number,
+  signal?: AbortSignal
 ): Promise<boolean> => {
   if (typeof device.watchAdvertisements !== 'function') {
     return Promise.resolve(false)
@@ -53,12 +55,19 @@ export const waitForAdvertisement = (
       if (settled) return
       settled = true
       clearTimeout(timer)
+      signal?.removeEventListener('abort', onCancel)
       device.removeEventListener('advertisementreceived', onAdvertisement)
       watchAbort.abort()
       resolve(seen)
     }
     const onAdvertisement = () => finish(true)
-    const timer = setTimeout(() => finish(false), timeoutMs)
+    const onCancel = () => finish(false)
+    const timer = setTimeout(onCancel, timeoutMs)
+    if (signal?.aborted) {
+      onCancel()
+      return
+    }
+    signal?.addEventListener('abort', onCancel, { once: true })
     const onWatchFailed = (error: unknown) => {
       if (watchAbort.signal.aborted) return
       logger.warn(

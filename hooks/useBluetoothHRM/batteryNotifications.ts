@@ -1,4 +1,4 @@
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import {
   BATTERY_LEVEL_CHARACTERISTIC_UUID,
   BATTERY_SERVICE_UUID,

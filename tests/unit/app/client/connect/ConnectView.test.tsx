@@ -64,6 +64,33 @@ describe('ConnectView', () => {
     signalPeriodMs: 1000,
   }
 
+  describe('connection diagnostics', () => {
+    it('offers the reload link only once in-page recovery gave up', () => {
+      const { rerender } = render(<ConnectView {...mockProps} />)
+      expect(screen.queryByTestId('reload-fallback')).not.toBeInTheDocument()
+      rerender(<ConnectView {...mockProps} showReloadFallback />)
+      expect(screen.getByTestId('reload-fallback')).toHaveTextContent(
+        'Still stuck? Reload page'
+      )
+    })
+
+    it('copies the connection log to the clipboard', async () => {
+      const writeText = jest.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      })
+      render(<ConnectView {...mockProps} />)
+      fireEvent.click(screen.getByTestId('copy-connection-log'))
+      await waitFor(() =>
+        expect(screen.getByTestId('copy-connection-log')).toHaveTextContent(
+          'Connection log copied'
+        )
+      )
+      expect(writeText.mock.calls[0][0]).toMatch(/^HRM connection log, tab /)
+    })
+  })
+
   it('renders the reset button when bluetooth is not supported', () => {
     render(<ConnectView {...mockProps} isSupported={false} />)
     const resetButton = screen.getByRole('button', {

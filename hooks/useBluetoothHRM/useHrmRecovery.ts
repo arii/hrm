@@ -6,7 +6,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
@@ -22,6 +22,7 @@ interface UseHrmRecoveryParams {
   currentStatusRef: MutableRefObject<BluetoothConnectionStatus>
   connectToGattRef: MutableRefObject<ConnectToGattFn | null>
   claimConnectionAttempt: () => void
+  connectionAttemptRef: MutableRefObject<number>
   reconnectHaltedRef: MutableRefObject<boolean>
   isConnecting: MutableRefObject<boolean>
   isManualDisconnect: MutableRefObject<boolean>
@@ -44,6 +45,7 @@ export const useHrmRecovery = ({
   currentStatusRef,
   connectToGattRef,
   claimConnectionAttempt,
+  connectionAttemptRef,
   reconnectHaltedRef,
   isConnecting,
   isManualDisconnect,
@@ -278,13 +280,18 @@ export const useHrmRecovery = ({
 
       setCustomStatusMessage(statusMessage)
 
+      const token = connectionAttemptRef.current
       reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null
         if (
           currentStatusRef.current !== BluetoothConnectionStatus.CONNECTED &&
           !isConnecting.current &&
           !isManualDisconnect.current
         ) {
           connectToGattRef.current?.(device, true).catch((error: unknown) => {
+            // Cancelled by a Connect tap, Reset, or disconnect: that newer
+            // operation owns the radio and the banner now.
+            if (connectionAttemptRef.current !== token) return
             logger.warn({ error }, 'Reconnect attempt failed')
             reconnect(
               device,
@@ -297,6 +304,7 @@ export const useHrmRecovery = ({
     [
       startWaitingForDevice,
       claimConnectionAttempt,
+      connectionAttemptRef,
       connectToGattRef,
       currentStatusRef,
       isConnecting,
@@ -321,9 +329,14 @@ export const useHrmRecovery = ({
           device: device.name,
           manual: isManualDisconnect.current,
           timeout: isTimeoutDisconnect.current,
+          midHandshake: isConnecting.current,
         },
         'Device disconnected'
       )
+      // A drop while a connect attempt holds the radio belongs to that
+      // attempt (its setup retry or its failure path). Starting a second
+      // recovery here would race it for the radio and the banner.
+      if (isConnecting.current) return
       setBatteryLevel(null)
       setStatus(BluetoothConnectionStatus.DISCONNECTED)
 
@@ -343,7 +356,7 @@ export const useHrmRecovery = ({
       reconnect(device, 'Connection lost')
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [reconnect, stopWaitingForDevice]
+    [reconnect, stopWaitingForDevice, isConnecting]
   )
 
   return {

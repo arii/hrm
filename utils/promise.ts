@@ -92,3 +92,26 @@ export const cancellablePromise = <T>(
     )
   })
 }
+
+/**
+ * Resolves after ms, or rejects with an AbortError as soon as the signal
+ * aborts, so a cancelled retry wait releases its caller immediately.
+ */
+export const abortableSleep = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const abortError = () =>
+      new DOMException('Connection cancelled', 'AbortError')
+    if (signal.aborted) {
+      reject(abortError())
+      return
+    }
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(abortError())
+    }
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal.addEventListener('abort', onAbort)
+  })

@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger, { recordConnectionEvent } from './useBluetoothHRM/connectionLog'
 import { useWebSocketConnection } from '@/context/WebSocketContext'
 import { useHrmMetadataSync } from '@/hooks/useHrmMetadataSync'
 import { clientEnv } from '@/lib/env-client'
 import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import { DATA_LIVENESS_TIMEOUT_MS } from '@/constants/bluetooth'
-import { PRE_CONNECT_ADVERTISEMENT_WAIT_MS } from '@/constants/bluetooth-reconnection'
+import {
+  OTHER_TAB_RELEASE_WAIT_MS,
+  PRE_CONNECT_ADVERTISEMENT_WAIT_MS,
+  RADIO_TAKEOVER_WAIT_MS,
+  RELOAD_FALLBACK_AFTER_FAILURES,
+} from '@/constants/bluetooth-reconnection'
 import {
   HEARTBEAT_INTERVAL_MS,
   statusMessageMap,
@@ -27,6 +32,11 @@ import { useHrSignalStats } from './useBluetoothHRM/useHrSignalStats'
 import { useHrmWatchdog } from './useBluetoothHRM/useHrmWatchdog'
 import { useHrmRecovery } from './useBluetoothHRM/useHrmRecovery'
 import { useGattConnect } from './useBluetoothHRM/useGattConnect'
+import { useStuckConnectDetector } from './useBluetoothHRM/useStuckConnectDetector'
+import {
+  DeviceHeldByOtherTabError,
+  useTabCoordination,
+} from './useBluetoothHRM/useTabCoordination'
 
 // Public API surface (tests and the connect page import from here); the
 // implementations live in the focused modules under useBluetoothHRM/.
@@ -145,10 +155,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectionAttemptRef,
     claimConnectionAttempt,
     isConnecting,
+    beginRadioOp,
+    releaseRadio,
+    markRadioProgress,
+    radioProgressAtRef,
     isManualDisconnect,
     isTimeoutDisconnect,
     isUnmountedRef,
   } = useConnectionOwnership()
+  // Consecutive failed manual connects and stuck-connect auto-resets since
+  // the last successful connect; they gate the reload fallback.
+  const [manualFailures, setManualFailures] = useState(0)
+  const [stuckGaveUp, setStuckGaveUp] = useState(false)
+  const stuckResetsRef = useRef(0)
+  const preWaitAbortRef = useRef<AbortController | null>(null)
 
   const {
     signalPeriodMs,
@@ -186,6 +206,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     currentStatusRef,
     connectToGattRef,
     claimConnectionAttempt,
+    connectionAttemptRef,
     reconnectHaltedRef,
     isConnecting,
     isManualDisconnect,
@@ -203,6 +224,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       connectionAttemptRef,
       reconnectHaltedRef,
       isConnecting,
+      beginRadioOp,
+      markRadioProgress,
       isManualDisconnect,
       isTimeoutDisconnect,
       isUnmountedRef,
@@ -219,14 +242,66 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
-  const disconnect = useCallback(() => {
+  // Cancels every radio activity this page started: the in-flight connect
+  // (and its retry waits), the pre-connect scan, the reconnect timer, and
+  // the wait for the strap. Claims ownership so nothing they still have in
+  // flight can write the banner afterwards.
+  const stopRadioActivity = useCallback(() => {
     claimConnectionAttempt()
+    abortInFlightConnect()
+    preWaitAbortRef.current?.abort()
+    preWaitAbortRef.current = null
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    stopWaitingForDevice()
+  }, [
+    claimConnectionAttempt,
+    abortInFlightConnect,
+    reconnectTimeoutRef,
+    stopWaitingForDevice,
+  ])
+
+  /**
+   * In-page equivalent of a reload for the radio state: stop all activity,
+   * drop listeners, close a half-open link, clear retry bookkeeping, and
+   * free the in-progress flag (waiting at most RADIO_TAKEOVER_WAIT_MS for
+   * the cancelled attempt to unwind).
+   */
+  const hardResetRadio = useCallback(
+    async (reason: string) => {
+      logger.info({ reason }, 'Resetting Bluetooth state in-page')
+      stopRadioActivity()
+      removeDisconnectListener()
+      removeHrListener()
+      const device = connectedDeviceRef.current
+      if (
+        device?.gatt?.connected &&
+        currentStatusRef.current !== BluetoothConnectionStatus.CONNECTED
+      ) {
+        device.gatt.disconnect()
+      }
+      reconnectAttempts.current = 0
+      reconnectHaltedRef.current = false
+      isTimeoutDisconnect.current = false
+      await releaseRadio(RADIO_TAKEOVER_WAIT_MS)
+    },
+    [
+      stopRadioActivity,
+      removeDisconnectListener,
+      removeHrListener,
+      reconnectAttempts,
+      isTimeoutDisconnect,
+      releaseRadio,
+    ]
+  )
+
+  const disconnect = useCallback(() => {
+    stopRadioActivity()
     isManualDisconnect.current = true
     isTimeoutDisconnect.current = false
     reconnectHaltedRef.current = false
-    abortInFlightConnect()
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-    stopWaitingForDevice()
     if (connectedDeviceRef.current?.gatt?.connected)
       connectedDeviceRef.current.gatt.disconnect()
 
@@ -240,30 +315,57 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectedDeviceRef.current = null
     resetSignalStats()
   }, [
-    claimConnectionAttempt,
-    abortInFlightConnect,
-    reconnectTimeoutRef,
-    stopWaitingForDevice,
+    stopRadioActivity,
     isManualDisconnect,
     isTimeoutDisconnect,
     setConnectionAttempted,
     resetSignalStats,
   ])
 
+  /**
+   * Reset: a true forget. Revokes this site's Bluetooth permission for the
+   * strap (device.forget(), which also ends its link in every tab), clears
+   * the saved strap, and resets the radio state in-page, so the next
+   * Connect opens the chooser in this same tab with no reload.
+   */
   const forgetDevice = useCallback(async () => {
-    logger.info('Initiating device forget sequence...')
+    const known = connectedDeviceRef.current ?? savedDevice
+    await hardResetRadio('reset')
     disconnect()
-    setConnectionAttempted(false)
+    Cookies.remove('hrm_device_id')
+    let permitted: BluetoothDevice[] = []
     try {
-      Cookies.remove('hrm_device_id')
-      setStatus(BluetoothConnectionStatus.DISCONNECTED)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.devicePermissionsRevoked)
-    } catch (e) {
-      logger.warn({ error: e }, 'Error during device forget')
-      setStatus(BluetoothConnectionStatus.ERROR)
-      setCustomStatusMessage(BLUETOOTH_MESSAGES.errorClearingPermissions)
+      permitted = (await navigator.bluetooth?.getDevices?.()) ?? []
+    } catch (error) {
+      logger.warn({ error }, 'Could not list permitted devices to forget')
     }
-  }, [disconnect, setConnectionAttempted])
+    const devices = new Set(known ? [known, ...permitted] : permitted)
+    for (const device of devices) {
+      if (typeof device.forget !== 'function') continue
+      try {
+        await device.forget()
+        logger.info({ device: device.name }, 'Forgot device permission')
+      } catch (error) {
+        logger.warn({ device: device.name, error }, 'device.forget() failed')
+      }
+    }
+    stuckResetsRef.current = 0
+    setManualFailures(0)
+    setStuckGaveUp(false)
+    setStatus(BluetoothConnectionStatus.DISCONNECTED)
+    setCustomStatusMessage(BLUETOOTH_MESSAGES.deviceForgotten)
+  }, [savedDevice, hardResetRadio, disconnect])
+
+  const { otherTabHolding, requestRelease } = useTabCoordination({
+    heldDevice:
+      status === BluetoothConnectionStatus.CONNECTED ? savedDevice : null,
+    onReleaseRequested: (deviceName) => {
+      disconnect()
+      setCustomStatusMessage(
+        BLUETOOTH_MESSAGES.deviceMovedToOtherTab(deviceName)
+      )
+    },
+  })
 
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = BLUETOOTH_MESSAGES.unknownError
@@ -338,20 +440,53 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       isUnmountedRef.current = true
       removeDisconnectListener()
       removeHrListener()
-      // Ref-stability caveat acknowledged: the timeout handle read at cleanup
-      // time is the one to clear; eslint-disable for the ref-in-cleanup rule.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // The timeout handle read at cleanup time is the one to clear.
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
       stopWaitingForDevice()
+      abortInFlightConnect()
+      preWaitAbortRef.current?.abort()
       if (installedControls) teardownTestControls(installedControls)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // A live connection ends any wait (covers watcher, poll, and manual wins).
+  // A live connection ends any wait (covers watcher, poll, and manual wins)
+  // and closes the failure episode behind the reload fallback.
   useEffect(() => {
-    if (status === BluetoothConnectionStatus.CONNECTED) stopWaitingForDevice()
+    if (status !== BluetoothConnectionStatus.CONNECTED) return
+    stopWaitingForDevice()
+    stuckResetsRef.current = 0
+    setManualFailures(0)
+    setStuckGaveUp(false)
   }, [status, stopWaitingForDevice])
+
+  // Banner history for the copied connection log.
+  useEffect(() => {
+    recordConnectionEvent('info', 'Banner', { status, text: deviceStatus })
+  }, [status, deviceStatus])
+
+  useStuckConnectDetector({
+    isConnecting,
+    radioProgressAtRef,
+    waitingDeviceRef,
+    isManualDisconnect,
+    connectToGattRef,
+    getDevice: () => connectedDeviceRef.current ?? savedDevice,
+    hardResetRadio,
+    startWaitingForDevice,
+    stuckResetsRef,
+    onGiveUp: () => {
+      setStuckGaveUp(true)
+      setStatus(BluetoothConnectionStatus.ERROR)
+      setCustomStatusMessage(
+        BLUETOOTH_MESSAGES.errorWithDetails(BLUETOOTH_MESSAGES.connectStuck)
+      )
+    },
+    onNoDevice: () => {
+      setStatus(BluetoothConnectionStatus.DISCONNECTED)
+      setCustomStatusMessage(null)
+    },
+  })
 
   /**
    * Scans for a Bluetooth device, connects to it, and starts streaming heart rate data.
@@ -375,12 +510,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       if (currentStatusRef.current === BluetoothConnectionStatus.CONNECTED)
         return true
-      // A connection attempt is already driving the radio (auto or manual):
-      // don't open a second picker or handshake. The in-flight attempt owns
-      // the UI; returning false tells this caller it did not connect.
+      // A silent attempt never competes with one already driving the radio.
+      // A Connect tap does: it cancels the in-flight attempt (whatever state
+      // it is stuck in) and starts fresh, so a tap is never a no-op.
       if (isConnecting.current) {
-        logger.info('connectAndStream skipped: connection already in progress')
-        return false
+        if (silent) {
+          logger.info(
+            'connectAndStream skipped: connection already in progress'
+          )
+          return false
+        }
+        logger.info('Connect tapped mid-attempt; cancelling it and restarting')
+        setStatus(BluetoothConnectionStatus.CONNECTING)
+        setCustomStatusMessage(BLUETOOTH_MESSAGES.connecting)
+        await hardResetRadio('connect tapped mid-attempt')
       }
 
       // Manual (non-silent) attempts that actually proceed take UI ownership
@@ -422,6 +565,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (device) {
+          const holder = otherTabHolding(device)
+          if (holder) {
+            // Every tab shares one radio link to the strap: connecting here
+            // would drop the other tab's stream mid-workout. A silent
+            // attempt leaves it alone; a tap asks that tab to hand it over.
+            if (silent) throw new DeviceHeldByOtherTabError(holder.deviceName)
+            if (connectionAttemptRef.current === attemptToken) {
+              setCustomStatusMessage(
+                BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
+              )
+            }
+            await requestRelease(device, OTHER_TAB_RELEASE_WAIT_MS)
+            if (connectionAttemptRef.current !== attemptToken) return false
+          }
           attemptedDevice = device
           if (!device.gatt?.connected) {
             // Same in-flight lock as the GATT handshake: a concurrent
@@ -441,15 +598,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             // Capture, don't claim (as connectToGatt does): a disconnect or
             // newer manual attempt during the wait wins.
             const waitToken = connectionAttemptRef.current
-            isConnecting.current = true
+            const endRadioOp = beginRadioOp()
+            const waitAbort = new AbortController()
+            preWaitAbortRef.current = waitAbort
             let seen = false
             try {
               seen = await waitForAdvertisement(
                 device,
-                PRE_CONNECT_ADVERTISEMENT_WAIT_MS
+                PRE_CONNECT_ADVERTISEMENT_WAIT_MS,
+                waitAbort.signal
               )
             } finally {
-              isConnecting.current = false
+              endRadioOp()
+              if (preWaitAbortRef.current === waitAbort) {
+                preWaitAbortRef.current = null
+              }
             }
             logger.info(
               { device: device.name, seen },
@@ -476,7 +639,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           throw error
         }
         if (!silent) {
-          handleConnectionError(error)
+          // Only the attempt that still owns the UI reports its failure: a
+          // Reset, disconnect, or newer tap since then owns the banner.
+          if (connectionAttemptRef.current === attemptToken) {
+            handleConnectionError(error)
+            const cancelled =
+              error instanceof DOMException && error.name === 'NotFoundError'
+            if (!cancelled) setManualFailures((count) => count + 1)
+          }
           throw error
         }
         const errorMsg = error instanceof Error ? error.message : String(error)
@@ -513,6 +683,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       isConnecting,
       isManualDisconnect,
       connectionAttemptRef,
+      hardResetRadio,
+      otherTabHolding,
+      requestRelease,
+      beginRadioOp,
     ]
   )
 
@@ -581,6 +755,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     lastPeriodMs: signalStatus.last,
     consecutiveSlowPackets: signalStatus.slow,
     connectionAttempted,
+    showReloadFallback:
+      stuckGaveUp || manualFailures >= RELOAD_FALLBACK_AFTER_FAILURES,
   }
 }
 
