@@ -17,12 +17,17 @@ import {
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
-const PlaylistSelector = dynamic(
-  () => import('../../../components/Spotify/PlaylistSelector'),
+const PlaylistQuickGrid = dynamic(
+  () => import('../../../components/Spotify/PlaylistQuickGrid'),
   {
     ssr: false,
     loading: () => <Skeleton variant="rectangular" height={200} />,
   }
+)
+
+const SpotifyQuickSettings = dynamic(
+  () => import('../../../components/Spotify/SpotifyQuickSettings'),
+  { ssr: false }
 )
 
 const PlaylistDetails = dynamic(
@@ -47,9 +52,9 @@ const SpotifySelectionPage = () => {
     null
   )
 
-  const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    setSelectedPlaylistId(playlistId || null)
+  const handleShowTracks = (uri: string) => {
+    const playlistId = uri.split(':').pop() || null
+    setSelectedPlaylistId((open) => (open === playlistId ? null : playlistId))
   }
 
   const playOnTarget = (payload: SpotifyPlayPayload): void => {
@@ -102,14 +107,23 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
+      <Box sx={{ mt: 2 }}>
+        <SpotifyQuickSettings />
+      </Box>
+
       <Card sx={{ mt: 2 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Select a Playlist to view its tracks
+            Tap a playlist to play it
           </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
+          <PlaylistQuickGrid
             onPlaylistPlay={handlePlaylistPlay}
+            onShowTracks={handleShowTracks}
+            openUri={
+              selectedPlaylistId
+                ? `spotify:playlist:${selectedPlaylistId}`
+                : null
+            }
           />
         </CardContent>
       </Card>

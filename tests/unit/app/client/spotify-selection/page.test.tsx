@@ -16,24 +16,27 @@ jest.mock('@/hooks/useAppSnackbar', () => ({
     showWarning: jest.fn(),
   })),
 }))
+// One mock for every dynamic import: only the playlist grid receives
+// onPlaylistPlay, so the quick settings and track list render nothing.
 jest.mock('next/dynamic', () => () => {
   const MockComponent = ({
-    onPlaylistSelected,
+    onShowTracks,
     onPlaylistPlay,
   }: {
-    onPlaylistSelected: (uri: string) => void
-    onPlaylistPlay: (uri: string) => void
-  }) => (
-    <div data-testid="mock-playlist-selector">
-      <button onClick={() => onPlaylistSelected('spotify:playlist:mock1')}>
-        Select
-      </button>
-      <button onClick={() => onPlaylistPlay('spotify:playlist:mock1')}>
-        Play
-      </button>
-    </div>
-  )
-  MockComponent.displayName = 'MockPlaylistSelector'
+    onShowTracks?: (uri: string) => void
+    onPlaylistPlay?: (uri: string) => void
+  }) =>
+    onPlaylistPlay ? (
+      <div data-testid="mock-playlist-grid">
+        <button onClick={() => onShowTracks?.('spotify:playlist:mock1')}>
+          Tracks
+        </button>
+        <button onClick={() => onPlaylistPlay('spotify:playlist:mock1')}>
+          Play
+        </button>
+      </div>
+    ) : null
+  MockComponent.displayName = 'MockDynamic'
   return MockComponent
 })
 

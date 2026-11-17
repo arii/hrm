@@ -1,6 +1,6 @@
 // app/api/spotify/playlists/search/route.ts
 // API route to search for public Spotify playlists
-// This endpoint is used by the PlaylistSelector component to search for popular playlists
+// This endpoint is used by the PlaylistQuickGrid component to search for popular playlists
 
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
@@ -16,7 +16,7 @@ import logger from '@/utils/logger.server'
  * API route to search for public Spotify playlists.
  *
  * This endpoint searches Spotify's public playlist catalog and returns results
- * that can be combined with user playlists in the PlaylistSelector component.
+ * that can be combined with user playlists in the PlaylistQuickGrid component.
  *
  * @param req The incoming Next.js API request containing a 'q' query parameter.
  * @returns A NextResponse object with search results or an error.

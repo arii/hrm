@@ -5,6 +5,22 @@ import SpeakerIcon from '@mui/icons-material/Speaker'
 import { MouseEvent } from 'react'
 import { SpotifyDevice } from '@/types/core'
 
+/**
+ * One entry per device name: every dashboard reload mints a new "HRM Web
+ * Player" id, so stale ids linger in Spotify's list. Keeps the active
+ * entry, else the last one listed (the newest registration).
+ */
+export const dedupeDevicesByName = (
+  devices: SpotifyDevice[]
+): SpotifyDevice[] => {
+  const byName = new Map<string, SpotifyDevice>()
+  for (const device of devices) {
+    const kept = byName.get(device.name)
+    if (!kept || !kept.is_active) byName.set(device.name, device)
+  }
+  return [...byName.values()]
+}
+
 interface SpotifyDeviceSelectorProps {
   availableDevices: SpotifyDevice[]
   deviceMenuAnchor: HTMLElement | null
@@ -21,6 +37,7 @@ const SpotifyDeviceSelector = ({
   onMenuClose,
 }: SpotifyDeviceSelectorProps) => {
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
+  const devices = dedupeDevicesByName(availableDevices)
 
   return (
     <>
@@ -57,8 +74,8 @@ const SpotifyDeviceSelector = ({
           'data-testid': 'spotify-device-selector-menu-paper',
         }}
       >
-        {availableDevices.length > 0 ? (
-          availableDevices.map((device) => (
+        {devices.length > 0 ? (
+          devices.map((device) => (
             <MenuItem
               key={device.id}
               onClick={() => onDeviceSelect(device.id)}
