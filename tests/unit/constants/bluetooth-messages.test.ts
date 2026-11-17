@@ -67,8 +67,8 @@ describe('Bluetooth Message Constants', () => {
     })
 
     it('should generate the correct reconnectingAttempt message', () => {
-      expect(BLUETOOTH_MESSAGES.reconnectingAttempt('Signal Lost', 2, 5)).toBe(
-        'Signal Lost. Reconnecting... (Attempt 2/5)'
+      expect(BLUETOOTH_MESSAGES.reconnectingAttempt('Signal Lost')).toBe(
+        'Signal Lost. Reconnecting...'
       )
     })
 
@@ -97,8 +97,14 @@ describe('Bluetooth Message Constants', () => {
     })
 
     it('should generate the correct deviceBusy message', () => {
-      expect(BLUETOOTH_MESSAGES.deviceBusy(2000, 1, 3)).toBe(
-        'Device busy. Retrying in 2s... (1/3)'
+      expect(BLUETOOTH_MESSAGES.deviceBusy(2000)).toBe(
+        'Device busy. Retrying in 2s...'
+      )
+    })
+
+    it('should have the correct string for quietStrapRetry', () => {
+      expect(BLUETOOTH_MESSAGES.quietStrapRetry).toBe(
+        'Strap is quiet. Retrying...'
       )
     })
   })

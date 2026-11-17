@@ -28,7 +28,9 @@ export default function ConnectPage() {
     gender,
   } = userProfile.data
 
-  const [currentHR, setCurrentHR] = useState(0)
+  // null until the first packet, so the tile shows '---' instead of a
+  // fake 0 BPM / Idle reading.
+  const [currentHR, setCurrentHR] = useState<number | null>(null)
 
   const { connectionStatus, sendData } = useWebSocketConnection()
 
@@ -183,7 +185,7 @@ export default function ConnectPage() {
   ])
 
   const { zone, percentage } = calculateZoneFromMaxHr(
-    currentHR,
+    currentHR ?? 0,
     calculateMaxHr(userAge)
   )
   const heartRateZone = toHeartRateZone(zone)
@@ -192,7 +194,7 @@ export default function ConnectPage() {
     throttledSend({
       type: 'HRM_INPUT',
       data: {
-        value: currentHR,
+        value: currentHR ?? 0,
         calories: caloriesBurned,
         percentage,
         zone: heartRateZone,

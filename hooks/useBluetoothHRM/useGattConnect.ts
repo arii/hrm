@@ -253,11 +253,7 @@ export const useGattConnect = ({
               if (connectionAttemptRef.current === connectAttemptToken) {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
                 setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.deviceBusy(
-                    action.delayMs,
-                    action.retryNumber,
-                    BUSY_RETRY_DELAYS_MS.length
-                  )
+                  BLUETOOTH_MESSAGES.deviceBusy(action.delayMs)
                 )
               }
               await new Promise((res) => setTimeout(res, action.delayMs))
@@ -278,12 +274,7 @@ export const useGattConnect = ({
               // the ownership token like the busy write above.
               if (connectionAttemptRef.current === connectAttemptToken) {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
-                setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.quietStrapRetry(
-                    action.retryNumber,
-                    QUIET_STRAP_RETRY_DELAYS_MS.length
-                  )
-                )
+                setCustomStatusMessage(BLUETOOTH_MESSAGES.quietStrapRetry)
               }
               await new Promise((res) => setTimeout(res, action.delayMs))
               if (
