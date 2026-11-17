@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import { signOut } from 'next-auth/react'
 import VolumeSlider from '../shared/VolumeSlider'
 import SpotifyDeviceSelector from '../SpotifyDeviceSelector'
@@ -56,6 +57,12 @@ export const DeviceColumn = ({
         minWidth: 0,
       }}
     >
+      <Typography
+        variant="caption"
+        sx={{ fontWeight: 700, display: { xs: 'none', sm: 'block' } }}
+      >
+        Music
+      </Typography>
       <VolumeSlider
         volume={displayVolume}
         muted={isMuted}
