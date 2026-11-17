@@ -169,6 +169,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [stuckGaveUp, setStuckGaveUp] = useState(false)
   const stuckResetsRef = useRef(0)
   const preWaitAbortRef = useRef<AbortController | null>(null)
+  // The strap this page last tried, so Reset can forget a strap picked in
+  // the chooser whose first connect failed (it was never saved).
+  const lastAttemptedDeviceRef = useRef<BluetoothDevice | null>(null)
 
   const {
     signalPeriodMs,
@@ -329,7 +332,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * Connect opens the chooser in this same tab with no reload.
    */
   const forgetDevice = useCallback(async () => {
-    const known = connectedDeviceRef.current ?? savedDevice
+    const known =
+      connectedDeviceRef.current ??
+      savedDevice ??
+      lastAttemptedDeviceRef.current
+    lastAttemptedDeviceRef.current = null
     const savedId = Cookies.get('hrm_device_id')
     await hardResetRadio('reset')
     disconnect()
@@ -597,6 +604,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             if (connectionAttemptRef.current !== attemptToken) return false
           }
           attemptedDevice = device
+          lastAttemptedDeviceRef.current = device
           if (!device.gatt?.connected) {
             // Same in-flight lock as the GATT handshake: a concurrent
             // attempt that got this far is skipped, and one that comes

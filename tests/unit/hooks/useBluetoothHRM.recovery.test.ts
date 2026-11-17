@@ -207,6 +207,20 @@ describe('useBluetoothHRM in-page recovery', () => {
     expect(result.current.isConnected).toBe(true)
   })
 
+  it('Reset forgets a strap picked in the chooser whose first connect failed', async () => {
+    mockGatt.connect.mockRejectedValueOnce(new Error('boom'))
+    const { result } = renderHook(() => useBluetoothHRM())
+    await act(async () => {
+      await result.current.connectAndStream('Ari', 30).catch(() => {})
+    })
+    expect(result.current.isConnected).toBe(false)
+
+    await act(async () => {
+      await result.current.forgetDevice()
+    })
+    expect(mockDevice.forget).toHaveBeenCalledTimes(1)
+  })
+
   it('Reset during a hung attempt frees Connect without a reload', async () => {
     mockGatt.connect
       .mockReturnValueOnce(new Promise(() => {}))
