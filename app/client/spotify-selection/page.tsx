@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSpotifyData } from '@/context/WebSocketContext'
 import {
   useSpotifyCommand,
@@ -17,12 +17,17 @@ import {
 import { useAppSnackbar } from '@/hooks/useAppSnackbar'
 import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
 
-const PlaylistSelector = dynamic(
-  () => import('../../../components/Spotify/PlaylistSelector'),
+const PlaylistQuickGrid = dynamic(
+  () => import('../../../components/Spotify/PlaylistQuickGrid'),
   {
     ssr: false,
     loading: () => <Skeleton variant="rectangular" height={200} />,
   }
+)
+
+const SpotifyQuickSettings = dynamic(
+  () => import('../../../components/Spotify/SpotifyQuickSettings'),
+  { ssr: false }
 )
 
 const PlaylistDetails = dynamic(
@@ -47,9 +52,9 @@ const SpotifySelectionPage = () => {
     null
   )
 
-  const handlePlaylistSelected = (uri: string) => {
-    const playlistId = uri.split(':').pop()
-    setSelectedPlaylistId(playlistId || null)
+  const handleShowTracks = (uri: string) => {
+    const playlistId = uri.split(':').pop() || null
+    setSelectedPlaylistId((open) => (open === playlistId ? null : playlistId))
   }
 
   const playOnTarget = (payload: SpotifyPlayPayload): void => {
@@ -62,6 +67,23 @@ const SpotifySelectionPage = () => {
     }
     executeSpotify('PLAY', { ...payload, deviceId: targetDeviceId })
   }
+
+  const trackName = spotifyData.playback.track.name
+  const isLoggedIn =
+    !!trackName &&
+    trackName !== 'Awaiting Login...' &&
+    trackName !== 'Requires Login'
+
+  // Devices are only polled for a signed-in account, so a known device
+  // means a live session even before anything has played.
+  const hasSpotifySession = isLoggedIn || !!spotifyData.devices?.length
+
+  const tracksRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (selectedPlaylistId) {
+      tracksRef.current?.scrollIntoView?.({ behavior: 'smooth' })
+    }
+  }, [selectedPlaylistId])
 
   const handlePlaylistPlay = (uri: string) => {
     playOnTarget({ contextUri: uri })
@@ -77,16 +99,14 @@ const SpotifySelectionPage = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
+    <Container maxWidth="md" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
 
       <Card>
         <CardContent>
-          {spotifyData.playback.track.name &&
-          spotifyData.playback.track.name !== 'Awaiting Login...' &&
-          spotifyData.playback.track.name !== 'Requires Login' ? (
+          {isLoggedIn ? (
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h6">Now Playing</Typography>
               <Typography>
@@ -102,24 +122,37 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
+      {hasSpotifySession && (
+        <Box sx={{ mt: 2 }}>
+          <SpotifyQuickSettings />
+        </Box>
+      )}
+
       <Card sx={{ mt: 2 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
-            Select a Playlist to view its tracks
+            Tap a playlist to play it
           </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
+          <PlaylistQuickGrid
             onPlaylistPlay={handlePlaylistPlay}
+            onShowTracks={handleShowTracks}
+            openUri={
+              selectedPlaylistId
+                ? `spotify:playlist:${selectedPlaylistId}`
+                : null
+            }
           />
         </CardContent>
       </Card>
 
-      {selectedPlaylistId && (
-        <PlaylistDetails
-          playlistId={selectedPlaylistId}
-          onTrackPlay={handleTrackPlay}
-        />
-      )}
+      <Box ref={tracksRef} sx={{ scrollMarginTop: 16 }}>
+        {selectedPlaylistId && (
+          <PlaylistDetails
+            playlistId={selectedPlaylistId}
+            onTrackPlay={handleTrackPlay}
+          />
+        )}
+      </Box>
     </Container>
   )
 }
