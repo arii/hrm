@@ -113,21 +113,16 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
-// One readable line instead of rotated side rails: the mode once a
-// timer is set up, plus the Tabata intervals.
+// Tabata intervals on one readable line. The mode is not named: the
+// digits counting down or up already show it.
 export const resolveTimerSummary = (input: {
   mode: TimerMode
-  currentPhase: TimerPhase
   workDuration: number
   restDuration: number
-}): string => {
-  const parts: string[] = []
-  if (input.currentPhase !== 'IDLE') parts.push(input.mode)
-  if (input.mode === 'TABATA') {
-    parts.push(`WORK: ${input.workDuration}s`, `REST: ${input.restDuration}s`)
-  }
-  return parts.join(' · ')
-}
+}): string =>
+  input.mode === 'TABATA'
+    ? `WORK: ${input.workDuration}s · REST: ${input.restDuration}s`
+    : ''
 
 const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
 
@@ -202,6 +197,7 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
 // While the timer runs the button stays hidden so the wall display shows
 // only the digits; a tap on the card reveals Stop for this long.
 const STOP_REVEAL_MS = 5000
+const TOGGLE_WIDTH_PX = 112
 
 const TimerToggleButton = () => {
   const control = useDashboardTimerControl()
@@ -237,15 +233,14 @@ const TimerToggleButton = () => {
         }}
         sx={{
           // Phones stack it under the digits; wider cards dock it in the
-          // corner so the digits stay centred.
+          // top chrome row beside the status so it never covers the digits.
           position: { xs: 'static', sm: 'absolute' },
           display: 'flex',
-          width: { xs: '100%', sm: 'auto' },
+          width: { xs: '100%', sm: TOGGLE_WIDTH_PX },
           mt: { xs: 1, sm: 0 },
-          bottom: 16,
+          top: 5,
           right: 16,
           zIndex: 2,
-          minWidth: 112,
           fontWeight: 800,
           letterSpacing: 1,
           opacity: visible ? 1 : 0,
@@ -266,6 +261,7 @@ const TimerToggleButton = () => {
 }
 
 const TimerDisplay = () => {
+  const hasToggle = useDashboardTimerControl() !== null
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
@@ -295,7 +291,6 @@ const TimerDisplay = () => {
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
   const timerSummary = resolveTimerSummary({
     mode,
-    currentPhase,
     workDuration,
     restDuration,
   })
@@ -337,7 +332,7 @@ const TimerDisplay = () => {
         sx={{
           position: 'absolute',
           top: 16,
-          right: 16,
+          right: hasToggle ? { xs: 16, sm: 16 + TOGGLE_WIDTH_PX + 12 } : 16,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
@@ -381,37 +376,47 @@ const TimerDisplay = () => {
           minWidth: 0, // Prevent content from overflowing
         }}
       >
-        {timerSummary && (
-          <Typography
-            data-testid="timer-work-rest-badge"
-            sx={{
-              mb: 0.5,
-              lineHeight: 1.2,
-              color: 'common.white',
-              fontWeight: 700,
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-              letterSpacing: 1,
-            }}
-          >
-            {timerSummary}
-          </Typography>
-        )}
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Typography
-            data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
-            sx={{
-              mb: 0.5,
-              color: phaseColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-            }}
-          >
-            {phaseLabel}
-          </Typography>
-        )}
+        {/* Phase and intervals share one row so the digits get the height */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            justifyContent: 'center',
+            columnGap: 2,
+          }}
+        >
+          {/* Phase Label - only show for Tabata phases, not RUNNING */}
+          {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
+            <Typography
+              data-testid="timer-phase"
+              variant="h6"
+              aria-live="polite"
+              sx={{
+                lineHeight: 1.2,
+                color: phaseColor,
+                fontWeight: 700,
+                letterSpacing: 2,
+              }}
+            >
+              {phaseLabel}
+            </Typography>
+          )}
+          {timerSummary && (
+            <Typography
+              data-testid="timer-work-rest-badge"
+              sx={{
+                lineHeight: 1.2,
+                color: 'common.white',
+                fontWeight: 700,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                letterSpacing: 1,
+              }}
+            >
+              {timerSummary}
+            </Typography>
+          )}
+        </Box>
 
         {/* Giant Timer Display */}
         <Typography
@@ -427,9 +432,9 @@ const TimerDisplay = () => {
             // The responsive cap fits the one-column phone layout; the
             // scaled canvas (full-width timer with no HR tiles) allows
             // the larger target-composition cap.
-            fontSize: 'clamp(4rem, 26cqw, 13rem)',
+            fontSize: 'clamp(4rem, 34cqw, 15rem)',
             [SCALED_CANVAS_SELECTOR]: {
-              fontSize: 'clamp(4rem, 26cqw, 16rem)',
+              fontSize: 'clamp(4rem, 34cqw, 17.5rem)',
             },
             fontWeight: 900,
             lineHeight: 1,
