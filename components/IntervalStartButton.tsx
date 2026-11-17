@@ -1,4 +1,5 @@
 'use client'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
@@ -26,14 +27,24 @@ const IntervalStartButton = ({
       startIcon={<PlayArrow />}
       disabled={!control.canControl || control.isRunning}
       onClick={() => control.startInterval(workDuration, restDuration)}
+      aria-label={`Start ${workDuration}/${restDuration}`}
       sx={{
-        flexShrink: 0,
+        // The header keeps its full width; on cramped cards the label
+        // truncates instead of covering the title.
+        flexShrink: 1,
+        minWidth: 0,
+        overflow: 'hidden',
         fontWeight: 700,
         whiteSpace: 'nowrap',
         mr: clearCorner ? 5 : 0,
       }}
     >
-      Start {workDuration}/{restDuration}
+      <Box
+        component="span"
+        sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        Start {workDuration}/{restDuration}
+      </Box>
     </Button>
   )
 }

@@ -246,8 +246,7 @@ export default function WorkoutPhaseGrid({
                   <Typography
                     component="h3"
                     sx={{
-                      flex: '1 1 auto',
-                      minWidth: 0,
+                      flex: '1 0 auto',
                       fontWeight: 700,
                       fontSize: 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                       [SCALED_CANVAS_SELECTOR]: {
