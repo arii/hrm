@@ -9,7 +9,8 @@ import {
   useTimerData,
   useWebSocketConnection,
 } from '@/context/WebSocketContext'
-import type { ServerMessage } from '@/types/websocket'
+import type { ClientCommandMessage, ServerMessage } from '@/types/websocket'
+import { audioManager } from '@/utils/audioManager'
 
 // Socket stub: the provider constructs it on mount. Never opens, so no
 // heartbeat/reconnect timers run and dispatches below are the only updates.
@@ -160,5 +161,59 @@ describe('WebSocketProvider slice isolation', () => {
     expect(timerRenders.count).toBe(before.timer)
     expect(spotifyRenders.count).toBe(before.spotify)
     expect(connectionRenders.count).toBe(before.connection)
+  })
+})
+
+describe('WebSocketProvider beep preference', () => {
+  it('keeps a queued Beeps change over the reconnect snapshot', () => {
+    jest.useFakeTimers()
+    const sockets: MockWs[] = []
+    class TrackedWs extends MockWs {
+      constructor(url: string) {
+        super(url)
+        sockets.push(this)
+      }
+    }
+    ;(global as unknown as { WebSocket: unknown }).WebSocket = TrackedWs
+    const applyRemote = jest
+      .spyOn(audioManager, 'applyRemote')
+      .mockImplementation(() => {})
+    const sender: { send?: (message: ClientCommandMessage) => void } = {}
+    const Sender = () => {
+      const { sendData } = useWebSocketConnection()
+      useEffect(() => {
+        sender.send = sendData
+      }, [sendData])
+      return null
+    }
+    render(
+      <WebSocketProvider serverUrl="ws://localhost:1">
+        <Sender />
+      </WebSocketProvider>
+    )
+    act(() =>
+      sender.send?.({ type: 'BEEP_PREFERENCE', volume: 70, muted: true })
+    )
+    const ws = sockets[sockets.length - 1]
+    act(() => {
+      ws.readyState = 1
+      ws.onopen?.({})
+    })
+    const snapshot = JSON.stringify({
+      type: 'INITIAL_STATE',
+      payload: {
+        hrmData: [],
+        timerData: timerPayload,
+        spotifyData: {},
+        beepPreference: { volume: 70, muted: false },
+      },
+    })
+    act(() => ws.onmessage?.({ data: snapshot }))
+    expect(applyRemote).not.toHaveBeenCalled()
+
+    act(() => ws.onmessage?.({ data: snapshot }))
+    expect(applyRemote).toHaveBeenCalledWith({ volume: 70, muted: false })
+    applyRemote.mockRestore()
+    jest.useRealTimers()
   })
 })

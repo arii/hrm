@@ -45,6 +45,7 @@ export const useWebSocketLifecycle = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
+  const skipSnapshotBeepRef = useRef(false)
   // Refs for heartbeat mechanism
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -124,6 +125,11 @@ export const useWebSocketLifecycle = ({
 
       // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
+      // A queued Beeps change replays after GET_STATE, so the snapshot's
+      // older preference must not overwrite it.
+      skipSnapshotBeepRef.current = pendingActions.current.some(
+        (action) => action.type === 'BEEP_PREFERENCE'
+      )
 
       if (pendingActions.current.length > 0) {
         logger.info(
@@ -210,11 +216,12 @@ export const useWebSocketLifecycle = ({
           audioManager.applyRemote(message.payload)
           return
         }
-        if (
-          message.type === 'INITIAL_STATE' &&
-          message.payload.beepPreference
-        ) {
-          audioManager.applyRemote(message.payload.beepPreference)
+        if (message.type === 'INITIAL_STATE') {
+          const { beepPreference } = message.payload
+          if (beepPreference && !skipSnapshotBeepRef.current) {
+            audioManager.applyRemote(beepPreference)
+          }
+          skipSnapshotBeepRef.current = false
         }
 
         // Throttle high-frequency messages
