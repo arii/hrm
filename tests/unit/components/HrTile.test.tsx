@@ -157,7 +157,7 @@ describe('HrTile', () => {
       />
     )
     expect(screen.getByTestId('hr-tile-name')).toHaveStyle({
-      fontSize: '1rem',
+      fontSize: '1.5rem',
     })
     expect(screen.getByTestId('bpm-percent')).toHaveStyle({
       fontSize: '2.75rem',
@@ -178,7 +178,7 @@ describe('HrTile', () => {
       />
     )
     expect(screen.getByTestId('hr-tile-name')).toHaveStyle({
-      fontSize: '1.5rem',
+      fontSize: '2.25rem',
     })
     expect(screen.getByTestId('bpm-value')).toHaveStyle({
       fontSize: '1.5rem',

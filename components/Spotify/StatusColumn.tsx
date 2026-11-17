@@ -60,19 +60,34 @@ export const StatusColumn = ({
       </Typography>
     )}
     {showActiveBadge && (
+      // A status, not an action: muted outline so it never reads as a button.
       <Typography
         variant="caption"
         sx={{
-          backgroundColor: 'success.main',
-          color: 'common.black',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.75,
+          color: 'grey.400',
+          border: 1,
+          borderColor: 'grey.700',
           px: 1,
-          py: 0.5,
-          borderRadius: 1,
+          py: 0.25,
+          borderRadius: 4,
           whiteSpace: 'nowrap',
           flexShrink: 0,
         }}
       >
-        🎵 Browser Player Active
+        <Box
+          component="span"
+          aria-hidden="true"
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: 'success.main',
+          }}
+        />
+        Browser Player Active
       </Typography>
     )}
     {showAutoPending && (
