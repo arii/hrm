@@ -10,16 +10,13 @@ import {
   HistorySection,
 } from './ConnectActionViews'
 import {
-  DeviceHealthRow,
+  BatteryRow,
   MetadataStrip,
   ProfileSection,
   StatusBanner,
 } from './ConnectStatusViews'
 import ResetSection from './ResetSection'
-import {
-  CopyConnectionLogButton,
-  ReloadFallback,
-} from './ConnectionDiagnostics'
+import { ConnectionDetails, ReloadFallback } from './ConnectionDiagnostics'
 import WorkoutControls from '../WorkoutControls'
 import type { ConnectViewProps } from '../ConnectViewProps'
 
@@ -56,13 +53,8 @@ export const ConnectMain = ({
 
         <StatusBanner banner={state.banner} />
 
-        {view.isConnected && (
-          <DeviceHealthRow
-            batteryLevel={view.batteryLevel}
-            signalPeriodMs={view.signalPeriodMs}
-            lastPeriodMs={view.lastPeriodMs}
-            isConnected={view.isConnected}
-          />
+        {view.isConnected && view.batteryLevel !== null && (
+          <BatteryRow batteryLevel={view.batteryLevel} />
         )}
 
         {/* Live telemetry first: null-safe sections, so idle and
@@ -99,8 +91,6 @@ export const ConnectMain = ({
             onStartWorkout={view.onStartWorkout}
             onPauseWorkout={view.onPauseWorkout}
             onEndWorkout={view.onEndWorkout}
-            onReset={reset.handleFullReset}
-            isResetting={reset.isResetting}
           />
         ) : (
           <>
@@ -113,10 +103,6 @@ export const ConnectMain = ({
               />
               {view.showReloadFallback && <ReloadFallback />}
             </Box>
-            <ResetSection
-              onReset={reset.handleFullReset}
-              isResetting={reset.isResetting}
-            />
             <WorkoutControls
               workoutStatus={view.workoutStatus}
               isConnected={view.isConnected}
@@ -128,18 +114,17 @@ export const ConnectMain = ({
           </>
         )}
 
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <CopyConnectionLogButton />
-        </Box>
+        <ConnectionDetails
+          isConnected={view.isConnected}
+          signalPeriodMs={view.signalPeriodMs}
+          lastPeriodMs={view.lastPeriodMs}
+          connectionStatus={view.connectionStatus}
+        />
 
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-          WebSocket: {view.connectionStatus}
-        </Typography>
+        <ResetSection
+          onReset={reset.handleFullReset}
+          isResetting={reset.isResetting}
+        />
       </Container>
     </>
   )

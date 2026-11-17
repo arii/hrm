@@ -22,6 +22,15 @@ export const dedupeDevicesByName = (
   return [...byName.values()]
 }
 
+// Some Spotify Connect devices report their raw id as the name.
+const RAW_DEVICE_ID = /^[0-9a-f]{20,}$/i
+
+/** Human-readable device name; never a raw id. */
+export const spotifyDeviceLabel = (device: SpotifyDevice): string => {
+  const name = device.name?.trim()
+  return name && !RAW_DEVICE_ID.test(name) ? name : 'Unnamed Spotify device'
+}
+
 interface SpotifyDeviceSelectorProps {
   availableDevices: SpotifyDevice[]
   deviceMenuAnchor: HTMLElement | null
@@ -83,7 +92,7 @@ const SpotifyDeviceSelector = ({
               selected={device.is_active}
               data-testid={`spotify-device-select-option-${device.id}`}
             >
-              {device.name} {device.is_active && '✓'}
+              {spotifyDeviceLabel(device)} {device.is_active && '✓'}
             </MenuItem>
           ))
         ) : (

@@ -6,7 +6,6 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop'
 import HrTile from '@/components/HrTile'
 import WorkoutSummary from '../WorkoutSummary'
 import WorkoutControls from '../WorkoutControls'
-import ResetSection from './ResetSection'
 import { WorkoutStatus } from '@/types/workout'
 import { HrZoneData } from '@/types/connect'
 
@@ -77,8 +76,6 @@ export const ActionToolbar = ({
   onStartWorkout,
   onPauseWorkout,
   onEndWorkout,
-  onReset,
-  isResetting,
 }: {
   onDisconnect: () => void
   workoutStatus: WorkoutStatus
@@ -86,8 +83,6 @@ export const ActionToolbar = ({
   onStartWorkout: () => void
   onPauseWorkout: () => void
   onEndWorkout: () => void
-  onReset: () => void
-  isResetting: boolean
 }) => (
   <Box
     data-testid="action-toolbar"
@@ -117,7 +112,6 @@ export const ActionToolbar = ({
       onEnd={onEndWorkout}
       onResume={onStartWorkout}
     />
-    <ResetSection compact onReset={onReset} isResetting={isResetting} />
   </Box>
 )
 

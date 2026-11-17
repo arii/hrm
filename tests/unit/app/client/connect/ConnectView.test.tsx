@@ -129,6 +129,7 @@ describe('ConnectView', () => {
       name: /Reset Permissions & Settings/i,
     })
     fireEvent.click(resetButton)
+    fireEvent.click(screen.getByRole('button', { name: 'Forget strap' }))
 
     await waitFor(() => {
       expect(mockProps.onForgetDevice).toHaveBeenCalled()

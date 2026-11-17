@@ -67,6 +67,20 @@ describe('useSpotifyControlDevice', () => {
     expect(result.current.selectedDeviceId).toBe('hrm')
   })
 
+  it('auto-selects the newest HRM Web Player, the one the dropdown lists', () => {
+    const devices = ['old', 'new'].map((id) =>
+      createMockSpotifyDevice({
+        id,
+        name: HRM_WEB_PLAYER_NAME,
+        is_active: false,
+      })
+    )
+    const { result } = renderHook(() =>
+      useSpotifyControlDevice({ ...baseProps, sendData: jest.fn(), devices })
+    )
+    expect(result.current.selectedDeviceId).toBe('new')
+  })
+
   it('tolerates devices with null names (#9298)', () => {
     const devices = [
       createMockSpotifyDevice({ id: 'a', name: null, is_active: true }),

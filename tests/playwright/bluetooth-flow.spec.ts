@@ -107,6 +107,7 @@ test.describe('Bluetooth HRM Connection', () => {
     })
     await resetButton.scrollIntoViewIfNeeded()
     await resetButton.click()
+    await connectPage.getByRole('button', { name: 'Forget strap' }).click()
 
     // 3. Assert UI returns to initial state
     await expect(connectPage.getByLabel('Your Name')).toBeVisible()
