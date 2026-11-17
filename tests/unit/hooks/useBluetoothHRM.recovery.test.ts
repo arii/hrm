@@ -13,21 +13,14 @@ import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import logger from '@/utils/logger'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import Cookies from 'js-cookie'
+import * as reconnection from '@/constants/bluetooth-reconnection'
 
-// Lets one test model a hang that no step timeout bounds, which only the
-// stuck detector can clear.
-let mockSetupTimeoutMs: number | undefined
-jest.mock('@/constants/bluetooth-reconnection', () => {
-  const actual = jest.requireActual<
-    typeof import('@/constants/bluetooth-reconnection')
-  >('@/constants/bluetooth-reconnection')
-  return {
-    ...actual,
-    get GATT_SETUP_TIMEOUT_MS() {
-      return mockSetupTimeoutMs ?? actual.GATT_SETUP_TIMEOUT_MS
-    },
-  }
-})
+// A plain, writable copy so one test can lift the setup timeout to model a
+// hang that no step timeout bounds, which only the stuck detector can clear.
+jest.mock('@/constants/bluetooth-reconnection', () => ({
+  __esModule: true,
+  ...jest.requireActual('@/constants/bluetooth-reconnection'),
+}))
 
 jest.mock('@/context/WebSocketContext')
 jest.mock('js-cookie', () => ({
@@ -123,7 +116,7 @@ describe('useBluetoothHRM in-page recovery', () => {
   })
 
   afterEach(() => {
-    mockSetupTimeoutMs = undefined
+    jest.restoreAllMocks()
     jest.useRealTimers()
   })
 
@@ -270,7 +263,11 @@ describe('useBluetoothHRM in-page recovery', () => {
     // Service discovery that never answers, with the setup timeout lifted
     // out of reach: the attempt holds the radio with no progress, which
     // only the detector can clear.
-    mockSetupTimeoutMs = STUCK_CONNECT_TIMEOUT_MS * 10
+    jest.replaceProperty(
+      reconnection,
+      'GATT_SETUP_TIMEOUT_MS',
+      STUCK_CONNECT_TIMEOUT_MS * 10
+    )
     mockGatt.getPrimaryService.mockReturnValue(new Promise(() => {}))
     const { result } = renderHook(() => useBluetoothHRM())
 
