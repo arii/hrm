@@ -23,7 +23,7 @@ describe('Environment Variables', () => {
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(30)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(100)
     expect(env.GENERAL_API_MAX_REQUESTS).toBe(200)
-    expect(env.WS_MAX_CONNECTIONS).toBe(1000)
+    expect(env.WS_MAX_CONNECTIONS).toBe(10)
   })
 
   it('should parse environment variables correctly', async () => {
@@ -36,13 +36,13 @@ describe('Environment Variables', () => {
     process.env.SPOTIFY_API_MAX_REQUESTS = '60'
     process.env.INTERNAL_API_MAX_REQUESTS = '200'
     process.env.GENERAL_API_MAX_REQUESTS = '400'
-    process.env.WS_MAX_CONNECTIONS = '10'
+    process.env.WS_MAX_CONNECTIONS = '25'
     const { env } = await import('../../../lib/env')
     expect(env.RATE_LIMIT_WINDOW_MS).toBe(120000)
     expect(env.SPOTIFY_API_MAX_REQUESTS).toBe(60)
     expect(env.INTERNAL_API_MAX_REQUESTS).toBe(200)
     expect(env.GENERAL_API_MAX_REQUESTS).toBe(400)
-    expect(env.WS_MAX_CONNECTIONS).toBe(10)
+    expect(env.WS_MAX_CONNECTIONS).toBe(25)
   })
 
   it('should throw an error for invalid environment variables', async () => {

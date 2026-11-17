@@ -102,9 +102,8 @@ const envSchema = z
     SPOTIFY_API_MAX_REQUESTS: z.coerce.number().default(30),
     INTERNAL_API_MAX_REQUESTS: z.coerce.number().default(100),
     GENERAL_API_MAX_REQUESTS: z.coerce.number().default(200),
-    // The default of 1000 provides a generous limit for concurrent WebSocket connections,
-    // suitable for a moderate-scale deployment. This can be adjusted based on expected user load.
-    WS_MAX_CONNECTIONS: z.coerce.number().default(1000),
+    // Live WebSocket connections allowed per client IP.
+    WS_MAX_CONNECTIONS: z.coerce.number().default(10),
     // Reverse-proxy hops in front of the app (nginx in prod, Caddy in dev).
     // Drives Express 'trust proxy' and right-to-left X-Forwarded-For parsing
     // so client IPs can't be spoofed with a forged leftmost entry.
