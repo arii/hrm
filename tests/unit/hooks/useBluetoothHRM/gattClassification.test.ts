@@ -216,6 +216,16 @@ describe('applyGattFailure', () => {
     expect(reconnectHaltedRef.current).toBe(false)
   })
 
+  it('leaves the shared link alone when a cancelled attempt settles late', () => {
+    const { device, connectedDeviceRef, setCustomStatusMessage } = setup(
+      'dropped',
+      true
+    )
+    expect(device.gatt!.disconnect).not.toHaveBeenCalled()
+    expect(connectedDeviceRef.current).toBe(device)
+    expect(setCustomStatusMessage).not.toHaveBeenCalled()
+  })
+
   it('on an intentional abort: keeps the device slot and writes no state', () => {
     const device = makeDevice()
     const connectedDeviceRef = { current: device as BluetoothDevice | null }

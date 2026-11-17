@@ -181,6 +181,10 @@ export const applyGattFailure = ({
   setStatus,
   setCustomStatusMessage,
 }: GattFailureOutcomeParams): unknown => {
+  // A cancelled attempt (Connect tap, Reset, disconnect) can settle after
+  // its replacement already owns the device: the canceller cleaned up, so
+  // touching the shared link or refs here would cut the new stream.
+  if (aborted) return error
   // Zombie killer (#9154): sever any half-open GATT link so the next
   // attempt meets a free radio instead of tripping over our own
   // previous session. Safe when already down; never masks the error.
