@@ -97,7 +97,7 @@ jobs:
           SPOTIFY_API_MAX_REQUESTS=30
           INTERNAL_API_MAX_REQUESTS=100
           GENERAL_API_MAX_REQUESTS=200
-          WS_MAX_CONNECTIONS=5
+          WS_MAX_CONNECTIONS=10
           EOF
 
       - name: 🚀 Execute Deployment
