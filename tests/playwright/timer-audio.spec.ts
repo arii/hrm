@@ -1,5 +1,10 @@
 import { expect, test } from './fixtures'
-import { startTimer, stopTimer, waitForPageReady } from './lib'
+import {
+  mockLoggedInSession,
+  startTimer,
+  stopTimer,
+  waitForPageReady,
+} from './lib'
 
 type PlayLog = { calls: string[] }
 
@@ -57,14 +62,19 @@ test.describe('Timer audio', () => {
     await stopTimer(controlPage, dashboardPage)
   })
 
-  test('muting beeps in one dashboard tab silences the other tabs', async ({
+  test('muting beeps on one dashboard silences dashboards on other devices', async ({
+    browser,
     dashboardPage,
     controlPage,
   }) => {
     test.setTimeout(60_000)
 
-    const context = dashboardPage.context()
-    await context.addInitScript(() => {
+    // A separate context shares no localStorage: another device.
+    const otherDevice = await browser.newContext({
+      baseURL: test.info().project.use.baseURL,
+    })
+    await mockLoggedInSession(otherDevice)
+    await otherDevice.addInitScript(() => {
       const log: PlayLog = { calls: [] }
       ;(window as unknown as { __audioLog: PlayLog }).__audioLog = log
       const originalPlay = HTMLMediaElement.prototype.play
@@ -73,7 +83,7 @@ test.describe('Timer audio', () => {
         return originalPlay.call(this)
       }
     })
-    const otherTab = await context.newPage()
+    const otherTab = await otherDevice.newPage()
     for (const tab of [dashboardPage, otherTab]) {
       await tab.goto('/')
       await waitForPageReady(tab)
@@ -104,6 +114,6 @@ test.describe('Timer audio', () => {
     expect(await audiblePlays()).toBe(2)
 
     await stopTimer(controlPage, dashboardPage)
-    await otherTab.close()
+    await otherDevice.close()
   })
 })

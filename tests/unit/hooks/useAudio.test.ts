@@ -3,11 +3,15 @@
  */
 import { renderHook } from '@testing-library/react'
 import { useAudio } from '@/hooks/useAudio'
-import { useTimerData } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 import { audioManager } from '@/utils/audioManager'
 
 jest.mock('@/context/WebSocketContext', () => ({
   useTimerData: jest.fn(),
+  useWebSocketConnection: jest.fn(),
 }))
 
 jest.mock('@/utils/audioManager', () => ({
@@ -15,13 +19,16 @@ jest.mock('@/utils/audioManager', () => ({
     loadAudio: jest.fn(),
     playShort: jest.fn(),
     playLong: jest.fn(),
+    onLocalChange: jest.fn(() => () => {}),
   },
 }))
 
 const mockedUseTimerData = useTimerData as jest.Mock
+const sendData = jest.fn()
 
 describe('useAudio', () => {
   const setup = (overrides: Record<string, unknown> = {}) => {
+    ;(useWebSocketConnection as jest.Mock).mockReturnValue({ sendData })
     mockedUseTimerData.mockReturnValue({
       soundToPlay: null,
       soundEventId: 0,
@@ -79,5 +86,17 @@ describe('useAudio', () => {
     expect(console.warn).toHaveBeenCalledWith(
       expect.stringContaining('Unknown sound type')
     )
+  })
+
+  it('sends Beeps control changes to the server', () => {
+    setup()
+    renderHook(() => useAudio())
+    const listener = (audioManager.onLocalChange as jest.Mock).mock.calls[0][0]
+    listener({ volume: 30, muted: true })
+    expect(sendData).toHaveBeenCalledWith({
+      type: 'BEEP_PREFERENCE',
+      volume: 30,
+      muted: true,
+    })
   })
 })

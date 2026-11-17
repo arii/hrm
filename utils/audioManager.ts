@@ -7,17 +7,13 @@
 
 import { getBasePath } from './urls'
 import logger from './logger'
+import type { BeepPreference } from '../types/websocket'
 
 // Beep preferences persist under their own keys, never the Spotify music
 // volume keys, so beeps and music cannot move each other.
 const BEEP_VOLUME_KEY = 'hrm-timer-volume'
 const BEEP_MUTED_KEY = 'hrm-timer-muted'
 const DEFAULT_BEEP_VOLUME = 70
-
-interface BeepPreference {
-  volume: number
-  muted: boolean
-}
 
 export const DEFAULT_BEEP_PREFERENCE: BeepPreference = {
   volume: DEFAULT_BEEP_VOLUME,
@@ -33,6 +29,7 @@ class AudioManager {
   private loadedAudio = false
   private preference: BeepPreference = DEFAULT_BEEP_PREFERENCE
   private listeners = new Set<() => void>()
+  private localChangeListeners = new Set<(next: BeepPreference) => void>()
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -100,13 +97,40 @@ class AudioManager {
     return true
   }
 
-  private updatePreference(next: BeepPreference) {
-    if (!this.applyPreference(next)) return
+  private persist(next: BeepPreference) {
     try {
       window.localStorage.setItem(BEEP_VOLUME_KEY, String(next.volume))
       window.localStorage.setItem(BEEP_MUTED_KEY, String(next.muted))
     } catch (e) {
       logger.warn('[AudioManager] Could not persist beep preference:', e)
+    }
+  }
+
+  private updatePreference(next: BeepPreference) {
+    if (!this.applyPreference(next)) return
+    this.persist(next)
+    this.localChangeListeners.forEach((listener) => listener(next))
+  }
+
+  /**
+   * Adopt a preference set on another dashboard (via the server). Not
+   * reported to onLocalChange, so it is never echoed back.
+   */
+  applyRemote(next: BeepPreference) {
+    const volume = clampPercent(next.volume)
+    // Zero means mute, as with the local slider; keep the audible level.
+    const preference =
+      volume === 0
+        ? { volume: this.preference.volume, muted: true }
+        : { volume, muted: next.muted }
+    if (this.applyPreference(preference)) this.persist(preference)
+  }
+
+  /** Changes made with this page's own controls, for syncing out. */
+  onLocalChange = (listener: (next: BeepPreference) => void): (() => void) => {
+    this.localChangeListeners.add(listener)
+    return () => {
+      this.localChangeListeners.delete(listener)
     }
   }
 

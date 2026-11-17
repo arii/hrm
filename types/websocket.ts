@@ -54,11 +54,19 @@ export interface ClientHrmData extends ConnectedHrmData {
  * The payload for the INITIAL_STATE message, representing the full application state.
  * hrmData is pre-filtered by the server (stale/generic/null entries removed).
  */
+/** Timer beep loudness shared by every dashboard. */
+export interface BeepPreference {
+  volume: number
+  muted: boolean
+}
+
 export interface InitialStateSnapshotPayload {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+  // Absent until a dashboard changes the Beeps control after a restart.
+  beepPreference?: BeepPreference
 }
 
 /**
@@ -94,6 +102,7 @@ export type ServerMessage = (
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | { type: 'BEEP_PREFERENCE_UPDATE'; payload: BeepPreference }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
   | { type: 'DEVICE_OFFLINE'; payload: { deviceId: string } }
 ) & { serverTimestamp?: number }
@@ -175,6 +184,10 @@ interface GetStateMessage {
   type: 'GET_STATE'
 }
 
+export interface BeepPreferenceMessage extends BeepPreference {
+  type: 'BEEP_PREFERENCE'
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -195,6 +208,7 @@ export type ClientCommandMessage =
   | SpotifyCommandMessage
   | TimerConfigMessage
   | GetStateMessage
+  | BeepPreferenceMessage
   | ClientRegistrationMessage
   | PingMessage
 
@@ -272,6 +286,12 @@ const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),
 })
 
+const BeepPreferenceMessageSchema = z.object({
+  type: z.literal('BEEP_PREFERENCE'),
+  volume: z.number().int().min(0).max(100),
+  muted: z.boolean(),
+})
+
 const ClientRegistrationMessageSchema = z.object({
   type: z.literal('REGISTER_CLIENT'),
   role: z.union([z.literal('dashboard'), z.literal('controller')]),
@@ -294,6 +314,7 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
+  BeepPreferenceMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
 ])
