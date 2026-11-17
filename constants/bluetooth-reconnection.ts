@@ -76,8 +76,14 @@ export const OTHER_TAB_RELEASE_WAIT_MS = 3000
 // reload as a last resort.
 export const RELOAD_FALLBACK_AFTER_FAILURES = 2
 
+// Service discovery through the first HR subscription. A strap can accept
+// the link and then never answer discovery; without this bound a wake
+// attempt during the open-ended wait (where the stuck detector never
+// fires) would hold the radio until the next Connect tap.
+export const GATT_SETUP_TIMEOUT_MS = 15000
+
 // A connect attempt that reports no progress for this long is stuck: every
 // legitimate step is bounded well below it (10s scan, 20s link timeout,
-// at most 20s retry wait). The detector then runs the internal reset.
+// 15s setup, at most 20s retry wait). The detector then runs the internal reset.
 export const STUCK_CONNECT_TIMEOUT_MS = 45000
 export const STUCK_CHECK_INTERVAL_MS = 5000
