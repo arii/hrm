@@ -25,6 +25,8 @@ interface VolumeSliderProps {
   disabled?: boolean
   /** Shown as a tooltip while disabled, so the user knows why. */
   disabledReason?: string
+  /** Accessible name; distinguishes music volume from timer beeps. */
+  ariaLabel?: string
   sx?: SxProps<Theme>
 }
 
@@ -70,6 +72,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   size = 'small',
   disabled = false,
   disabledReason,
+  ariaLabel = 'Volume control',
   sx,
 }) => {
   const handleVolumeChange = useCallback(
@@ -128,7 +131,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         size={size}
         disabled={disabled}
         sliderColor={sliderColor}
-        aria-label="Volume control"
+        aria-label={ariaLabel}
         getAriaValueText={(value) => `${value} percent`}
         data-testid="volume-slider-input"
       />

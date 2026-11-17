@@ -72,6 +72,7 @@ export const DeviceColumn = ({
         showValue={true}
         disabled={!hasActiveDevice}
         disabledReason="Waiting for a Spotify device to connect"
+        ariaLabel="Music volume"
       />
       <SpotifyDeviceSelector
         availableDevices={devices || []}
