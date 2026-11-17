@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocketConnection } from '@/context/WebSocketContext'
 import { formatDuration } from '@/lib/utils'
@@ -138,15 +138,25 @@ export default function ConnectPage() {
     onConnect: handleStartWorkout,
   })
 
-  // Automatically start workout or resume when connected to maintain previous behavior
+  // A paused session resumes once per connection, so a Pause tapped while
+  // the strap stays connected sticks until the next (re)connect.
+  const resumedThisConnectionRef = useRef(false)
+
   useEffect(() => {
-    if (isInitialized && isConnected) {
-      if (workoutStatus === 'idle') {
-        startWorkout(userAge || 30, userWeight || 70, { gender })
-      } else if (workoutStatus === 'paused') {
-        resumeWorkout()
-      }
+    if (!isConnected) {
+      resumedThisConnectionRef.current = false
+      return
     }
+    if (!isInitialized) return
+    if (workoutStatus === 'idle') {
+      startWorkout(userAge || 30, userWeight || 70, { gender })
+    } else if (
+      workoutStatus === 'paused' &&
+      !resumedThisConnectionRef.current
+    ) {
+      resumeWorkout()
+    }
+    resumedThisConnectionRef.current = true
   }, [
     isInitialized,
     isConnected,

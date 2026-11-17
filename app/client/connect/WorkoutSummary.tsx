@@ -35,7 +35,12 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
         >
           <Stack spacing={1} alignItems="center">
             <WatchLaterIcon color="action" sx={{ fontSize: 30 }} />
-            <Typography variant="h5" component="p" fontWeight="bold">
+            <Typography
+              variant="h5"
+              component="p"
+              fontWeight="bold"
+              data-testid="workout-duration"
+            >
               {duration}
             </Typography>
             <Typography variant="caption" color="text.secondary">
