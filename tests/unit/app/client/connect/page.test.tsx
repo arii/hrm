@@ -11,6 +11,7 @@ import {
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { toDisplay } from '@/utils/units'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useWorkoutSessionManager } from '@/hooks/useWorkoutSessionManager'
 
 // Correctly mock the hooks
 const mockConnectAndStream = jest.fn().mockResolvedValue(true)
@@ -229,5 +230,68 @@ describe('ConnectPage', () => {
     // No packet yet: an unknown reading, not a fake 0 BPM.
     expect(screen.getByTestId('bpm-value')).toHaveTextContent('---')
     expect(screen.queryByTestId('user-settings-form')).not.toBeInTheDocument()
+  })
+  describe('workout pause while connected', () => {
+    const bluetooth = (isConnected: boolean) => ({
+      connectAndStream: mockConnectAndStream,
+      autoConnect: mockAutoConnect,
+      disconnect: mockDisconnect,
+      forgetDevice: mockForgetDevice,
+      deviceStatus: isConnected ? 'connected' : 'disconnected',
+      batteryLevel: 90,
+      isConnected,
+      isSupported: true,
+      connectionAttempted: true,
+      signalPeriodMs: 0,
+      lastPeriodMs: 0,
+      consecutiveSlowPackets: 0,
+    })
+    const resumeWorkout = jest.fn()
+    const session = (workoutStatus: 'running' | 'paused') =>
+      ({
+        session: null,
+        resetWorkout: jest.fn(),
+        hasStarted: true,
+        startWorkout: jest.fn(),
+        pauseWorkout: jest.fn(),
+        resumeWorkout,
+        endWorkout: jest.fn(),
+        workoutStatus,
+        addHrData: jest.fn(),
+        caloriesBurned: 0,
+        isInitialized: true,
+      }) as unknown as ReturnType<typeof useWorkoutSessionManager>
+
+    const page = () => (
+      <WebSocketProvider>
+        <UserSettingsContext.Provider {...providerProps}>
+          <ConnectPage />
+        </UserSettingsContext.Provider>
+      </WebSocketProvider>
+    )
+
+    it('keeps a Pause tapped while the strap stays connected', () => {
+      jest.mocked(useBluetoothHRM).mockReturnValue(bluetooth(true))
+      jest.mocked(useWorkoutSessionManager).mockReturnValue(session('running'))
+      const { rerender } = render(page())
+
+      jest.mocked(useWorkoutSessionManager).mockReturnValue(session('paused'))
+      rerender(page())
+
+      expect(resumeWorkout).not.toHaveBeenCalled()
+    })
+
+    it('resumes a paused session once when the strap reconnects', () => {
+      jest.mocked(useBluetoothHRM).mockReturnValue(bluetooth(false))
+      jest.mocked(useWorkoutSessionManager).mockReturnValue(session('paused'))
+      const { rerender } = render(page())
+      expect(resumeWorkout).not.toHaveBeenCalled()
+
+      jest.mocked(useBluetoothHRM).mockReturnValue(bluetooth(true))
+      rerender(page())
+      rerender(page())
+
+      expect(resumeWorkout).toHaveBeenCalledTimes(1)
+    })
   })
 })
