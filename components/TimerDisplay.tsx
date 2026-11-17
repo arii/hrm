@@ -197,6 +197,7 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
 // While the timer runs the button stays hidden so the wall display shows
 // only the digits; a tap on the card reveals Stop for this long.
 const STOP_REVEAL_MS = 5000
+const TOGGLE_WIDTH_PX = 112
 
 const TimerToggleButton = () => {
   const control = useDashboardTimerControl()
@@ -232,15 +233,14 @@ const TimerToggleButton = () => {
         }}
         sx={{
           // Phones stack it under the digits; wider cards dock it in the
-          // corner so the digits stay centred.
+          // top chrome row beside the status so it never covers the digits.
           position: { xs: 'static', sm: 'absolute' },
           display: 'flex',
-          width: { xs: '100%', sm: 'auto' },
+          width: { xs: '100%', sm: TOGGLE_WIDTH_PX },
           mt: { xs: 1, sm: 0 },
-          bottom: 16,
+          top: 5,
           right: 16,
           zIndex: 2,
-          minWidth: 112,
           fontWeight: 800,
           letterSpacing: 1,
           opacity: visible ? 1 : 0,
@@ -261,6 +261,7 @@ const TimerToggleButton = () => {
 }
 
 const TimerDisplay = () => {
+  const hasToggle = useDashboardTimerControl() !== null
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
@@ -331,7 +332,7 @@ const TimerDisplay = () => {
         sx={{
           position: 'absolute',
           top: 16,
-          right: 16,
+          right: hasToggle ? { xs: 16, sm: 16 + TOGGLE_WIDTH_PX + 12 } : 16,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
@@ -433,12 +434,10 @@ const TimerDisplay = () => {
             // the larger target-composition cap.
             fontSize: 'clamp(4rem, 34cqw, 15rem)',
             [SCALED_CANVAS_SELECTOR]: {
-              fontSize: 'clamp(4rem, 34cqw, 21rem)',
+              fontSize: 'clamp(4rem, 34cqw, 17.5rem)',
             },
             fontWeight: 900,
-            // digital-7 ink fills ~70% of the em box; a tight line box
-            // gives that height back to the glyphs.
-            lineHeight: 0.8,
+            lineHeight: 1,
             whiteSpace: 'nowrap',
             textAlign: 'center',
             color: phaseColor,
