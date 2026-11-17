@@ -226,7 +226,8 @@ describe('ConnectPage', () => {
     })
 
     renderWithProviders(<ConnectPage />, { providerProps })
-    expect(screen.getByTestId('bpm-value')).toBeInTheDocument()
+    // No packet yet: an unknown reading, not a fake 0 BPM.
+    expect(screen.getByTestId('bpm-value')).toHaveTextContent('---')
     expect(screen.queryByTestId('user-settings-form')).not.toBeInTheDocument()
   })
 })

@@ -16,6 +16,8 @@ import { ServiceInitializationError } from '../lib/errors.js'
 import { SpotifyPlayerManager } from './spotifyPlayerManager.js'
 import { SpotifyDeviceManager } from './spotifyDeviceManager.js'
 
+const POST_COMMAND_REPOLL_MS = [1000, 3000]
+
 export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
@@ -264,8 +266,12 @@ export class SpotifyPolling implements SpotifyService {
       // All other commands are player-related
       await this.playerManager!.executeSpotifyCommand(command, params)
 
-      // Slight delay to allow Spotify API to update before we re-poll
-      setTimeout(() => this.getCurrentlyPlaying(), 1000)
+      // Spotify's playback state lags commands by a few seconds: re-poll
+      // early so Now Playing and play/pause catch up without waiting for
+      // the next regular poll.
+      for (const delay of POST_COMMAND_REPOLL_MS) {
+        setTimeout(() => this.getCurrentlyPlaying(), delay)
+      }
     } catch (error) {
       await logSpotifyCommandError(command, error)
     }
