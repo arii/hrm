@@ -225,7 +225,7 @@ export const useHrmRecovery = ({
   )
 
   const reconnect = useCallback(
-    (device: BluetoothDevice, reason = 'Connection lost') => {
+    (device: BluetoothDevice, reason = 'Connection lost', streamed = true) => {
       claimConnectionAttempt()
       if (reconnectHaltedRef.current) {
         // A GATT timeout already stopped this episode's burst: the radio
@@ -266,17 +266,24 @@ export const useHrmRecovery = ({
           : BluetoothConnectionStatus.RECONNECTING
       )
 
+      // Attempt counts go to the log only: the banner shows one steady
+      // message per phase instead of two unrelated counters.
+      logger.info(
+        {
+          device: device.name,
+          reason,
+          attempt: reconnectAttempts.current,
+          maxAttempts: BLUETOOTH_MAX_RECONNECT_ATTEMPTS,
+        },
+        'Scheduling reconnect attempt'
+      )
+      // A link that never streamed was not "lost": the strap is still
+      // waking up, so say we are connecting.
       const statusMessage = isBusy
-        ? BLUETOOTH_MESSAGES.deviceBusy(
-            delay,
-            reconnectAttempts.current,
-            BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-          )
-        : BLUETOOTH_MESSAGES.reconnectingAttempt(
-            reason,
-            reconnectAttempts.current,
-            BLUETOOTH_MAX_RECONNECT_ATTEMPTS
-          )
+        ? BLUETOOTH_MESSAGES.deviceBusy(delay)
+        : streamed
+          ? BLUETOOTH_MESSAGES.reconnectingAttempt(reason)
+          : BLUETOOTH_MESSAGES.connectingToDevice(device.name || '')
 
       setCustomStatusMessage(statusMessage)
 
@@ -295,7 +302,8 @@ export const useHrmRecovery = ({
             logger.warn({ error }, 'Reconnect attempt failed')
             reconnect(
               device,
-              error instanceof Error ? error.message : String(error)
+              error instanceof Error ? error.message : String(error),
+              streamed
             )
           })
         }
@@ -324,12 +332,18 @@ export const useHrmRecovery = ({
         return
       }
 
+      // Read before setStatus below: the watchdog flips status to
+      // RECONNECTING before it severs a stalled stream, so its flag counts.
+      const streamed =
+        currentStatusRef.current === BluetoothConnectionStatus.CONNECTED ||
+        isTimeoutDisconnect.current
       logger.info(
         {
           device: device.name,
           manual: isManualDisconnect.current,
           timeout: isTimeoutDisconnect.current,
           midHandshake: isConnecting.current,
+          streamed,
         },
         'Device disconnected'
       )
@@ -353,7 +367,7 @@ export const useHrmRecovery = ({
       reconnectAttempts.current = 0
       reconnectHaltedRef.current = false
       stopWaitingForDevice()
-      reconnect(device, 'Connection lost')
+      reconnect(device, 'Connection lost', streamed)
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [reconnect, stopWaitingForDevice, isConnecting]

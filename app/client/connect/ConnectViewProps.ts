@@ -18,7 +18,7 @@ export interface ConnectViewProps {
   isSupported: boolean
   signalPeriodMs: number
   lastPeriodMs: number
-  currentHR: number
+  currentHR: number | null
   hrZoneData: HrZoneData
   connectionStatus: string
   bluetoothConnected: boolean

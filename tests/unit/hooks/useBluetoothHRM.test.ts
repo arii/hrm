@@ -526,6 +526,68 @@ describe('useBluetoothHRM', () => {
       expect(mockGatt.disconnect).toHaveBeenCalled()
     })
 
+    const lastScheduledAttempt = () =>
+      (logger.info as jest.Mock).mock.calls
+        .filter((call) => call[1] === 'Scheduling reconnect attempt')
+        .at(-1)?.[0].attempt
+
+    const connectWithService = (getPrimaryService: jest.Mock) => {
+      const mockCharacteristic: MockBluetoothRemoteGATTCharacteristic = {
+        startNotifications: jest.fn().mockResolvedValue(undefined),
+        stopNotifications: jest.fn().mockResolvedValue(undefined),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      }
+      const mockService: MockBluetoothRemoteGATTService = {
+        getCharacteristic: jest.fn().mockResolvedValue(mockCharacteristic),
+      }
+      getPrimaryService.mockResolvedValue(mockService)
+      mockGatt.connect.mockResolvedValue({ ...mockGatt, getPrimaryService })
+    }
+
+    it('says "Connection lost" when a streaming link drops', async () => {
+      connectWithService(jest.fn())
+      const { result } = renderHook(() => useBluetoothHRM())
+      await act(async () => {
+        await result.current.connectAndStream()
+      })
+      expect(result.current.isConnected).toBe(true)
+
+      act(() => {
+        onDisconnectedCallback()
+      })
+
+      expect(result.current.deviceStatus).toBe(
+        'Connection lost. Reconnecting...'
+      )
+    })
+
+    it('says "Connecting" when a link drops before it ever streamed', async () => {
+      // Service discovery never finishes: the strap woke, linked, and
+      // dropped mid-handshake, as a freshly worn strap often does.
+      mockGatt.connect.mockResolvedValue({
+        ...mockGatt,
+        getPrimaryService: jest.fn(() => new Promise(() => {})),
+      })
+      const { result } = renderHook(() => useBluetoothHRM())
+      act(() => {
+        void result.current.connectAndStream()
+      })
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(0)
+      })
+      expect(result.current.isConnected).toBe(false)
+
+      act(() => {
+        onDisconnectedCallback()
+      })
+
+      expect(result.current.deviceStatus).toBe(
+        BLUETOOTH_MESSAGES.connectingToDevice('Test HRM')
+      )
+      expect(result.current.deviceStatus).not.toMatch(/lost|attempt/i)
+    })
+
     it('should sever the GATT link when a connection attempt fails (#9154 zombie killer)', async () => {
       jest.useRealTimers() // fast-retry path sleeps on real timers
       // Persistent failure: every fast-retry attempt fails so the outer catch runs.
@@ -564,12 +626,10 @@ describe('useBluetoothHRM', () => {
       })
 
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toMatch(
-        new RegExp(
-          `reconnecting.*attempt 1/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
-          'i'
-        )
+      expect(result.current.deviceStatus).toBe(
+        'Connection lost. Reconnecting...'
       )
+      expect(lastScheduledAttempt()).toBe(1)
 
       // --- Reconnection attempts ---
       for (
@@ -582,13 +642,10 @@ describe('useBluetoothHRM', () => {
         })
         expect(mockGatt.connect).toHaveBeenCalledTimes(i)
         if (i < env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS) {
-          expect(result.current.deviceStatus).toMatch(
-            new RegExp(
-              `reconnecting.*attempt ${
-                i + 1
-              }/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
-              'i'
-            )
+          // Counts stay in the log; the banner never shows them.
+          expect(lastScheduledAttempt()).toBe(i + 1)
+          expect(result.current.deviceStatus).toBe(
+            'Reconnect failed. Reconnecting...'
           )
         }
       }
@@ -640,12 +697,10 @@ describe('useBluetoothHRM', () => {
       })
       expect(mockGatt.connect).toHaveBeenCalledTimes(1)
       expect(result.current.isConnected).toBe(false)
-      expect(result.current.deviceStatus).toMatch(
-        new RegExp(
-          `reconnecting.*attempt 2/${env.NEXT_PUBLIC_BLUETOOTH_MAX_RECONNECT_ATTEMPTS}`,
-          'i'
-        )
+      expect(result.current.deviceStatus).toBe(
+        'Reconnect failed. Reconnecting...'
       )
+      expect(lastScheduledAttempt()).toBe(2)
 
       // Second attempt (should succeed)
       await act(async () => {
@@ -1745,14 +1800,14 @@ describe('useBluetoothHRM', () => {
         await jest.advanceTimersByTimeAsync(1000)
       })
       expect(result.current.deviceStatus).toBe(
-        'Strap is quiet. Retrying... (Attempt 1/3)'
+        BLUETOOTH_MESSAGES.quietStrapRetry
       )
       // Second attempt fails after its wait; progress advances.
       await act(async () => {
         await jest.advanceTimersByTimeAsync(5000)
       })
       expect(result.current.deviceStatus).toBe(
-        'Strap is quiet. Retrying... (Attempt 2/3)'
+        BLUETOOTH_MESSAGES.quietStrapRetry
       )
       // Exhaustion now waits for the strap instead of failing dead.
       await act(async () => {
@@ -1783,7 +1838,7 @@ describe('useBluetoothHRM', () => {
         await jest.advanceTimersByTimeAsync(1000)
       })
       expect(result.current.deviceStatus).toBe(
-        'Strap is quiet. Retrying... (Attempt 1/3)'
+        BLUETOOTH_MESSAGES.quietStrapRetry
       )
       // The tap cancels the silent attempt's 5s retry wait instead of
       // being ignored behind it, and its own connect succeeds.
@@ -1812,9 +1867,7 @@ describe('useBluetoothHRM', () => {
       await act(async () => {
         await jest.advanceTimersByTimeAsync(500)
       })
-      expect(result.current.deviceStatus).toBe(
-        'Device busy. Retrying in 1s... (1/3)'
-      )
+      expect(result.current.deviceStatus).toBe('Device busy. Retrying in 1s...')
       await act(async () => {
         await jest.advanceTimersByTimeAsync(10000)
         await autoPromise

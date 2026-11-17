@@ -263,11 +263,7 @@ export const useGattConnect = ({
               if (ownsAttempt()) {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
                 setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.deviceBusy(
-                    action.delayMs,
-                    action.retryNumber,
-                    BUSY_RETRY_DELAYS_MS.length
-                  )
+                  BLUETOOTH_MESSAGES.deviceBusy(action.delayMs)
                 )
               }
               markRadioProgress()
@@ -292,12 +288,7 @@ export const useGattConnect = ({
               // the ownership token like the busy write above.
               if (ownsAttempt()) {
                 setStatus(BluetoothConnectionStatus.CONNECTING)
-                setCustomStatusMessage(
-                  BLUETOOTH_MESSAGES.quietStrapRetry(
-                    action.retryNumber,
-                    QUIET_STRAP_RETRY_DELAYS_MS.length
-                  )
-                )
+                setCustomStatusMessage(BLUETOOTH_MESSAGES.quietStrapRetry)
               }
               markRadioProgress()
               await abortableSleep(action.delayMs, signal)

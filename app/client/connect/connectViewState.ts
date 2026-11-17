@@ -13,7 +13,7 @@ interface ConnectionBanner {
 // Exactly one status banner at a time, highest priority first: a named
 // failure beats live BLE state, which beats the bare-disconnected notice,
 // which beats the connected confirmation. A started workout must not mask
-// recovery progress ("Reconnecting... (Attempt 3/8)", "Waiting for ... to
+// recovery progress ("Connection lost. Reconnecting...", "Waiting for ... to
 // wake up..."): the raw caption only renders while connected, so the banner
 // is the only place that state is visible. Pure: unit-tested.
 export const getConnectionBanner = ({
