@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Collapse from '@mui/material/Collapse'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import { formatConnectionLog } from '@/hooks/useBluetoothHRM/connectionLog'
 import logger from '@/utils/logger'
+import { SignalQualityIndicator } from '../SignalQualityIndicator'
 
 const COPY_LABEL_RESET_MS = 2500
 
@@ -17,7 +21,7 @@ const labels = {
  * Copies the timestamped Bluetooth log for this tab, the console
  * replacement for hardware tests on devices without DevTools.
  */
-export const CopyConnectionLogButton = () => {
+const CopyConnectionLogButton = () => {
   const [state, setState] = useState<keyof typeof labels>('idle')
 
   useEffect(() => {
@@ -67,3 +71,66 @@ export const ReloadFallback = () => (
     </Link>
   </Typography>
 )
+
+/**
+ * Technical diagnostics, collapsed so the live numbers lead the page.
+ */
+export const ConnectionDetails = ({
+  isConnected,
+  signalPeriodMs,
+  lastPeriodMs,
+  connectionStatus,
+}: {
+  isConnected: boolean
+  signalPeriodMs: number
+  lastPeriodMs: number
+  connectionStatus: string
+}) => {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Box sx={{ textAlign: 'center', mt: 3 }}>
+      <Button
+        size="small"
+        color="inherit"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls="connection-details"
+        endIcon={
+          <ExpandMoreIcon
+            sx={{
+              transform: open ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.2s',
+            }}
+          />
+        }
+        sx={{ minHeight: 44, color: 'text.secondary' }}
+      >
+        Connection details
+      </Button>
+      <Collapse in={open} id="connection-details">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1,
+            pt: 1,
+          }}
+        >
+          {isConnected && (
+            <SignalQualityIndicator
+              periodMs={signalPeriodMs}
+              lastPeriodMs={lastPeriodMs}
+              isConnected={isConnected}
+            />
+          )}
+          <CopyConnectionLogButton />
+          <Typography variant="body2" color="text.secondary">
+            WebSocket: {connectionStatus}
+          </Typography>
+        </Box>
+      </Collapse>
+    </Box>
+  )
+}
