@@ -1,8 +1,11 @@
 import { useEffect, useSyncExternalStore } from 'react'
 
-// Grace window for optimistic play/pause: long enough to feel instant,
-// short enough that the next server poll (5s) corrects a wrong guess.
-const OPTIMISTIC_REVERT_MS = 2500
+// Grace window for optimistic play/pause. Spotify's playback state lags a
+// command by a few seconds, so a shorter window let a stale "still
+// playing" poll flip Pause back to Playing. 12s spans the post-command
+// re-polls plus two regular 5s polls; agreement from the server still
+// clears it at once.
+export const OPTIMISTIC_REVERT_MS = 12000
 
 let optimistic: boolean | null = null
 let revertTimer: ReturnType<typeof setTimeout> | null = null

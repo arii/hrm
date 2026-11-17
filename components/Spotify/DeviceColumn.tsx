@@ -64,6 +64,7 @@ export const DeviceColumn = ({
         onToggleMute={handleToggleMute}
         showValue={true}
         disabled={!hasActiveDevice}
+        disabledReason="Waiting for a Spotify device to connect"
       />
       <SpotifyDeviceSelector
         availableDevices={devices || []}

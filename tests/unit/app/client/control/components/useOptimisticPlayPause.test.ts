@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import { OPTIMISTIC_REVERT_MS } from '@/lib/spotify/optimisticPlayback'
 import { renderHook, act } from '@testing-library/react'
 import { useOptimisticPlayPause } from '@/app/client/control/components/useOptimisticPlayPause'
 import { setOptimisticPlaying } from '@/lib/spotify/optimisticPlayback'
@@ -30,7 +31,7 @@ describe('useOptimisticPlayPause', () => {
     expect(sendCommand).toHaveBeenCalledWith('PLAY')
 
     act(() => {
-      jest.advanceTimersByTime(2500)
+      jest.advanceTimersByTime(OPTIMISTIC_REVERT_MS)
     })
     expect(result.current.displayPlaying).toBe(false)
   })
