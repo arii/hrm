@@ -25,9 +25,7 @@ test('Pause workout freezes the session and offers Resume', async ({
   await expect(
     connectPage.getByRole('button', { name: 'Resume workout session' })
   ).toBeVisible()
-  const duration = connectPage
-    .getByText('Duration', { exact: true })
-    .locator('xpath=preceding-sibling::p[1]')
+  const duration = connectPage.getByTestId('workout-duration')
   const frozen = await duration.textContent()
   await connectPage.evaluate(() => {
     window.bluetoothTestHelpers.simulateHeartRate(95)
