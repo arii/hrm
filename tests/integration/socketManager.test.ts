@@ -206,4 +206,37 @@ describe('WebSocket Full Integration Test', () => {
 
     ws2.close()
   })
+
+  it('relays the Beeps control to every dashboard and to later joiners', async () => {
+    const open = async () => {
+      const socket = new WebSocket(wsUrl)
+      await new Promise((resolve) => socket.on('open', resolve))
+      return socket
+    }
+    const setter = await open()
+    const other = await open()
+
+    const relayed = waitForMessage<ServerMessage>(
+      other,
+      (msg) => msg.type === 'BEEP_PREFERENCE_UPDATE'
+    )
+    setter.send(
+      JSON.stringify({ type: 'BEEP_PREFERENCE', volume: 25, muted: true })
+    )
+    expect(await relayed).toMatchObject({
+      payload: { volume: 25, muted: true },
+    })
+
+    const late = await open()
+    const initial = waitForMessage<ServerMessage>(
+      late,
+      (msg) => msg.type === 'INITIAL_STATE'
+    )
+    late.send(JSON.stringify({ type: 'GET_STATE' }))
+    expect(await initial).toMatchObject({
+      payload: { beepPreference: { volume: 25, muted: true } },
+    })
+
+    for (const socket of [setter, other, late]) socket.close()
+  })
 })

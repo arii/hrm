@@ -10,6 +10,8 @@ import {
   TimerCommandMessage,
   TimerModeCommandMessage,
   TimerConfigMessage,
+  BeepPreference,
+  BeepPreferenceMessage,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -192,6 +194,7 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
+  beepPreference = undefined
   hrmSessionManager.clear()
   clientSessionState.clear()
 
@@ -249,6 +252,24 @@ const handleRegisterClient: IncomingMessageHandler = (
   logger.info({ clientId, clientType: ws.clientType }, 'Client registered')
 }
 
+// Server copy of the Beeps control so every dashboard, on any device,
+// beeps at the level last set on any of them.
+let beepPreference: BeepPreference | undefined
+
+const handleBeepPreference: IncomingMessageHandler = (
+  _ws,
+  message,
+  _clientId
+) => {
+  const { volume, muted } = message as BeepPreferenceMessage
+  beepPreference = { volume, muted }
+  broadcast(
+    wsServerInstance,
+    { type: 'BEEP_PREFERENCE_UPDATE', payload: beepPreference },
+    'socketManager.BEEP_PREFERENCE'
+  )
+}
+
 const handleGetState: IncomingMessageHandler = (ws, _message, _clientId) => {
   const stateSnapshot = getUnifiedStateSnapshot()
   const allData = hrmSessionManager.findAll()
@@ -259,6 +280,7 @@ const handleGetState: IncomingMessageHandler = (ws, _message, _clientId) => {
   const payload: InitialStateSnapshotPayload = {
     ...stateSnapshot,
     hrmData: filteredData,
+    ...(beepPreference && { beepPreference }),
   }
   const initialStateMessage: ServerMessage = {
     type: 'INITIAL_STATE',
@@ -550,6 +572,7 @@ const messageHandlers: Record<
   PING: handlePing,
   REGISTER_CLIENT: handleRegisterClient,
   GET_STATE: handleGetState,
+  BEEP_PREFERENCE: handleBeepPreference,
   HRM_METADATA_UPDATE: handleHrmMetadataUpdate,
   HRM_INPUT: handleHrmInput,
   TIMER_COMMAND: handleTimerCommand,

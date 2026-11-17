@@ -1,10 +1,24 @@
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import logger from '@/utils/logger'
-import { useTimerData } from '@/context/WebSocketContext'
+import {
+  useTimerData,
+  useWebSocketConnection,
+} from '@/context/WebSocketContext'
 
 export const useAudio = () => {
   const timerData = useTimerData()
+  const { sendData } = useWebSocketConnection()
+
+  // Beeps control changes go to the server, which relays them to every
+  // other dashboard so none keeps beeping at the old level.
+  useEffect(
+    () =>
+      audioManager.onLocalChange(({ volume, muted }) => {
+        sendData({ type: 'BEEP_PREFERENCE', volume, muted })
+      }),
+    [sendData]
+  )
   const lastSoundEventId = useRef<number>(0)
 
   useEffect(() => {

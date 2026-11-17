@@ -2,6 +2,7 @@
 import throttle from 'lodash.throttle'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import logger from '@/utils/logger'
+import { audioManager } from '@/utils/audioManager'
 import type { ClientCommandMessage, ServerMessage } from '../../types/websocket'
 import type { WebSocketDispatch } from './testHooks'
 import { isTestEnvironment, markConnectionStatus } from './testHooks'
@@ -203,6 +204,17 @@ export const useWebSocketLifecycle = ({
             clearTimeout(pongTimeoutRef.current)
           }
           return // Pong message is handled, no state dispatch needed
+        }
+
+        if (message.type === 'BEEP_PREFERENCE_UPDATE') {
+          audioManager.applyRemote(message.payload)
+          return
+        }
+        if (
+          message.type === 'INITIAL_STATE' &&
+          message.payload.beepPreference
+        ) {
+          audioManager.applyRemote(message.payload.beepPreference)
         }
 
         // Throttle high-frequency messages

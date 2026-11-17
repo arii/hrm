@@ -35,6 +35,19 @@ describe('audioManager beep preference', () => {
     expect(audioManager.getMuted()).toBe(false)
   })
 
+  it('reports own-control changes but not server ones', () => {
+    const local = jest.fn()
+    const unsubscribe = audioManager.onLocalChange(local)
+    audioManager.setVolume(40)
+    expect(local).toHaveBeenCalledWith({ volume: 40, muted: false })
+
+    audioManager.applyRemote({ volume: 20, muted: true })
+    expect(audioManager.getPreference()).toEqual({ volume: 20, muted: true })
+    expect(localStorage.getItem('hrm-timer-muted')).toBe('true')
+    expect(local).toHaveBeenCalledTimes(1)
+    unsubscribe()
+  })
+
   it('persists volume and mute under the timer-only keys', () => {
     audioManager.setVolume(40)
     audioManager.setMuted(true)
