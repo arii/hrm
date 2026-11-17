@@ -48,6 +48,12 @@ describe('audioManager beep preference', () => {
     unsubscribe()
   })
 
+  it('treats a relayed zero volume as mute', () => {
+    audioManager.setVolume(45)
+    audioManager.applyRemote({ volume: 0, muted: false })
+    expect(audioManager.getPreference()).toEqual({ volume: 45, muted: true })
+  })
+
   it('persists volume and mute under the timer-only keys', () => {
     audioManager.setVolume(40)
     audioManager.setMuted(true)

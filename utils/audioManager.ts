@@ -117,10 +117,12 @@ class AudioManager {
    * reported to onLocalChange, so it is never echoed back.
    */
   applyRemote(next: BeepPreference) {
-    const preference = {
-      volume: clampPercent(next.volume) || DEFAULT_BEEP_VOLUME,
-      muted: next.muted,
-    }
+    const volume = clampPercent(next.volume)
+    // Zero means mute, as with the local slider; keep the audible level.
+    const preference =
+      volume === 0
+        ? { volume: this.preference.volume, muted: true }
+        : { volume, muted: next.muted }
     if (this.applyPreference(preference)) this.persist(preference)
   }
 
