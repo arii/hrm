@@ -113,21 +113,16 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
-// One readable line instead of rotated side rails: the mode once a
-// timer is set up, plus the Tabata intervals.
+// Tabata intervals on one readable line. The mode is not named: the
+// digits counting down or up already show it.
 export const resolveTimerSummary = (input: {
   mode: TimerMode
-  currentPhase: TimerPhase
   workDuration: number
   restDuration: number
-}): string => {
-  const parts: string[] = []
-  if (input.currentPhase !== 'IDLE') parts.push(input.mode)
-  if (input.mode === 'TABATA') {
-    parts.push(`WORK: ${input.workDuration}s`, `REST: ${input.restDuration}s`)
-  }
-  return parts.join(' · ')
-}
+}): string =>
+  input.mode === 'TABATA'
+    ? `WORK: ${input.workDuration}s · REST: ${input.restDuration}s`
+    : ''
 
 const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
 
@@ -295,7 +290,6 @@ const TimerDisplay = () => {
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
   const timerSummary = resolveTimerSummary({
     mode,
-    currentPhase,
     workDuration,
     restDuration,
   })
@@ -381,37 +375,47 @@ const TimerDisplay = () => {
           minWidth: 0, // Prevent content from overflowing
         }}
       >
-        {timerSummary && (
-          <Typography
-            data-testid="timer-work-rest-badge"
-            sx={{
-              mb: 0.5,
-              lineHeight: 1.2,
-              color: 'common.white',
-              fontWeight: 700,
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-              letterSpacing: 1,
-            }}
-          >
-            {timerSummary}
-          </Typography>
-        )}
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Typography
-            data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
-            sx={{
-              mb: 0.5,
-              color: phaseColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-            }}
-          >
-            {phaseLabel}
-          </Typography>
-        )}
+        {/* Phase and intervals share one row so the digits get the height */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            justifyContent: 'center',
+            columnGap: 2,
+          }}
+        >
+          {/* Phase Label - only show for Tabata phases, not RUNNING */}
+          {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
+            <Typography
+              data-testid="timer-phase"
+              variant="h6"
+              aria-live="polite"
+              sx={{
+                lineHeight: 1.2,
+                color: phaseColor,
+                fontWeight: 700,
+                letterSpacing: 2,
+              }}
+            >
+              {phaseLabel}
+            </Typography>
+          )}
+          {timerSummary && (
+            <Typography
+              data-testid="timer-work-rest-badge"
+              sx={{
+                lineHeight: 1.2,
+                color: 'common.white',
+                fontWeight: 700,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                letterSpacing: 1,
+              }}
+            >
+              {timerSummary}
+            </Typography>
+          )}
+        </Box>
 
         {/* Giant Timer Display */}
         <Typography
@@ -427,12 +431,14 @@ const TimerDisplay = () => {
             // The responsive cap fits the one-column phone layout; the
             // scaled canvas (full-width timer with no HR tiles) allows
             // the larger target-composition cap.
-            fontSize: 'clamp(4rem, 26cqw, 13rem)',
+            fontSize: 'clamp(4rem, 34cqw, 15rem)',
             [SCALED_CANVAS_SELECTOR]: {
-              fontSize: 'clamp(4rem, 26cqw, 16rem)',
+              fontSize: 'clamp(4rem, 34cqw, 21rem)',
             },
             fontWeight: 900,
-            lineHeight: 1,
+            // digital-7 ink fills ~70% of the em box; a tight line box
+            // gives that height back to the glyphs.
+            lineHeight: 0.8,
             whiteSpace: 'nowrap',
             textAlign: 'center',
             color: phaseColor,
