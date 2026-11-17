@@ -16,15 +16,17 @@ jest.mock('@/hooks/useAppSnackbar', () => ({
     showWarning: jest.fn(),
   })),
 }))
-// One mock for every dynamic import: only the playlist grid receives
-// onPlaylistPlay, so the quick settings and track list render nothing.
+// One mock for every dynamic import, told apart by props: the grid gets
+// onPlaylistPlay, the track list onTrackPlay, the quick settings nothing.
 jest.mock('next/dynamic', () => () => {
   const MockComponent = ({
     onShowTracks,
     onPlaylistPlay,
+    onTrackPlay,
   }: {
     onShowTracks?: (uri: string) => void
     onPlaylistPlay?: (uri: string) => void
+    onTrackPlay?: (index: number) => void
   }) =>
     onPlaylistPlay ? (
       <div data-testid="mock-playlist-grid">
@@ -35,7 +37,9 @@ jest.mock('next/dynamic', () => () => {
           Play
         </button>
       </div>
-    ) : null
+    ) : onTrackPlay ? null : (
+      <div data-testid="mock-quick-settings" />
+    )
   MockComponent.displayName = 'MockDynamic'
   return MockComponent
 })
@@ -143,5 +147,19 @@ describe('SpotifySelectionPage', () => {
     expect(showWarning).toHaveBeenCalledWith(
       expect.stringContaining('No Spotify device available')
     )
+  })
+
+  it('hides quick settings when signed out', () => {
+    render(<SpotifySelectionPage />)
+    expect(screen.queryByTestId('mock-quick-settings')).not.toBeInTheDocument()
+  })
+
+  it('shows quick settings for a signed-in session before anything plays', () => {
+    mockedUseSpotifyData.mockReturnValue({
+      ...mockSpotifyDataValue,
+      devices: [{ id: 'hrm-1', name: 'HRM Web Player', is_active: false }],
+    })
+    render(<SpotifySelectionPage />)
+    expect(screen.getByTestId('mock-quick-settings')).toBeInTheDocument()
   })
 })

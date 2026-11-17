@@ -74,6 +74,10 @@ const SpotifySelectionPage = () => {
     trackName !== 'Awaiting Login...' &&
     trackName !== 'Requires Login'
 
+  // Devices are only polled for a signed-in account, so a known device
+  // means a live session even before anything has played.
+  const hasSpotifySession = isLoggedIn || !!spotifyData.devices?.length
+
   const tracksRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (selectedPlaylistId) {
@@ -118,7 +122,7 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
-      {isLoggedIn && (
+      {hasSpotifySession && (
         <Box sx={{ mt: 2 }}>
           <SpotifyQuickSettings />
         </Box>
