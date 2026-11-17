@@ -15,8 +15,9 @@ export const dedupeDevicesByName = (
 ): SpotifyDevice[] => {
   const byName = new Map<string, SpotifyDevice>()
   for (const device of devices) {
-    const kept = byName.get(device.name)
-    if (!kept || !kept.is_active) byName.set(device.name, device)
+    const key = device.name ?? device.id ?? ''
+    const kept = byName.get(key)
+    if (!kept || !kept.is_active) byName.set(key, device)
   }
   return [...byName.values()]
 }
