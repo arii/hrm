@@ -8,7 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSpotifyData } from '@/context/WebSocketContext'
 import {
   useSpotifyCommand,
@@ -68,6 +68,19 @@ const SpotifySelectionPage = () => {
     executeSpotify('PLAY', { ...payload, deviceId: targetDeviceId })
   }
 
+  const trackName = spotifyData.playback.track.name
+  const isLoggedIn =
+    !!trackName &&
+    trackName !== 'Awaiting Login...' &&
+    trackName !== 'Requires Login'
+
+  const tracksRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (selectedPlaylistId) {
+      tracksRef.current?.scrollIntoView?.({ behavior: 'smooth' })
+    }
+  }, [selectedPlaylistId])
+
   const handlePlaylistPlay = (uri: string) => {
     playOnTarget({ contextUri: uri })
   }
@@ -82,16 +95,14 @@ const SpotifySelectionPage = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
+    <Container maxWidth="md" sx={{ py: 3, pb: FOOTER_RESERVE_RESPONSIVE }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Spotify Playlist Selector
       </Typography>
 
       <Card>
         <CardContent>
-          {spotifyData.playback.track.name &&
-          spotifyData.playback.track.name !== 'Awaiting Login...' &&
-          spotifyData.playback.track.name !== 'Requires Login' ? (
+          {isLoggedIn ? (
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h6">Now Playing</Typography>
               <Typography>
@@ -107,9 +118,11 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
-      <Box sx={{ mt: 2 }}>
-        <SpotifyQuickSettings />
-      </Box>
+      {isLoggedIn && (
+        <Box sx={{ mt: 2 }}>
+          <SpotifyQuickSettings />
+        </Box>
+      )}
 
       <Card sx={{ mt: 2 }}>
         <CardContent>
@@ -128,12 +141,14 @@ const SpotifySelectionPage = () => {
         </CardContent>
       </Card>
 
-      {selectedPlaylistId && (
-        <PlaylistDetails
-          playlistId={selectedPlaylistId}
-          onTrackPlay={handleTrackPlay}
-        />
-      )}
+      <Box ref={tracksRef} sx={{ scrollMarginTop: 16 }}>
+        {selectedPlaylistId && (
+          <PlaylistDetails
+            playlistId={selectedPlaylistId}
+            onTrackPlay={handleTrackPlay}
+          />
+        )}
+      </Box>
     </Container>
   )
 }

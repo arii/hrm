@@ -96,7 +96,12 @@ const PlaylistTile = ({
         <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
           {playlist.name}
         </Typography>
-        <Typography variant="caption" color="text.secondary" noWrap>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          noWrap
+        >
           {subtitle(playlist) || '\u00a0'}
         </Typography>
       </Box>
@@ -130,7 +135,7 @@ const Section = ({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))',
           gap: 2,
         }}
       >
