@@ -151,7 +151,8 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
         position: 'absolute',
         top: 4,
         left: 8,
-        zIndex: 1,
+        // Above the running timer's tap-to-reveal layer.
+        zIndex: 3,
         display: 'flex',
         alignItems: 'center',
         gap: 1,
