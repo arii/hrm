@@ -165,6 +165,8 @@ describe('useBluetoothHRM in-page recovery', () => {
   })
 
   it('Reset forgets the strap and Connect opens the chooser in the same tab', async () => {
+    const otherDevice = { ...mockDevice, id: 'other', forget: jest.fn() }
+    mockBluetooth.getDevices.mockResolvedValue([mockDevice, otherDevice])
     const { result } = renderHook(() => useBluetoothHRM())
     await act(async () => {
       await result.current.connectAndStream('Ari', 30)
@@ -174,7 +176,8 @@ describe('useBluetoothHRM in-page recovery', () => {
     await act(async () => {
       await result.current.forgetDevice()
     })
-    expect(mockDevice.forget).toHaveBeenCalled()
+    expect(mockDevice.forget).toHaveBeenCalledTimes(1)
+    expect(otherDevice.forget).not.toHaveBeenCalled()
     expect(Cookies.remove).toHaveBeenCalledWith('hrm_device_id')
     expect(result.current.deviceStatus).toBe(BLUETOOTH_MESSAGES.deviceForgotten)
 

@@ -330,6 +330,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    */
   const forgetDevice = useCallback(async () => {
     const known = connectedDeviceRef.current ?? savedDevice
+    const savedId = Cookies.get('hrm_device_id')
     await hardResetRadio('reset')
     disconnect()
     Cookies.remove('hrm_device_id')
@@ -339,8 +340,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     } catch (error) {
       logger.warn({ error }, 'Could not list permitted devices to forget')
     }
-    const devices = new Set(known ? [known, ...permitted] : permitted)
-    for (const device of devices) {
+    // Only this page's strap: other devices the site was granted keep
+    // their permission.
+    const strapIds = new Set([known?.id, savedId].filter(Boolean))
+    const devices = new Map(
+      permitted.filter((d) => strapIds.has(d.id)).map((d) => [d.id, d])
+    )
+    if (known && !devices.has(known.id)) devices.set(known.id, known)
+    for (const device of devices.values()) {
       if (typeof device.forget !== 'function') continue
       try {
         await device.forget()
