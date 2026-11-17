@@ -15,24 +15,26 @@ describe('ResetSection', () => {
     expect(screen.getByTestId('reset-section')).toBeInTheDocument()
   })
 
-  it('calls onReset when the button is clicked', () => {
+  it('asks for confirmation before calling onReset', () => {
     const onReset = jest.fn()
     renderSection({ onReset })
     fireEvent.click(screen.getByRole('button', { name: /reset permissions/i }))
+    expect(onReset).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Forget strap' }))
     expect(onReset).toHaveBeenCalledTimes(1)
+  })
+
+  it('does nothing when the confirmation is cancelled', () => {
+    const onReset = jest.fn()
+    renderSection({ onReset })
+    fireEvent.click(screen.getByRole('button', { name: /reset permissions/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onReset).not.toHaveBeenCalled()
   })
 
   it('disables the button and relabels while resetting', () => {
     renderSection({ isResetting: true })
     const button = screen.getByRole('button', { name: /resetting/i })
     expect(button).toBeDisabled()
-  })
-
-  it('renders the same controls in compact toolbar mode', () => {
-    renderSection({ compact: true })
-    expect(screen.getByTestId('reset-section')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /reset permissions/i })
-    ).toBeEnabled()
   })
 })

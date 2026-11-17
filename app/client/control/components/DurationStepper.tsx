@@ -28,8 +28,8 @@ const stepperButtonSx = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
   },
-  width: 56,
-  height: 56,
+  width: 72,
+  height: 72,
 }
 
 const DurationStepper: React.FC<DurationStepperProps> = ({
@@ -57,7 +57,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
           color: 'white',
           fontWeight: 'medium',
           mb: 0.5,
-          fontSize: '0.95rem',
+          fontSize: '1.1rem',
           textAlign: 'center',
         }}
       >
@@ -87,9 +87,9 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
           sx={{
             color,
             fontWeight: 'bold',
-            fontSize: '2.5rem',
+            fontSize: '3.5rem',
             textAlign: 'center',
-            minWidth: '80px',
+            minWidth: '120px',
             fontFamily: 'monospace',
           }}
           data-testid={`${label.toLowerCase()}-duration-display`}

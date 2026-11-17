@@ -4,6 +4,10 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import type { SpotifyDevice } from '@/types/core'
+import {
+  dedupeDevicesByName,
+  spotifyDeviceLabel,
+} from '@/components/SpotifyDeviceSelector'
 
 interface SpotifyDeviceDropdownProps {
   devices: SpotifyDevice[]
@@ -43,13 +47,13 @@ const SpotifyDeviceDropdown = ({
         }}
         data-testid="spotify-device-select"
       >
-        {devices.map((device) => (
+        {dedupeDevicesByName(devices).map((device) => (
           <MenuItem
             key={device.id}
             value={device.id}
             data-testid={`spotify-device-select-option-${device.id}`}
           >
-            {device.name} {device.is_active && '(Active)'}
+            {spotifyDeviceLabel(device)} {device.is_active && '(Active)'}
           </MenuItem>
         ))}
       </Select>

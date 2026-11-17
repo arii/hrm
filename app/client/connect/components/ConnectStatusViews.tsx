@@ -7,7 +7,6 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import UserSettings from '../UserSettings'
-import { SignalQualityIndicator } from '../SignalQualityIndicator'
 import type { UserProfileState } from '@/types/connect'
 import type { ConnectionBanner } from '../connectViewState'
 
@@ -18,43 +17,17 @@ const BatteryIcon = ({ level }: { level: number }) => {
   return <BatteryAlertIcon color="error" />
 }
 
-export const DeviceHealthRow = ({
-  batteryLevel,
-  signalPeriodMs,
-  lastPeriodMs,
-  isConnected,
-}: {
-  batteryLevel: number | null
-  signalPeriodMs: number
-  lastPeriodMs: number
-  isConnected: boolean
-}) => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 2,
-      mb: 1,
-    }}
+export const BatteryRow = ({ batteryLevel }: { batteryLevel: number }) => (
+  <Stack
+    direction="row"
+    alignItems="center"
+    justifyContent="center"
+    spacing={0.5}
+    sx={{ color: 'text.secondary', mb: 1 }}
   >
-    {batteryLevel !== null && (
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={0.5}
-        sx={{ color: 'text.secondary' }}
-      >
-        <BatteryIcon level={batteryLevel} />
-        <Typography variant="body2">{batteryLevel}% Battery</Typography>
-      </Stack>
-    )}
-    <SignalQualityIndicator
-      periodMs={signalPeriodMs}
-      lastPeriodMs={lastPeriodMs}
-      isConnected={isConnected}
-    />
-  </Box>
+    <BatteryIcon level={batteryLevel} />
+    <Typography variant="body2">{batteryLevel}% Battery</Typography>
+  </Stack>
 )
 
 export const MetadataStrip = ({

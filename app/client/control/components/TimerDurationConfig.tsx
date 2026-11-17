@@ -8,6 +8,16 @@ import Typography from '@mui/material/Typography'
 import { alpha, useTheme } from '@mui/material/styles'
 import DurationStepper from './DurationStepper'
 
+// Gym-floor tap targets, readable from a few metres away.
+const presetButtonSx = {
+  flex: 1,
+  minHeight: 64,
+  fontSize: '1.1rem',
+  fontWeight: 700,
+  backgroundColor: 'secondary.dark',
+  '&:hover': { backgroundColor: 'secondary.main' },
+}
+
 interface TimerDurationConfigProps {
   workTime: number
   restTime: number
@@ -47,11 +57,7 @@ const TimerDurationConfig = ({
               onRestChange(10)
             }}
             disabled={disabled}
-            sx={{
-              flex: 1,
-              backgroundColor: 'secondary.dark',
-              '&:hover': { backgroundColor: 'secondary.main' },
-            }}
+            sx={presetButtonSx}
             data-testid="timer-preset-tabata-button"
           >
             Tabata (20/10)
@@ -63,11 +69,7 @@ const TimerDurationConfig = ({
               onRestChange(60)
             }}
             disabled={disabled}
-            sx={{
-              flex: 1,
-              backgroundColor: 'secondary.dark',
-              '&:hover': { backgroundColor: 'secondary.main' },
-            }}
+            sx={presetButtonSx}
             data-testid="timer-preset-emom-button"
           >
             EMOM (60/60)
