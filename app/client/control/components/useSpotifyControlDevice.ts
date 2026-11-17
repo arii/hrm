@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HRM_WEB_PLAYER_NAME } from '@/constants/spotify'
 import { resolveTargetDeviceId as resolveDeviceId } from '@/lib/spotify/deviceResolution'
 import type { SpotifyDevice } from '@/types/core'
+import { dedupeDevicesByName } from '@/components/SpotifyDeviceSelector'
 
 /** Device lifecycle for the control page: fetch, select, target (#9298). */
 export const useSpotifyControlDevice = ({
@@ -27,7 +28,8 @@ export const useSpotifyControlDevice = ({
 
   const hrmDevice = useMemo(
     () =>
-      devices.find(
+      // The same registration the deduped dropdown lists (the newest).
+      dedupeDevicesByName(devices).find(
         (d) => d.name?.toLowerCase() === HRM_WEB_PLAYER_NAME.toLowerCase()
       ),
     [devices]

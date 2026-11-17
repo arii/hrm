@@ -9,15 +9,6 @@ import {
   spotifyDeviceLabel,
 } from '@/components/SpotifyDeviceSelector'
 
-// One entry per name, but the selected registration stands in for its
-// group so the Select always has a matching option.
-const deviceOptions = (devices: SpotifyDevice[], selectedId: string) => {
-  const selected = devices.find((device) => device.id === selectedId)
-  return dedupeDevicesByName(devices).map((kept) =>
-    selected && selected.name === kept.name ? selected : kept
-  )
-}
-
 interface SpotifyDeviceDropdownProps {
   devices: SpotifyDevice[]
   selectedDeviceId: string
@@ -56,7 +47,7 @@ const SpotifyDeviceDropdown = ({
         }}
         data-testid="spotify-device-select"
       >
-        {deviceOptions(devices, selectedDeviceId).map((device) => (
+        {dedupeDevicesByName(devices).map((device) => (
           <MenuItem
             key={device.id}
             value={device.id}
