@@ -571,7 +571,8 @@ describe('useBluetoothHRM', () => {
       })
       const { result } = renderHook(() => useBluetoothHRM())
       act(() => {
-        void result.current.connectAndStream()
+        // Settles (rejects) once the setup timeout or unmount ends it.
+        void result.current.connectAndStream().catch(() => {})
       })
       await act(async () => {
         await jest.advanceTimersByTimeAsync(0)

@@ -3,14 +3,31 @@
  */
 import { renderHook, act, waitFor } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { GATT_SETUP_STALLED } from '@/hooks/useBluetoothHRM/useGattConnect'
 import {
   STUCK_CHECK_INTERVAL_MS,
   STUCK_CONNECT_TIMEOUT_MS,
+  GATT_SETUP_TIMEOUT_MS,
 } from '@/constants/bluetooth-reconnection'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import logger from '@/utils/logger'
 import * as WebSocketContext from '@/context/WebSocketContext'
 import Cookies from 'js-cookie'
+
+// Lets one test model a hang that no step timeout bounds, which only the
+// stuck detector can clear.
+let mockSetupTimeoutMs: number | undefined
+jest.mock('@/constants/bluetooth-reconnection', () => {
+  const actual = jest.requireActual<
+    typeof import('@/constants/bluetooth-reconnection')
+  >('@/constants/bluetooth-reconnection')
+  return {
+    ...actual,
+    get GATT_SETUP_TIMEOUT_MS() {
+      return mockSetupTimeoutMs ?? actual.GATT_SETUP_TIMEOUT_MS
+    },
+  }
+})
 
 jest.mock('@/context/WebSocketContext')
 jest.mock('js-cookie', () => ({
@@ -106,6 +123,7 @@ describe('useBluetoothHRM in-page recovery', () => {
   })
 
   afterEach(() => {
+    mockSetupTimeoutMs = undefined
     jest.useRealTimers()
   })
 
@@ -249,8 +267,10 @@ describe('useBluetoothHRM in-page recovery', () => {
   })
 
   it('auto-resets a stuck connect once, then names the failure and offers the reload fallback', async () => {
-    // Service discovery that never answers: the attempt holds the radio
-    // with no progress, which only the detector can clear.
+    // Service discovery that never answers, with the setup timeout lifted
+    // out of reach: the attempt holds the radio with no progress, which
+    // only the detector can clear.
+    mockSetupTimeoutMs = STUCK_CONNECT_TIMEOUT_MS * 10
     mockGatt.getPrimaryService.mockReturnValue(new Promise(() => {}))
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -311,6 +331,62 @@ describe('useBluetoothHRM in-page recovery', () => {
     expect(loggedMessages('warn')).not.toContain(
       'stuck connect, auto-resetting'
     )
+  })
+
+  it('gives up a wake attempt whose setup hangs and keeps waiting for the strap', async () => {
+    ;(Cookies.get as jest.Mock).mockReturnValue('hr6')
+    mockGatt.connect.mockRejectedValue(new Error('Connection failed'))
+    const { result } = renderHook(() => useBluetoothHRM())
+    await act(async () => {
+      await result.current.autoConnect()
+    })
+    const waiting = BLUETOOTH_MESSAGES.waitingForDevice('HR6 0050855')
+    expect(result.current.deviceStatus).toBe(waiting)
+
+    mockGatt.connect.mockReset()
+    mockGatt.connect.mockResolvedValue(mockGatt)
+    mockGatt.getPrimaryService.mockReturnValue(new Promise(() => {}))
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(60000)
+    })
+    expect(mockGatt.getPrimaryService).toHaveBeenCalledTimes(1)
+    mockGatt.disconnect.mockClear()
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(GATT_SETUP_TIMEOUT_MS)
+    })
+    expect(mockGatt.disconnect).toHaveBeenCalled()
+    expect(result.current.deviceStatus).toBe(waiting)
+
+    // The radio is free again: the next poll makes a fresh wake attempt
+    // that streams once discovery answers.
+    mockGatt.getPrimaryService.mockResolvedValue(mockService)
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(60000)
+    })
+    expect(mockGatt.getPrimaryService.mock.calls.length).toBeGreaterThan(1)
+    expect(result.current.isConnected).toBe(true)
+  })
+
+  it('fails a manual connect whose setup hangs so the next Connect acts', async () => {
+    mockGatt.getPrimaryService.mockReturnValueOnce(new Promise(() => {}))
+    const { result } = renderHook(() => useBluetoothHRM())
+    let first: Promise<unknown> = Promise.resolve()
+    act(() => {
+      first = result.current.connectAndStream('Ari', 30).catch((e) => e)
+    })
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(GATT_SETUP_TIMEOUT_MS)
+    })
+    expect(String(await first)).toContain(GATT_SETUP_STALLED)
+    expect(result.current.isConnected).toBe(false)
+
+    await act(async () => {
+      await expect(result.current.connectAndStream('Ari', 30)).resolves.toBe(
+        true
+      )
+    })
+    expect(result.current.isConnected).toBe(true)
   })
 
   it('offers the reload fallback only after repeated failed connects, not chooser cancels', async () => {

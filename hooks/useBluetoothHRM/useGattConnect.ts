@@ -13,6 +13,7 @@ import Cookies from 'js-cookie'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 import {
   BUSY_RETRY_DELAYS_MS,
+  GATT_SETUP_TIMEOUT_MS,
   QUIET_STRAP_RETRY_DELAYS_MS,
   SETUP_DROP_RETRY_DELAYS_MS,
 } from '@/constants/bluetooth-reconnection'
@@ -23,6 +24,11 @@ import {
 } from './gattClassification'
 import { setupBatteryNotifications } from './batteryNotifications'
 import { HR_CHARACTERISTIC_UUID, HR_SERVICE_UUID } from './constants'
+
+// Deliberately not a "timeout": classifyGattFailure treats timeouts as a
+// slow strap and halts auto-recovery, while a stalled setup is an ordinary
+// failure that closes the link and lets the wait keep polling.
+export const GATT_SETUP_STALLED = 'GATT setup stalled'
 
 /** Signature of the GATT connect operation exposed to the recovery loop. */
 export type ConnectToGattFn = (
@@ -310,18 +316,45 @@ export const useGattConnect = ({
       }
 
       /** Service discovery through the first HR notification setup. */
-      const subscribe = async (server: BluetoothRemoteGATTServer) => {
+      const subscribe = async (
+        server: BluetoothRemoteGATTServer,
+        isAbandoned: () => boolean
+      ) => {
+        // A step that resolves after the setup timeout gave up must not
+        // carry on and subscribe on a link the failure path already closed.
+        const checkStep = () => {
+          throwIfAborted()
+          if (isAbandoned()) throw new Error(GATT_SETUP_STALLED)
+        }
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
-        throwIfAborted()
+        checkStep()
         const characteristic = await service.getCharacteristic(
           HR_CHARACTERISTIC_UUID
         )
-        throwIfAborted()
+        checkStep()
         await setupBatteryNotifications(server, setBatteryLevel)
-        throwIfAborted()
+        checkStep()
         await characteristic.startNotifications()
-        throwIfAborted()
+        checkStep()
         return characteristic
+      }
+
+      /** subscribe() bounded by GATT_SETUP_TIMEOUT_MS. */
+      const subscribeWithin = async (server: BluetoothRemoteGATTServer) => {
+        let abandoned = false
+        try {
+          return await cancellablePromise(
+            subscribe(server, () => abandoned),
+            {
+              timeoutMs: GATT_SETUP_TIMEOUT_MS,
+              errorMessage: GATT_SETUP_STALLED,
+              signal,
+            }
+          )
+        } catch (error) {
+          abandoned = true
+          throw error
+        }
       }
 
       try {
@@ -349,7 +382,7 @@ export const useGattConnect = ({
           swapDisconnectListener(device)
 
           try {
-            swapHrListener(await subscribe(server))
+            swapHrListener(await subscribeWithin(server))
             break
           } catch (error) {
             const delay = SETUP_DROP_RETRY_DELAYS_MS[setupDrops]
