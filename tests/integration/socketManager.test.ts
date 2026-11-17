@@ -215,6 +215,12 @@ describe('WebSocket Full Integration Test', () => {
     }
     const setter = await open()
     const other = await open()
+    const echoes: string[] = []
+    setter.on('message', (data) => {
+      if (String(data).includes('BEEP_PREFERENCE_UPDATE')) {
+        echoes.push(String(data))
+      }
+    })
 
     const relayed = waitForMessage<ServerMessage>(
       other,
@@ -226,6 +232,8 @@ describe('WebSocket Full Integration Test', () => {
     expect(await relayed).toMatchObject({
       payload: { volume: 25, muted: true },
     })
+
+    expect(echoes).toEqual([])
 
     const late = await open()
     const initial = waitForMessage<ServerMessage>(

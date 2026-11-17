@@ -256,18 +256,28 @@ const handleRegisterClient: IncomingMessageHandler = (
 // beeps at the level last set on any of them.
 let beepPreference: BeepPreference | undefined
 
+// The sender is skipped: an echo arriving mid-drag would pull its
+// slider back to an older value.
 const handleBeepPreference: IncomingMessageHandler = (
-  _ws,
+  ws,
   message,
   _clientId
 ) => {
   const { volume, muted } = message as BeepPreferenceMessage
   beepPreference = { volume, muted }
-  broadcast(
-    wsServerInstance,
-    { type: 'BEEP_PREFERENCE_UPDATE', payload: beepPreference },
-    'socketManager.BEEP_PREFERENCE'
-  )
+  const update: ServerMessage = {
+    type: 'BEEP_PREFERENCE_UPDATE',
+    payload: beepPreference,
+  }
+  wsServerInstance.clients.forEach((client) => {
+    if (client !== ws && client.readyState === WebSocket.OPEN) {
+      sendWebSocketMessage(
+        client as ExtWebSocket,
+        update,
+        'socketManager.BEEP_PREFERENCE'
+      )
+    }
+  })
 }
 
 const handleGetState: IncomingMessageHandler = (ws, _message, _clientId) => {
