@@ -452,6 +452,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       stopWaitingForDevice()
       abortInFlightConnect()
       preWaitAbortRef.current?.abort()
+      // A cancelled attempt no longer closes its own link, so close a
+      // half-open one here (route change mid-handshake).
+      const device = connectedDeviceRef.current
+      if (
+        device?.gatt?.connected &&
+        currentStatusRef.current !== BluetoothConnectionStatus.CONNECTED
+      ) {
+        device.gatt.disconnect()
+      }
       if (installedControls) teardownTestControls(installedControls)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

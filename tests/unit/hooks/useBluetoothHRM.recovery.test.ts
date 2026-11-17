@@ -164,6 +164,22 @@ describe('useBluetoothHRM in-page recovery', () => {
     )
   })
 
+  it('closes a half-open link when the page unmounts mid-handshake', async () => {
+    mockGatt.connect.mockImplementation(() => {
+      mockGatt.connected = true
+      return Promise.resolve(mockGatt)
+    })
+    mockGatt.getPrimaryService.mockReturnValue(new Promise(() => {}))
+    const { result, unmount } = renderHook(() => useBluetoothHRM())
+    act(() => {
+      void result.current.connectAndStream('Ari', 30).catch(() => {})
+    })
+    await waitFor(() => expect(mockGatt.getPrimaryService).toHaveBeenCalled())
+
+    unmount()
+    expect(mockGatt.disconnect).toHaveBeenCalled()
+  })
+
   it('Reset forgets the strap and Connect opens the chooser in the same tab', async () => {
     const otherDevice = { ...mockDevice, id: 'other', forget: jest.fn() }
     mockBluetooth.getDevices.mockResolvedValue([mockDevice, otherDevice])
