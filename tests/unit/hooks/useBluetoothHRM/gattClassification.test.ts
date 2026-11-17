@@ -7,6 +7,7 @@ import {
   isQuietStrapMiss,
   type GattConnectRetryState,
 } from '@/hooks/useBluetoothHRM/gattClassification'
+import { DeviceHeldByOtherTabError } from '@/hooks/useBluetoothHRM/useTabCoordination'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
 import { BLUETOOTH_MESSAGES } from '@/constants/bluetooth-messages'
 
@@ -215,6 +216,16 @@ describe('applyGattFailure', () => {
     expect(reconnectHaltedRef.current).toBe(false)
   })
 
+  it('leaves the shared link alone when a cancelled attempt settles late', () => {
+    const { device, connectedDeviceRef, setCustomStatusMessage } = setup(
+      'dropped',
+      true
+    )
+    expect(device.gatt!.disconnect).not.toHaveBeenCalled()
+    expect(connectedDeviceRef.current).toBe(device)
+    expect(setCustomStatusMessage).not.toHaveBeenCalled()
+  })
+
   it('on an intentional abort: keeps the device slot and writes no state', () => {
     const device = makeDevice()
     const connectedDeviceRef = { current: device as BluetoothDevice | null }
@@ -244,6 +255,12 @@ describe('applyGattFailure', () => {
 })
 
 describe('getAutoConnectFailureMessage', () => {
+  it('names the other tab holding the strap', () => {
+    expect(
+      getAutoConnectFailureMessage(new DeviceHeldByOtherTabError('HR6'))
+    ).toBe(BLUETOOTH_MESSAGES.otherTabHoldsDevice('HR6'))
+  })
+
   it('stays silent when there was no saved device', () => {
     expect(
       getAutoConnectFailureMessage(

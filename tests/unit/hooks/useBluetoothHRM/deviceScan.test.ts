@@ -183,6 +183,17 @@ describe('waitForAdvertisement', () => {
     expect(signal()?.aborted).toBe(true)
   })
 
+  it('resolves false as soon as the caller aborts, and stops the watch', async () => {
+    const { device, signal } = makeWatchableDevice(Promise.resolve())
+    const cancel = new AbortController()
+
+    const pending = waitForAdvertisement(device, 10000, cancel.signal)
+    cancel.abort()
+
+    await expect(pending).resolves.toBe(false)
+    expect(signal()?.aborted).toBe(true)
+  })
+
   it('resolves false at the timeout and stops the watch', async () => {
     const { device, signal } = makeWatchableDevice(Promise.resolve())
 

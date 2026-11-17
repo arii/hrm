@@ -16,6 +16,10 @@ import {
   StatusBanner,
 } from './ConnectStatusViews'
 import ResetSection from './ResetSection'
+import {
+  CopyConnectionLogButton,
+  ReloadFallback,
+} from './ConnectionDiagnostics'
 import WorkoutControls from '../WorkoutControls'
 import type { ConnectViewProps } from '../ConnectViewProps'
 
@@ -107,6 +111,7 @@ export const ConnectMain = ({
                 connecting={state.isConnecting}
                 reducedMotion={reducedMotion}
               />
+              {view.showReloadFallback && <ReloadFallback />}
             </Box>
             <ResetSection
               onReset={reset.handleFullReset}
@@ -122,6 +127,10 @@ export const ConnectMain = ({
             />
           </>
         )}
+
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <CopyConnectionLogButton />
+        </Box>
 
         <Typography
           variant="body2"

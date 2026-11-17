@@ -13,6 +13,8 @@ export interface ConnectViewProps {
   onConnect: () => void
   onDisconnect: () => void
   onForgetDevice: () => Promise<void>
+  /** In-page recovery gave up: offer a reload as the last resort. */
+  showReloadFallback?: boolean
   isSupported: boolean
   signalPeriodMs: number
   lastPeriodMs: number

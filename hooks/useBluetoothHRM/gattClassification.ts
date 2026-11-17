@@ -4,8 +4,9 @@ import {
   QUIET_STRAP_RETRY_DELAYS_MS,
 } from '@/constants/bluetooth-reconnection'
 import { BluetoothConnectionStatus } from '@/types/bluetooth'
-import logger from '@/utils/logger'
+import logger from './connectionLog'
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
+import { DeviceHeldByOtherTabError } from './useTabCoordination'
 
 /**
  * Maps a silent auto-connect failure to the banner message, or null to stay
@@ -13,6 +14,9 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
  * path's NetworkError mapping so both surfaces name the cause.
  */
 export const getAutoConnectFailureMessage = (error: unknown): string | null => {
+  if (error instanceof DeviceHeldByOtherTabError) {
+    return BLUETOOTH_MESSAGES.otherTabHoldsDevice(error.deviceName)
+  }
   const errorMsg = error instanceof Error ? error.message : String(error)
   if (errorMsg.includes('No saved device ID')) return null
   if (error instanceof DOMException && error.name === 'AbortError') return null
@@ -177,6 +181,10 @@ export const applyGattFailure = ({
   setStatus,
   setCustomStatusMessage,
 }: GattFailureOutcomeParams): unknown => {
+  // A cancelled attempt (Connect tap, Reset, disconnect) can settle after
+  // its replacement already owns the device: the canceller cleaned up, so
+  // touching the shared link or refs here would cut the new stream.
+  if (aborted) return error
   // Zombie killer (#9154): sever any half-open GATT link so the next
   // attempt meets a free radio instead of tripping over our own
   // previous session. Safe when already down; never masks the error.

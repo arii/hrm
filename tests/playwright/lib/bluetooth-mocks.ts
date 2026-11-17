@@ -30,6 +30,12 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.listeners[type].push(listener)
       }
 
+      removeEventListener(type: string, listener: MockEventListener) {
+        this.listeners[type] = (this.listeners[type] ?? []).filter(
+          (l) => l !== listener
+        )
+      }
+
       // Helper to simulate data arriving
       emitValue(uint8Value: number) {
         const buffer = new ArrayBuffer(2)
@@ -113,6 +119,12 @@ export const injectBluetoothMocks = async (page: Page) => {
       addEventListener(type: string, listener: (event: Event) => void) {
         if (!this.listeners[type]) this.listeners[type] = []
         this.listeners[type].push(listener)
+      }
+
+      removeEventListener(type: string, listener: (event: Event) => void) {
+        this.listeners[type] = (this.listeners[type] ?? []).filter(
+          (l) => l !== listener
+        )
       }
 
       async forget() {

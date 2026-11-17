@@ -195,56 +195,33 @@ describe('useBluetoothHRM', () => {
     expect(mockBluetooth.requestDevice).toHaveBeenCalled()
   })
 
-  it('ignores connection attempts while isConnecting lock is held', async () => {
-    const mockAbort = jest.fn()
-    const OriginalAbortController = global.AbortController
-    global.AbortController = jest.fn().mockImplementation(() => ({
-      signal: {
-        aborted: false,
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-      },
-      abort: mockAbort,
-    })) as jest.Mock
+  it('a Connect tap mid-attempt cancels the attempt and starts fresh', async () => {
+    // First radio call hangs: without the takeover the tap would be ignored.
+    mockGatt.connect
+      .mockReturnValueOnce(new Promise(() => {}))
+      .mockResolvedValue(mockGatt)
 
-    try {
-      // Make the connect call a promise that we can control
-      let connectResolver: (value: MockBluetoothRemoteGATTServer) => void
-      const connectPromise = new Promise<MockBluetoothRemoteGATTServer>(
-        (resolve) => {
-          connectResolver = resolve
-        }
-      )
-      mockGatt.connect.mockReturnValue(connectPromise)
+    const { result } = renderHook(() => useBluetoothHRM())
 
-      const { result } = renderHook(() => useBluetoothHRM())
+    let firstPromise: Promise<boolean> | undefined
+    act(() => {
+      firstPromise = result.current.connectAndStream()
+    })
+    await waitFor(() => expect(mockGatt.connect).toHaveBeenCalledTimes(1))
 
-      let firstPromise: Promise<void> | undefined
-      act(() => {
-        firstPromise = result.current.connectAndStream()
-      })
+    let secondPromise: Promise<boolean> | undefined
+    act(() => {
+      secondPromise = result.current.connectAndStream()
+    })
+    let secondResult: boolean | undefined
+    await act(async () => {
+      await expect(firstPromise).rejects.toMatchObject({ name: 'AbortError' })
+      secondResult = await secondPromise
+    })
 
-      await waitFor(() => {
-        expect(result.current.deviceStatus).toMatch(/connecting/i)
-      })
-
-      act(() => {
-        result.current.connectAndStream()
-      })
-
-      expect(mockAbort).not.toHaveBeenCalled()
-      expect(mockGatt.connect).toHaveBeenCalledTimes(1)
-
-      await act(async () => {
-        connectResolver(mockGatt)
-        await firstPromise
-      })
-
-      expect(result.current.isConnected).toBe(true)
-    } finally {
-      // Restore original AbortController
-      global.AbortController = OriginalAbortController
-    }
+    expect(secondResult).toBe(true)
+    expect(mockGatt.connect).toHaveBeenCalledTimes(2)
+    expect(result.current.isConnected).toBe(true)
   })
 
   describe('Signal Quality Calculation', () => {
@@ -1842,10 +1819,10 @@ describe('useBluetoothHRM', () => {
       )
     })
 
-    it('keeps quiet-retry progress when a manual tap is skipped behind it', async () => {
+    it('a manual tap behind a silent quiet-retry takes over and connects', async () => {
       ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
       mockBluetooth.getDevices.mockResolvedValue([mockDevice])
-      mockGatt.connect.mockRejectedValue(
+      mockGatt.connect.mockRejectedValueOnce(
         new DOMException(
           'Bluetooth Device is no longer in range.',
           'NetworkError'
@@ -1860,23 +1837,19 @@ describe('useBluetoothHRM', () => {
       await act(async () => {
         await jest.advanceTimersByTimeAsync(1000)
       })
-      // A manual tap while the silent attempt owns the radio is skipped and
-      // claims nothing, so the silent progress keeps surfacing.
-      let manualResult: boolean | undefined
-      await act(async () => {
-        manualResult = await result.current.connectAndStream('VRT', 30)
-      })
-      expect(manualResult).toBe(false)
-      await act(async () => {
-        await jest.advanceTimersByTimeAsync(5000)
-      })
       expect(result.current.deviceStatus).toBe(
         BLUETOOTH_MESSAGES.quietStrapRetry
       )
+      // The tap cancels the silent attempt's 5s retry wait instead of
+      // being ignored behind it, and its own connect succeeds.
+      let manualResult: boolean | undefined
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(40000)
+        manualResult = await result.current.connectAndStream('VRT', 30)
         await autoPromise
       })
+      expect(manualResult).toBe(true)
+      expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
+      expect(mockGatt.connect).toHaveBeenCalledTimes(2)
     })
 
     it('surfaces busy fast-retry progress', async () => {

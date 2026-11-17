@@ -41,8 +41,8 @@ const ResetSection = ({
       display="block"
       sx={{ mt: 1, color: 'text.secondary' }}
     >
-      Resets stored permissions and device settings, including Bluetooth
-      connection.
+      Forgets the strap in this browser and clears device settings. Connect then
+      asks you to pick the strap again.
     </Typography>
   </Box>
 )
