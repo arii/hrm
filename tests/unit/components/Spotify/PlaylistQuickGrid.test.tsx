@@ -109,4 +109,19 @@ describe('PlaylistQuickGrid', () => {
       expect(screen.getByText('Failed to fetch playlists')).toBeInTheDocument()
     )
   })
+
+  it('stops the search spinner when the filter is cleared mid-search', async () => {
+    renderGrid()
+    await screen.findByRole('button', { name: 'Play playlist: Workout' })
+    const input = screen.getByLabelText('Filter or search playlists')
+    fireEvent.change(input, { target: { value: 'leg' } })
+    await screen.findByRole('button', { name: 'Play playlist: Legends' })
+    fireEvent.change(input, { target: { value: '' } })
+    await waitFor(() =>
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    )
+    expect(
+      screen.getByRole('button', { name: 'Play playlist: Workout' })
+    ).toBeInTheDocument()
+  })
 })

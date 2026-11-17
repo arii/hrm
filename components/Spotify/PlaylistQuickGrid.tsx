@@ -60,6 +60,7 @@ const PlaylistTile = ({
     }}
   >
     <ButtonBase
+      focusRipple
       onClick={onPlay}
       aria-label={`Play playlist: ${playlist.name}`}
       sx={{
@@ -196,6 +197,7 @@ const PlaylistQuickGrid = (props: PlaylistQuickGridProps) => {
     const term = debouncedQuery.trim()
     if (!term) {
       setSearchResults([])
+      setSearchLoading(false)
       return
     }
     const controller = new AbortController()
@@ -229,7 +231,7 @@ const PlaylistQuickGrid = (props: PlaylistQuickGridProps) => {
       !term || p.name.toLowerCase().includes(term)
     const shownPresets = presets.filter(matches)
     const shownOwn = own.filter(matches)
-    const known = new Set([...presets, ...own].map((p) => p.uri))
+    const known = new Set([...shownPresets, ...shownOwn].map((p) => p.uri))
     const shownResults = term
       ? searchResults.filter((p) => !known.has(p.uri))
       : []
