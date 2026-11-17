@@ -20,6 +20,7 @@ import {
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
+import IntervalStartButton from './IntervalStartButton'
 import { useInScaledStage } from '@/components/ScaledStage'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import {
@@ -247,6 +248,7 @@ export default function WorkoutPhaseGrid({
                 >
                   {header}
                 </Typography>
+                <IntervalStartButton header={header} />
                 {exercises.length > 0 && (
                   <>
                     <Divider sx={{ my: isScaledLayout ? 1 : 1.5 }} />

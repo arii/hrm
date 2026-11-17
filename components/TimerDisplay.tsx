@@ -7,17 +7,19 @@ import {
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import VolumeUp from '@mui/icons-material/VolumeUp'
-import { memo, useSyncExternalStore } from 'react'
+import { memo, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import type { TimerMode, TimerPhase } from '@/types/core'
 import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
+import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
 
 // Theme colors the phase policy needs, passed in so the policy stays
 // pure (no private hex values; the timer shares the dashboard palette).
@@ -196,6 +198,62 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
   )
 }
 
+// While the timer runs the button stays hidden so the wall display shows
+// only the digits; a tap on the card reveals Stop for this long.
+const STOP_REVEAL_MS = 5000
+
+const TimerToggleButton = () => {
+  const control = useDashboardTimerControl()
+  const [revealed, setRevealed] = useState(false)
+
+  useEffect(() => {
+    if (!revealed) return () => {}
+    const timer = setTimeout(() => setRevealed(false), STOP_REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [revealed])
+
+  if (!control) return null
+  const visible = !control.isRunning || revealed
+
+  return (
+    <>
+      {control.isRunning && !revealed && (
+        <Box
+          data-testid="timer-reveal-area"
+          onClick={() => setRevealed(true)}
+          sx={{ position: 'absolute', inset: 0, zIndex: 1 }}
+        />
+      )}
+      <Button
+        data-testid="timer-toggle"
+        variant="contained"
+        size="large"
+        color={control.isRunning ? 'error' : 'success'}
+        disabled={!control.canControl}
+        onClick={() => {
+          control.toggle()
+          setRevealed(false)
+        }}
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          zIndex: 2,
+          minWidth: 112,
+          fontWeight: 800,
+          letterSpacing: 1,
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none',
+          '&:focus-visible': { opacity: 1 },
+          transition: 'opacity 0.2s',
+        }}
+      >
+        {control.isRunning ? 'Stop' : 'Start'}
+      </Button>
+    </>
+  )
+}
+
 const TimerDisplay = () => {
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
@@ -263,6 +321,7 @@ const TimerDisplay = () => {
       }}
     >
       <TimerBeepVolume accentColor={phaseColor} />
+      <TimerToggleButton />
       {/* Status Indicator */}
       <Box
         sx={{
