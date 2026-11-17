@@ -233,22 +233,38 @@ export default function WorkoutPhaseGrid({
                   flexDirection: 'column',
                 }}
               >
-                <Typography
-                  component="h3"
+                {/* The interval button shares the header line so it costs the
+                    exercise fit no vertical space. */}
+                <Box
                   sx={{
-                    fontWeight: 700,
-                    fontSize: 'clamp(1.25rem, 1rem + 2vw, 2rem)',
-                    [SCALED_CANVAS_SELECTOR]: {
-                      fontSize: `var(--workout-header-font-rem, ${FALLBACK_HEADER_REM})`,
-                    },
-                    lineHeight: 1.15,
-                    textAlign: 'center',
-                    textWrap: isScaledLayout ? 'balance' : undefined,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
                   }}
                 >
-                  {header}
-                </Typography>
-                <IntervalStartButton header={header} />
+                  <Typography
+                    component="h3"
+                    sx={{
+                      flex: '1 1 auto',
+                      minWidth: 0,
+                      fontWeight: 700,
+                      fontSize: 'clamp(1.25rem, 1rem + 2vw, 2rem)',
+                      [SCALED_CANVAS_SELECTOR]: {
+                        fontSize: `var(--workout-header-font-rem, ${FALLBACK_HEADER_REM})`,
+                      },
+                      lineHeight: 1.15,
+                      textAlign: 'center',
+                      textWrap: isScaledLayout ? 'balance' : undefined,
+                    }}
+                  >
+                    {header}
+                  </Typography>
+                  <IntervalStartButton
+                    header={header}
+                    clearCorner={Boolean(onRefresh)}
+                  />
+                </Box>
                 {exercises.length > 0 && (
                   <>
                     <Divider sx={{ my: isScaledLayout ? 1 : 1.5 }} />

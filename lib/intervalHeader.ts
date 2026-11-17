@@ -3,7 +3,7 @@
 // startable from the card.
 const INTERVAL_HEADER = /^\s*(\d{1,3})\s*\/\s*(\d{1,3})\s*(?:x\s*\d+\s*)?$/i
 
-export interface IntervalHeader {
+interface IntervalHeader {
   workDuration: number
   restDuration: number
 }

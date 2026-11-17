@@ -235,7 +235,12 @@ const TimerToggleButton = () => {
           setRevealed(false)
         }}
         sx={{
-          position: 'absolute',
+          // Phones stack it under the digits; wider cards dock it in the
+          // corner so the digits stay centred.
+          position: { xs: 'static', sm: 'absolute' },
+          display: 'flex',
+          width: { xs: '100%', sm: 'auto' },
+          mt: { xs: 1, sm: 0 },
           bottom: 16,
           right: 16,
           zIndex: 2,
@@ -245,6 +250,11 @@ const TimerToggleButton = () => {
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none',
           '&:focus-visible': { opacity: 1 },
+          // MUI's default disabled fill vanishes on the black card.
+          '&.Mui-disabled': {
+            backgroundColor: 'grey.800',
+            color: 'grey.500',
+          },
           transition: 'opacity 0.2s',
         }}
       >
@@ -321,7 +331,6 @@ const TimerDisplay = () => {
       }}
     >
       <TimerBeepVolume accentColor={phaseColor} />
-      <TimerToggleButton />
       {/* Status Indicator */}
       <Box
         sx={{
@@ -433,6 +442,7 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
+        <TimerToggleButton />
       </CardContent>
     </Card>
   )

@@ -5,7 +5,14 @@ import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
 import { parseIntervalHeader } from '@/lib/intervalHeader'
 
 /** "Start 20/10" on cards whose header names a work/rest interval. */
-const IntervalStartButton = ({ header }: { header: string }) => {
+const IntervalStartButton = ({
+  header,
+  clearCorner = false,
+}: {
+  header: string
+  /** Leave room for the refresh button docked in the grid's top-right. */
+  clearCorner?: boolean
+}) => {
   const control = useDashboardTimerControl()
   const interval = parseIntervalHeader(header)
   if (!control || !interval) return null
@@ -19,7 +26,12 @@ const IntervalStartButton = ({ header }: { header: string }) => {
       startIcon={<PlayArrow />}
       disabled={!control.canControl || control.isRunning}
       onClick={() => control.startInterval(workDuration, restDuration)}
-      sx={{ alignSelf: 'center', mt: 1, fontWeight: 700 }}
+      sx={{
+        flexShrink: 0,
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+        mr: clearCorner ? 5 : 0,
+      }}
     >
       Start {workDuration}/{restDuration}
     </Button>

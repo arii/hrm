@@ -13,7 +13,7 @@ import {
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 import { useTimerCommand } from '@/app/client/control/components/useTimerCommand'
 
-export interface DashboardTimerControl {
+interface DashboardTimerControl {
   isRunning: boolean
   canControl: boolean
   toggle: () => void
