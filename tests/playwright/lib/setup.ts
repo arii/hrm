@@ -174,7 +174,12 @@ export async function freezeUIForVRT(page: Page): Promise<void> {
         transform: none !important;
       }
     `
-    document.head.appendChild(style)
+    // Init scripts run before the parser creates <head>, so append once
+    // the document exists; appending eagerly throws and freezes nothing.
+    const attach = () =>
+      (document.head ?? document.documentElement).appendChild(style)
+    if (document.documentElement) attach()
+    else document.addEventListener('DOMContentLoaded', attach, { once: true })
   })
 }
 
