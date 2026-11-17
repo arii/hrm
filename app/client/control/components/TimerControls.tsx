@@ -92,10 +92,9 @@ const TimerControls = () => {
             sx={{ color: 'common.white', mb: 0.5 }}
             data-testid={isRunning ? 'timer-running' : 'timer-stopped'}
           >
-            {isRunning ? 'Timer Running' : 'Timer Stopped'}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'error.main' }}>
-            {timerData.currentPhase}
+            {isRunning
+              ? `Timer running: ${timerData.currentPhase}`
+              : 'Timer stopped'}
           </Typography>
         </Box>
 

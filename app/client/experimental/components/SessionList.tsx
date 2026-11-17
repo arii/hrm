@@ -54,6 +54,11 @@ const SessionList = ({
       <Card>
         <CardContent>
           <Typography variant="h6">Workout History</Typography>
+          {sessions.length === 0 && (
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              No workouts saved yet. Tap New Workout to record one.
+            </Typography>
+          )}
           <List>
             {sessions.map((session) => (
               <ListItem

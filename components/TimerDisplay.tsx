@@ -13,15 +13,11 @@ import Typography from '@mui/material/Typography'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import { memo, useSyncExternalStore } from 'react'
-import SideLabel from './SideLabel'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import type { TimerMode, TimerPhase } from '@/types/core'
 import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
-
-// Define a constant for the side column width to avoid magic numbers
-const SIDE_COLUMN_WIDTH = '40px'
 
 // Theme colors the phase policy needs, passed in so the policy stays
 // pure (no private hex values; the timer shares the dashboard palette).
@@ -115,6 +111,22 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
+// One readable line instead of rotated side rails: the mode once a
+// timer is set up, plus the Tabata intervals.
+export const resolveTimerSummary = (input: {
+  mode: TimerMode
+  currentPhase: TimerPhase
+  workDuration: number
+  restDuration: number
+}): string => {
+  const parts: string[] = []
+  if (input.currentPhase !== 'IDLE') parts.push(input.mode)
+  if (input.mode === 'TABATA') {
+    parts.push(`WORK: ${input.workDuration}s`, `REST: ${input.restDuration}s`)
+  }
+  return parts.join(' · ')
+}
+
 const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
 
 // Beep-only volume. Overlaid in the card corner so it never takes space
@@ -136,7 +148,7 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
       sx={{
         position: 'absolute',
         top: 4,
-        left: SIDE_COLUMN_WIDTH,
+        left: 8,
         zIndex: 1,
         display: 'flex',
         alignItems: 'center',
@@ -153,6 +165,9 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
       >
         {muted ? <VolumeOff /> : <VolumeUp />}
       </IconButton>
+      <Typography variant="caption" sx={{ fontWeight: 700, ml: -0.5 }}>
+        Beeps
+      </Typography>
       <Slider
         aria-label="Timer beep volume"
         value={muted ? 0 : volume}
@@ -209,6 +224,12 @@ const TimerDisplay = () => {
   )
 
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
+  const timerSummary = resolveTimerSummary({
+    mode,
+    currentPhase,
+    workDuration,
+    restDuration,
+  })
 
   return (
     <Card
@@ -271,50 +292,6 @@ const TimerDisplay = () => {
           }}
         />
       </Box>
-      {/* Left Column: Mode Indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: SIDE_COLUMN_WIDTH,
-        }}
-      >
-        {currentPhase !== 'IDLE' && (
-          <SideLabel
-            text={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-            ariaLabel={`Timer mode: ${mode}`}
-            rotation="left"
-          />
-        )}
-      </Box>
-      {/* Right Column: Tabata Durations. Vertical rail keeps the
-          durations out of the digits' vertical budget. */}
-      <Box
-        data-testid="timer-work-rest-badge"
-        sx={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: SIDE_COLUMN_WIDTH,
-        }}
-      >
-        {mode === 'TABATA' && (
-          <SideLabel
-            text={`WORK:${workDuration}s REST:${restDuration}s`}
-            ariaLabel={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
-            rotation="right"
-          />
-        )}
-      </Box>
       <CardContent
         sx={{
           position: 'relative',
@@ -322,8 +299,11 @@ const TimerDisplay = () => {
           // The sm value is the target-composition pin: scaled viewports
           // are always ≥ SCALE_TO_FIT_MIN_WIDTH, which tracks the sm
           // breakpoint, so the canvas never sees the xs value.
-          py: { xs: 1, sm: 1.5 },
-          px: SIDE_COLUMN_WIDTH,
+          // Phones clear the corner controls in flow; wider cards keep
+          // them overlaid so the digits keep the full height.
+          pt: { xs: '52px', sm: 1.5 },
+          pb: { xs: 1, sm: 1.5 },
+          px: 2,
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
@@ -332,6 +312,22 @@ const TimerDisplay = () => {
           minWidth: 0, // Prevent content from overflowing
         }}
       >
+        {timerSummary && (
+          <Typography
+            data-testid="timer-work-rest-badge"
+            sx={{
+              mb: 0.5,
+              lineHeight: 1.2,
+              color: 'common.white',
+              fontWeight: 700,
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {timerSummary}
+          </Typography>
+        )}
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography

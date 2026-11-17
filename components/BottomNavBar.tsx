@@ -71,6 +71,17 @@ export default function BottomNavBar() {
         right: 0,
         zIndex: 1000,
         boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
+        // Six tabs must fit a 360px phone: drop MUI's 80px minimum and
+        // keep the selected label the same size so tabs never shift.
+        '& .MuiBottomNavigationAction-root': {
+          minWidth: 0,
+          px: { xs: 0.25, sm: 1.5 },
+        },
+        '& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected':
+          {
+            fontSize: { xs: '0.68rem', sm: '0.8rem' },
+            whiteSpace: 'nowrap',
+          },
       }}
     >
       {NAV_ITEMS.map((item, index) => (
