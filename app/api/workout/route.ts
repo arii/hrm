@@ -29,9 +29,9 @@ export async function GET(request: Request) {
     // NOTE: The Google Doc must be shared as "Anyone with the link can view"
     const exportUrl = `https://docs.google.com/document/d/${docId}/export?format=html`
 
-    const response = await fetch(exportUrl, {
-      next: { revalidate: 60 }, // Cache to avoid hitting Google limits
-    })
+    // Every dashboard load reads the current doc; Google's export can
+    // still trail an edit by a few minutes on its side.
+    const response = await fetch(exportUrl, { cache: 'no-store' })
 
     if (!response.ok) {
       if (response.status === 404) {
