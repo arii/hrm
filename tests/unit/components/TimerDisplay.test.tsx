@@ -42,6 +42,10 @@ describe('TimerDisplay', () => {
     // In the IDLE state, a phase label is not shown
     expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
+    expect(
+      screen.queryByRole('button', { name: /^(start|stop)$/i })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByTestId('timer-reveal-area')).not.toBeInTheDocument()
   })
 
   it('should render the WORK phase correctly', () => {
@@ -56,6 +60,10 @@ describe('TimerDisplay', () => {
     expect(screen.getByTestId('timer-phase')).toHaveTextContent('WORK')
     // It should display the remaining time formatted as MM:SS
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:15')
+    fireEvent.click(screen.getByTestId('timer-countdown'))
+    expect(
+      screen.queryByRole('button', { name: /^(start|stop)$/i })
+    ).not.toBeInTheDocument()
   })
 
   it('should render the REST phase correctly', () => {

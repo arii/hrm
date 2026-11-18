@@ -20,7 +20,6 @@ import {
 } from '@mui/material'
 import { WorkoutTableDto } from '@/types/workout'
 import RefreshIconButton from './RefreshIconButton'
-import IntervalStartButton from './IntervalStartButton'
 import { useInScaledStage } from '@/components/ScaledStage'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import {
@@ -233,8 +232,6 @@ export default function WorkoutPhaseGrid({
                   flexDirection: 'column',
                 }}
               >
-                {/* The interval button shares the header line so it costs the
-                    exercise fit no vertical space. */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -259,10 +256,6 @@ export default function WorkoutPhaseGrid({
                   >
                     {header}
                   </Typography>
-                  <IntervalStartButton
-                    header={header}
-                    clearCorner={Boolean(onRefresh)}
-                  />
                 </Box>
                 {exercises.length > 0 && (
                   <>

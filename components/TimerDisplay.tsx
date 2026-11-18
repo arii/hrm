@@ -7,20 +7,18 @@ import {
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import NotificationsActive from '@mui/icons-material/NotificationsActive'
 import NotificationsOff from '@mui/icons-material/NotificationsOff'
-import { memo, useEffect, useState, useSyncExternalStore } from 'react'
+import { memo, useSyncExternalStore } from 'react'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import { visuallyHidden } from '@/lib/visuallyHidden'
 import type { TimerMode, TimerPhase } from '@/types/core'
 import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
-import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
 
 // Theme colors the phase policy needs, passed in so the policy stays
 // pure (no private hex values; the timer shares the dashboard palette).
@@ -193,74 +191,7 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
   )
 }
 
-// While the timer runs the button stays hidden so the wall display shows
-// only the digits; a tap on the card reveals Stop for this long.
-const STOP_REVEAL_MS = 5000
-const TOGGLE_WIDTH_PX = 112
-
-const TimerToggleButton = () => {
-  const control = useDashboardTimerControl()
-  const [revealed, setRevealed] = useState(false)
-
-  useEffect(() => {
-    if (!revealed) return () => {}
-    const timer = setTimeout(() => setRevealed(false), STOP_REVEAL_MS)
-    return () => clearTimeout(timer)
-  }, [revealed])
-
-  if (!control) return null
-  const visible = !control.isRunning || revealed
-
-  return (
-    <>
-      {control.isRunning && !revealed && (
-        <Box
-          data-testid="timer-reveal-area"
-          onClick={() => setRevealed(true)}
-          sx={{ position: 'absolute', inset: 0, zIndex: 1 }}
-        />
-      )}
-      <Button
-        data-testid="timer-toggle"
-        variant="contained"
-        size="large"
-        color={control.isRunning ? 'error' : 'success'}
-        disabled={!control.canControl}
-        onClick={() => {
-          control.toggle()
-          setRevealed(false)
-        }}
-        sx={{
-          // Phones stack it under the digits; wider cards dock it in the
-          // top chrome row beside the status so it never covers the digits.
-          position: { xs: 'static', sm: 'absolute' },
-          display: 'flex',
-          width: { xs: '100%', sm: TOGGLE_WIDTH_PX },
-          mt: { xs: 1, sm: 0 },
-          top: 5,
-          right: 16,
-          zIndex: 2,
-          fontWeight: 800,
-          letterSpacing: 1,
-          opacity: visible ? 1 : 0,
-          pointerEvents: visible ? 'auto' : 'none',
-          '&:focus-visible': { opacity: 1 },
-          // MUI's default disabled fill vanishes on the black card.
-          '&.Mui-disabled': {
-            backgroundColor: 'grey.800',
-            color: 'grey.500',
-          },
-          transition: 'opacity 0.2s',
-        }}
-      >
-        {control.isRunning ? 'Stop' : 'Start'}
-      </Button>
-    </>
-  )
-}
-
 const TimerDisplay = () => {
-  const hasToggle = useDashboardTimerControl() !== null
   const timerData = useTimerData()
   const { connectionStatus } = useWebSocketConnection()
   const theme = useTheme()
@@ -331,7 +262,7 @@ const TimerDisplay = () => {
         sx={{
           position: 'absolute',
           top: 16,
-          right: hasToggle ? { xs: 16, sm: 16 + TOGGLE_WIDTH_PX + 12 } : 16,
+          right: 16,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
@@ -455,7 +386,6 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
-        <TimerToggleButton />
       </CardContent>
     </Card>
   )
