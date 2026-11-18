@@ -137,7 +137,11 @@ const HrmConnectionPanel = () => {
                 data-testid="hr-tile-grid-item"
                 sx={{ minHeight: 0, minWidth: 0, overflow: 'hidden' }}
               >
-                <HrTile {...tileProps} isCompact={isCompact} />
+                <HrTile
+                  {...tileProps}
+                  isCompact={isCompact}
+                  dashboardTileCount={hrCount}
+                />
               </Box>
             )
           })}

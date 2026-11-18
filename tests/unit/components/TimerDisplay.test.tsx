@@ -2,7 +2,6 @@
 
 import { jest } from '@jest/globals'
 import TimerDisplay, {
-  resolveTimerSummary,
   resolveTimerPhaseVisual,
   resolveWsDotColor,
   type TimerPhasePalette,
@@ -39,8 +38,7 @@ describe('TimerDisplay', () => {
       mode: 'TABATA',
     })
     render(<TimerDisplay />)
-    // In the IDLE state, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('READY')
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
     expect(
       screen.queryByRole('button', { name: /^(start|stop)$/i })
@@ -88,8 +86,7 @@ describe('TimerDisplay', () => {
     })
     render(<TimerDisplay />)
 
-    // In stopwatch mode, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('RUNNING')
     // It should display the elapsed time
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('02:05')
   })
@@ -109,6 +106,70 @@ describe('TimerDisplay', () => {
   })
 
   describe('resolveTimerPhaseVisual', () => {
+    it.each(['WORK', 'REST'] as const)(
+      '#9904 emphasizes the active %s interval without relying on color',
+      (currentPhase) => {
+        setupMock({
+          mode: 'TABATA',
+          currentPhase,
+          workDuration: 30,
+          restDuration: 10,
+          timeRemaining: 27,
+          timeElapsed: 3,
+        })
+        render(<TimerDisplay />)
+        const work = screen.getByTestId('timer-work')
+        const rest = screen.getByTestId('timer-rest')
+        const active = currentPhase === 'WORK' ? work : rest
+        const inactive = currentPhase === 'WORK' ? rest : work
+        expect(active).toHaveStyle('font-weight: 900; opacity: 1')
+        expect(inactive).toHaveStyle('font-weight: 700; opacity: 0.65')
+        expect(getComputedStyle(active).color).not.toBe(
+          getComputedStyle(inactive).color
+        )
+        expect(screen.getByTestId('timer-work-rest-badge')).toHaveTextContent(
+          'WORK 30 · REST 10'
+        )
+        expect(
+          screen.getByRole('group', {
+            name: 'Work 30 seconds, rest 10 seconds',
+          })
+        ).toBe(screen.getByTestId('timer-work-rest-badge'))
+        expect(screen.getByTestId('timer-phase')).toHaveAttribute(
+          'aria-live',
+          'polite'
+        )
+        expect(screen.getByTestId('timer-phase')).toHaveTextContent(
+          currentPhase
+        )
+        expect(screen.getByTestId('timer-phase')).toHaveStyle(
+          'position: absolute'
+        )
+      }
+    )
+
+    it.each([
+      ['TABATA', 'PREPARE', 'GET READY', true],
+      ['TABATA', 'COOLDOWN', 'COOLDOWN', true],
+      ['TABATA', 'IDLE', 'READY', true],
+      ['STOPWATCH', 'RUNNING', 'RUNNING', false],
+      ['STOPWATCH', 'IDLE', 'READY', false],
+      ['STOPWATCH', 'WORK', 'READY', false],
+    ] as const)(
+      '#9904 preserves visible phase information in %s / %s',
+      (mode, currentPhase, label, hasIntervals) => {
+        setupMock({ mode, currentPhase, timeRemaining: 3, timeElapsed: 125 })
+        render(<TimerDisplay />)
+        const phase = screen.getByTestId('timer-phase')
+        expect(phase).toHaveTextContent(label)
+        expect(phase).not.toHaveStyle('position: absolute')
+        expect(phase).toHaveAttribute('aria-live', 'polite')
+        expect(!!screen.queryByTestId('timer-work-rest-badge')).toBe(
+          hasIntervals
+        )
+      }
+    )
+
     const palette: TimerPhasePalette = {
       warningDark: 'W',
       infoMain: 'I',
@@ -248,7 +309,7 @@ describe('TimerDisplay', () => {
       // We can't easily use getComputedStyle in this JSDOM environment for absolute positioning
       // if it's set via MUI sx props and not in actual CSS, but we can check the presence of the text
       expect(screen.getByTestId('timer-work-rest-badge')).toHaveTextContent(
-        'WORK: 30s · REST: 15s'
+        'WORK 30 · REST 15'
       )
     })
   })
@@ -285,28 +346,6 @@ describe('TimerDisplay beep volume', () => {
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: false })
     fireEvent.change(slider, { target: { value: 0 } })
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: true })
-  })
-})
-
-describe('resolveTimerSummary', () => {
-  it('shows the Tabata intervals without naming the mode', () => {
-    expect(
-      resolveTimerSummary({
-        mode: 'TABATA',
-        workDuration: 20,
-        restDuration: 10,
-      })
-    ).toBe('WORK: 20s · REST: 10s')
-  })
-
-  it('is empty for a stopwatch', () => {
-    expect(
-      resolveTimerSummary({
-        mode: 'STOPWATCH',
-        workDuration: 20,
-        restDuration: 10,
-      })
-    ).toBe('')
   })
 })
 

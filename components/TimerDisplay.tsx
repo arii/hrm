@@ -112,17 +112,6 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
-// Tabata intervals on one readable line. The mode is not named: the
-// digits counting down or up already show it.
-export const resolveTimerSummary = (input: {
-  mode: TimerMode
-  workDuration: number
-  restDuration: number
-}): string =>
-  input.mode === 'TABATA'
-    ? `WORK: ${input.workDuration}s · REST: ${input.restDuration}s`
-    : ''
-
 const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
 
 // Beep-only volume. Overlaid in the card corner so it never takes space
@@ -219,11 +208,7 @@ const TimerDisplay = () => {
   )
 
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
-  const timerSummary = resolveTimerSummary({
-    mode,
-    workDuration,
-    restDuration,
-  })
+  const showIntervalBanner = mode === 'TABATA'
 
   return (
     <Card
@@ -322,36 +307,65 @@ const TimerDisplay = () => {
             alignItems: 'baseline',
             justifyContent: 'center',
             columnGap: 2,
+            // Clear the corner volume controls without shifting the countdown.
+            transform: showIntervalBanner
+              ? { sm: 'translateY(44px)' }
+              : undefined,
           }}
         >
-          {/* Phase Label - only show for Tabata phases, not RUNNING */}
-          {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-            <Typography
-              data-testid="timer-phase"
-              variant="h6"
-              aria-live="polite"
-              sx={{
-                lineHeight: 1.2,
-                color: phaseColor,
-                fontWeight: 700,
-                letterSpacing: 2,
-              }}
-            >
-              {phaseLabel}
-            </Typography>
-          )}
-          {timerSummary && (
+          <Typography
+            data-testid="timer-phase"
+            variant="h6"
+            aria-live="polite"
+            sx={{
+              lineHeight: 1.2,
+              color: phaseColor,
+              fontWeight: 700,
+              letterSpacing: 2,
+              ...(mode === 'TABATA' &&
+                (currentPhase === 'WORK' || currentPhase === 'REST') &&
+                visuallyHidden),
+            }}
+          >
+            {phaseLabel}
+          </Typography>
+          {showIntervalBanner && (
             <Typography
               data-testid="timer-work-rest-badge"
+              component="div"
+              role="group"
+              aria-label={`Work ${workDuration} seconds, rest ${restDuration} seconds`}
               sx={{
-                lineHeight: 1.2,
+                lineHeight: 1.1,
                 color: 'common.white',
                 fontWeight: 700,
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                letterSpacing: 1,
+                fontSize: { xs: '1.5rem', sm: '3rem' },
+                whiteSpace: 'nowrap',
               }}
             >
-              {timerSummary}
+              <Box
+                component="span"
+                data-testid="timer-work"
+                sx={{
+                  color: currentPhase === 'WORK' ? phaseColor : 'common.white',
+                  fontWeight: currentPhase === 'WORK' ? 900 : 700,
+                  opacity: currentPhase === 'REST' ? 0.65 : 1,
+                }}
+              >
+                WORK {workDuration}
+              </Box>
+              {' · '}
+              <Box
+                component="span"
+                data-testid="timer-rest"
+                sx={{
+                  color: currentPhase === 'REST' ? phaseColor : 'common.white',
+                  fontWeight: currentPhase === 'REST' ? 900 : 700,
+                  opacity: currentPhase === 'WORK' ? 0.65 : 1,
+                }}
+              >
+                REST {restDuration}
+              </Box>
             </Typography>
           )}
         </Box>

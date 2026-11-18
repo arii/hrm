@@ -24,6 +24,23 @@ const makeHrmDevice = (clientId: string, name: string) => ({
 })
 
 describe('HrmConnectionPanel', () => {
+  it.each([1, 2, 3, 4])(
+    '#9904 supplies the dashboard tile count (%i) for metric sizing',
+    (count) => {
+      mockUseHrmData.mockReturnValue(
+        Array.from({ length: count }, (_, i) =>
+          makeHrmDevice(`${i}`, `Alex ${i}`)
+        )
+      )
+      MockedHrTile.mockClear()
+      render(<HrmConnectionPanel />)
+      expect(MockedHrTile).toHaveBeenCalledTimes(count)
+      for (const [props] of MockedHrTile.mock.calls) {
+        expect(props.dashboardTileCount).toBe(count)
+      }
+    }
+  )
+
   beforeEach(() => {
     mockUseHrmData.mockReturnValue([])
     mockUseActiveAlerts.mockReturnValue([])
