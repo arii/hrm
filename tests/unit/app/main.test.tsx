@@ -17,10 +17,19 @@ jest.mock('@/components/BottomNavBar', () => {
   BottomNavBar.displayName = 'BottomNavBar'
   return BottomNavBar
 })
+jest.mock('@/components/DashboardMenu', () => ({
+  __esModule: true,
+  default: () => <button>Open dashboard menu</button>,
+}))
 
 describe('FooterStack', () => {
   it('renders page content plus footer and nav', () => {
-    render(<FooterStack pageMotion={<div data-testid="page" />} isDashboard />)
+    render(
+      <FooterStack
+        pageMotion={<div data-testid="page" />}
+        isDashboard={false}
+      />
+    )
     expect(screen.getByTestId('page')).toBeInTheDocument()
     expect(screen.getByTestId('footer')).toBeInTheDocument()
     expect(screen.getByTestId('bottom-nav-bar')).toBeInTheDocument()
@@ -32,10 +41,12 @@ describe('FooterStack', () => {
     expect(await screen.findByTestId('spotify-display')).toBeInTheDocument()
   })
 
-  it('shows the Spotify wrapper on the dashboard route', async () => {
+  it('hides the Spotify wrapper on the dashboard route', async () => {
     render(<FooterStack pageMotion={<div data-testid="page" />} isDashboard />)
-    expect(await screen.findByTestId('spotify-display')).toBeVisible()
-    expect(screen.getByTestId('global-spotify-footer-wrapper')).toBeVisible()
+    expect(await screen.findByTestId('spotify-display')).not.toBeVisible()
+    expect(
+      screen.getByTestId('global-spotify-footer-wrapper')
+    ).not.toBeVisible()
   })
 
   it('hides the Spotify wrapper off-dashboard while keeping it mounted', async () => {

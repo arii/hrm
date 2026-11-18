@@ -2,6 +2,7 @@
 'use client'
 
 import Button from '@mui/material/Button'
+import MenuItem from '@mui/material/MenuItem'
 import { signIn } from 'next-auth/react'
 import logger from '@/utils/logger'
 import { useState } from 'react'
@@ -10,9 +11,14 @@ import { getBasePath } from '@/utils/urls'
 interface AuthButtonProps {
   providerId: string
   providerName: string
+  menuItem?: boolean
 }
 
-const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
+const AuthButton = ({
+  providerId,
+  providerName,
+  menuItem = false,
+}: AuthButtonProps) => {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = async () => {
@@ -32,6 +38,14 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
       logger.error(`[AuthButton] signIn() error for ${providerName}:`, error)
       setIsLoading(false)
     }
+  }
+
+  if (menuItem) {
+    return (
+      <MenuItem onClick={handleLogin} disabled={isLoading}>
+        {isLoading ? 'Logging in...' : `Login with ${providerName}`}
+      </MenuItem>
+    )
   }
 
   return (

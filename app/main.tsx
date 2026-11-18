@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import BottomNavBar from '@/components/BottomNavBar'
+import DashboardMenu from '@/components/DashboardMenu'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
@@ -40,10 +41,8 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
-/** Page content plus the global footer stack, shared by both layout
- * branches so no route can silently lose the Spotify bar. The player
- * stays mounted on every route (audio persistence); the wrapper hides
- * its UI off-dashboard so it never overlaps Controls/Stream content. */
+/** Keep the player mounted for audio and remote control, independently
+ * of the route's visible navigation. */
 export function FooterStack({
   pageMotion,
   isDashboard,
@@ -54,14 +53,17 @@ export function FooterStack({
   return (
     <>
       {pageMotion}
-      <Box
-        data-testid="global-spotify-footer-wrapper"
-        sx={{ display: isDashboard ? 'block' : 'none' }}
-      >
+      <Box data-testid="global-spotify-footer-wrapper" sx={{ display: 'none' }}>
         <SpotifyDisplay />
       </Box>
-      <Footer />
-      <BottomNavBar />
+      {isDashboard ? (
+        <DashboardMenu />
+      ) : (
+        <>
+          <Footer />
+          <BottomNavBar />
+        </>
+      )}
     </>
   )
 }

@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import MusicNote from '@mui/icons-material/MusicNote'
-import { signOut } from 'next-auth/react'
+import { logoutSpotify } from '@/lib/spotify/logout'
 import VolumeSlider from '../shared/VolumeSlider'
 import SpotifyDeviceSelector from '../SpotifyDeviceSelector'
 import type { SpotifyDevice } from '@/types/core'
@@ -40,11 +40,6 @@ export const DeviceColumn = ({
   const handleDeviceSelect = (deviceId: string) => {
     deviceDispatch({ type: 'SELECT_DEVICE', payload: deviceId })
     executeSpotify('TRANSFER_PLAYBACK', { deviceId })
-  }
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    window.location.reload()
   }
 
   return (
@@ -87,7 +82,7 @@ export const DeviceColumn = ({
       <Button
         variant="outlined"
         size="small"
-        onClick={handleLogout}
+        onClick={logoutSpotify}
         data-testid="spotify-logout-button"
         sx={{
           color: 'common.white',

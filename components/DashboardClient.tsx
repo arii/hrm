@@ -13,11 +13,8 @@ import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
 import { HrmDataContext } from '@/context/WebSocketContext'
 import {
-  DASHBOARD_SHELL_HEIGHT,
+  DASHBOARD_DESIGN_HEIGHT,
   DASHBOARD_TOP_ROW_HEIGHT_MD,
-  FOOTER_HEIGHT_PX,
-  FOOTER_RESERVE_RESPONSIVE,
-  FOOTER_RESERVE_SCALED,
   SCALED_CANVAS_SELECTOR,
   getTopRowGridColumns,
 } from '@/constants/layout'
@@ -113,20 +110,12 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
     <Box
       sx={{
         backgroundColor: 'background.default',
-        // Fixed viewport app shell: the page itself never scrolls. The
-        // timer row keeps its size, the workout section flexes into the
-        // remaining space (scrolling internally when tall), and the
-        // footer reserve below accounts for the fixed footer stack. The
-        // in-flow page Footer below this shell is subtracted so the body
-        // never scrolls. On the scaled canvas the shell height is
-        // canvas-relative px (DASHBOARD_SHELL_HEIGHT) — viewport units
-        // would resolve against the real window, not the canvas. The
-        // selector's (0,2,0) specificity beats the @supports rule below.
-        height: `calc(100vh - ${FOOTER_HEIGHT_PX}px)`,
+        // The workout section absorbs the space below the fixed timer row.
+        height: '100vh',
         '@supports (height: 100dvh)': {
-          height: `calc(100dvh - ${FOOTER_HEIGHT_PX}px)`,
+          height: '100dvh',
         },
-        [SCALED_CANVAS_SELECTOR]: { height: DASHBOARD_SHELL_HEIGHT },
+        [SCALED_CANVAS_SELECTOR]: { height: `${DASHBOARD_DESIGN_HEIGHT}px` },
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -141,19 +130,12 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
           // The sm value is the target-composition pin: scaled viewports
           // are always ≥ SCALE_TO_FIT_MIN_WIDTH, which tracks the sm
           // breakpoint, so the canvas never sees the xs value.
-          py: { xs: 1, sm: 2 },
+          pt: { xs: 1, sm: 2 },
           // Side margins are removed on the fixed canvas via
           // disableGutters above: every pixel goes to card width
           // (fewer wrapped lines, larger text).
-          // Reserve space for the fixed footer stack (bottom nav + Spotify
-          // bar + buffer) so trailing content never slides under it.
-          // Measured: 56px nav + 48px bar; the 16px buffer covers bar
-          // growth up to 64px before any overlap. The canvas reserve
-          // (nav + measured bar headroom) rides the canvas selector:
-          // (0,2,0) specificity beats the py media rule above, which
-          // would otherwise clobber a plain paddingBottom.
-          paddingBottom: FOOTER_RESERVE_RESPONSIVE,
-          [SCALED_CANVAS_SELECTOR]: { paddingBottom: FOOTER_RESERVE_SCALED },
+          // Leave a clear corner for the 28px dashboard menu button.
+          paddingBottom: 4,
           flex: 1,
           minHeight: 0,
           display: 'flex',
