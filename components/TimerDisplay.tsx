@@ -11,8 +11,8 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import VolumeOff from '@mui/icons-material/VolumeOff'
-import VolumeUp from '@mui/icons-material/VolumeUp'
+import NotificationsActive from '@mui/icons-material/NotificationsActive'
+import NotificationsOff from '@mui/icons-material/NotificationsOff'
 import { memo, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
@@ -161,11 +161,9 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
         data-testid="timer-volume-mute-button"
         sx={{ color: 'inherit', width: 44, height: 44 }}
       >
-        {muted ? <VolumeOff /> : <VolumeUp />}
+        {/* A bell, not a speaker, so it never reads as the music volume. */}
+        {muted ? <NotificationsOff /> : <NotificationsActive />}
       </IconButton>
-      <Typography variant="caption" sx={{ fontWeight: 700, ml: -0.5 }}>
-        Beeps
-      </Typography>
       <Slider
         aria-label="Timer beep volume"
         value={muted ? 0 : volume}
@@ -197,6 +195,15 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
 // While the timer runs the button stays hidden so the wall display shows
 // only the digits; a tap on the card reveals Stop for this long.
 const STOP_REVEAL_MS = 5000
+
+const VISUALLY_HIDDEN = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const
 const TOGGLE_WIDTH_PX = 112
 
 const TimerToggleButton = () => {
@@ -338,9 +345,14 @@ const TimerDisplay = () => {
           gap: 1,
         }}
       >
+        {/* While connected only the dot shows; the words appear when
+            the connection drops. Screen readers always get the text. */}
         <Typography
           variant="caption"
-          sx={{ color: theme.palette.common.white }}
+          sx={{
+            color: theme.palette.common.white,
+            ...(connectionStatus === 'Connected' && VISUALLY_HIDDEN),
+          }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
