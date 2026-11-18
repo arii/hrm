@@ -301,3 +301,41 @@ describe('resolveTimerSummary', () => {
     ).toBe('')
   })
 })
+
+describe('TimerDisplay connection status', () => {
+  beforeEach(() => {
+    mockedUseTimerData.mockReturnValue({
+      currentPhase: 'IDLE',
+      timeRemaining: 0,
+      timeElapsed: 0,
+      mode: 'TABATA',
+    })
+    audioManager.setMuted(false)
+  })
+
+  it('shows only the dot while connected, keeping the words for screen readers', () => {
+    mockedUseConnection.mockReturnValue({ connectionStatus: 'Connected' })
+    render(<TimerDisplay />)
+    const status = screen.getByTestId('ws-status-indicator')
+    expect(status).toHaveTextContent('Connected')
+    expect(status).toHaveStyle({ position: 'absolute', overflow: 'hidden' })
+  })
+
+  it('shows the words once the connection drops', () => {
+    mockedUseConnection.mockReturnValue({ connectionStatus: 'Disconnected' })
+    render(<TimerDisplay />)
+    const status = screen.getByTestId('ws-status-indicator')
+    expect(status).toHaveTextContent('Disconnected')
+    expect(status).not.toHaveStyle({ position: 'absolute' })
+  })
+
+  it('uses a bell for the beeps control instead of a speaker', () => {
+    mockedUseConnection.mockReturnValue({ connectionStatus: 'Connected' })
+    render(<TimerDisplay />)
+    const mute = screen.getByRole('button', { name: 'Mute timer beeps' })
+    expect(
+      mute.querySelector('[data-testid="NotificationsActiveIcon"]')
+    ).not.toBeNull()
+    expect(screen.queryByText('Beeps')).not.toBeInTheDocument()
+  })
+})
