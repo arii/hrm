@@ -5,6 +5,7 @@ import {
   type WorkoutFitInput,
   type WorkoutFontMetrics,
 } from '../../../lib/workoutSizing'
+import previousWorkouts from '../../playwright/data/previous-workouts.json'
 
 // Deterministic metric stub: monospace 0.6em advance at the reference
 // size. widthPx(text) at any candidate size is text.length * 0.6 * size.
@@ -46,7 +47,7 @@ const modeledHeightPx = (
         sum + lines(ex, fit.exerciseRem * 16) * fit.exerciseRem * 16 * 1.15,
       0
     ) +
-    Math.max(0, (input.content.columns[0]?.length ?? 0) - 1) * 12
+    Math.max(0, (input.content.columns[0]?.length ?? 0) - 1) * 6
   )
 }
 
@@ -66,6 +67,22 @@ const makeInput = (
 })
 
 describe('computeWorkoutFit', () => {
+  it('#9898 keeps the eleven-line Tabata fixture inside its 406px card at the largest fitting size', () => {
+    const workout = previousWorkouts.find(({ date }) => date === '2024-01-24')!
+    const fit = computeWorkoutFit(
+      makeInput({
+        box: { widthPx: 1600, heightPx: 406 },
+        content: workout,
+      })
+    )
+    // All eleven names fit on one line at this size. Production layout:
+    // 24px padding, 33.12px title, 17px divider, ten 6px stack gaps.
+    const renderedHeight = (exerciseRem: number) =>
+      24 + 33.12 + 17 + 10 * 6 + 11 * exerciseRem * 16 * 1.15
+    expect(renderedHeight(fit.exerciseRem)).toBeLessThanOrEqual(406)
+    expect(renderedHeight(fit.exerciseRem + 0.01)).toBeGreaterThan(406)
+  })
+
   it('is deterministic: same input, same output', () => {
     const input = makeInput()
     expect(computeWorkoutFit(input)).toStrictEqual(computeWorkoutFit(input))
@@ -148,7 +165,7 @@ describe('computeWorkoutFit', () => {
     }
   })
 
-  it('never goes below the 1.4rem floor even for absurd content', () => {
+  it('never goes below the minimum size even for absurd content', () => {
     const longText = 'Very long unbreakable compound exercise name '.repeat(12)
     const input = makeInput({
       content: {
