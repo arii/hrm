@@ -30,11 +30,13 @@ if (process.env.NODE_ENV === 'development') {
 const logger = pino(pinoOptions) as Logger
 
 // Static bundles, sounds, fonts and HMR are fetched on every page load and
-// otherwise drown out the API request logs.
-const STATIC_REQUEST_PATTERN = /\/(_next|assets|fonts)\/|\/favicon\.ico(\?|$)/
+// otherwise drown out the API request logs. Only the path is matched, so a
+// query string cannot hide a request; the optional first segment is the base path.
+const STATIC_PATH_PATTERN =
+  /^(?:\/[^/]+)?\/(?:(?:_next|assets|fonts)\/|favicon\.ico$)/
 
 export const isStaticAssetRequest = (url: string | undefined): boolean =>
-  STATIC_REQUEST_PATTERN.test(url ?? '')
+  STATIC_PATH_PATTERN.test(url?.split('?')[0] ?? '')
 
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,

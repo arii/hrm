@@ -21,6 +21,9 @@ describe('isStaticAssetRequest', () => {
     '/api/auth/session',
     '/api/workout',
     '/api/assets-report',
+    '/api/auth/callback/github?next=/_next/',
+    '/api/workout?x=/assets/a',
+    '/api/hrm/fonts/x',
     undefined,
   ])('keeps request logging for %s', (url) => {
     expect(isStaticAssetRequest(url)).toBe(false)
