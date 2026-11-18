@@ -2,6 +2,10 @@
 
 This document provides context and rules for AI assistants to ensure consistency and adherence to project standards. These instructions are designed to **reduce "AI slop"** by enforcing technical-first constraints specific to this project's architecture.
 
+## Project Vision
+
+Read `docs/VISION.md` first. It defines the surfaces (passive dashboard, phone control, set-and-forget connect), the priorities, and what not to build. Suggestions that add unrequested dashboard features or rewrite workout content are slop.
+
 ## Tech Stack & Core Concepts
 
 - **Framework**: Next.js with a custom, stateful Express server (`server.ts`).
@@ -168,7 +172,7 @@ window.TEST_CONTROLS = { ... } // NO!
 ### 4. Deployment Context
 
 - **Branch**: Production deployment always targets the `leader` branch.
-- **Mechanism**: Deployment is handled by a `deploy.sh` script on the production host. This script pulls the latest `leader` branch and reloads the application using `pm2 reload`.
+- **Mechanism**: `.github/workflows/deploy.yml` builds a release artifact on every `leader` push, copies it to the self-hosted server and runs `scripts/deploy-artifact.sh`, which restarts the PM2 `hrm-server` process.
 - **Environment**: The production server requires a `.env.production` file.
 - **Scripts**: All deployment scripts must align with `package.json` scripts and the `ecosystem.config.cjs` PM2 configuration.
 

@@ -1,5 +1,17 @@
 # AGENTS.md
 
+## Read First: Project Vision
+
+`docs/VISION.md` defines who uses each page, what matters, and what not to build. Every issue, PR and audit must be consistent with it. Key rules:
+
+- The dashboard is a passive OBS/Zoom broadcast screen. Do not add in-workout controls to it; the owner drives the workout from `/client/control` on a phone.
+- `/client/connect` is set-and-forget for attendees: Bluetooth must stay connected without interaction.
+- Legibility from a distance beats extra information. Do not add badges, labels, icons or decoration that were not requested.
+- Render Google Doc workout text as written. Do not add or reword content (e.g. no appended "(N reps)").
+- Do not remove a control until you have shown every action it performs is still reachable elsewhere.
+- Heart rate data is shown live and discarded: no server persistence, no HR in logs, no long-lived browser HR history.
+- Unrequested ideas go in an issue for the owner, not in a PR.
+
 ## Commands
 
 - `pnpm run test` - run the full test suite
