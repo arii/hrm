@@ -8,6 +8,50 @@ import '@testing-library/jest-dom'
 import { HR_ZONE_CONFIG } from '@/lib/shared/hr-zones'
 
 describe('HrTile', () => {
+  it.each([
+    [1, 48, 16],
+    [2, 41, 15],
+    [3, 35, 15],
+    [4, 28, 14],
+  ])(
+    '#9904 renders inline canvas metrics for %i tiles at %ipx with %ipx units',
+    (count, numberSize, unitSize) => {
+      render(
+        <div data-scaled-canvas="">
+          <HrTile
+            name="An exceptionally long participant name"
+            value={199}
+            calories={9999}
+            percentage={84}
+            isCompact={count >= 4}
+            dashboardTileCount={count}
+          />
+        </div>
+      )
+      for (const id of ['bpm-value', 'calories-value']) {
+        const metric = screen.getByTestId(id)
+        expect(metric).toHaveStyle(`font-size: ${numberSize}px`)
+        expect(metric).toHaveStyle('white-space: nowrap; line-height: 1')
+        const unit = metric.querySelector('span')!
+        expect(unit).toHaveStyle(`font-size: ${unitSize}px`)
+        expect(getComputedStyle(unit).display).not.toBe('block')
+      }
+      expect(screen.getByTestId('bpm-value')).toHaveTextContent('199 BPM')
+      expect(screen.getByTestId('calories-value')).toHaveTextContent(
+        '9999 KCAL'
+      )
+      expect(screen.getByTestId('hr-tile-name')).toHaveStyle(
+        'overflow: hidden; text-overflow: ellipsis; white-space: nowrap'
+      )
+    }
+  )
+
+  it('#9904 leaves standalone connect metric styling unchanged', () => {
+    render(<HrTile name="Alex" value={155} calories={328} percentage={84} />)
+    expect(screen.getByTestId('bpm-value')).toHaveStyle('font-size: 1.5rem')
+    expect(screen.getByText('BPM')).toHaveStyle('font-size: 1rem')
+  })
+
   it('renders the correct background and text color for the Max zone', () => {
     // 95% -> Zone 6
     render(<HrTile name="Test" value={190} percentage={95} zone="ZONE_6" />)

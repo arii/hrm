@@ -100,16 +100,32 @@ const MetricItem = ({
   label,
   testId,
   isCompact = false,
+  dashboardTileCount,
 }: {
   value: React.ReactNode
   label: string
   testId?: string
   isCompact?: boolean
+  dashboardTileCount?: number
 }) => (
   <Typography
     data-testid={testId}
     variant="h4"
-    sx={{ fontWeight: 800, fontSize: isCompact ? '0.9rem' : '1.5rem' }}
+    sx={{
+      fontWeight: 800,
+      fontSize: isCompact ? '0.9rem' : '1.5rem',
+      ...(dashboardTileCount && {
+        [SCALED_CANVAS_SELECTOR]: {
+          fontSize: `${Math.round(48 - ((Math.min(4, dashboardTileCount) - 1) * 20) / 3)}px`,
+          lineHeight: 1,
+          whiteSpace: 'nowrap',
+          flex: 1,
+          minWidth: 0,
+          textAlign: 'center',
+          fontVariantNumeric: 'tabular-nums',
+        },
+      }),
+    }}
   >
     {value}{' '}
     <Typography
@@ -119,6 +135,11 @@ const MetricItem = ({
         fontSize: isCompact ? '0.75rem' : '1rem',
         fontWeight: 700,
         opacity: 0.9,
+        ...(dashboardTileCount && {
+          [SCALED_CANVAS_SELECTOR]: {
+            fontSize: `${Math.round(16 - ((Math.min(4, dashboardTileCount) - 1) * 2) / 3)}px`,
+          },
+        }),
       }}
     >
       {label}
@@ -131,11 +152,13 @@ const DataTier = ({
   calories,
   showName,
   isCompact = false,
+  dashboardTileCount,
 }: {
   value: number | null
   calories: number
   showName: boolean
   isCompact?: boolean
+  dashboardTileCount?: number
 }) => (
   <Box
     sx={{
@@ -151,12 +174,14 @@ const DataTier = ({
       label="BPM"
       testId="bpm-value"
       isCompact={isCompact}
+      dashboardTileCount={dashboardTileCount}
     />
     <MetricItem
       value={Math.floor(calories)}
       label="KCAL"
       testId="calories-value"
       isCompact={isCompact}
+      dashboardTileCount={dashboardTileCount}
     />
   </Box>
 )
@@ -176,7 +201,8 @@ const HrTile = ({
   isAlerting = false,
   alertMessage = 'Checking signal...',
   isCompact = false,
-}: HrTileProps) => {
+  dashboardTileCount,
+}: HrTileProps & { dashboardTileCount?: number }) => {
   const theme = useTheme()
 
   const zoneConfig =
@@ -278,6 +304,7 @@ const HrTile = ({
           <Box data-testid="hr-tile-data" aria-hidden="true">
             <HeroTier percentage={percentage} isCompact={isCompact} />
             <DataTier
+              dashboardTileCount={dashboardTileCount}
               value={value}
               calories={calories}
               showName={showName}
