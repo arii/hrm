@@ -433,8 +433,6 @@ const resolveClientCalories = (
     logger.warn(
       {
         clientId,
-        clientCalories,
-        serverCalories,
         isInitialValue: isAnomalousInitialValue,
       },
       'Anomalous calorie value detected. Using last known server value.'

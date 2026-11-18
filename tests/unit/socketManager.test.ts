@@ -111,6 +111,9 @@ class MockWebSocket extends EventEmitter {
   }
 }
 
+const ANOMALY_MSG =
+  'Anomalous calorie value detected. Using last known server value.'
+
 describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let mockServices: {
@@ -380,11 +383,14 @@ describe('WebSocket Manager', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'test-client',
-          clientCalories: 100,
-          serverCalories: 10,
         }),
-        'Anomalous calorie value detected. Using last known server value.'
+        ANOMALY_MSG
       )
+      const warnMeta = (logger.warn as jest.Mock).mock.calls.find(
+        (call) => call[1] === ANOMALY_MSG
+      )![0]
+      expect(warnMeta).not.toHaveProperty('clientCalories')
+      expect(warnMeta).not.toHaveProperty('serverCalories')
       expect(clientData!.calories).toBe(10)
     })
 
@@ -513,12 +519,15 @@ describe('WebSocket Manager', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'test-client',
-          clientCalories: 1001,
-          serverCalories: 0,
           isInitialValue: true,
         }),
-        'Anomalous calorie value detected. Using last known server value.'
+        ANOMALY_MSG
       )
+      const warnMeta = (logger.warn as jest.Mock).mock.calls.find(
+        (call) => call[1] === ANOMALY_MSG
+      )![0]
+      expect(warnMeta).not.toHaveProperty('clientCalories')
+      expect(warnMeta).not.toHaveProperty('serverCalories')
       expect(clientData).toBeDefined()
       expect(clientData!.calories).toBe(0)
     })
