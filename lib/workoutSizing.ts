@@ -26,7 +26,7 @@ export const REFERENCE_FONT_PX = 100
 const ROOT_FONT_PX = 16
 
 /** Hard floor for exercise text on the scaled canvas. */
-export const MIN_EXERCISE_REM = 1.4
+export const MIN_EXERCISE_REM = 1.3
 /** Roomiest exercise size (the old content-estimate band ceiling). */
 const MAX_EXERCISE_REM = 3.0
 
@@ -43,12 +43,12 @@ const HEADER_LINE_HEIGHT = 1.15
 // Layout constants mirroring the grid's MUI sx values so the model and
 // the rendered box cannot drift: `gap: 2` -> 16px, card `p: 1.5` ->
 // 12px, Divider `my: 1` -> 8px margins + 1px rule, Stack `spacing:
-// 0.75` -> 12px, `minmax(min(100%, 240px), 1fr)` -> 240px card floor.
+// 0.75` -> 6px, `minmax(min(100%, 240px), 1fr)` -> 240px card floor.
 const GRID_GAP_PX = 16
 const CARD_MIN_WIDTH_PX = 240
 const CARD_PADDING_PX = 12
 const DIVIDER_PX = 17
-const EXERCISE_GAP_REM = 0.75
+const EXERCISE_GAP_PX = 6
 
 /** Real font metrics, measured by the caller (never by this module). */
 export interface WorkoutFontMetrics {
@@ -187,8 +187,7 @@ const cardContentHeightPx = (
         EXERCISE_LINE_HEIGHT,
     0
   )
-  const gapsPx =
-    Math.max(0, exercises.length - 1) * EXERCISE_GAP_REM * ROOT_FONT_PX
+  const gapsPx = Math.max(0, exercises.length - 1) * EXERCISE_GAP_PX
   return (
     2 * CARD_PADDING_PX +
     headerLines * headerPx * HEADER_LINE_HEIGHT +
