@@ -56,6 +56,9 @@ describe('WorkoutPhaseGrid', () => {
     expect(screen.getByText('Jumping Jacks')).toBeInTheDocument()
     expect(screen.getByText('High Knees')).toBeInTheDocument()
     expect(screen.getByTestId('workout-phase-grid')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /^start/i })
+    ).not.toBeInTheDocument()
   })
 
   it('renders header-only phases as plain cards alongside the rest', async () => {
