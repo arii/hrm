@@ -76,7 +76,7 @@ export default function BottomNavBar() {
         '& .MuiBottomNavigationAction-root': {
           minWidth: 0,
           px: { xs: 0.25, sm: 1.5 },
-          mx: { xs: 0.25, sm: 0.5 },
+          mx: { xs: 0, sm: 0.5 },
           my: 0.5,
           borderRadius: 3,
         },
@@ -90,12 +90,13 @@ export default function BottomNavBar() {
         },
         '& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected':
           {
-            fontSize: { xs: '0.72rem', sm: '0.95rem' },
+            fontSize: { xs: '0.66rem', sm: '0.95rem' },
             fontWeight: 600,
             whiteSpace: 'nowrap',
           },
+        // Bolder only where the wider label cannot clip a 60px phone tab.
         '& .MuiBottomNavigationAction-label.Mui-selected': {
-          fontWeight: 800,
+          fontWeight: { xs: 600, sm: 800 },
         },
       }}
     >
