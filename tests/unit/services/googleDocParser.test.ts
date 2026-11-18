@@ -24,11 +24,11 @@ describe('parseGoogleDocTable', () => {
     expect(parseGoogleDocTable(html)).toEqual(expectedDto)
   })
 
-  it('splits <br>-separated lines and combined exercises with reps', () => {
+  it('preserves exercise text when splitting <br>-separated lines', () => {
     const html = `
       <table>
         <tr>
-          <td>Emom<br>B. squat row 20 Floor press 15<br>Swings 20<br>Alt curl press 60 seconds</td>
+          <td>Emom<br>  Pull thru 25  <br>B. squat row 20 Floor press 15<br>Swings 20<br>Alt curl press 60 seconds</td>
         </tr>
       </table>
     `
@@ -37,9 +37,9 @@ describe('parseGoogleDocTable', () => {
       headers: ['Emom'],
       columns: [
         [
-          'B. squat row (20 reps)',
-          'Floor press (15 reps)',
-          'Swings (20 reps)',
+          'Pull thru 25',
+          'B. squat row 20 Floor press 15',
+          'Swings 20',
           'Alt curl press 60 seconds',
         ],
       ],
@@ -89,18 +89,18 @@ describe('parseGoogleDocTable', () => {
     ).toEqual({ headers: [], columns: [] })
   })
 
-  it('decodes HTML entities and normalizes whitespace per line', () => {
+  it('decodes HTML entities and collapses whitespace within each line', () => {
     const html = `
       <table>
         <tr>
-          <td><p>Sets &amp; Reps</p><p>Note&nbsp;with&nbsp;nbsp</p></td>
+          <td><p>Sets &amp; Reps</p><p>  Note&nbsp;with&nbsp;nbsp  </p><p>  Pull  thru 25  </p><p>Squats (10 reps)</p></td>
         </tr>
       </table>
     `
 
     expect(parseGoogleDocTable(html)).toEqual({
       headers: ['Sets & Reps'],
-      columns: [['Note with nbsp']],
+      columns: [['Note with nbsp', 'Pull thru 25', 'Squats (10 reps)']],
     })
   })
 
