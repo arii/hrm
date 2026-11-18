@@ -116,7 +116,7 @@ describe('API Route: /api/workout', () => {
       expect(data).toEqual(mockParsedData)
       expect(mockedFetch).toHaveBeenCalledWith(
         'https://docs.google.com/document/d/test-doc-id/export?format=html',
-        { next: { revalidate: 60 } }
+        { cache: 'no-store' }
       )
       expect(mockedParseGoogleDocTable).toHaveBeenCalledWith(mockHtml)
     })
