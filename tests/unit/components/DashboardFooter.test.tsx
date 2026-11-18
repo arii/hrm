@@ -24,7 +24,27 @@ jest.mock('next-auth/react', () => ({
 }))
 jest.mock('@/components/SpotifyDisplay', () => ({
   __esModule: true,
-  default: () => <div data-testid="mounted-player">Spotify player UI</div>,
+  default: ({
+    onRetryAvailable,
+  }: {
+    onRetryAvailable?: (available: boolean) => void
+  }) => (
+    <div data-testid="mounted-player">
+      Spotify player UI
+      <button
+        data-testid="player-retry-available"
+        onClick={() => onRetryAvailable?.(true)}
+      >
+        Report retry available
+      </button>
+      <button
+        data-testid="player-retry-unavailable"
+        onClick={() => onRetryAvailable?.(false)}
+      >
+        Report retry unavailable
+      </button>
+    </div>
+  ),
 }))
 
 const mockSpotifyAuth = jest.mocked(useSpotifyAuth)
@@ -60,6 +80,41 @@ describe('#9903 dashboard footer contract', () => {
       session: null,
     })
     jest.mocked(useSpotifyCommand).mockReturnValue(idlePlayer())
+  })
+
+  it('routes mounted player retry availability through FooterStack to dashboard recovery', async () => {
+    mockSpotifyAuth.mockReturnValue({
+      isLoggedIn: true,
+      status: 'authenticated',
+      session: { expires: '2099-01-01' },
+    })
+    const player = idlePlayer()
+    jest.mocked(useSpotifyCommand).mockReturnValue(player)
+    const user = userEvent.setup()
+    render(<FooterStack pageMotion={<div />} isDashboard />)
+    await screen.findByTestId('mounted-player')
+    await user.click(
+      screen.getByRole('button', { name: 'Open dashboard menu' })
+    )
+    expect(
+      screen.queryByRole('menuitem', { name: 'Connect to HRM Web Player' })
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('player-retry-available'))
+    await user.click(
+      await screen.findByRole('menuitem', {
+        name: 'Connect to HRM Web Player',
+      })
+    )
+    expect(player.execute).toHaveBeenCalledWith('TRANSFER_PLAYBACK', {
+      deviceId: 'browser-player',
+    })
+    fireEvent.click(screen.getByTestId('player-retry-unavailable'))
+    await waitFor(() => expect(screen.getAllByRole('menuitem')).toHaveLength(6))
+    expect(
+      screen.queryByRole('menuitem', {
+        name: /Connect to HRM Web Player|Connecting…/,
+      })
+    ).not.toBeInTheDocument()
   })
 
   it('offers the old manual transfer action only when recovery is available', async () => {
