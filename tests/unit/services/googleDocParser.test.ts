@@ -89,7 +89,7 @@ describe('parseGoogleDocTable', () => {
     ).toEqual({ headers: [], columns: [] })
   })
 
-  it('decodes HTML entities and only trims whitespace around each line', () => {
+  it('decodes HTML entities and collapses whitespace within each line', () => {
     const html = `
       <table>
         <tr>
@@ -101,7 +101,7 @@ describe('parseGoogleDocTable', () => {
     expect(parseGoogleDocTable(html)).toEqual({
       headers: ['Sets & Reps'],
       columns: [
-        ['Note\u00a0with\u00a0nbsp', 'Pull  thru 25', 'Squats (10 reps)'],
+        ['Note with nbsp', 'Pull thru 25', 'Squats (10 reps)'],
       ],
     })
   })

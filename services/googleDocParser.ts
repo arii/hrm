@@ -23,10 +23,10 @@ const extractCellLines = (cell: HTMLElement): string[] => {
     block.insertAdjacentHTML('afterend', '\n')
   })
 
-  // Decode FIRST to handle &nbsp; correctly, then trim each line.
+  // Decode FIRST to handle &nbsp; correctly, then normalize each line.
   return decode(cell.text)
     .split('\n')
-    .map((line) => line.trim())
+    .map((line) => line.replace(/\s+/g, ' ').trim())
     .filter(Boolean)
 }
 
