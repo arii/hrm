@@ -4,6 +4,7 @@ import { Request, Response } from 'express'
 import pinoHttp from 'pino-http'
 import { randomUUID } from 'crypto'
 import type { Logger } from './logger'
+import { getBasePath } from './urls'
 
 export const pinoOptions: pino.LoggerOptions = {
   level:
@@ -30,13 +31,19 @@ if (process.env.NODE_ENV === 'development') {
 const logger = pino(pinoOptions) as Logger
 
 // Static bundles, sounds, fonts and HMR are fetched on every page load and
-// otherwise drown out the API request logs. Only the path is matched, so a
-// query string cannot hide a request; the optional first segment is the base path.
-const STATIC_PATH_PATTERN =
-  /^(?:\/[^/]+)?\/(?:(?:_next|assets|fonts)\/|favicon\.ico$)/
+// otherwise drown out the API request logs. Only the path after the base path
+// is matched, so a query string or a nested API route cannot hide a request.
+const STATIC_PATH_PATTERN = /^\/(?:(?:_next|assets|fonts)\/|favicon\.ico$)/
 
-export const isStaticAssetRequest = (url: string | undefined): boolean =>
-  STATIC_PATH_PATTERN.test(url?.split('?')[0] ?? '')
+export const isStaticAssetRequest = (url: string | undefined): boolean => {
+  const path = url?.split('?')[0] ?? ''
+  const basePath = getBasePath()
+  const appPath =
+    basePath && path.startsWith(`${basePath}/`)
+      ? path.slice(basePath.length)
+      : path
+  return STATIC_PATH_PATTERN.test(appPath)
+}
 
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,

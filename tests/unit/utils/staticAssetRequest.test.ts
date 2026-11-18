@@ -4,6 +4,14 @@
 import { isStaticAssetRequest } from '@/utils/logger.server'
 
 describe('isStaticAssetRequest', () => {
+  const originalBasePath = process.env.NEXT_PUBLIC_BASE_PATH
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_BASE_PATH = '/hrm'
+  })
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_BASE_PATH = originalBasePath
+  })
+
   it.each([
     '/_next/static/chunks/app_layout.js',
     '/hrm/_next/static/css/app.css',
@@ -24,6 +32,8 @@ describe('isStaticAssetRequest', () => {
     '/api/auth/callback/github?next=/_next/',
     '/api/workout?x=/assets/a',
     '/api/hrm/fonts/x',
+    '/api/fonts/x',
+    '/hrm/api/assets/x',
     undefined,
   ])('keeps request logging for %s', (url) => {
     expect(isStaticAssetRequest(url)).toBe(false)
