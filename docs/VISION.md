@@ -20,7 +20,7 @@ The dashboard is a broadcast screen, not an app. Interactive controls on it are 
 1. **Reliability during a live session.** The timer is accurate, beeps are audible, Bluetooth stays connected, music keeps playing. A regression here ruins a live class.
 2. **Legibility from a distance.** Every pixel on the 1600x900 dashboard canvas competes for space. Bigger text beats more information. Text that cannot be read through a Zoom tile from the mat is a bug.
 3. **Workout content fidelity.** Exercise cards show what the owner wrote in the Google Doc, as large as it fits. The doc is a table with one header row and one content row with 4 to 6 columns; cards are sized from that table.
-4. **Privacy.** Heart rate is health data. It is shown live and then discarded (see Privacy below).
+4. **Privacy.** Heart rate is health data. Each user's workout history stays on their own device; the server keeps none (see Privacy below).
 5. **Simplicity.** Every new control, badge or code path is a new place for bugs and security issues. Fewer moving parts is the default.
 
 ## Recent wins (the model for good changes)
@@ -51,13 +51,14 @@ The dashboard is a broadcast screen, not an app. Interactive controls on it are 
 
 ## Privacy
 
-- Heart rate data is never written to a server database, file or log. The server keeps only the latest readings in memory for live display and drops them when a device goes offline or idles out.
-- Browser storage holds only what a page needs to resume after a reload (for example the paired device id). Prefer `sessionStorage` over `localStorage`; do not keep HR histories after the session ends unless the owner explicitly asks to export one.
+- Heart rate data is never written to a server database, file or log. The server keeps only the latest readings in memory for live display and drops them when a device goes offline or idles out (`HRM_SESSION_TTL_MS`, 30 minutes by default).
+- Workout history (HR and calorie history for the Experiments tab) lives only in each user's own browser storage on their own device. It belongs to that user, not the server. Do not add server-side copies or sync.
+- Exception, Strava: when the owner uploads a workout to Strava, the server may hold the owner's own workout in memory until it is uploaded or discarded. Nothing is written to disk, and no other attendee's data is held.
 - Logs must not contain HR values, names or ages at info level or above.
 
 ## Direction (owner-approved, not yet scheduled)
 
-- Strava: upload a completed workout on request (write-only).
+- Strava: upload a completed workout on request (write-only), following the Strava exception under Privacy.
 - Previous workouts: pull an earlier revision of the workout doc, or reuse workouts from `arii/previous_workouts`, to pick or generate today's workout.
 - Decouple timer, Spotify and workout cards so each can change without touching the others, with no behavior change.
 - Extract the Bluetooth HRM code into a reusable standalone package.

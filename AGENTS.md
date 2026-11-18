@@ -9,7 +9,7 @@
 - Legibility from a distance beats extra information. Do not add badges, labels, icons or decoration that were not requested.
 - Render Google Doc workout text as written. Do not add or reword content (e.g. no appended "(N reps)").
 - Do not remove a control until you have shown every action it performs is still reachable elsewhere.
-- Heart rate data is shown live and discarded: no server persistence, no HR in logs, no long-lived browser HR history.
+- Heart rate history stays on each user's own device (browser storage, for the Experiments tab). The server keeps only a short in-memory live window: no server persistence, no HR in logs. The only exception is holding the owner's own workout in memory until a Strava upload or discard.
 - Unrequested ideas go in an issue for the owner, not in a PR.
 
 ## Commands
