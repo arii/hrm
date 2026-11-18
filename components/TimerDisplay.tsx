@@ -322,6 +322,8 @@ const TimerDisplay = () => {
             alignItems: 'baseline',
             justifyContent: 'center',
             columnGap: 2,
+            // Clear the corner volume controls without shifting the countdown.
+            transform: timerSummary ? { sm: 'translateY(44px)' } : undefined,
           }}
         >
           <Typography
