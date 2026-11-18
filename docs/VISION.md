@@ -39,6 +39,7 @@ The dashboard is a broadcast screen, not an app. Interactive controls on it are 
 
 ## Rules for agents
 
+- **Owner-reported dashboard issues come first.** Fixing dashboard problems the owner has highlighted always takes priority over new features.
 - **Build what was asked.** No unrequested features, badges, buttons, icons, animations, labels or copy. If you think something is missing, open an issue that cites this file and wait for the owner.
 - **Name the surface.** Every PR and issue states which surface it affects (dashboard, control, connect, setup) and which priority above it serves. Dashboard changes must not add in-workout interactivity.
 - **Do not rewrite workout content.** Render the doc text as written. Parsing may split cells into lines; it must not add, reword or decorate text.
