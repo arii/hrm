@@ -44,6 +44,14 @@ describe('SpotifySearchInput', () => {
     jest.restoreAllMocks()
   })
 
+  it('gives the search box an accessible name', () => {
+    render(<SpotifySearchInput onTrackSelect={jest.fn()} />)
+
+    expect(
+      screen.getByRole('combobox', { name: 'Search Spotify for a song' })
+    ).toBeInTheDocument()
+  })
+
   it('renders same-name tracks without duplicate React key warnings', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     render(<SpotifySearchInput onTrackSelect={jest.fn()} />)

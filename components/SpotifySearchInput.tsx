@@ -129,6 +129,10 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             size="small"
             variant="outlined"
             sx={{ backgroundColor: 'background.paper', borderRadius: 1 }}
+            inputProps={{
+              ...params.inputProps,
+              'aria-label': 'Search Spotify for a song',
+            }}
             InputProps={{
               ...params.InputProps,
               startAdornment: (
@@ -189,7 +193,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         {!hasSearched && !query && (
           <Typography
             variant="body2"
-            color="text.secondary"
+            color="grey.400"
             align="center"
             sx={{ mt: 2 }}
           >
