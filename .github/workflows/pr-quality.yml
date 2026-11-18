@@ -709,17 +709,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mkdir -p logs test-results
-          SKIP_BUILD=true pnpm run test:visual --shard="${SHARD_INDEX}/${SHARD_TOTAL}" --update-snapshots=all 2>&1 | tee logs/visual-output.log
-
-      - name: Upload Regenerated VRT Baselines
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: regenerated-vrt-shard-${{ matrix.shard }}
-          path: tests/playwright/**/*-snapshots/*.png
-          if-no-files-found: error
-          retention-days: 2
+          ./scripts/ci/run-visual-tests.sh
 
       - name: Publish Visual Tests Results
         uses: dorny/test-reporter@v1
