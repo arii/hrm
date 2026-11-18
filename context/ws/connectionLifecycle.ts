@@ -60,7 +60,7 @@ export const useWebSocketLifecycle = ({
     () =>
       throttle(
         () => {
-          logger.warn(
+          logger.debug(
             '[WebSocketProvider] Connection not open. Queuing action.'
           )
         },

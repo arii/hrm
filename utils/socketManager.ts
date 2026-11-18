@@ -148,7 +148,7 @@ const initSocketManager = (
     extWs.clientId = clientId
 
     if (clientSockets.has(clientId)) {
-      logger.warn(
+      logger.info(
         logMeta,
         'Existing socket found. Overwriting with new connection.'
       )
@@ -238,7 +238,7 @@ type IncomingMessageHandler = (
 ) => void
 
 const handlePing: IncomingMessageHandler = (ws, _message, clientId) => {
-  logger.info({ clientId }, 'Received PING, sending PONG.')
+  logger.debug({ clientId }, 'Received PING, sending PONG.')
   const pongMessage: ServerMessage = { type: 'PONG' }
   sendWebSocketMessage(ws, pongMessage, 'socketManager.PING')
 }

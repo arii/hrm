@@ -29,8 +29,18 @@ if (process.env.NODE_ENV === 'development') {
 
 const logger = pino(pinoOptions) as Logger
 
+// Static bundles, sounds, fonts and HMR are fetched on every page load and
+// otherwise drown out the API request logs.
+const STATIC_REQUEST_PATTERN = /\/(_next|assets|fonts)\/|\/favicon\.ico(\?|$)/
+
+export const isStaticAssetRequest = (url: string | undefined): boolean =>
+  STATIC_REQUEST_PATTERN.test(url ?? '')
+
 const httpLogger = pinoHttp({
   logger: logger as pino.Logger,
+  autoLogging: {
+    ignore: (req: Request) => isStaticAssetRequest(req.url),
+  },
   genReqId: function (req: Request, res: Response) {
     const existingID = req.id ?? req.headers['x-request-id']
     if (existingID) return existingID

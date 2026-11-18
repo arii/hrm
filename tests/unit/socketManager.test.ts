@@ -199,17 +199,22 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should log a warning when overwriting an existing socket', () => {
+    it('should log at info, not warn, when a client reconnects over its existing socket', () => {
+      const loggerInfoSpy = jest.spyOn(logger, 'info')
       const loggerWarnSpy = jest.spyOn(logger, 'warn')
       const mockReq = createMockRequest('/?clientId=test-client') // Same clientId as in beforeEach
       const newWs = new MockWebSocket()
 
       mockWss.emit('connection', newWs, mockReq)
 
-      expect(loggerWarnSpy).toHaveBeenCalledWith(
+      expect(loggerInfoSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           clientId: 'test-client',
         }),
+        'Existing socket found. Overwriting with new connection.'
+      )
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
         'Existing socket found. Overwriting with new connection.'
       )
     })
