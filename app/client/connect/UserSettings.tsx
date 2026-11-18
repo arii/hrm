@@ -36,7 +36,18 @@ const UserSettings: React.FC<UserSettingsProps> = ({ profile }) => {
   const { data, handlers, errors } = profile
 
   return (
-    <Stack spacing={2} sx={{ mb: 3 }} data-testid="user-settings-form">
+    <Stack
+      spacing={2}
+      // Touch-friendly sizes to match the rest of the dashboard.
+      sx={{
+        mb: 3,
+        '& .MuiInputBase-input': { fontSize: '1.2rem', py: 1.75 },
+        '& .MuiToggleButton-root': { px: 3, py: 1.25, fontSize: '1rem' },
+        '& .MuiRadio-root .MuiSvgIcon-root': { fontSize: '1.9rem' },
+        '& .MuiFormControlLabel-label': { fontSize: '1.1rem' },
+      }}
+      data-testid="user-settings-form"
+    >
       <ToggleButtonGroup
         value={data.unitSystem}
         exclusive

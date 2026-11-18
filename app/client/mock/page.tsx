@@ -230,7 +230,8 @@ export default function MockPage() {
             size="medium"
             disabled={isStreaming}
             inputProps={{ 'data-testid': 'hr-input' }}
-            sx={{ mb: 3 }}
+            // Readable from across the room while checking the dashboard.
+            sx={{ mb: 3, '& input': { fontSize: '2rem', fontWeight: 700 } }}
           />
 
           <Typography

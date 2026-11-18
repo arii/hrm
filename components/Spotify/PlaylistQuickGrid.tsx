@@ -94,11 +94,11 @@ const PlaylistTile = ({
         </Box>
       )}
       <Box sx={{ p: 1, pr: 6 }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+        <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>
           {playlist.name}
         </Typography>
         <Typography
-          variant="caption"
+          variant="body2"
           color="text.secondary"
           display="block"
           noWrap
@@ -136,8 +136,8 @@ const Section = ({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))',
-          gap: 2,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: 3,
         }}
       >
         {playlists.map((playlist) => (

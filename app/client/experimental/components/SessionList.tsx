@@ -63,6 +63,15 @@ const SessionList = ({
             {sessions.map((session) => (
               <ListItem
                 key={session.sessionId}
+                // One summary card per session: date, duration and
+                // calories readable at a glance.
+                sx={{
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  mb: 1.5,
+                  py: 1.5,
+                }}
                 secondaryAction={
                   <>
                     <IconButton
@@ -83,6 +92,12 @@ const SessionList = ({
                 }
               >
                 <ListItemText
+                  primaryTypographyProps={{ variant: 'h6', fontWeight: 700 }}
+                  secondaryTypographyProps={{
+                    variant: 'body1',
+                    component: 'div',
+                    color: 'text.primary',
+                  }}
                   primary={`Workout - ${formatDate(session.startTime, {
                     year: 'numeric',
                     month: 'short',
@@ -95,9 +110,9 @@ const SessionList = ({
                         endTime={session.endTime}
                       />
                       <Typography
-                        variant="caption"
+                        variant="body1"
                         component="span"
-                        sx={{ display: 'block' }}
+                        sx={{ display: 'block', fontWeight: 700 }}
                       >
                         Calories: {getTotalCalories(session).toFixed(0)} kCal
                       </Typography>
