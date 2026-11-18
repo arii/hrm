@@ -29,7 +29,9 @@ const IdentityTier = ({
       variant="h4"
       sx={{
         fontWeight: 900,
-        fontSize: isCompact ? '1rem' : '1.5rem',
+        // Large enough to find your own tile from across the room.
+        fontSize: isCompact ? '1.5rem' : '2.25rem',
+        lineHeight: 1.15,
         textTransform: 'uppercase',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

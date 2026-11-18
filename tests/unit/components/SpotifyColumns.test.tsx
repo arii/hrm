@@ -40,7 +40,7 @@ describe('Spotify StatusColumn', () => {
     expect(screen.getByTestId('spotify-now-playing')).toHaveTextContent(
       'Track Artist'
     )
-    expect(screen.queryByText('🎵 Browser Player Active')).toBeNull()
+    expect(screen.queryByText('Browser Player Active')).toBeNull()
   })
 
   it('renders the active badge and the device recommendation when flagged', () => {
@@ -54,7 +54,7 @@ describe('Spotify StatusColumn', () => {
         showConnectButton={true}
       />
     )
-    expect(screen.getByText('🎵 Browser Player Active')).toBeInTheDocument()
+    expect(screen.getByText('Browser Player Active')).toBeInTheDocument()
     expect(screen.getByTestId('device-recommendation')).toBeInTheDocument()
   })
 })

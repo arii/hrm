@@ -76,12 +76,28 @@ export default function BottomNavBar() {
         '& .MuiBottomNavigationAction-root': {
           minWidth: 0,
           px: { xs: 0.25, sm: 1.5 },
+          mx: { xs: 0, sm: 0.5 },
+          my: 0.5,
+          borderRadius: 3,
+        },
+        '& .MuiBottomNavigationAction-root .MuiSvgIcon-root': {
+          fontSize: { xs: '1.6rem', sm: '1.85rem' },
+        },
+        // Selected tab: filled pill plus bold label, readable at a glance.
+        '& .MuiBottomNavigationAction-root.Mui-selected': {
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
         },
         '& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected':
           {
-            fontSize: { xs: '0.68rem', sm: '0.8rem' },
+            fontSize: { xs: '0.66rem', sm: '0.95rem' },
+            fontWeight: 600,
             whiteSpace: 'nowrap',
           },
+        // Bolder only where the wider label cannot clip a 60px phone tab.
+        '& .MuiBottomNavigationAction-label.Mui-selected': {
+          fontWeight: { xs: 600, sm: 800 },
+        },
       }}
     >
       {NAV_ITEMS.map((item, index) => (
@@ -93,10 +109,12 @@ export default function BottomNavBar() {
           component={Link}
           href={item.href}
           sx={{
-            color: activeValue === index ? 'primary.main' : 'text.secondary',
-            '&:hover, &.Mui-focusVisible': {
-              backgroundColor: 'action.hover',
-            },
+            color:
+              activeValue === index ? 'primary.contrastText' : 'text.primary',
+            '&:hover:not(.Mui-selected), &.Mui-focusVisible:not(.Mui-selected)':
+              {
+                backgroundColor: 'action.hover',
+              },
           }}
         />
       ))}
