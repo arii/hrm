@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import BottomNavBar from '@/components/BottomNavBar'
@@ -50,14 +51,15 @@ export function FooterStack({
   pageMotion: React.ReactNode
   isDashboard: boolean
 }) {
+  const [showPlayerRetry, setShowPlayerRetry] = useState(false)
   return (
     <>
       {pageMotion}
       <Box data-testid="global-spotify-footer-wrapper" sx={{ display: 'none' }}>
-        <SpotifyDisplay />
+        <SpotifyDisplay onRetryAvailable={setShowPlayerRetry} />
       </Box>
       {isDashboard ? (
-        <DashboardMenu />
+        <DashboardMenu showPlayerRetry={showPlayerRetry} />
       ) : (
         <>
           <Footer />

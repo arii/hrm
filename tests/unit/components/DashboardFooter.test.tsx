@@ -10,8 +10,11 @@ import userEvent from '@testing-library/user-event'
 import { signIn, signOut } from 'next-auth/react'
 import { FooterStack } from '@/app/main'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
+import DashboardMenu from '@/components/DashboardMenu'
+import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
 
 jest.mock('@/hooks/useSpotifyAuth', () => ({ useSpotifyAuth: jest.fn() }))
+jest.mock('@/hooks/useSpotifyCommand', () => ({ useSpotifyCommand: jest.fn() }))
 jest.mock('next/navigation', () => ({
   usePathname: () => '/client/control',
 }))
@@ -24,14 +27,92 @@ jest.mock('@/components/SpotifyDisplay', () => ({
   default: () => <div data-testid="mounted-player">Spotify player UI</div>,
 }))
 
+const mockSpotifyAuth = jest.mocked(useSpotifyAuth)
+
 describe('#9903 dashboard footer contract', () => {
+  const hrmPlayer = {
+    id: 'browser-player',
+    name: 'HRM Web Player',
+    is_active: false,
+    is_private_session: false,
+    is_restricted: false,
+    type: 'Computer',
+    volume_percent: 50,
+  }
+  const idlePlayer = () => ({
+    execute: jest.fn(),
+    activeDevice: null,
+    hrmPlayer,
+    playback: {
+      track: { id: null, name: '', artist: '', albumName: '', albumArtUrl: '' },
+      is_playing: false,
+      isMuted: false,
+      volume_percent: 50,
+      progress_ms: 0,
+    },
+    isHrmPlayerActive: false,
+  })
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.mocked(useSpotifyAuth).mockReturnValue({
+    mockSpotifyAuth.mockReturnValue({
       isLoggedIn: false,
       status: 'unauthenticated',
       session: null,
     })
+    jest.mocked(useSpotifyCommand).mockReturnValue(idlePlayer())
+  })
+
+  it('offers the old manual transfer action only when recovery is available', async () => {
+    mockSpotifyAuth.mockReturnValue({
+      isLoggedIn: true,
+      status: 'authenticated',
+      session: { expires: '2099-01-01' },
+    })
+    const player = idlePlayer()
+    jest.mocked(useSpotifyCommand).mockReturnValue(player)
+    const user = userEvent.setup()
+    render(<DashboardMenu showPlayerRetry />)
+    await user.click(
+      screen.getByRole('button', { name: 'Open dashboard menu' })
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Connect to HRM Web Player' })
+    )
+    expect(player.execute).toHaveBeenCalledWith('TRANSFER_PLAYBACK', {
+      deviceId: 'browser-player',
+    })
+    expect(
+      screen.getByRole('menuitem', { name: 'Connecting…' })
+    ).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it.each([
+    'pending',
+    'logged out',
+    'playing',
+    'active device',
+    'missing player',
+  ])('does not offer manual recovery when %s', async (state) => {
+    mockSpotifyAuth.mockReturnValue({
+      isLoggedIn: state !== 'logged out',
+      status: state === 'logged out' ? 'unauthenticated' : 'authenticated',
+      session: null,
+    })
+    const player = idlePlayer()
+    jest.mocked(useSpotifyCommand).mockReturnValue({
+      ...player,
+      activeDevice: state === 'active device' ? hrmPlayer : null,
+      hrmPlayer: state === 'missing player' ? null : hrmPlayer,
+      playback: { ...player.playback, is_playing: state === 'playing' },
+    })
+    const user = userEvent.setup()
+    render(<DashboardMenu showPlayerRetry={state !== 'pending'} />)
+    await user.click(
+      screen.getByRole('button', { name: 'Open dashboard menu' })
+    )
+    expect(
+      screen.queryByRole('menuitem', { name: 'Connect to HRM Web Player' })
+    ).not.toBeInTheDocument()
   })
 
   it('hides dashboard footer UI but keeps the player mounted', async () => {
@@ -92,7 +173,7 @@ describe('#9903 dashboard footer contract', () => {
   })
 
   it('replaces login with the existing logout action for signed-in owners', async () => {
-    jest.mocked(useSpotifyAuth).mockReturnValue({
+    mockSpotifyAuth.mockReturnValue({
       isLoggedIn: true,
       status: 'authenticated',
       session: { expires: '2099-01-01' },

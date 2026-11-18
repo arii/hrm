@@ -513,8 +513,12 @@ describe('SpotifyDisplay', () => {
       jest.useFakeTimers()
       try {
         setupAutoConnect([hrmDevice])
-        renderWithProviders(<SpotifyDisplay />)
+        const onRetryAvailable = jest.fn()
+        renderWithProviders(
+          <SpotifyDisplay onRetryAvailable={onRetryAvailable} />
+        )
         expect(screen.getByText('Connecting…')).toBeInTheDocument()
+        expect(onRetryAvailable).toHaveBeenLastCalledWith(false)
         act(() => {
           jest.advanceTimersByTime(15000)
         })
@@ -522,6 +526,7 @@ describe('SpotifyDisplay', () => {
           screen.getByText(/Connect to HRM Web Player/)
         ).toBeInTheDocument()
         expect(screen.queryByText('Connecting…')).not.toBeInTheDocument()
+        expect(onRetryAvailable).toHaveBeenLastCalledWith(true)
       } finally {
         jest.useRealTimers()
       }

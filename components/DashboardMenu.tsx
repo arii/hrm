@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import AuthButton from '@/components/AuthButton'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 import { logoutSpotify } from '@/lib/spotify/logout'
+import DeviceRecommendation from '@/components/Spotify/DeviceRecommendation'
 
 const LINKS = [
   ['Controls', '/client/control'],
@@ -18,7 +19,11 @@ const LINKS = [
   ['Profile', '/client/settings'],
 ] as const
 
-export default function DashboardMenu() {
+export default function DashboardMenu({
+  showPlayerRetry = false,
+}: {
+  showPlayerRetry?: boolean
+}) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const { isLoggedIn } = useSpotifyAuth()
   const close = () => setAnchor(null)
@@ -51,6 +56,7 @@ export default function DashboardMenu() {
         open={!!anchor}
         onClose={close}
         disableScrollLock
+        keepMounted
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
@@ -64,6 +70,7 @@ export default function DashboardMenu() {
         ) : (
           <AuthButton providerId="spotify" providerName="Spotify" menuItem />
         )}
+        {isLoggedIn && showPlayerRetry && <DeviceRecommendation menuItem />}
       </Menu>
     </>
   )
