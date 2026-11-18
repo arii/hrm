@@ -18,6 +18,7 @@ import {
   resolveTrackDisplay,
 } from '@/lib/spotify/playerBadges'
 import Box from '@mui/material/Box'
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import AuthButton from './AuthButton'
 import { StatusColumn } from './Spotify/StatusColumn'
@@ -25,7 +26,9 @@ import { TransportColumn } from './Spotify/TransportColumn'
 import { DeviceColumn } from './Spotify/DeviceColumn'
 import { SPOTIFY_BAR_BOTTOM_OFFSET } from '@/constants/layout'
 
-const SpotifyDisplay = () => {
+const SpotifyDisplay = ({
+  onRetryAvailable,
+}: { onRetryAvailable?: (available: boolean) => void } = {}) => {
   const { isLoggedIn } = useSpotifyAuth()
   const spotifyData = useSpotifyData()
   const { connectionStatus } = useWebSocketConnection()
@@ -81,6 +84,24 @@ const SpotifyDisplay = () => {
     executeSpotify,
   })
 
+  const {
+    showActiveBadge,
+    showConnectingBadge,
+    showAutoPending,
+    showConnectButton,
+  } = resolvePlayerBadges({
+    hrmActive: stable.hrmActive,
+    listActive: stable.active,
+    autoPending,
+    displayPlaying,
+    sdkReady: isReady && !!deviceId,
+    listed: stable.listed,
+  })
+
+  useEffect(() => {
+    onRetryAvailable?.(isLoggedIn && showConnectButton)
+  }, [isLoggedIn, showConnectButton, onRetryAvailable])
+
   if (!isLoggedIn) {
     return (
       <Box
@@ -116,22 +137,6 @@ const SpotifyDisplay = () => {
     spotifyData.playback.track.name,
     spotifyData.playback.track.artist
   )
-
-  // Strict player-state display: exactly one status affordance at a
-  // time (see resolvePlayerBadges for the policy).
-  const {
-    showActiveBadge,
-    showConnectingBadge,
-    showAutoPending,
-    showConnectButton,
-  } = resolvePlayerBadges({
-    hrmActive: stable.hrmActive,
-    listActive: stable.active,
-    autoPending,
-    displayPlaying,
-    sdkReady: isReady && !!deviceId,
-    listed: stable.listed,
-  })
 
   return (
     <Box

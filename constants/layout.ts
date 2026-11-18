@@ -4,8 +4,6 @@ export const HR_TILE_MIN_HEIGHT = '8.5rem'
 // by composing these instead of restating rem values.
 const BOTTOM_NAV_HEIGHT = '3.5rem'
 const SPOTIFY_BAR_MEASURED_HEIGHT = '3rem'
-// Spotify bar growth headroom on the scaled canvas.
-const SPOTIFY_BAR_RESERVE = '1rem'
 // Extra buffer on responsive viewports, where the bar has no measured
 // reserve of its own.
 const RESPONSIVE_FOOTER_BUFFER = '1.25rem'
@@ -14,7 +12,6 @@ export const FOOTER_HEIGHT_PX = 54
 // Fixed footer stack dimensions and reserve across all pages.
 // Spotify bar sits immediately above the bottom nav.
 export const SPOTIFY_BAR_BOTTOM_OFFSET = BOTTOM_NAV_HEIGHT
-export const FOOTER_RESERVE_SCALED = `calc(${BOTTOM_NAV_HEIGHT} + ${SPOTIFY_BAR_RESERVE})`
 // Responsive viewports reserve the measured bar plus buffer above the
 // bottom nav.
 export const FOOTER_RESERVE_RESPONSIVE = `calc(${BOTTOM_NAV_HEIGHT} + ${SPOTIFY_BAR_MEASURED_HEIGHT} + ${RESPONSIVE_FOOTER_BUFFER})`
@@ -45,13 +42,6 @@ export const SCALE_TO_FIT_MIN_WIDTH = 600
 // never depends on cascade order.
 export const SCALED_CANVAS_SELECTOR = '[data-scaled-canvas] &'
 
-/**
- * Dashboard shell height on the scaled canvas: the fixed canvas minus
- * the in-flow page footer below the shell. Canvas-relative px — viewport
- * units would resolve against the real window and break the canvas
- * proportions when the stage is scaled.
- */
-export const DASHBOARD_SHELL_HEIGHT = `${DASHBOARD_DESIGN_HEIGHT - FOOTER_HEIGHT_PX}px`
 export const HERO_FONT_FAMILY =
   'var(--font-roboto-mono), "Courier New", monospace'
 

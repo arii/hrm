@@ -41,7 +41,7 @@
   - Workout content renders through one path: the native parsed
     `WorkoutPhaseGrid` over `GET /api/workout` (`GOOGLE_DOC_WORKOUT_URL`).
   - Canvas is fixed at 1600×900 via `ScaledStage`.
-  - Workout card heights are fixed (~426px); exercise font sizes step down monotonically (`scaledExerciseFontRem`) and are guarded against clipping with client measurement in `WorkoutPhaseGrid.tsx`.
+  - Workout card heights are fixed (500px on the 1600×900 canvas); exercise font sizes step down monotonically (`scaledExerciseFontRem`) and are guarded against clipping with client measurement in `WorkoutPhaseGrid.tsx`.
 - **MCP Tool Caveat**: The `boomtick` MCP server is configured for `tech-dancer`. For repo modifications in `hrm`, use standard `git` and `gh` CLI commands.
 - Use ESM `import`/`export` syntax for modules.
 - Name Jest unit tests `*.test.ts`.
