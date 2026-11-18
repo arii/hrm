@@ -112,17 +112,6 @@ export const resolveWsDotColor = (
       ? palette.warningDark
       : palette.errorMain
 
-// Tabata intervals on one readable line. The mode is not named: the
-// digits counting down or up already show it.
-export const resolveTimerSummary = (input: {
-  mode: TimerMode
-  workDuration: number
-  restDuration: number
-}): string =>
-  input.mode === 'TABATA'
-    ? `WORK ${input.workDuration} · REST ${input.restDuration}`
-    : ''
-
 const getBeepServerSnapshot = () => DEFAULT_BEEP_PREFERENCE
 
 // Beep-only volume. Overlaid in the card corner so it never takes space
@@ -219,11 +208,7 @@ const TimerDisplay = () => {
   )
 
   const wsDotColor = resolveWsDotColor(connectionStatus, palette)
-  const timerSummary = resolveTimerSummary({
-    mode,
-    workDuration,
-    restDuration,
-  })
+  const showIntervalBanner = mode === 'TABATA'
 
   return (
     <Card
@@ -323,7 +308,9 @@ const TimerDisplay = () => {
             justifyContent: 'center',
             columnGap: 2,
             // Clear the corner volume controls without shifting the countdown.
-            transform: timerSummary ? { sm: 'translateY(44px)' } : undefined,
+            transform: showIntervalBanner
+              ? { sm: 'translateY(44px)' }
+              : undefined,
           }}
         >
           <Typography
@@ -342,7 +329,7 @@ const TimerDisplay = () => {
           >
             {phaseLabel}
           </Typography>
-          {timerSummary && (
+          {showIntervalBanner && (
             <Typography
               data-testid="timer-work-rest-badge"
               component="div"

@@ -2,7 +2,6 @@
 
 import { jest } from '@jest/globals'
 import TimerDisplay, {
-  resolveTimerSummary,
   resolveTimerPhaseVisual,
   resolveWsDotColor,
   type TimerPhasePalette,
@@ -347,28 +346,6 @@ describe('TimerDisplay beep volume', () => {
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: false })
     fireEvent.change(slider, { target: { value: 0 } })
     expect(audioManager.getPreference()).toEqual({ volume: 35, muted: true })
-  })
-})
-
-describe('resolveTimerSummary', () => {
-  it('shows the Tabata intervals without naming the mode', () => {
-    expect(
-      resolveTimerSummary({
-        mode: 'TABATA',
-        workDuration: 20,
-        restDuration: 10,
-      })
-    ).toBe('WORK 20 · REST 10')
-  })
-
-  it('is empty for a stopwatch', () => {
-    expect(
-      resolveTimerSummary({
-        mode: 'STOPWATCH',
-        workDuration: 20,
-        restDuration: 10,
-      })
-    ).toBe('')
   })
 })
 
