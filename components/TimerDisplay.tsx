@@ -11,12 +11,13 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import VolumeOff from '@mui/icons-material/VolumeOff'
-import VolumeUp from '@mui/icons-material/VolumeUp'
+import NotificationsActive from '@mui/icons-material/NotificationsActive'
+import NotificationsOff from '@mui/icons-material/NotificationsOff'
 import { memo, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
+import { visuallyHidden } from '@/lib/visuallyHidden'
 import type { TimerMode, TimerPhase } from '@/types/core'
 import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
 import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
@@ -161,11 +162,9 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
         data-testid="timer-volume-mute-button"
         sx={{ color: 'inherit', width: 44, height: 44 }}
       >
-        {muted ? <VolumeOff /> : <VolumeUp />}
+        {/* Bell icon keeps the beeps control distinct from the music volume. */}
+        {muted ? <NotificationsOff /> : <NotificationsActive />}
       </IconButton>
-      <Typography variant="caption" sx={{ fontWeight: 700, ml: -0.5 }}>
-        Beeps
-      </Typography>
       <Slider
         aria-label="Timer beep volume"
         value={muted ? 0 : volume}
@@ -338,9 +337,14 @@ const TimerDisplay = () => {
           gap: 1,
         }}
       >
+        {/* While connected only the dot shows; the words appear when
+            the connection drops. Screen readers always get the text. */}
         <Typography
           variant="caption"
-          sx={{ color: theme.palette.common.white }}
+          sx={{
+            color: theme.palette.common.white,
+            ...(connectionStatus === 'Connected' && visuallyHidden),
+          }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
@@ -351,6 +355,9 @@ const TimerDisplay = () => {
             height: 12,
             borderRadius: '50%',
             backgroundColor: wsDotColor,
+            // Keep the dot painted in Windows high contrast, where it is the
+            // only sign of a live connection.
+            forcedColorAdjust: 'none',
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
