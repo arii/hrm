@@ -23,37 +23,11 @@ const extractCellLines = (cell: HTMLElement): string[] => {
     block.insertAdjacentHTML('afterend', '\n')
   })
 
-  // Decode FIRST to handle &nbsp; correctly, then normalize each line.
+  // Decode FIRST to handle &nbsp; correctly, then trim each line.
   return decode(cell.text)
     .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .map((line) => line.trim())
     .filter(Boolean)
-}
-
-type SplitExercise = { name: string; reps: string | null }
-
-/**
- * Splits combined exercise lines, ported from previous_workouts:
- * "B. squat row 20 Floor press 15" -> two exercises, "Swings 20" -> one
- * with reps. Lines without trailing digits pass through untouched.
- */
-const separateCombinedExercises = (exerciseName: string): SplitExercise[] => {
-  // Groups are guaranteed present when the pattern matches; the defaults
-  // below only satisfy the index-access checker, they never fire.
-  const combined = exerciseName.match(/^(.+?)\s+(\d+)\s+(.+?)\s+(\d+)$/)
-  if (combined) {
-    const [, name1 = '', reps1 = '', name2 = '', reps2 = ''] = combined
-    return [
-      { name: name1.trim(), reps: reps1 || null },
-      { name: name2.trim(), reps: reps2 || null },
-    ]
-  }
-  const single = exerciseName.match(/^(.+?)\s+(\d+)$/)
-  if (single) {
-    const [, name = '', reps = ''] = single
-    return [{ name: name.trim(), reps: reps || null }]
-  }
-  return [{ name: exerciseName, reps: null }]
 }
 
 /**
@@ -82,10 +56,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableDto => {
     .filter((lines) => lines.length > 0)
     .map((lines) => ({
       header: lines[0] ?? '',
-      exercises: lines
-        .slice(1)
-        .flatMap(separateCombinedExercises)
-        .map(({ name, reps }) => (reps ? `${name} (${reps} reps)` : name)),
+      exercises: lines.slice(1),
     }))
 
   if (phases.length === 0) {
