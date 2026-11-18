@@ -1,26 +1,21 @@
 import { expect } from '@playwright/test'
 import { test } from './fixtures'
-import {
-  setupMinimalVisualRegressionTest,
-  mockSpotifyPlaybackState,
-  getSpotifyMasks,
-} from './lib'
-import { checkAccessibility } from './lib/accessibility'
+import { setupMinimalVisualRegressionTest } from './lib'
 import { takeScreenshot } from './lib/visual'
-import { waitForPageReady, waitForWebSocketConnection } from './lib/waits'
+import { waitForPageReady } from './lib/waits'
 import { VRT_TIMEOUTS } from './lib/timeouts'
 
 test.describe('Component-Specific VRT', () => {
-  test('BottomNavBar highlights correct icon', async ({ dashboardPage }) => {
+  test('dashboard omits the bottom navigation', async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
     const bottomNav = dashboardPage.getByTestId('bottom-nav-bar')
-    await takeScreenshot(bottomNav, 'bottom-nav-bar.png')
+    await expect(bottomNav).toHaveCount(0)
   })
 
-  test('Footer rendering', async ({ dashboardPage }) => {
+  test('dashboard omits the footer', async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
     const footer = dashboardPage.getByTestId('footer')
-    await takeScreenshot(footer, 'footer.png')
+    await expect(footer).toHaveCount(0)
   })
 
   test('LoadingIndicator visibility', async ({ dashboardPage }) => {
@@ -73,75 +68,26 @@ test.describe('Component-Specific VRT', () => {
     await takeScreenshot(tableHeader, 'workout-phase-grid.png')
   })
 
-  test('SpotifyDeviceSelector menu', async ({ dashboardPage }) => {
+  test('dashboard menu exposes setup navigation', async ({ dashboardPage }) => {
     await setupMinimalVisualRegressionTest(dashboardPage, '/')
-
-    // Wait for the WebSocket to fully reconnect after the reload
-    // before applying mocks, otherwise the server's initial STATE_SYNC
-    // will immediately overwrite the mock.
-    await waitForWebSocketConnection(dashboardPage)
-
-    // Mock Spotify state with devices to show the component naturally
-    await mockSpotifyPlaybackState(dashboardPage, {
-      playback: {
-        is_playing: true,
-        volume_percent: 50,
-        isMuted: false,
-        progress_ms: 0,
-        track: {
-          id: 'vrt-track',
-          name: 'VRT Test Track',
-          artist: 'VRT Artist',
-          albumName: 'VRT Album',
-          albumArtUrl: 'https://via.placeholder.com/150',
-        },
-      },
-      devices: [
-        {
-          id: 'dev-1',
-          name: 'Speaker 1',
-          is_active: true,
-          type: 'Speaker',
-          is_private_session: false,
-          is_restricted: false,
-          volume_percent: 50,
-        },
-        {
-          id: 'dev-2',
-          name: 'Phone',
-          is_active: false,
-          type: 'Smartphone',
-          is_private_session: false,
-          is_restricted: false,
-          volume_percent: 50,
-        },
-      ],
-    })
-
-    const selectorButton = dashboardPage.getByTestId('spotify-device-select')
-    await expect(selectorButton).toBeVisible({
-      timeout: VRT_TIMEOUTS.STANDARD,
-    })
-    await selectorButton.click()
-
-    const menu = dashboardPage
-      .locator('[data-testid="spotify-device-selector-menu-paper"]')
-      .last()
-
-    // Give the menu time to mount in the portal and stabilize before checking visibility
-    await expect(menu).toBeVisible()
-
-    // Wait for the opacity transition to finish rendering
-    await expect(menu).toHaveCSS('opacity', '1')
-
-    // Perform manual accessibility check on the specific menu element to ensure context validity
-    await checkAccessibility(menu)
-
-    await takeScreenshot(menu, 'spotify-device-selector-menu.png', {
-      threshold: 0.2, // Tighter threshold for the Paper element
-      skipA11y: true, // Accessibility checked manually above
-      mask: getSpotifyMasks(dashboardPage),
-    })
+    await dashboardPage
+      .getByRole('button', { name: 'Open dashboard menu' })
+      .click()
+    const menu = dashboardPage.getByRole('menu')
+    for (const name of [
+      'Controls',
+      'Stream',
+      'Spotify',
+      'Experiments',
+      'Profile',
+    ]) {
+      await expect(
+        menu.getByRole('menuitem', { name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(
+      menu.getByRole('menuitem', { name: /^(Login with|Log out of) Spotify$/ })
+    ).toBeVisible()
   })
 
   test('RefreshIconButton states', async ({ dashboardPage }) => {
