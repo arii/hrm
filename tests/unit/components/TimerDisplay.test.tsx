@@ -318,7 +318,11 @@ describe('TimerDisplay connection status', () => {
     render(<TimerDisplay />)
     const status = screen.getByTestId('ws-status-indicator')
     expect(status).toHaveTextContent('Connected')
-    expect(status).toHaveStyle({ position: 'absolute', overflow: 'hidden' })
+    expect(status).toHaveStyle({
+      position: 'absolute',
+      width: '1px',
+      overflow: 'hidden',
+    })
   })
 
   it('shows the words once the connection drops', () => {

@@ -17,6 +17,7 @@ import { memo, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatDuration } from '@/lib/utils'
 import { useTheme } from '@mui/material/styles'
 import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
+import { visuallyHidden } from '@/lib/visuallyHidden'
 import type { TimerMode, TimerPhase } from '@/types/core'
 import { audioManager, DEFAULT_BEEP_PREFERENCE } from '@/utils/audioManager'
 import { useDashboardTimerControl } from '@/components/DashboardTimerControl'
@@ -161,7 +162,7 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
         data-testid="timer-volume-mute-button"
         sx={{ color: 'inherit', width: 44, height: 44 }}
       >
-        {/* A bell, not a speaker, so it never reads as the music volume. */}
+        {/* Bell icon keeps the beeps control distinct from the music volume. */}
         {muted ? <NotificationsOff /> : <NotificationsActive />}
       </IconButton>
       <Slider
@@ -195,15 +196,6 @@ const TimerBeepVolume = ({ accentColor }: { accentColor: string }) => {
 // While the timer runs the button stays hidden so the wall display shows
 // only the digits; a tap on the card reveals Stop for this long.
 const STOP_REVEAL_MS = 5000
-
-const VISUALLY_HIDDEN = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-} as const
 const TOGGLE_WIDTH_PX = 112
 
 const TimerToggleButton = () => {
@@ -351,7 +343,7 @@ const TimerDisplay = () => {
           variant="caption"
           sx={{
             color: theme.palette.common.white,
-            ...(connectionStatus === 'Connected' && VISUALLY_HIDDEN),
+            ...(connectionStatus === 'Connected' && visuallyHidden),
           }}
           data-testid="ws-status-indicator"
         >
