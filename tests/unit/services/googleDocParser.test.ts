@@ -100,9 +100,7 @@ describe('parseGoogleDocTable', () => {
 
     expect(parseGoogleDocTable(html)).toEqual({
       headers: ['Sets & Reps'],
-      columns: [
-        ['Note with nbsp', 'Pull thru 25', 'Squats (10 reps)'],
-      ],
+      columns: [['Note with nbsp', 'Pull thru 25', 'Squats (10 reps)']],
     })
   })
 
