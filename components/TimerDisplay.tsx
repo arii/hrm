@@ -355,6 +355,9 @@ const TimerDisplay = () => {
             height: 12,
             borderRadius: '50%',
             backgroundColor: wsDotColor,
+            // Keep the dot painted in Windows high contrast, where it is the
+            // only sign of a live connection.
+            forcedColorAdjust: 'none',
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
