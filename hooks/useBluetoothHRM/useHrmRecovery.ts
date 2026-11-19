@@ -18,6 +18,7 @@ import {
 import type { ConnectToGattFn } from './useGattConnect'
 
 interface UseHrmRecoveryParams {
+  onWaitingExpired: () => void
   connectedDeviceRef: MutableRefObject<BluetoothDevice | null>
   currentStatusRef: MutableRefObject<BluetoothConnectionStatus>
   connectToGattRef: MutableRefObject<ConnectToGattFn | null>
@@ -41,6 +42,7 @@ interface UseHrmRecoveryParams {
  * refs and setters, so this module can be tested without a radio.
  */
 export const useHrmRecovery = ({
+  onWaitingExpired,
   connectedDeviceRef,
   currentStatusRef,
   connectToGattRef,
@@ -61,6 +63,7 @@ export const useHrmRecovery = ({
   // with a known saved device instead of stopping/forgetting.
   const waitingDeviceRef = useRef<BluetoothDevice | null>(null)
   const waitingPollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const waitingDeadlineRef = useRef<NodeJS.Timeout | null>(null)
   const waitingAdvertisementRef = useRef<{
     device: BluetoothDevice
     listener: () => void
@@ -71,6 +74,10 @@ export const useHrmRecovery = ({
   const waitAdSeenRef = useRef(false)
 
   const stopWaitingForDevice = useCallback(() => {
+    if (waitingDeadlineRef.current) {
+      clearTimeout(waitingDeadlineRef.current)
+      waitingDeadlineRef.current = null
+    }
     if (waitingPollTimeoutRef.current) {
       clearTimeout(waitingPollTimeoutRef.current)
       waitingPollTimeoutRef.current = null
@@ -99,6 +106,15 @@ export const useHrmRecovery = ({
       setCustomStatusMessage(
         BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
       )
+      waitingDeadlineRef.current = setTimeout(() => {
+        stopWaitingForDevice()
+        reconnectHaltedRef.current = true
+        onWaitingExpired()
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        setCustomStatusMessage(
+          BLUETOOTH_MESSAGES.waitExpired(device.name || '')
+        )
+      }, ADVERTISEMENT_FALLBACK_POLL_MS * WAIT_GUIDANCE_AFTER_MISSES)
 
       // Sustained misses escalate the message from patience to guidance:
       // advertisements seen but connects refused means the strap is held
@@ -212,6 +228,7 @@ export const useHrmRecovery = ({
       scheduleWaitingPoll()
     },
     [
+      onWaitingExpired,
       stopWaitingForDevice,
       reconnectHaltedRef,
       setStatus,

@@ -26,6 +26,9 @@ export const BLUETOOTH_MESSAGES = {
     `Waiting for ${deviceName || 'device'} to wake up...`,
   stillWaitingForDevice: (deviceName: string) =>
     `Still waiting for ${deviceName || 'device'}. Tap Connect to re-select it.`,
+  waitExpired: (deviceName: string) =>
+    `Could not reconnect to ${deviceName || 'device'}. Tap Connect to re-select the strap.`,
+  pairAgain: 'Saved device is no longer available. Tap Connect to pair again.',
   deviceHeldElsewhere: (deviceName: string) =>
     `${deviceName || 'Device'} is nearby but won't connect. It may be used by another app.`,
   reconnectingAttempt: (reason: string) => `${reason}. Reconnecting...`,

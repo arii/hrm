@@ -118,6 +118,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   // reconnect(); cleared on every fresh episode (see onDisconnected),
   // manual disconnect, and successful connect.
   const reconnectHaltedRef = useRef(false)
+  const reselectDeviceRef = useRef(false)
   const onConnectRef = useRef(onConnect)
 
   useEffect(() => {
@@ -205,6 +206,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     reconnectTimeoutRef,
     waitingDeviceRef,
   } = useHrmRecovery({
+    onWaitingExpired: () => {
+      claimConnectionAttempt()
+      abortInFlightConnect()
+      reselectDeviceRef.current = true
+    },
     connectedDeviceRef,
     currentStatusRef,
     connectToGattRef,
@@ -580,8 +586,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         )
         setStatus(BluetoothConnectionStatus.CONNECTING)
         const device = await resolveConnectDevice(silent, {
-          savedDevice,
-          findSavedDevice,
+          savedDevice: reselectDeviceRef.current ? null : savedDevice,
+          findSavedDevice: reselectDeviceRef.current
+            ? async () => null
+            : findSavedDevice,
           onScanning: () => {
             setStatus(BluetoothConnectionStatus.CONNECTING)
             setCustomStatusMessage(BLUETOOTH_MESSAGES.scanningForDevices)
@@ -589,6 +597,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (device) {
+          reselectDeviceRef.current = false
           const holder = otherTabHolding(device)
           if (holder) {
             // Every tab shares one radio link to the strap: connecting here
@@ -745,7 +754,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           !waitingDeviceRef.current
         ) {
           setStatus(BluetoothConnectionStatus.DISCONNECTED)
-          setCustomStatusMessage(null)
+          setCustomStatusMessage(
+            Cookies.get('hrm_device_id') ? BLUETOOTH_MESSAGES.pairAgain : null
+          )
         }
       }
     } catch (error) {

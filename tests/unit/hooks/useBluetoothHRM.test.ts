@@ -135,6 +135,16 @@ describe('useBluetoothHRM', () => {
     expect(result.current.deviceStatus).toBe('Disconnected')
   })
 
+  it('prompts to pair again when the saved grant is gone', async () => {
+    ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
+    const { result } = renderHook(() => useBluetoothHRM())
+    await act(async () => {
+      await result.current.autoConnect()
+    })
+    expect(result.current.deviceStatus).toContain('Tap Connect to pair again')
+    expect(mockGatt.connect).not.toHaveBeenCalled()
+  })
+
   it('should auto-connect to a saved device', async () => {
     ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
@@ -941,6 +951,30 @@ describe('useBluetoothHRM', () => {
         expect(watch).toHaveBeenCalled()
       })
 
+      it('ends waiting after three minutes and reopens the picker on Connect', async () => {
+        const { watchSignal } = addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(180000)
+        })
+        expect(result.current.deviceStatus).toContain(
+          'Tap Connect to re-select'
+        )
+        expect(watchSignal()?.aborted).toBe(true)
+        const calls = mockGatt.connect.mock.calls.length
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(180000)
+        })
+        expect(mockGatt.connect).toHaveBeenCalledTimes(calls)
+        mockGatt.connect.mockResolvedValue(mockGatt)
+        delete (mockDevice as BluetoothDevice).watchAdvertisements
+        await act(async () => {
+          await result.current.connectAndStream()
+        })
+        expect(mockBluetooth.requestDevice).toHaveBeenCalled()
+      })
+
       it('slow-polls while waiting when advertisements are unavailable', async () => {
         // No watch mocks: the device predates watchAdvertisements.
         const { result } = renderHook(() => useBluetoothHRM())
@@ -1013,7 +1047,7 @@ describe('useBluetoothHRM', () => {
         expect(mockGatt.connect.mock.calls.length).toBe(attemptsAfterWait + 2)
       })
 
-      it('escalates to re-select guidance after sustained silent misses', async () => {
+      it('stops recovery with re-select guidance after sustained silent misses', async () => {
         // No watch mocks: pure poll mode, no advertisements ever seen.
         const { result } = renderHook(() => useBluetoothHRM())
 
@@ -1027,16 +1061,14 @@ describe('useBluetoothHRM', () => {
         })
 
         expect(result.current.deviceStatus).toBe(
-          BLUETOOTH_MESSAGES.stillWaitingForDevice('Test HRM')
+          BLUETOOTH_MESSAGES.waitExpired('Test HRM')
         )
-        // Recovery still runs underneath: polls continue.
+        // Recovery is terminal until the user taps Connect.
         const callsAfterGuidance = mockGatt.connect.mock.calls.length
         await act(async () => {
           await jest.advanceTimersByTimeAsync(65000)
         })
-        expect(mockGatt.connect.mock.calls.length).toBeGreaterThan(
-          callsAfterGuidance
-        )
+        expect(mockGatt.connect.mock.calls.length).toBe(callsAfterGuidance)
       })
 
       it('names a refusing strap as possibly held by another app', async () => {
@@ -1096,6 +1128,8 @@ describe('useBluetoothHRM', () => {
 
         expect(watchSignal()?.aborted).toBe(true)
         expect(mockGatt.connect.mock.calls.length).toBe(attemptsAfterWait)
+        expect(result.current.deviceStatus).toBe('Disconnected')
+        expect(Cookies.remove).not.toHaveBeenCalled()
       })
     })
 
