@@ -26,6 +26,7 @@ import {
   computeWorkoutFit,
   createWorkoutTextMeasurer,
   fitHeaderRem,
+  REFERENCE_FONT_PX,
   type WorkoutFit,
 } from '@/lib/workoutSizing'
 import { withBasePath } from '@/utils/urls'
@@ -79,27 +80,34 @@ export default function WorkoutPhaseGrid({
       content: { headers: data.headers, columns: data.columns ?? [] },
       fontMetrics: createWorkoutTextMeasurer(getComputedStyle(grid).fontFamily),
     })
-    const canvas = document.createElement('canvas')
-    const context = canvas.getContext('2d')
-    if (context) {
-      const sizes = Array.from(grid.querySelectorAll('h3'), (header) => {
+    const sizes = Array.from(
+      grid.querySelectorAll<HTMLElement>(
+        '[data-testid="workout-phase-header"]'
+      ),
+      (header) => {
         const style = getComputedStyle(header)
-        context.font = `${style.fontWeight} ${result.headerRem * 16}px ${style.fontFamily}`
+        const metrics = createWorkoutTextMeasurer(
+          style.fontFamily,
+          style.fontWeight
+        )
         const widestToken = Math.max(
           0,
           ...(header.textContent ?? '')
             .split(/\s+/)
-            .map((token) => context.measureText(token).width)
+            .map(
+              (token) =>
+                metrics.measureTextPx(token) *
+                ((result.headerRem * 16) / REFERENCE_FONT_PX)
+            )
         )
         return fitHeaderRem(result.headerRem, header.clientWidth, widestToken)
-      })
-      setHeaderSizes((prev) =>
-        prev.length === sizes.length &&
-        prev.every((size, i) => size === sizes[i])
-          ? prev
-          : sizes
-      )
-    }
+      }
+    )
+    setHeaderSizes((prev) =>
+      prev.length === sizes.length && prev.every((size, i) => size === sizes[i])
+        ? prev
+        : sizes
+    )
     setFit((prev) =>
       prev &&
       prev.exerciseRem === result.exerciseRem &&
@@ -265,6 +273,7 @@ export default function WorkoutPhaseGrid({
                 >
                   <Typography
                     component="h3"
+                    data-testid="workout-phase-header"
                     style={
                       isScaledLayout && headerSizes[index] !== undefined
                         ? ({
