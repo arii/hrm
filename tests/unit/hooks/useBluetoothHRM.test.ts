@@ -145,6 +145,32 @@ describe('useBluetoothHRM', () => {
     expect(mockGatt.connect).not.toHaveBeenCalled()
   })
 
+  it('closes a native link that resolves after Cancel', async () => {
+    let finish!: (server: MockBluetoothRemoteGATTServer) => void
+    mockGatt.connect.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
+    const { result } = renderHook(() => useBluetoothHRM())
+    let pending!: Promise<unknown>
+    await act(async () => {
+      pending = result.current.connectAndStream().catch(() => {})
+    })
+    await act(async () => {
+      result.current.disconnect()
+      await pending
+    })
+    mockGatt.disconnect.mockClear()
+    await act(async () => {
+      finish(mockGatt)
+    })
+    expect(mockGatt.disconnect).toHaveBeenCalled()
+    expect(mockGatt.getPrimaryService).not.toHaveBeenCalled()
+    expect(result.current.deviceStatus).toBe('Disconnected')
+  })
+
   it('should auto-connect to a saved device', async () => {
     ;(Cookies.get as jest.Mock).mockReturnValue('test-device-id')
     mockBluetooth.getDevices.mockResolvedValue([mockDevice])
@@ -973,6 +999,30 @@ describe('useBluetoothHRM', () => {
           await result.current.connectAndStream()
         })
         expect(mockBluetooth.requestDevice).toHaveBeenCalled()
+      })
+
+      it('closes the native link when waiting expires during setup', async () => {
+        addWatchMocks()
+        const { result } = renderHook(() => useBluetoothHRM())
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(165000)
+        })
+        mockGatt.connect.mockResolvedValue(mockGatt)
+        mockGatt.getPrimaryService.mockImplementation(
+          () => new Promise(() => {})
+        )
+        await act(async () => {
+          adListener()()
+        })
+        mockGatt.disconnect.mockClear()
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(10000)
+        })
+        expect(mockGatt.disconnect).toHaveBeenCalled()
+        expect(result.current.deviceStatus).toContain(
+          'Tap Connect to re-select'
+        )
       })
 
       it('slow-polls while waiting when advertisements are unavailable', async () => {

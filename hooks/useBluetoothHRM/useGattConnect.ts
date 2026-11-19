@@ -85,6 +85,7 @@ export const useGattConnect = ({
   setSavedDevice,
 }: UseGattConnectParams) => {
   const abortControllerRef = useRef<AbortController | null>(null)
+  const linkGenerationRef = useRef(0)
   const activeDisconnectListenerRef = useRef<((event: Event) => void) | null>(
     null
   )
@@ -186,8 +187,19 @@ export const useGattConnect = ({
       // its signal.
       const endRadioOp = beginRadioOp()
       const controller = new AbortController()
+      const linkGeneration = ++linkGenerationRef.current
       abortControllerRef.current = controller
       const { signal } = controller
+      const closeAbortedLink = () => {
+        if (linkGenerationRef.current !== linkGeneration) return
+        removeDisconnectListener()
+        try {
+          device.gatt?.disconnect()
+        } catch {
+          // Already down: nothing to close.
+        }
+      }
+      signal.addEventListener('abort', closeAbortedLink, { once: true })
       // Every completed step counts as progress for the stuck detector.
       const throwIfAborted = () => {
         markRadioProgress()
@@ -225,7 +237,11 @@ export const useGattConnect = ({
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           markRadioProgress()
           try {
-            return await cancellablePromise(device.gatt!.connect(), {
+            const connecting = device.gatt!.connect().then((server) => {
+              if (signal.aborted) closeAbortedLink()
+              return server
+            })
+            return await cancellablePromise(connecting, {
               timeoutMs: 20000,
               errorMessage: 'GATT connection timeout',
               signal,
@@ -432,6 +448,7 @@ export const useGattConnect = ({
       } catch (error) {
         throw handleGattFailure(device, error, signal.aborted)
       } finally {
+        signal.removeEventListener('abort', closeAbortedLink)
         endRadioOp()
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null
@@ -457,6 +474,7 @@ export const useGattConnect = ({
       reconnectHaltedRef,
       onConnectRef,
       handleGattFailure,
+      removeDisconnectListener,
     ]
   )
 
