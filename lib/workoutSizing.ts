@@ -69,6 +69,17 @@ export interface WorkoutFit {
   headerRem: number
 }
 
+export function fitHeaderRem(
+  headerRem: number,
+  availableWidthPx: number,
+  widestTokenPx: number
+): number {
+  if (availableWidthPx <= 0 || widestTokenPx <= availableWidthPx) {
+    return headerRem
+  }
+  return Math.floor((headerRem * availableWidthPx * 100) / widestTokenPx) / 100
+}
+
 /**
  * Deterministic: same input, same output. Converges in one call via a
  * bounded binary search over real metrics — never from overflow.
