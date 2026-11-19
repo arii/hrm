@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   type Dispatch,
   type MutableRefObject,
@@ -57,6 +58,11 @@ export const useHrmRecovery = ({
   setCustomStatusMessage,
   setBatteryLevel,
 }: UseHrmRecoveryParams) => {
+  const onWaitingExpiredRef = useRef(onWaitingExpired)
+  useEffect(() => {
+    onWaitingExpiredRef.current = onWaitingExpired
+  }, [onWaitingExpired])
+
   const reconnectAttempts = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Waiting-for-device state (issue 9806): armed when retries exhaust
@@ -109,7 +115,7 @@ export const useHrmRecovery = ({
       waitingDeadlineRef.current = setTimeout(() => {
         stopWaitingForDevice()
         reconnectHaltedRef.current = true
-        onWaitingExpired()
+        onWaitingExpiredRef.current()
         setStatus(BluetoothConnectionStatus.DISCONNECTED)
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.waitExpired(device.name || '')
@@ -228,7 +234,6 @@ export const useHrmRecovery = ({
       scheduleWaitingPoll()
     },
     [
-      onWaitingExpired,
       stopWaitingForDevice,
       reconnectHaltedRef,
       setStatus,
