@@ -784,6 +784,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     disconnect,
     forgetDevice,
     deviceStatus,
+    canCancelConnection:
+      status === BluetoothConnectionStatus.CONNECTING ||
+      status === BluetoothConnectionStatus.RECONNECTING,
     batteryLevel,
     isConnected: status === BluetoothConnectionStatus.CONNECTED,
     isSupported, // Export this flag

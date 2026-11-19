@@ -102,10 +102,7 @@ export const ConnectMain = ({
                 connecting={state.isConnecting}
                 reducedMotion={reducedMotion}
               />
-              {(state.isConnecting ||
-                /Waiting for|Still waiting|is nearby but won't connect/.test(
-                  view.deviceStatus
-                )) && (
+              {view.canCancelConnection && (
                 <Button onClick={view.onDisconnect} sx={{ ml: 1 }}>
                   Cancel
                 </Button>
