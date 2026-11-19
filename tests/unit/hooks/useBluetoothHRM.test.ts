@@ -1025,6 +1025,23 @@ describe('useBluetoothHRM', () => {
         )
       })
 
+      it('keeps opening the picker after a re-selection handshake fails', async () => {
+        const { result } = renderHook(() => useBluetoothHRM())
+        await armWaitingViaSilentFailure(result.current.autoConnect)
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(180000)
+        })
+        mockGatt.connect.mockRejectedValue(new Error('Setup failed'))
+        await act(async () => {
+          await result.current.connectAndStream().catch(() => {})
+        })
+        expect(mockBluetooth.requestDevice).toHaveBeenCalledTimes(1)
+        await act(async () => {
+          await result.current.connectAndStream().catch(() => {})
+        })
+        expect(mockBluetooth.requestDevice).toHaveBeenCalledTimes(2)
+      })
+
       it('slow-polls while waiting when advertisements are unavailable', async () => {
         // No watch mocks: the device predates watchAdvertisements.
         const { result } = renderHook(() => useBluetoothHRM())

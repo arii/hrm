@@ -597,7 +597,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         })
 
         if (device) {
-          reselectDeviceRef.current = false
           const holder = otherTabHolding(device)
           if (holder) {
             // Every tab shares one radio link to the strap: connecting here
@@ -661,6 +660,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           }
           logger.info({ device: device.name }, 'Connecting to device')
           if (!(await connectToGatt(device, false, true))) return false
+          reselectDeviceRef.current = false
           return true
         }
         if (!silent) {
