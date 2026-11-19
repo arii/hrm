@@ -15,6 +15,7 @@ import {
   ADVERTISEMENT_FALLBACK_POLL_MS,
   WAKE_ATTEMPT_COOLDOWN_MS,
   WAIT_GUIDANCE_AFTER_MISSES,
+  WAITING_DEVICE_DEADLINE_MS,
 } from '@/constants/bluetooth-reconnection'
 import type { ConnectToGattFn } from './useGattConnect'
 
@@ -120,7 +121,7 @@ export const useHrmRecovery = ({
         setCustomStatusMessage(
           BLUETOOTH_MESSAGES.waitExpired(device.name || '')
         )
-      }, ADVERTISEMENT_FALLBACK_POLL_MS * WAIT_GUIDANCE_AFTER_MISSES)
+      }, WAITING_DEVICE_DEADLINE_MS)
 
       // Sustained misses escalate the message from patience to guidance:
       // advertisements seen but connects refused means the strap is held

@@ -38,6 +38,8 @@ export const PRE_CONNECT_ADVERTISEMENT_WAIT_MS = 10000
 // without it and missed advertisements. Each miss fails fast.
 export const ADVERTISEMENT_FALLBACK_POLL_MS = 60000
 
+export const WAITING_DEVICE_DEADLINE_MS = 180000
+
 // Minimum spacing between advertisement-triggered wake attempts. Straps
 // advertise ~1Hz, so without a cooldown every advertisement would fire a
 // radio op; a refusing strap would spin the adapter hot. Polls (60s)
