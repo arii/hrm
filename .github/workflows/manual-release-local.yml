@@ -17,9 +17,15 @@ on:
 env:
   NODE_VERSION: '24'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Do not interrupt release or deployment side effects.
+  cancel-in-progress: false
+
 jobs:
   release-local:
     runs-on: self-hosted
+    timeout-minutes: 30
 
     steps:
       - name: 📋 Display Configuration

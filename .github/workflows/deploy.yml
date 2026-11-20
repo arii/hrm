@@ -9,15 +9,14 @@ env:
 
 jobs:
   build:
+    concurrency:
+      group: ${{ github.workflow }}-build-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/leader'
 
     steps:
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.13.0
-        with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: actions/checkout@v7
 
       - name: 📦 Setup pnpm
@@ -52,7 +51,12 @@ jobs:
           path: release.tar.gz
 
   deploy:
+    concurrency:
+      group: ${{ github.workflow }}-production-${{ github.ref }}
+      # Never cancel an in-progress production deployment.
+      cancel-in-progress: false
     runs-on: self-hosted
+    timeout-minutes: 30
     needs: build
     if: github.ref == 'refs/heads/leader'
 

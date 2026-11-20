@@ -37,6 +37,7 @@ jobs:
   filter:
     name: 🔍 Path Filter
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       should_review: ${{ steps.changes.outputs.src }}
     steps:
@@ -124,6 +125,7 @@ jobs:
     needs: [filter]
     if: needs.filter.outputs.should_review == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       is_meaningful: ${{ steps.diff_check.outputs.is_meaningful }}
     steps:

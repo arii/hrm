@@ -10,9 +10,15 @@ permissions:
   pull-requests: write
   issues: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Do not interrupt release or deployment side effects.
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: self-hosted
+    timeout-minutes: 15
     steps:
       - uses: googleapis/release-please-action@v4
         with:
