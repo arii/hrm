@@ -14,6 +14,7 @@ import { test } from './fixtures'
 import { waitForPageReady } from './lib/waits'
 import { freezeUIForVRT } from './lib/setup'
 import { takeScreenshot } from './lib/visual'
+import previousWorkouts from './data/previous-workouts.json' with { type: 'json' }
 
 // Content shapes the fit must handle on one canvas: short names, long
 // wrapping names, and four narrow cards.
@@ -106,6 +107,51 @@ const twoAnimationFrames = (page: Page): Promise<void> =>
   )
 
 test.describe('Workout grid deterministic text fit (scaled canvas)', () => {
+  test('six phase headers wrap inside their content boxes without clipping exercises', async ({
+    dashboardPage,
+  }) => {
+    await dashboardPage.setViewportSize({ width: 1600, height: 900 })
+    const workout = previousWorkouts.find(
+      ({ reason }) => reason === 'most phases'
+    )!
+    await routeWorkout(dashboardPage, workout)
+    await openWorkoutGrid(dashboardPage)
+    await expectTextInsideCards(dashboardPage)
+    await takeScreenshot(
+      dashboardPage.getByTestId('workout-phase-grid'),
+      'workout-six-phase-headers.png'
+    )
+  })
+
+  for (const count of [1, 4, 6, 7]) {
+    test(`unbreakable headers fit with ${count} phases`, async ({
+      dashboardPage,
+    }) => {
+      await dashboardPage.setViewportSize({ width: 1600, height: 900 })
+      const header = 'Chipper20/15/10'.repeat(8)
+      await routeWorkout(dashboardPage, {
+        headers: Array.from({ length: count }, () => header),
+        columns: Array.from({ length: count }, () => ['Row', 'Rest']),
+      })
+      await openWorkoutGrid(dashboardPage)
+      await expectTextInsideCards(dashboardPage)
+      await expect(dashboardPage.locator('h3').first()).toHaveText(header)
+      const sizes = await dashboardPage
+        .locator('h3')
+        .evaluateAll((headers) =>
+          headers.map((header) => getComputedStyle(header).fontSize)
+        )
+      await twoAnimationFrames(dashboardPage)
+      expect(
+        await dashboardPage
+          .locator('h3')
+          .evaluateAll((headers) =>
+            headers.map((header) => getComputedStyle(header).fontSize)
+          )
+      ).toEqual(sizes)
+    })
+  }
+
   test('after fonts ready: loaded-metric fit, no overflow', async ({
     dashboardPage,
   }) => {
@@ -178,6 +224,42 @@ test.describe('Workout grid deterministic text fit (scaled canvas)', () => {
     )
   })
 })
+
+async function expectTextInsideCards(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page.getByTestId('workout-phase-grid').evaluate((grid) => {
+        const clipped: string[] = []
+        for (const element of grid.querySelectorAll<HTMLElement>(
+          'h3, [data-testid="workout-exercise-text"]'
+        )) {
+          const card = element.closest('.MuiCardContent-root')!
+          const rect = card.getBoundingClientRect()
+          const style = getComputedStyle(card)
+          const box = element.getBoundingClientRect()
+          const range = document.createRange()
+          range.selectNodeContents(element)
+          const text = range.getBoundingClientRect()
+          const left = rect.left + parseFloat(style.paddingLeft)
+          const right = rect.right - parseFloat(style.paddingRight)
+          const bottom = rect.bottom - parseFloat(style.paddingBottom)
+          if (
+            box.left < left - 1 ||
+            box.right > right + 1 ||
+            text.left < left - 1 ||
+            text.right > right + 1 ||
+            box.bottom > bottom + 1 ||
+            element.scrollWidth > element.clientWidth + 1
+          ) {
+            clipped.push(element.textContent ?? '')
+          }
+        }
+        return clipped
+      })
+    )
+    .toEqual([])
+  await expectGridFits(page)
+}
 
 async function settleFontsAndFrames(page: Page): Promise<void> {
   await page.evaluateHandle(() => document.fonts.ready)

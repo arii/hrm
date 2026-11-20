@@ -25,6 +25,8 @@ import { SCALED_CANVAS_SELECTOR } from '@/constants/layout'
 import {
   computeWorkoutFit,
   createWorkoutTextMeasurer,
+  fitHeaderRem,
+  REFERENCE_FONT_PX,
   type WorkoutFit,
 } from '@/lib/workoutSizing'
 import { withBasePath } from '@/utils/urls'
@@ -60,6 +62,7 @@ export default function WorkoutPhaseGrid({
   const isScaledLayout = useInScaledStage()
   const gridRef = useRef<HTMLDivElement>(null)
   const [fit, setFit] = useState<WorkoutFit | null>(null)
+  const [headerSizes, setHeaderSizes] = useState<number[]>([])
 
   // The one sizing computation. Deterministic and idempotent: it
   // measures the loaded font once, feeds the pure fit, and replaces the
@@ -77,6 +80,34 @@ export default function WorkoutPhaseGrid({
       content: { headers: data.headers, columns: data.columns ?? [] },
       fontMetrics: createWorkoutTextMeasurer(getComputedStyle(grid).fontFamily),
     })
+    const sizes = Array.from(
+      grid.querySelectorAll<HTMLElement>(
+        '[data-testid="workout-phase-header"]'
+      ),
+      (header) => {
+        const style = getComputedStyle(header)
+        const metrics = createWorkoutTextMeasurer(
+          style.fontFamily,
+          style.fontWeight
+        )
+        const widestToken = Math.max(
+          0,
+          ...(header.textContent ?? '')
+            .split(/\s+/)
+            .map(
+              (token) =>
+                metrics.measureTextPx(token) *
+                ((result.headerRem * 16) / REFERENCE_FONT_PX)
+            )
+        )
+        return fitHeaderRem(result.headerRem, header.clientWidth, widestToken)
+      }
+    )
+    setHeaderSizes((prev) =>
+      prev.length === sizes.length && prev.every((size, i) => size === sizes[i])
+        ? prev
+        : sizes
+    )
     setFit((prev) =>
       prev &&
       prev.exerciseRem === result.exerciseRem &&
@@ -242,8 +273,17 @@ export default function WorkoutPhaseGrid({
                 >
                   <Typography
                     component="h3"
+                    data-testid="workout-phase-header"
+                    style={
+                      isScaledLayout && headerSizes[index] !== undefined
+                        ? ({
+                            '--workout-header-font-rem': `${headerSizes[index]}rem`,
+                          } as CSSProperties)
+                        : undefined
+                    }
                     sx={{
-                      flex: '1 0 auto',
+                      flex: '1 1 0',
+                      minWidth: 0,
                       fontWeight: 700,
                       fontSize: 'clamp(1.25rem, 1rem + 2vw, 2rem)',
                       [SCALED_CANVAS_SELECTOR]: {

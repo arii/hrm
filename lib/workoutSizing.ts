@@ -69,6 +69,17 @@ export interface WorkoutFit {
   headerRem: number
 }
 
+export function fitHeaderRem(
+  headerRem: number,
+  availableWidthPx: number,
+  widestTokenPx: number
+): number {
+  if (availableWidthPx <= 0 || widestTokenPx <= availableWidthPx) {
+    return headerRem
+  }
+  return Math.floor((headerRem * availableWidthPx * 100) / widestTokenPx) / 100
+}
+
 /**
  * Deterministic: same input, same output. Converges in one call via a
  * bounded binary search over real metrics — never from overflow.
@@ -234,7 +245,8 @@ const wrapLines = (
  * source feeding the same fit.
  */
 export const createWorkoutTextMeasurer = (
-  fontFamily: string
+  fontFamily: string,
+  fontWeight: string | number = 400
 ): WorkoutFontMetrics => {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
@@ -243,6 +255,6 @@ export const createWorkoutTextMeasurer = (
       measureTextPx: (text) => text.length * REFERENCE_FONT_PX * 0.6,
     }
   }
-  ctx.font = `${REFERENCE_FONT_PX}px ${fontFamily}`
+  ctx.font = `${fontWeight} ${REFERENCE_FONT_PX}px ${fontFamily}`
   return { measureTextPx: (text) => ctx.measureText(text).width }
 }

@@ -2,6 +2,7 @@ import {
   MIN_EXERCISE_REM,
   REFERENCE_FONT_PX,
   computeWorkoutFit,
+  fitHeaderRem,
   type WorkoutFitInput,
   type WorkoutFontMetrics,
 } from '../../../lib/workoutSizing'
@@ -240,5 +241,24 @@ describe('computeWorkoutFit', () => {
       exerciseRem: MIN_EXERCISE_REM,
       headerRem: 1.8,
     })
+  })
+})
+
+describe('fitHeaderRem', () => {
+  it('preserves the header size when its longest word fits', () => {
+    expect(fitHeaderRem(2.85, 230, 200)).toBe(2.85)
+  })
+
+  it('steps down an oversized token without exceeding its content width', () => {
+    const size = fitHeaderRem(2.85, 230, 400)
+    expect(size).toBeLessThan(2.85)
+    expect((400 * size) / 2.85).toBeLessThanOrEqual(230)
+    expect(fitHeaderRem(2.85, 200, 400)).toBeLessThanOrEqual(size)
+    expect(fitHeaderRem(size, 230, (400 * size) / 2.85)).toBe(size)
+  })
+
+  it('keeps the starting size for empty text or an unmeasured box', () => {
+    expect(fitHeaderRem(2.85, 230, 0)).toBe(2.85)
+    expect(fitHeaderRem(2.85, 0, 400)).toBe(2.85)
   })
 })
