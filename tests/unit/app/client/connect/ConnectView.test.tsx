@@ -64,6 +64,22 @@ describe('ConnectView', () => {
     signalPeriodMs: 1000,
   }
 
+  it.each([
+    'Connecting...',
+    'Waiting for Test HRM to wake up...',
+    'Looking for Test HRM nearby...',
+  ])('offers Cancel during %s', (deviceStatus) => {
+    render(
+      <ConnectView
+        {...mockProps}
+        deviceStatus={deviceStatus}
+        canCancelConnection
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(mockProps.onDisconnect).toHaveBeenCalled()
+  })
+
   describe('connection diagnostics', () => {
     it('offers the reload link only once in-page recovery gave up', () => {
       const { rerender } = render(<ConnectView {...mockProps} />)

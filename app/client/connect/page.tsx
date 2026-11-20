@@ -123,6 +123,7 @@ export default function ConnectPage() {
     disconnect,
     forgetDevice,
     deviceStatus,
+    canCancelConnection,
     batteryLevel,
     isConnected,
     isSupported,
@@ -234,6 +235,7 @@ export default function ConnectPage() {
       userProfile={userProfile}
       isConnected={isConnected}
       deviceStatus={deviceStatus}
+      canCancelConnection={canCancelConnection}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}

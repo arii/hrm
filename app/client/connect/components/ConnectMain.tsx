@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import { FOOTER_RESERVE_RESPONSIVE } from '@/constants/layout'
@@ -101,6 +102,11 @@ export const ConnectMain = ({
                 connecting={state.isConnecting}
                 reducedMotion={reducedMotion}
               />
+              {view.canCancelConnection && (
+                <Button onClick={view.onDisconnect} sx={{ ml: 1 }}>
+                  Cancel
+                </Button>
+              )}
               {view.showReloadFallback && <ReloadFallback />}
             </Box>
             <WorkoutControls

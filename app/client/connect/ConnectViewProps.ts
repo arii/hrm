@@ -9,6 +9,7 @@ export interface ConnectViewProps {
   isConnected: boolean
   isDataStale?: boolean
   deviceStatus: string
+  canCancelConnection?: boolean
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void

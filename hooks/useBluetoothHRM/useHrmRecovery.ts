@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   type Dispatch,
   type MutableRefObject,
@@ -14,10 +15,12 @@ import {
   ADVERTISEMENT_FALLBACK_POLL_MS,
   WAKE_ATTEMPT_COOLDOWN_MS,
   WAIT_GUIDANCE_AFTER_MISSES,
+  WAITING_DEVICE_DEADLINE_MS,
 } from '@/constants/bluetooth-reconnection'
 import type { ConnectToGattFn } from './useGattConnect'
 
 interface UseHrmRecoveryParams {
+  onWaitingExpired: () => void
   connectedDeviceRef: MutableRefObject<BluetoothDevice | null>
   currentStatusRef: MutableRefObject<BluetoothConnectionStatus>
   connectToGattRef: MutableRefObject<ConnectToGattFn | null>
@@ -41,6 +44,7 @@ interface UseHrmRecoveryParams {
  * refs and setters, so this module can be tested without a radio.
  */
 export const useHrmRecovery = ({
+  onWaitingExpired,
   connectedDeviceRef,
   currentStatusRef,
   connectToGattRef,
@@ -55,12 +59,18 @@ export const useHrmRecovery = ({
   setCustomStatusMessage,
   setBatteryLevel,
 }: UseHrmRecoveryParams) => {
+  const onWaitingExpiredRef = useRef(onWaitingExpired)
+  useEffect(() => {
+    onWaitingExpiredRef.current = onWaitingExpired
+  }, [onWaitingExpired])
+
   const reconnectAttempts = useRef(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Waiting-for-device state (issue 9806): armed when retries exhaust
   // with a known saved device instead of stopping/forgetting.
   const waitingDeviceRef = useRef<BluetoothDevice | null>(null)
   const waitingPollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const waitingDeadlineRef = useRef<NodeJS.Timeout | null>(null)
   const waitingAdvertisementRef = useRef<{
     device: BluetoothDevice
     listener: () => void
@@ -71,6 +81,10 @@ export const useHrmRecovery = ({
   const waitAdSeenRef = useRef(false)
 
   const stopWaitingForDevice = useCallback(() => {
+    if (waitingDeadlineRef.current) {
+      clearTimeout(waitingDeadlineRef.current)
+      waitingDeadlineRef.current = null
+    }
     if (waitingPollTimeoutRef.current) {
       clearTimeout(waitingPollTimeoutRef.current)
       waitingPollTimeoutRef.current = null
@@ -99,6 +113,15 @@ export const useHrmRecovery = ({
       setCustomStatusMessage(
         BLUETOOTH_MESSAGES.waitingForDevice(device.name || '')
       )
+      waitingDeadlineRef.current = setTimeout(() => {
+        stopWaitingForDevice()
+        reconnectHaltedRef.current = true
+        onWaitingExpiredRef.current()
+        setStatus(BluetoothConnectionStatus.DISCONNECTED)
+        setCustomStatusMessage(
+          BLUETOOTH_MESSAGES.waitExpired(device.name || '')
+        )
+      }, WAITING_DEVICE_DEADLINE_MS)
 
       // Sustained misses escalate the message from patience to guidance:
       // advertisements seen but connects refused means the strap is held
