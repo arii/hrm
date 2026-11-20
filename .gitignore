@@ -85,3 +85,8 @@ verification/screenshots/
 release.tar.gz
 knip_report.txt
 .cache/
+
+# Local tool runtime state (generated per checkout, never commit)
+.td_rag/
+.agent_tool_receipt.json
+.agents/plans/
