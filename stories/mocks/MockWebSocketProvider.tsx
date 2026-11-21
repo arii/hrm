@@ -16,7 +16,7 @@ import {
   TimerData,
   SpotifyData,
 } from '@/types/websocket'
-import { action } from '@storybook/addon-actions'
+import { action } from 'storybook/actions'
 
 // Explicitly type the state to avoid incorrect type inference on empty arrays
 // and string literals.

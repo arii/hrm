@@ -6,6 +6,8 @@
     "**/*.js",
     "**/*.jsx",
     "**/*.mts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
     "playwright.config.ts",
     "tests/**/*.ts"
   ],

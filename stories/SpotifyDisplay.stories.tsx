@@ -30,9 +30,7 @@ const meta: Meta<typeof SpotifyDisplay> = {
     ),
   ],
   parameters: {
-    msw: {
-      handlers,
-    },
+    msw: handlers,
     viewport: {
       defaultViewport: 'iphone6',
     },
