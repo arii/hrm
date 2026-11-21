@@ -25,8 +25,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
     apt-get update && apt-get install -y gh
 
 # 2. Install Node.js (aligned with your Next.js 16 / types/node requirements)
-# Using NodeSource for the latest LTS (v22)
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+# Using NodeSource for the Node 24, matching CI (.nvmrc)
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs
 
 # 3. Install pnpm and PM2 globally

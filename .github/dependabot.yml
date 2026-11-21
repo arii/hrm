@@ -24,6 +24,15 @@ updates:
       prefix: 'chore(deps)'
       prefix-development: 'chore(deps-dev)'
 
+    # Held major versions. Remove an entry once the blocker below is resolved.
+    ignore:
+      # typescript 7 is the native (Go) port and ships no JavaScript compiler
+      # API (require('typescript') only exports version fields). typescript-eslint
+      # (peer range <6.1.0), ts-jest, next's type check and eslint-config-next
+      # all load that API, so `pnpm run lint` and every jest suite fail to start.
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
+
     # Groups are evaluated in order and the first match wins, so the specific
     # groups must stay above the catch-all groups.
     # NOTE: groups only apply to version updates. Security updates are not

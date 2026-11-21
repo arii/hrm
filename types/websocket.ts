@@ -120,7 +120,7 @@ export type ServerMessage = (
  * The `calories` field is optional to support older clients and handle
  * cases where the client has not yet calculated a value.
  */
-export interface IncomingHrmData {
+interface IncomingHrmData {
   clientId?: string
   value: number | null
   maxHr?: number

@@ -21,8 +21,7 @@ const config = {
   ],
   collectCoverageFrom: ['server.ts', '!**/*.d.ts', '!**/node_modules/**'],
   transform: {
-    '^.+\\.mjs$': 'babel-jest',
-    '^.+\\.(ts|tsx)$': [
+    '^.+\\.(ts|tsx|js|mjs)$': [
       'ts-jest',
       {
         useESM: true,
@@ -31,12 +30,13 @@ const config = {
           moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          allowJs: true, // transpile ESM-only packages (uuid, he) from node_modules
         },
       },
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
+    '/node_modules/(?!(\\.pnpm/)?(uuid|he[@/]|@asteasolutions[/+]zod-to-openapi))',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {

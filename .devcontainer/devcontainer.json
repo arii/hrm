@@ -1,6 +1,6 @@
 {
   "name": "HRM Development Environment",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },

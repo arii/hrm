@@ -2,15 +2,12 @@ import type { Preview } from '@storybook/react'
 import { ThemeProvider } from '@mui/material/styles'
 import { CssBaseline } from '@mui/material'
 import { SessionProvider } from 'next-auth/react'
-import { initialize, mswLoader } from 'msw-storybook-addon'
+import { mswLoader } from 'msw-storybook-addon/csf3'
 import React from 'react'
 import { handlers } from '../stories/mocks/handlers'
 import theme from '../lib/theme'
 import { RouterContext } from 'next/dist/shared/lib/router-context.shared-runtime' // next 13
 import * as NextRouter from 'next/router'
-
-// Initialize MSW
-initialize({}, handlers)
 
 const preview: Preview = {
   parameters: {
@@ -21,16 +18,14 @@ const preview: Preview = {
       },
     },
     // Ensure MSW handles requests by default
-    msw: {
-      handlers: handlers,
-    },
+    msw: handlers,
     nextRouter: {
       Provider: RouterContext.Provider,
       ...NextRouter,
     },
   },
-  // Register the MSW loader
-  loaders: [mswLoader],
+  // Register the MSW loader (starts the worker with the default handlers)
+  loaders: [mswLoader()],
   decorators: [
     (Story) => (
       <SessionProvider session={null}>

@@ -27,8 +27,7 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
+    '^.+\\.(ts|tsx|js|mjs)$': [
       'ts-jest',
       {
         useESM: true,
@@ -37,13 +36,16 @@ const config = {
           moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          allowJs: true, // transpile ESM-only packages (uuid, he) from node_modules
         },
       },
     ],
   },
   transformIgnorePatterns: [
     // recharts is mocked, so it doesn't need to be explicitly transformed or ignored from transformation.
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi|@garmin/fitsdk)',
+    // pnpm nests packages under node_modules/.pnpm/<name>@<ver>/node_modules/<name>, so the
+    // negative lookahead must allow the .pnpm segment and the '+' used for scoped names.
+    '/node_modules/(?!(\\.pnpm/)?(uuid|he[@/]|@asteasolutions[/+]zod-to-openapi|@garmin[/+]fitsdk))',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
