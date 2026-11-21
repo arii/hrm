@@ -1,7 +1,7 @@
 import { MeasurementSystem, Gender } from './core'
 import { HeartRateZone } from '../lib/shared/hr-zones'
 
-export interface UserProfileData {
+interface UserProfileData {
   userName: string
   userAge: string
   userAgeNum: number
@@ -13,7 +13,7 @@ export interface UserProfileData {
   unitSystem: MeasurementSystem
 }
 
-export interface UserProfileHandlers {
+interface UserProfileHandlers {
   setUserName: (name: string) => void
   setUserAge: (age: string) => void
   onAgeBlur: () => void
@@ -27,7 +27,7 @@ export interface UserProfileHandlers {
   onUnitChange: (unit: MeasurementSystem) => void
 }
 
-export interface UserProfileErrors {
+interface UserProfileErrors {
   ageError: string | null
   heightError: string | null
   weightError: string | null
