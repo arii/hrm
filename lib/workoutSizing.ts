@@ -27,11 +27,15 @@ const ROOT_FONT_PX = 16
 
 /** Hard floor for exercise text on the scaled canvas. */
 export const MIN_EXERCISE_REM = 1.3
-/** Roomiest exercise size (the old content-estimate band ceiling). */
-const MAX_EXERCISE_REM = 3.0
+/**
+ * Roomiest exercise size. Few phases (e.g. 2) leave far more room than
+ * the old 3.0rem cap used, so the ceiling is raised and the height fit
+ * decides the size.
+ */
+const MAX_EXERCISE_REM = 4.5
 
 const MIN_HEADER_REM = 1.8
-const MAX_HEADER_REM = 2.85
+const MAX_HEADER_REM = 4.0
 // Headers track exercise size so the two stay visually balanced. The
 // ratio is applied inside this one fit (never as a separate component
 // heuristic) and is clamped so 2-word headers fit on one line.

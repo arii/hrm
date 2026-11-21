@@ -146,9 +146,9 @@ describe('computeWorkoutFit', () => {
       const input = makeInput({ content: shape.content })
       const fit = computeWorkoutFit(input)
       expect(fit.exerciseRem).toBeGreaterThanOrEqual(MIN_EXERCISE_REM)
-      expect(fit.exerciseRem).toBeLessThanOrEqual(3.0)
+      expect(fit.exerciseRem).toBeLessThanOrEqual(4.5)
       expect(fit.headerRem).toBeGreaterThanOrEqual(1.8)
-      expect(fit.headerRem).toBeLessThanOrEqual(2.85)
+      expect(fit.headerRem).toBeLessThanOrEqual(4.0)
       // Single-row shapes must fit their modeled height in the box.
       const cardsPerRow = Math.min(
         shape.content.headers.length,
@@ -183,7 +183,7 @@ describe('computeWorkoutFit', () => {
         content: { headers: ['HIIT'], columns: [['Row', 'Rest']] },
       })
     )
-    expect(fit.exerciseRem).toBe(3.0)
+    expect(fit.exerciseRem).toBe(4.5)
   })
 
   it('monotonically sizes down as content grows', () => {
@@ -220,7 +220,7 @@ describe('computeWorkoutFit', () => {
         content: { headers: ['HIIT'], columns: [['Row']] },
       })
     )
-    expect(roomy.headerRem).toBe(2.85) // 3.0 * 1.05 capped
+    expect(roomy.headerRem).toBe(4.0) // 4.5 * 1.05 capped
     const floored = computeWorkoutFit(
       makeInput({
         content: {

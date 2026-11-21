@@ -38,7 +38,10 @@ describe('TimerDisplay', () => {
       mode: 'TABATA',
     })
     render(<TimerDisplay />)
-    expect(screen.getByTestId('timer-phase')).toHaveTextContent('READY')
+    // #9912: the READY label is visually hidden but still announced.
+    const phase = screen.getByTestId('timer-phase')
+    expect(phase).toHaveTextContent('READY')
+    expect(phase).toHaveStyle('position: absolute')
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
     expect(
       screen.queryByRole('button', { name: /^(start|stop)$/i })
@@ -122,8 +125,8 @@ describe('TimerDisplay', () => {
         const rest = screen.getByTestId('timer-rest')
         const active = currentPhase === 'WORK' ? work : rest
         const inactive = currentPhase === 'WORK' ? rest : work
-        expect(active).toHaveStyle('font-weight: 900; opacity: 1')
-        expect(inactive).toHaveStyle('font-weight: 700; opacity: 0.65')
+        expect(active).toHaveStyle('font-weight: 700; opacity: 1')
+        expect(inactive).toHaveStyle('font-weight: 400; opacity: 0.65')
         expect(getComputedStyle(active).color).not.toBe(
           getComputedStyle(inactive).color
         )
@@ -162,7 +165,11 @@ describe('TimerDisplay', () => {
         render(<TimerDisplay />)
         const phase = screen.getByTestId('timer-phase')
         expect(phase).toHaveTextContent(label)
-        expect(phase).not.toHaveStyle('position: absolute')
+        if (currentPhase === 'IDLE') {
+          expect(phase).toHaveStyle('position: absolute')
+        } else {
+          expect(phase).not.toHaveStyle('position: absolute')
+        }
         expect(phase).toHaveAttribute('aria-live', 'polite')
         expect(!!screen.queryByTestId('timer-work-rest-badge')).toBe(
           hasIntervals
