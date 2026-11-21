@@ -1,5 +1,5 @@
-# Use the official Node.js 20 image.
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-bullseye
+# Use the official Node.js 24 image.
+FROM mcr.microsoft.com/devcontainers/typescript-node:24-bookworm
 
 # Install pnpm globally
 RUN npm install -g pnpm

@@ -90,10 +90,9 @@ If you are not using the DevContainer, you can set up the project manually:
 
 Before setting up the project locally, ensure you have the following installed on your system:
 
-- **Node.js 24** (the version pinned in `.nvmrc` and used by CI and the deploy workflow; `package.json` `engines` allows `>=20.0.0`)
+- **Node.js 24** (the version pinned in `.nvmrc` and used by CI and the deploy workflow; `package.json` `engines` requires `>=22.22.1`)
   - Download from [nodejs.org](https://nodejs.org/) or run `nvm use`
   - Verify installation: `node --version`
-  - The DevContainer image still uses Node 20 (`.devcontainer/devcontainer.json`), which satisfies `engines` but differs from CI.
 
 - **pnpm 9.15.9** (pinned by the `packageManager` field in `package.json`)
   - Recommended: `corepack enable` (CI does `corepack prepare pnpm@9.15.9 --activate`)
