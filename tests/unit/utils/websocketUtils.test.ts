@@ -64,8 +64,9 @@ describe('ConnectionMonitor', () => {
     jest.useFakeTimers()
     setIntervalSpy = jest.spyOn(global, 'setInterval')
     clearIntervalSpy = jest.spyOn(global, 'clearInterval')
-    mockWss =
-      new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
+    mockWss = new (
+      WebSocketServer as jest.Mock
+    )() as jest.Mocked<WebSocketServer>
     // Note: ConnectionMonitor is instantiated in each test to allow for env var manipulation
   })
 

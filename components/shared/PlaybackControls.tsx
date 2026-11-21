@@ -27,9 +27,7 @@ const PlaybackControls = ({
     <Stack
       direction="row"
       spacing={1}
-      justifyContent="center"
-      alignItems="center"
-      sx={{ mb: 2 }}
+      sx={{ justifyContent: 'center', alignItems: 'center', mb: 2 }}
     >
       <IconButton
         onClick={() => onCommand('PREVIOUS')}

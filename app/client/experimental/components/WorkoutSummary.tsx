@@ -44,13 +44,14 @@ const MetricBlock = ({
   <Box sx={{ textAlign: 'center', flex: 1 }}>
     <Stack
       direction="row"
-      justifyContent="center"
-      alignItems="center"
-      gap={1}
-      mb={0.5}
+      sx={{ justifyContent: 'center', alignItems: 'center', gap: 1, mb: 0.5 }}
     >
       <Icon color={iconColor} fontSize="small" aria-hidden="true" />
-      <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
+      <Typography
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
         {label}
       </Typography>
     </Stack>
@@ -108,8 +109,7 @@ const WorkoutSummary = ({
       >
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
         >
           <Box>
             <Typography
@@ -120,8 +120,12 @@ const WorkoutSummary = ({
             </Typography>
             <Typography
               variant="h6"
-              fontWeight="bold"
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              sx={{
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
             >
               <PersonIcon fontSize="small" aria-hidden="true" /> {userName}
             </Typography>
@@ -151,7 +155,7 @@ const WorkoutSummary = ({
           direction={{ xs: 'column', sm: 'row' }}
           divider={<Divider orientation="vertical" flexItem />}
           spacing={2}
-          justifyContent="space-around"
+          sx={{ justifyContent: 'space-around' }}
         >
           <MetricBlock
             label="DURATION"

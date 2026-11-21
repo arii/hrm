@@ -95,8 +95,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
     <Stack
       direction="row"
       spacing={2}
-      alignItems="center"
       sx={{
+        alignItems: 'center',
         flexGrow: 1,
         width: '100%',
         minWidth: { xs: 150, md: 250 },

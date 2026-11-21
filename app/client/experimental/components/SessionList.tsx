@@ -92,11 +92,13 @@ const SessionList = ({
                 }
               >
                 <ListItemText
-                  primaryTypographyProps={{ variant: 'h6', fontWeight: 700 }}
-                  secondaryTypographyProps={{
-                    variant: 'body1',
-                    component: 'div',
-                    color: 'text.primary',
+                  slotProps={{
+                    primary: { variant: 'h6', sx: { fontWeight: 700 } },
+                    secondary: {
+                      variant: 'body1',
+                      component: 'div',
+                      color: 'text.primary',
+                    },
                   }}
                   primary={`Workout - ${formatDate(session.startTime, {
                     year: 'numeric',

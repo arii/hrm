@@ -153,12 +153,7 @@ export type TimerMode = 'STOPWATCH' | 'TABATA'
  * Defines the possible phases of the application timer.
  */
 export type TimerPhase =
-  | 'IDLE'
-  | 'PREPARE'
-  | 'WORK'
-  | 'REST'
-  | 'COOLDOWN'
-  | 'RUNNING'
+  'IDLE' | 'PREPARE' | 'WORK' | 'REST' | 'COOLDOWN' | 'RUNNING'
 
 /**
  * Represents the complete state of the application timer.

@@ -10,7 +10,7 @@ exports[`ControlPanel Component should match snapshot 1`] = `
       class="MuiBox-root css-146i0gf"
     >
       <span
-        class="MuiTypography-root MuiTypography-caption css-mmb54v-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-caption css-y43p4j-MuiTypography-root"
       >
         Server: Connected
       </span>
@@ -39,13 +39,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
               class="MuiBox-root css-gtkpha"
             >
               <button
-                class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c3apq8-MuiButtonBase-root-MuiButton-root"
+                class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-kky1q5-MuiButtonBase-root-MuiButton-root"
                 data-testid="tabata-mode-button"
                 tabindex="0"
                 type="button"
               >
                 <span
-                  class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                  class="MuiButton-icon MuiButton-startIcon css-1lxyhll-MuiButton-startIcon"
                 >
                   <svg
                     aria-hidden="true"
@@ -62,13 +62,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
                 Tabata
               </button>
               <button
-                class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeMedium MuiButton-textSizeMedium MuiButton-colorPrimary css-1c3apq8-MuiButtonBase-root-MuiButton-root"
+                class="MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-kky1q5-MuiButtonBase-root-MuiButton-root"
                 data-testid="stopwatch-mode-button"
                 tabindex="0"
                 type="button"
               >
                 <span
-                  class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                  class="MuiButton-icon MuiButton-startIcon css-1lxyhll-MuiButton-startIcon"
                 >
                   <svg
                     aria-hidden="true"
@@ -107,13 +107,13 @@ exports[`ControlPanel Component should match snapshot 1`] = `
               tabindex="0"
             >
               <button
-                class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-av20y-MuiButtonBase-root-MuiButton-root"
+                class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-sizeMedium MuiButton-colorPrimary css-rxc7mg-MuiButtonBase-root-MuiButton-root"
                 data-testid="start-timer-button"
                 tabindex="0"
                 type="button"
               >
                 <span
-                  class="MuiButton-icon MuiButton-startIcon MuiButton-iconSizeMedium css-1sh91j5-MuiButton-startIcon"
+                  class="MuiButton-icon MuiButton-startIcon css-1lxyhll-MuiButton-startIcon"
                 >
                   <svg
                     aria-hidden="true"

@@ -54,7 +54,7 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
             variant="h6"
             component="h2"
             gutterBottom
-            fontWeight="bold"
+            sx={{ fontWeight: 'bold' }}
           >
             Heart Rate Zone Distribution
           </Typography>
@@ -103,21 +103,30 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
       </Box>
 
       <CardContent>
-        <Typography variant="h6" component="h2" gutterBottom fontWeight="bold">
+        <Typography
+          variant="h6"
+          component="h2"
+          gutterBottom
+          sx={{ fontWeight: 'bold' }}
+        >
           Heart Rate Zone Distribution
         </Typography>
 
         <Box
-          display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          gap={2}
-          alignItems="center"
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+            alignItems: 'center',
+          }}
         >
           {/* Chart Section */}
           <Box
-            width={{ xs: '100%', sm: '50%' }}
-            height={200}
-            position="relative"
+            sx={{
+              width: { xs: '100%', sm: '50%' },
+              height: 200,
+              position: 'relative',
+            }}
             role="img"
             aria-label={`Donut chart showing heart rate zone distribution. Total duration: ${formatDuration(
               totalDuration,
@@ -163,21 +172,23 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
 
             {/* Center Label */}
             <Box
-              position="absolute"
-              top={0}
-              left={0}
-              bottom={0}
-              right={0}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              flexDirection="column"
-              sx={{ pointerEvents: 'none' }}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                pointerEvents: 'none',
+              }}
             >
               <Typography variant="caption" color="textSecondary">
                 Total
               </Typography>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {formatDuration(totalDuration, {
                   unit: 'seconds',
                   format: 'MM:SS',
@@ -189,39 +200,44 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
 
           {/* Legend / List Section */}
           <Box
-            width={{ xs: '100%', sm: '50%' }}
-            display="flex"
-            flexDirection="column"
-            gap={1}
+            sx={{
+              width: { xs: '100%', sm: '50%' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+            }}
           >
             {data.map((item) => (
               <Box
                 key={item.name}
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                p={0.5}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 0.5,
+                }}
               >
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box
-                    width={12}
-                    height={12}
-                    borderRadius="50%"
-                    bgcolor={item.color}
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      bgcolor: item.color,
+                    }}
                   />
                   <Typography
                     variant="body2"
-                    fontWeight={600}
+                    sx={{ fontWeight: 600 }}
                     color="textPrimary"
                   >
                     {item.name}
                   </Typography>
                 </Box>
-                <Box textAlign="right">
+                <Box sx={{ textAlign: 'right' }}>
                   <Typography
                     variant="body2"
-                    fontWeight="bold"
-                    fontFamily="monospace"
+                    sx={{ fontWeight: 'bold', fontFamily: 'monospace' }}
                   >
                     {item.formattedTime}
                   </Typography>

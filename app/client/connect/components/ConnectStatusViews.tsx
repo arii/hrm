@@ -20,10 +20,13 @@ const BatteryIcon = ({ level }: { level: number }) => {
 export const BatteryRow = ({ batteryLevel }: { batteryLevel: number }) => (
   <Stack
     direction="row"
-    alignItems="center"
-    justifyContent="center"
     spacing={0.5}
-    sx={{ color: 'text.secondary', mb: 1 }}
+    sx={{
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'text.secondary',
+      mb: 1,
+    }}
   >
     <BatteryIcon level={batteryLevel} />
     <Typography variant="body2">{batteryLevel}% Battery</Typography>

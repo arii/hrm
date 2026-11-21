@@ -33,14 +33,13 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
             textAlign: 'center',
           }}
         >
-          <Stack spacing={1} alignItems="center">
+          <Stack spacing={1} sx={{ alignItems: 'center' }}>
             <WatchLaterIcon color="action" sx={{ fontSize: 30 }} />
             <Typography
               variant="h3"
               component="p"
-              fontWeight="bold"
               data-testid="workout-duration"
-              sx={{ fontVariantNumeric: 'tabular-nums' }}
+              sx={{ fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}
             >
               {duration}
             </Typography>
@@ -48,9 +47,9 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
               Duration
             </Typography>
           </Stack>
-          <Stack spacing={1} alignItems="center">
+          <Stack spacing={1} sx={{ alignItems: 'center' }}>
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
-            <Typography variant="h3" component="p" fontWeight="bold">
+            <Typography variant="h3" component="p" sx={{ fontWeight: 'bold' }}>
               {(Number(caloriesBurned) || 0).toFixed(1)}
             </Typography>
             <Typography variant="caption" color="text.secondary">

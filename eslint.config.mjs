@@ -200,6 +200,27 @@ export default defineConfig([
     },
   },
 
+  // 8.6 Deferred tech debt from the eslint-config-next 16.4 upgrade, which
+  // pulled in eslint-plugin-react-hooks 7 with the React Compiler rules
+  // set-state-in-effect and immutability. Fixing these hits needs
+  // behavior-affecting refactors (Bluetooth connection hooks, localStorage
+  // hydration effects), so they are disabled for the listed files only.
+  {
+    files: [
+      'hooks/useBluetoothHRM.ts',
+      'hooks/useBluetoothHRM/**/*.ts',
+      'app/client/control/components/useSpotifyControlDevice.ts',
+      'hooks/useVolumePreference.ts',
+      'components/Playlist/PlaylistTracksDisplay.tsx',
+      'components/Spotify/PlaylistQuickGrid.tsx',
+      'components/WorkoutPhaseGrid.tsx',
+    ],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/immutability': 'off',
+    },
+  },
+
   // 9. Prettier Config (Must be last to override conflicting rules)
   // This disables ESLint's stylistic rules in favor of Prettier.
   // Code formatting is enforced via a pre-commit hook using lint-staged.

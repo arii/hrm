@@ -100,7 +100,7 @@ const PlaylistTile = ({
         <Typography
           variant="body2"
           color="text.secondary"
-          display="block"
+          sx={{ display: 'block' }}
           noWrap
         >
           {subtitle(playlist) || '\u00a0'}
@@ -258,18 +258,20 @@ const PlaylistQuickGrid = (props: PlaylistQuickGridProps) => {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Filter or search playlists"
-        inputProps={{ 'aria-label': 'Filter or search playlists' }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          ),
-          endAdornment: searchLoading ? (
-            <InputAdornment position="end">
-              <CircularProgress size={20} />
-            </InputAdornment>
-          ) : null,
+        slotProps={{
+          htmlInput: { 'aria-label': 'Filter or search playlists' },
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+            endAdornment: searchLoading ? (
+              <InputAdornment position="end">
+                <CircularProgress size={20} />
+              </InputAdornment>
+            ) : null,
+          },
         }}
         sx={{ mb: 2 }}
       />

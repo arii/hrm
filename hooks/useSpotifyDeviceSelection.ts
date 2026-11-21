@@ -33,8 +33,7 @@ const spotifyDeviceReducer = (
 
 /** Sync decision for the selected device. Pure values. */
 type SelectedDeviceSync =
-  | { kind: 'select'; deviceId: string }
-  | { kind: 'none' }
+  { kind: 'select'; deviceId: string } | { kind: 'none' }
 
 /**
  * Pure selection-sync policy: clears when the list empties,

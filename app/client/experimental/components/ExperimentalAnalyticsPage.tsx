@@ -42,9 +42,7 @@ interface SessionSummaryStats {
 // Summary stats for the active session view. Pure: unit-tested.
 export const computeSummaryStats = (
   activeSession:
-    | Pick<WorkoutSessionData, 'hrHistory' | 'timeInZones'>
-    | null
-    | undefined,
+    Pick<WorkoutSessionData, 'hrHistory' | 'timeInZones'> | null | undefined,
   caloriesBurned: number
 ): SessionSummaryStats => {
   if (!activeSession)
