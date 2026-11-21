@@ -14,12 +14,7 @@ import {
 } from '@/constants/bluetooth'
 
 type SignalStatusKey =
-  | 'critical'
-  | 'warning'
-  | 'excellent'
-  | 'good'
-  | 'poor'
-  | 'none'
+  'critical' | 'warning' | 'excellent' | 'good' | 'poor' | 'none'
 
 interface StatusConfig {
   color: string

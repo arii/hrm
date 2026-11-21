@@ -57,10 +57,7 @@ export const isQuietStrapMiss = (errorText: string): boolean =>
  * agrees on every producible error. Pure: unit-tested.
  */
 type GattFailureKind =
-  | 'timeout'
-  | 'disconnected-during-connect'
-  | 'intentional-abort'
-  | 'failed'
+  'timeout' | 'disconnected-during-connect' | 'intentional-abort' | 'failed'
 
 export const classifyGattFailure = (
   error: unknown,

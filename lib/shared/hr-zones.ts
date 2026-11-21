@@ -12,13 +12,7 @@ export { calculateMaxHr }
  * Replaces HrZoneName enum and numeric indices in modern code.
  */
 export type HeartRateZone =
-  | 'ZONE_0'
-  | 'ZONE_1'
-  | 'ZONE_2'
-  | 'ZONE_3'
-  | 'ZONE_4'
-  | 'ZONE_5'
-  | 'ZONE_6'
+  'ZONE_0' | 'ZONE_1' | 'ZONE_2' | 'ZONE_3' | 'ZONE_4' | 'ZONE_5' | 'ZONE_6'
 
 /**
  * Canonical configuration for heart rate zones.
