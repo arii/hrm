@@ -4,6 +4,8 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 **⚠️ Important:** This project uses a custom server entry (`server.ts`) that runs Next.js, a persistent WebSocket server, and background services. The server is stateful and **cannot be deployed on serverless platforms** like Vercel.
 
+> **Last verified:** 2026-11-20 against `leader` (see [README currency checks](#readme-currency-checks)).
+
 ## Table of Contents
 
 - [HRM (Heart Rate Monitor) Dashboard](#hrm-heart-rate-monitor-dashboard)
@@ -35,6 +37,7 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Audio System Integration](#audio-system-integration)
     - [UI/UX Enhancements](#uiux-enhancements)
     - [Production Readiness](#production-readiness)
+  - [README currency checks](#readme-currency-checks)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
 
@@ -87,12 +90,14 @@ If you are not using the DevContainer, you can set up the project manually:
 
 Before setting up the project locally, ensure you have the following installed on your system:
 
-- **Node.js** (version 18.x or higher recommended)
-  - Download from [nodejs.org](https://nodejs.org/)
+- **Node.js 24** (the version pinned in `.nvmrc` and used by CI and the deploy workflow; `package.json` `engines` allows `>=20.0.0`)
+  - Download from [nodejs.org](https://nodejs.org/) or run `nvm use`
   - Verify installation: `node --version`
+  - The DevContainer image still uses Node 20 (`.devcontainer/devcontainer.json`), which satisfies `engines` but differs from CI.
 
-- **pnpm** (Package Manager)
-  - Install globally: `npm install -g pnpm`
+- **pnpm 9.15.9** (pinned by the `packageManager` field in `package.json`)
+  - Recommended: `corepack enable` (CI does `corepack prepare pnpm@9.15.9 --activate`)
+  - Alternative: `npm install -g pnpm`
   - Verify installation: `pnpm --version`
 
 - **Git**
@@ -345,18 +350,18 @@ The app includes URL redirects for easier navigation:
 
 ### Testing \& Verification
 
-- **Baseline visual regression:** `pnpm run test:core`
+- **Visual regression (Playwright):** `pnpm run test:visual`
+- **Unit tests:** `pnpm run test:unit`
 - **Snapshot updates (intentional UI changes):** `pnpm run test:visual:update`
 - **Headed debugging:** `pnpm run test:visual:headed`
 - **Interactive runner:** `pnpm run test:visual:ui`
 - **Fast smoke (under a minute):** `pnpm run test:quick`
-- **Clean environment runs:** `pnpm run test:clean` / `pnpm run test:clean:update`
 - **Reports:** `pnpm run test:visual:report`
 - **Spotify integration health check:** `pnpm run verify:spotify`
 
-Playwright tests live in `tests/playwright/core-functionality.spec.ts`; baseline screenshots are stored in `tests/playwright/core-functionality.spec.ts-snapshots/`.
+Playwright tests live in `tests/playwright/`; baseline screenshots are stored in the adjacent `*.spec.ts-snapshots/` directories (for example `vrt-components.spec.ts-snapshots/`).
 
-**Best practice:** Run `pnpm run test:core` before pushing UI changes and regenerate snapshots only after manual review.
+**Best practice:** Run `pnpm run test:visual` before pushing UI changes and regenerate snapshots only after manual review.
 
 ## VS Code Integration
 
@@ -425,10 +430,9 @@ These variables control the behavior of the WebSocket server, which manages real
 
 ## Documentation
 
-- **[Design Guidelines](DESIGN_GUIDELINES.md)** – Theme, typography, and component standards.
-- **[Front-End Improvement Plan](FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
-- **[Test Improvement Plan](TEST_IMPROVEMENT_PLAN.md)** – Roadmap for expanding automated coverage.
-- **[Testing Guide](TESTING.md)** – How to run and interpret the existing suites.
+- **[Design Guidelines](docs/DESIGN_GUIDELINES.md)** – Theme, typography, and component standards.
+- **[Front-End Improvement Plan](docs/FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
+- **[Testing Guide](docs/TESTING.md)** – How to run and interpret the existing suites.
 - **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
 - **[TypeScript Patterns](docs/TYPESCRIPT_PATTERNS.md)** – Best practices for writing type-safe code and avoiding `any`.
 
@@ -492,8 +496,8 @@ graph TD
 ### Key Services
 
 - **`tabataTimer.ts`**: A state machine managing WORK/REST/IDLE phases. It broadcasts `timerData` and emits `soundToPlay` events for audio feedback.
-- **`spotifyPolling.ts`**: Polls the Spotify API every 3 seconds for the "Now Playing" status and handles playback commands. It loads tokens from `logs/spotify_tokens.json` for persistence.
-- **`spotifyTokenManager.ts`**: Automatically refreshes the Spotify access token every 55 minutes and saves it to the file system, ensuring the server can survive restarts without requiring re-authentication.
+- **`spotifyPolling.ts`**: Polls the Spotify API (default every 5 seconds, `SPOTIFY_POLLING_INTERVAL_MS`) for the "Now Playing" status and handles playback commands. It loads tokens from `logs/spotify_tokens.json` for persistence.
+- **`spotifyTokenManager.ts`**: Refreshes the Spotify access token on demand when it is within 1 minute of expiry and saves it to the file system, ensuring the server can survive restarts without requiring re-authentication.
 
 ## Contributing
 
@@ -531,6 +535,17 @@ Track progress by updating the respective markdown plans after each milestone.
 - Nginx configuration template
 - Pre-deployment validation checks
 
+## README currency checks
+
+Last verified: **2026-11-20** (issue #9916). Items checked against the repository at that date:
+
+- **Stateful server / no serverless:** `server.ts` still hosts Next.js, the `/ws` WebSocket server and the Tabata and Spotify services. Deployment is a self-hosted PM2 process.
+- **Node and pnpm:** CI (`.github/actions/setup-env`) and `deploy.yml` use Node 24 and pnpm 9.15.9; `.nvmrc` is 24.16.0.
+- **Operational notes:**
+  - The WebSocket server allows 10 connections per client IP by default (`WS_MAX_CONNECTIONS`).
+  - Dependabot runs weekly for npm and monthly for GitHub Actions (`.github/dependabot.yml`). Dependabot PR heads may have no CI run. Trigger **PR Orchestrator** manually with `workflow_dispatch` (inputs `pr_number`, `base_ref`, `base_branch`, `head_ref`).
+  - `deploy.yml` never cancels an in-progress production deployment.
+
 ## License
 
 MIT
@@ -556,12 +571,13 @@ MIT
 
 #### Deployment Steps
 
-1.  **Run Deployment Script**: Ensure `.env.production` exists. Then, on the production host, run the automated deployment script:
+1.  **Automated (normal path)**: A push to `leader` triggers `.github/workflows/deploy.yml`. A GitHub-hosted job builds with Node 24 and pnpm and packages `release.tar.gz` via `scripts/package.sh`. A self-hosted runner then copies the tarball to the production host with `scp`, writes `.env.production`, and runs `scripts/deploy-artifact.sh`, which installs production dependencies and restarts the app under PM2.
+2.  **Manual fallback**: Ensure `.env.production` exists. Then, on the production host, run the script that syncs `leader`, builds on the host, and reloads PM2:
     ```bash
     ./scripts/deploy.sh
     ```
     This script automatically syncs the `leader` branch, installs dependencies, builds the project, and reloads the application using PM2.
-2.  **Initial Server Setup**: For the first deployment, you will need to:
+3.  **Initial Server Setup**: For the first deployment, you will need to:
     - Configure Nginx as a reverse proxy (see configuration below).
     - Set up SSL certificates (e.g., with Let's Encrypt).
     - Configure PM2 to start on system boot with `pm2 startup`.
@@ -664,16 +680,9 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ### 🚀 Production Deployment
 
-Deployment is automated via a script that syncs the `leader` branch and reloads the application.
+Deployment is automated by `.github/workflows/deploy.yml` on every push to `leader` (see [Deployment Steps](#deployment-steps)). `./scripts/deploy.sh` remains available as a manual fallback on the production host.
 
-1.  **Commit Changes**: Ensure all your changes are committed and pushed.
-2.  **Run Deploy Script**: On the production host, run the deployment script:
-    `bash
-./scripts/deploy.sh
-`
-    This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
-
-See the [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration) section below for the required Nginx setup.
+See the [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration) section above for the required Nginx setup.
 
 ## Future Plans (Long Term)
 
