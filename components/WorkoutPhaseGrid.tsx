@@ -241,6 +241,12 @@ export default function WorkoutPhaseGrid({
           // halves, 4 share quarters) instead of orphaning a wrapped card.
           gridTemplateColumns:
             'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+          // The canvas always shows one row of equal columns, whatever
+          // the phase count, so the cards never wrap or leave a gap.
+          [SCALED_CANVAS_SELECTOR]: {
+            gridTemplateColumns: `repeat(${data.headers.length}, minmax(0, 1fr))`,
+            gridTemplateRows: 'minmax(0, 1fr)',
+          },
           height: isScaledLayout ? '100%' : undefined,
         }}
       >

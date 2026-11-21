@@ -303,14 +303,10 @@ const TimerDisplay = () => {
         <Box
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'baseline',
+            flexDirection: 'column',
+            alignItems: 'center',
             justifyContent: 'center',
-            columnGap: 2,
-            // Clear the corner volume controls without shifting the countdown.
-            transform: showIntervalBanner
-              ? { sm: 'translateY(44px)' }
-              : undefined,
+            width: '100%',
           }}
         >
           <Typography
@@ -322,8 +318,11 @@ const TimerDisplay = () => {
               color: phaseColor,
               fontWeight: 700,
               letterSpacing: 2,
-              ...(mode === 'TABATA' &&
-                (currentPhase === 'WORK' || currentPhase === 'REST') &&
+              // WORK/REST are shown by the interval readout and IDLE
+              // needs no label; both stay available to screen readers.
+              ...((currentPhase === 'IDLE' ||
+                (mode === 'TABATA' &&
+                  (currentPhase === 'WORK' || currentPhase === 'REST'))) &&
                 visuallyHidden),
             }}
           >
@@ -338,8 +337,8 @@ const TimerDisplay = () => {
               sx={{
                 lineHeight: 1.1,
                 color: 'common.white',
-                fontWeight: 700,
-                fontSize: { xs: '1.5rem', sm: '3rem' },
+                fontWeight: 400,
+                fontSize: { xs: '1.1rem', sm: '1.75rem' },
                 whiteSpace: 'nowrap',
               }}
             >
@@ -348,7 +347,7 @@ const TimerDisplay = () => {
                 data-testid="timer-work"
                 sx={{
                   color: currentPhase === 'WORK' ? phaseColor : 'common.white',
-                  fontWeight: currentPhase === 'WORK' ? 900 : 700,
+                  fontWeight: currentPhase === 'WORK' ? 700 : 400,
                   opacity: currentPhase === 'REST' ? 0.65 : 1,
                 }}
               >
@@ -360,7 +359,7 @@ const TimerDisplay = () => {
                 data-testid="timer-rest"
                 sx={{
                   color: currentPhase === 'REST' ? phaseColor : 'common.white',
-                  fontWeight: currentPhase === 'REST' ? 900 : 700,
+                  fontWeight: currentPhase === 'REST' ? 700 : 400,
                   opacity: currentPhase === 'WORK' ? 0.65 : 1,
                 }}
               >

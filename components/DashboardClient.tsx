@@ -136,6 +136,9 @@ const DashboardClient = ({ docId, triggerError }: DashboardClientProps) => {
           // (fewer wrapped lines, larger text).
           // Leave a clear corner for the 28px dashboard menu button.
           paddingBottom: 4,
+          // On the canvas the cards run to the bottom edge and the top
+          // row sits flush to the header: no reserved margins.
+          [SCALED_CANVAS_SELECTOR]: { pt: 0, pb: 0 },
           flex: 1,
           minHeight: 0,
           display: 'flex',
