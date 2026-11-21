@@ -186,6 +186,31 @@ describe('computeWorkoutFit', () => {
     expect(fit.exerciseRem).toBe(4.5)
   })
 
+  it('#9921 shrinks until the widest exercise word fits the card width', () => {
+    // Six cards on 1600px: 253.33px wide, 229.33px usable. Plenty of
+    // height, so only the unbreakable word "Bulgarians" limits the size.
+    const input = makeInput({
+      box: { widthPx: 1600, heightPx: 2000 },
+      content: {
+        headers: ['a', 'b', 'c', 'd', 'e', 'f'],
+        columns: [
+          ['Bulgarians l/r'],
+          ['Row'],
+          ['Row'],
+          ['Row'],
+          ['Row'],
+          ['Row'],
+        ],
+      },
+    })
+    const fit = computeWorkoutFit(input)
+    const usablePx = (1600 - 16 * 5) / 6 - 24
+    const wordPx = (rem: number) => 'Bulgarians'.length * 0.6 * rem * 16
+    expect(fit.exerciseRem).toBeLessThan(4.5)
+    expect(wordPx(fit.exerciseRem)).toBeLessThanOrEqual(usablePx)
+    expect(wordPx(fit.exerciseRem + 0.01)).toBeGreaterThan(usablePx)
+  })
+
   it('monotonically sizes down as content grows', () => {
     const light = computeWorkoutFit(makeInput()).exerciseRem
     const heavy = computeWorkoutFit(
