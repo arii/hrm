@@ -21,7 +21,9 @@ const config = {
     ],
   },
   // pnpm nests packages under node_modules/.pnpm/<name>@<ver>/node_modules/<name>.
-  transformIgnorePatterns: ['/node_modules/(?!(\\.pnpm/)?(uuid|he[@/]))'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(\\.pnpm/)?(uuid|he[@/]|@asteasolutions[/+]zod-to-openapi|@garmin[/+]fitsdk))',
+  ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
