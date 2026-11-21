@@ -150,9 +150,9 @@ const ZoneDistribution: React.FC<ZoneDistributionProps> = ({ timeInZones }) => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number | undefined) =>
+                  formatter={(value) =>
                     [
-                      formatDuration(value || 0, {
+                      formatDuration(Number(value) || 0, {
                         unit: 'seconds',
                         format: 'MM:SS',
                         noPadMinutes: true,
