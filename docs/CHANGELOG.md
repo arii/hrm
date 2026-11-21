@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.1](https://github.com/arii/hrm/compare/hrm-v0.33.0...hrm-v0.33.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **build:** type-check deploy build with tsconfig.type-check.json ([#9931](https://github.com/arii/hrm/issues/9931)) ([ac3cc61](https://github.com/arii/hrm/commit/ac3cc61f54fb319836e1520a7b5ef57a9723bfaf))
+
 ## [0.33.0](https://github.com/arii/hrm/compare/hrm-v0.32.0...hrm-v0.33.0) (2026-11-21)
 
 
