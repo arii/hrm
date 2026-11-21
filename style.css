@@ -188,6 +188,21 @@ footer .legal-links a { margin: 0 1rem; text-decoration: none; }
     .contact-grid-simple {
         grid-template-columns: 1fr; /* Stack on mobile */
     }
+    .steps-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+    .site-header-inner {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .site-nav-list {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem !important; /* override inline desktop gap */
+    }
+    .site-nav-list a {
+        display: inline-block;
+        padding: 0.5rem 0;
+    }
 }
 
 /* 3. Action Cards */
