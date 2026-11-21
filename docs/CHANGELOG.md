@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.33.0](https://github.com/arii/hrm/compare/hrm-v0.32.0...hrm-v0.33.0) (2026-11-21)
+
+
+### Features
+
+* **dashboard:** Start/Stop on the timer card and Start interval on workout cards ([#9886](https://github.com/arii/hrm/issues/9886)) ([c6c7e8a](https://github.com/arii/hrm/commit/c6c7e8af50877e7692bc8b0c662c0d9007121902))
+* **spotify:** quick-set playlist grid with one-tap playback and volume (OD-23) ([#9882](https://github.com/arii/hrm/issues/9882)) ([1400729](https://github.com/arii/hrm/commit/1400729c84be26938fe8d351cc074d80739bf1e9))
+* **ux:** bell and note icons for volume, connection shown as a dot ([#9895](https://github.com/arii/hrm/issues/9895)) ([039c02f](https://github.com/arii/hrm/commit/039c02f3fbddbde9ec28ba0cc768736a0820a9e9))
+* **ux:** bigger HR tile names, muted player badge, high-contrast nav ([#9893](https://github.com/arii/hrm/issues/9893)) ([5765615](https://github.com/arii/hrm/commit/57656159c1a7ed8dc4d03a233672a01d09a1602e))
+* **ux:** distance-readable Controls and Connect, confirmed Reset, no raw Spotify ids ([#9892](https://github.com/arii/hrm/issues/9892)) ([305ad24](https://github.com/arii/hrm/commit/305ad24361b2f621e62ba995e83b55008970776f))
+* **ux:** larger playlist tiles, history cards, touch-size profile form, mock BPM readout ([#9894](https://github.com/arii/hrm/issues/9894)) ([68681a6](https://github.com/arii/hrm/commit/68681a6aec87922c8e94686def111c04ca29c1b0))
+
+
+### Bug Fixes
+
+* **audio:** remount useAudio on the dashboard so timer beeps play again ([#9876](https://github.com/arii/hrm/issues/9876)) ([7827177](https://github.com/arii/hrm/commit/7827177633467c32fcff8bfcf32f23c66902e45d))
+* **audio:** restore timer-only beep volume control independent of music volume ([#9878](https://github.com/arii/hrm/issues/9878)) ([4f3a7fe](https://github.com/arii/hrm/commit/4f3a7feece53e2be71a88ec86d75ff2a1b10a4f2))
+* **audio:** share the Beeps control with every dashboard through the server ([#9891](https://github.com/arii/hrm/issues/9891)) ([fbfd0f9](https://github.com/arii/hrm/commit/fbfd0f964bd1eaf35cc160627c4ae98c0cd5878d))
+* **audio:** sync beep mute and volume across open dashboard tabs ([#9888](https://github.com/arii/hrm/issues/9888)) ([b8b5217](https://github.com/arii/hrm/commit/b8b5217c6e9ef30501015e752d10fece9d7ef7aa))
+* **auth:** key Spotify refresh mutex per refresh token to stop cross-user token leak ([#9872](https://github.com/arii/hrm/issues/9872)) ([48d7026](https://github.com/arii/hrm/commit/48d70266d90e7c915d15fceabeb1a473b4da8221))
+* **ble:** bound GATT setup so a hung wake attempt frees the radio while waiting ([#9885](https://github.com/arii/hrm/issues/9885)) ([33527cc](https://github.com/arii/hrm/commit/33527ccddcee38e74e33d1ffa0a3164f636dc7b6))
+* **ble:** honest connect status, no retry counts, '---' before first HR reading ([#9880](https://github.com/arii/hrm/issues/9880)) ([322c59a](https://github.com/arii/hrm/commit/322c59a740b58e78c4ee433c06eb9a02125d51a6))
+* **ble:** in-page recovery so Connect always acts after a failure or Reset ([#9881](https://github.com/arii/hrm/issues/9881)) ([b93a8f3](https://github.com/arii/hrm/commit/b93a8f3277bc966b1227ec0e8a363afc68d4d3c6))
+* **ble:** wake saved straps via advertisement watch before connecting ([#9873](https://github.com/arii/hrm/issues/9873)) ([5ca60bc](https://github.com/arii/hrm/commit/5ca60bca15a439c42e98cfa2ca9d7a81995c248b))
+* **ci:** pin browser-install workflows to ubuntu-24.04 ([#9865](https://github.com/arii/hrm/issues/9865)) ([884656c](https://github.com/arii/hrm/commit/884656c231617fc200234f02c5157d57dcf27c78))
+* **connect:** bound Bluetooth recovery and allow cancellation ([#9910](https://github.com/arii/hrm/issues/9910)) ([99b9244](https://github.com/arii/hrm/commit/99b9244c13de68a6d0103f6a49baeba121d09537))
+* **connect:** keep workout Pause while the strap stays connected ([#9887](https://github.com/arii/hrm/issues/9887)) ([4ea710a](https://github.com/arii/hrm/commit/4ea710acf62d6230ec6139efd08ec75b3d1bcd48))
+* **dashboard:** enlarge HR metrics and interval phase banner ([#9907](https://github.com/arii/hrm/issues/9907)) ([fc63c2c](https://github.com/arii/hrm/commit/fc63c2c4ff15fd7f21ff23d48d77b89c696462f2))
+* **dashboard:** flush layout, larger card text, centered WORK/REST readout ([#9924](https://github.com/arii/hrm/issues/9924)) ([6626f7e](https://github.com/arii/hrm/commit/6626f7e0fd3b99824fdfa241a7c9f3f5822a0596))
+* **dashboard:** keep dense workout cards inside their box at 1080p ([#9899](https://github.com/arii/hrm/issues/9899)) ([c461eb6](https://github.com/arii/hrm/commit/c461eb67434f8fda519bdc44cbf1f95943b7708c))
+* **dashboard:** keep phase headers inside workout cards ([#9911](https://github.com/arii/hrm/issues/9911)) ([18eb9b1](https://github.com/arii/hrm/commit/18eb9b17be0ded1922b3f46a8ebb324b13fcab76))
+* **dashboard:** readable timer intervals, phone nav fit, visible refresh, wider Controls ([#9883](https://github.com/arii/hrm/issues/9883)) ([bde79c9](https://github.com/arii/hrm/commit/bde79c9f91b4001af5d5c88b4b302aeb721acb62))
+* **dashboard:** remove in-workout Start controls from the broadcast screen ([#9906](https://github.com/arii/hrm/issues/9906)) ([66a8d45](https://github.com/arii/hrm/commit/66a8d459e686063e1c5ddff19b96309547f2f850))
+* **dashboard:** replace footer bars with a quiet corner menu ([#9908](https://github.com/arii/hrm/issues/9908)) ([7fbb72b](https://github.com/arii/hrm/commit/7fbb72b9cb4b4e63b9f305db97ed6df6d2ad69a5))
+* **logging:** quiet static asset, heartbeat and reconnect logs; label Spotify search ([#9896](https://github.com/arii/hrm/issues/9896)) ([5fab594](https://github.com/arii/hrm/commit/5fab594aa07610b8dfd84a0c12e5a8af9b1fcaaf))
+* **timer:** drop the mode label and enlarge the timer digits ([#9889](https://github.com/arii/hrm/issues/9889)) ([20028f5](https://github.com/arii/hrm/commit/20028f5bbf4e0ab9738870e8d7226babad7cea95))
+* **workout-grid:** deterministic exercise-text fit without refresh clicks ([#9840](https://github.com/arii/hrm/issues/9840)) ([2ab77a0](https://github.com/arii/hrm/commit/2ab77a0d9f42d65b176317e99fd767c201353d07))
+* **workout:** load the current doc on every dashboard load ([#9897](https://github.com/arii/hrm/issues/9897)) ([b287792](https://github.com/arii/hrm/commit/b287792d44c3ed963593434ed40a020e88ace4d1))
+* **workout:** render doc exercise text verbatim ([#9905](https://github.com/arii/hrm/issues/9905)) ([16db1c7](https://github.com/arii/hrm/commit/16db1c7706bfccc2de42bdfdcb0feeab6d17d3b0))
+* **ws:** default to 10 WebSocket connections per client IP ([#9890](https://github.com/arii/hrm/issues/9890)) ([5e6b47f](https://github.com/arii/hrm/commit/5e6b47f306a57ab525e5e032fe8c27e16fc55799))
+
+
+### Performance Improvements
+
+* **ci:** shard Playwright visual tests 4x ([#9866](https://github.com/arii/hrm/issues/9866)) ([6039659](https://github.com/arii/hrm/commit/6039659fd401bccdda43899af77168878f04d354))
+* **ci:** skip post-job cache steps on hits and fix sharded visual log path ([#9874](https://github.com/arii/hrm/issues/9874)) ([fbedc10](https://github.com/arii/hrm/commit/fbedc10422c9f3e889d7bc815cceb827e51b058c))
+
 ## [0.32.0](https://github.com/arii/hrm/compare/hrm-v0.31.0...hrm-v0.32.0) (2026-11-09)
 
 
