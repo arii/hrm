@@ -88,5 +88,5 @@ knip_report.txt
 
 # Local tool runtime state (generated per checkout, never commit)
 .td_rag/
+project_config.json
 .agent_tool_receipt.json
-.agents/plans/
