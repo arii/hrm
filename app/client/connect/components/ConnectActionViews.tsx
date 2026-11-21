@@ -27,7 +27,7 @@ export const ConnectButton = ({
     disabled={disabled}
   >
     {connecting ? (
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
         {reducedMotion ? (
           <HourglassTopIcon sx={{ fontSize: 20 }} />
         ) : (

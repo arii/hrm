@@ -129,25 +129,28 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
             size="small"
             variant="outlined"
             sx={{ backgroundColor: 'background.paper', borderRadius: 1 }}
-            inputProps={{
-              ...params.inputProps,
-              'aria-label': 'Search Spotify for a song',
-            }}
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <>
-                  {isLoading ? (
-                    <CircularProgress color="inherit" size={20} />
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              htmlInput: {
+                ...params.slotProps.htmlInput,
+                'aria-label': 'Search Spotify for a song',
+              },
+              input: {
+                ...params.slotProps.input,
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <>
+                    {isLoading ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : null}
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}
@@ -182,8 +185,10 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
                 secondary={`${track.artists
                   .map((a) => a.name)
                   .join(', ')} • ${track.album.name}`}
-                primaryTypographyProps={{ noWrap: true, variant: 'body2' }}
-                secondaryTypographyProps={{ noWrap: true, variant: 'caption' }}
+                slotProps={{
+                  primary: { noWrap: true, variant: 'body2' },
+                  secondary: { noWrap: true, variant: 'caption' },
+                }}
               />
             </Box>
           )

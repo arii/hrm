@@ -201,10 +201,12 @@ export default function WorkoutPhaseGrid({
     if (loading && !data) {
       return (
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ minHeight: '12.5rem' }}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '12.5rem',
+          }}
         >
           <CircularProgress size={32} />
         </Box>

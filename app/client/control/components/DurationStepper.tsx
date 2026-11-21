@@ -65,8 +65,7 @@ const DurationStepper: React.FC<DurationStepperProps> = ({
       </Typography>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="center"
+        sx={{ alignItems: 'center', justifyContent: 'center' }}
         spacing={1}
       >
         <Tooltip title={`Decrease by ${step}s`} arrow>

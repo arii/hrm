@@ -175,7 +175,7 @@ export default function MockPage() {
                 value={deviceId}
                 onChange={(e) => setDeviceId(e.target.value)}
                 fullWidth
-                inputProps={{ 'data-testid': 'device-id-input' }}
+                slotProps={{ htmlInput: { 'data-testid': 'device-id-input' } }}
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
@@ -229,16 +229,15 @@ export default function MockPage() {
             fullWidth
             size="medium"
             disabled={isStreaming}
-            inputProps={{ 'data-testid': 'hr-input' }}
+            slotProps={{ htmlInput: { 'data-testid': 'hr-input' } }}
             // Readable from across the room while checking the dashboard.
             sx={{ mb: 3, '& input': { fontSize: '2rem', fontWeight: 700 } }}
           />
 
           <Typography
             variant="caption"
-            display="block"
             color="text.secondary"
-            sx={{ mb: 2 }}
+            sx={{ display: 'block', mb: 2 }}
           >
             Select a zone to set HR:
           </Typography>

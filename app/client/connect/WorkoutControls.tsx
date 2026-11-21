@@ -42,7 +42,7 @@ const WorkoutControls = ({
         </Button>
       )}
       {workoutStatus === 'paused' && (
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
           <Button
             variant="contained"
             onClick={onResume}
@@ -63,7 +63,7 @@ const WorkoutControls = ({
         </Stack>
       )}
       {workoutStatus === 'running' && (
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
           <Button
             variant="contained"
             onClick={onPause}

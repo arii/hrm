@@ -30,7 +30,13 @@ const CalorieTracker = ({ calorieHistory }: CalorieTrackerProps) => {
         <Typography variant="h6" gutterBottom>
           Calories Burned
         </Typography>
-        <Box display="flex" justifyContent="space-around" textAlign="center">
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-around',
+            textAlign: 'center',
+          }}
+        >
           <Box>
             <Typography variant="h4">{totalCalories.toFixed(0)}</Typography>
             <Typography variant="caption">Total kCal</Typography>

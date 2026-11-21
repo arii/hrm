@@ -80,8 +80,10 @@ const SpotifyDeviceSelector = ({
           horizontal: 'right',
         }}
         data-testid="spotify-device-selector-menu"
-        PaperProps={{
-          'data-testid': 'spotify-device-selector-menu-paper',
+        slotProps={{
+          paper: {
+            'data-testid': 'spotify-device-selector-menu-paper',
+          } as React.HTMLAttributes<HTMLDivElement>,
         }}
       >
         {devices.length > 0 ? (

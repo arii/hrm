@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Button, MenuItem } from '@mui/material'
 import { useSpotifyCommand } from '@/hooks/useSpotifyCommand'
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined'
 
 /**
  * Fallback control that transfers playback to the 'HRM Web Player'

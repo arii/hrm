@@ -42,8 +42,7 @@ const ResetSection = ({ onReset, isResetting }: ResetSectionProps) => {
       </Button>
       <Typography
         variant="caption"
-        display="block"
-        sx={{ mt: 1, color: 'text.secondary' }}
+        sx={{ display: 'block', mt: 1, color: 'text.secondary' }}
       >
         {RESET_EXPLANATION}
       </Typography>
