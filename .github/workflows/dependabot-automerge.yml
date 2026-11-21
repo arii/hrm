@@ -1,0 +1,71 @@
+name: Dependabot Auto-merge
+
+# Design choice: this runs on workflow_run after 'PR Orchestrator' succeeds,
+# instead of pull_request_target. The repo may have no required status checks,
+# in which case `gh pr merge --auto` on a freshly opened PR would merge
+# immediately without waiting for CI. Triggering after a successful run means
+# the quality gate has already passed. Branch protection that requires the
+# PR Orchestrator checks is still recommended as a second safeguard.
+#
+# Safety:
+# - PR code is never checked out or executed.
+# - Only grouped minor/patch Dependabot PRs are eligible. The branch name
+#   Dependabot creates contains the group name; 'major-updates' and ungrouped
+#   (individual, possibly major) PRs are skipped.
+
+on:
+  workflow_run:
+    workflows: ['PR Orchestrator']
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Enable auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    steps:
+      - name: Find PR and decide eligibility
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+          number=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:${HEAD_BRANCH}" --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            echo "::notice::No open PR for branch $HEAD_BRANCH"
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          current_sha=$(gh api "repos/$REPO/pulls/$number" --jq '.head.sha')
+          if [ "$current_sha" != "$HEAD_SHA" ]; then
+            echo "::notice::PR head moved since the checked run; skipping."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Branch looks like dependabot/<ecosystem>/<group>-<hash>
+          if [[ "$HEAD_BRANCH" =~ ^dependabot/(npm_and_yarn|github_actions)/(framework|mui|testing|linting|storybook|minor-and-patch|github-actions)-[0-9a-f]{6,}$ ]]; then
+            echo "eligible=true" >> "$GITHUB_OUTPUT"
+            echo "number=$number" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Branch $HEAD_BRANCH is not an eligible minor/patch group; leaving for manual review."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable auto-merge (squash)
+        if: steps.pr.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          REPO: ${{ github.repository }}
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash

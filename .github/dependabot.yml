@@ -1,37 +1,49 @@
 version: 2
 updates:
-  # 1. NPM Dependencies (The core of your app)
+  # 1. NPM dependencies
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
       day: 'monday'
       time: '09:00'
-      timezone: 'America/Los_Angeles' # Aligned with your Bakersfield location
+      timezone: 'America/Los_Angeles'
 
-    # LIMIT NOISE: Don't open more than 10 PRs at a time
-    open-pull-requests-limit: 10
+    # Wait for new releases to settle before proposing them.
+    cooldown:
+      default-days: 3
+      semver-major-days: 14
 
-    # Custom labels
+    open-pull-requests-limit: 5
+
     labels:
       - 'dependencies'
 
-    # STRATEGIC GROUPING (Crucial for React/MUI apps)
+    # Conventional commits (commitlint)
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+
+    # Groups are evaluated in order and the first match wins, so the specific
+    # groups must stay above the catch-all groups.
+    # NOTE: groups only apply to version updates. Security updates are not
+    # grouped (applies-to: security-updates is intentionally not set) so each
+    # security fix still arrives as its own PR.
+    # Auto-merge is decided by .github/workflows/dependabot-automerge.yml from
+    # the group name, not by labels. Only minor/patch groups are eligible.
     groups:
-      # Update React and Next.js together to avoid peer dependency warnings
       framework:
         patterns:
           - 'next'
           - 'react'
           - 'react-dom'
           - 'eslint-config-next'
+          - '@types/react'
+          - '@types/react-dom'
         update-types:
           - 'minor'
           - 'patch'
-        labels:
-          - 'automerge'
 
-      # Update all MUI and Emotion packages together to ensure styling consistency
       mui:
         patterns:
           - '@mui/*'
@@ -39,34 +51,72 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-        labels:
-          - 'automerge'
 
-      # Keep your testing suite verified together
+      # 'playwright' must be grouped with @playwright/* so the two never drift
+      # apart (a stale 'playwright' next to a newer @playwright/test broke CI).
       testing:
         patterns:
+          - 'playwright'
+          - 'playwright-core'
           - '@playwright/*'
+          - '@testing-library/*'
+          - 'jest*'
+          - '@jest/*'
+          - 'babel-jest'
+          - '@types/jest'
+          - '@axe-core/*'
         update-types:
           - 'minor'
           - 'patch'
-        labels:
-          - 'automerge'
 
-      # Group linting tools to avoid minor formatting diffs in separate PRs
       linting:
         patterns:
           - 'eslint'
           - 'eslint-*'
+          - '@eslint/*'
           - 'prettier'
+          - 'typescript-eslint'
           - '@typescript-eslint/*'
         update-types:
           - 'minor'
           - 'patch'
-        labels:
-          - 'automerge'
 
-  # 2. GitHub Actions (Keeps your CI/CD pipeline secure)
+      storybook:
+        patterns:
+          - 'storybook'
+          - '@storybook/*'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+      # Everything else that is minor/patch
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+      # All major bumps in a single PR. Never auto-merged.
+      major-updates:
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
+
+  # 2. GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'monthly'
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'ci(deps)'
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
