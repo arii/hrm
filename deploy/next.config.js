@@ -13,6 +13,8 @@
  * - env.TESTING only (no NEXT_PUBLIC_TESTING mapping) — keeps
  *   window.__TEST_CONTROLS__ uninstalled in production builds.
  * - No typescript.ignoreBuildErrors — deploy builds stay strict on types.
+ *   They type-check with tsconfig.type-check.json (same scope as
+ *   `pnpm type-check`, which excludes test files) instead of tsconfig.json.
  * - No bundleAnalyzer wrapper — ANALYZE is never set during deploy.
  *
  * @type {import('next').NextConfig}
@@ -82,6 +84,9 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  typescript: {
+    tsconfigPath: 'tsconfig.type-check.json',
+  },
 }
 
 export default nextConfig
