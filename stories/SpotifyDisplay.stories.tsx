@@ -9,7 +9,6 @@ import {
   mockTimerData,
 } from './mocks/mockWebSocketContext'
 import { mockSession } from './mocks/mockSession'
-import { handlers } from './mocks/handlers'
 
 const baseState = {
   spotifyData: mockSpotifyData,
@@ -30,7 +29,6 @@ const meta: Meta<typeof SpotifyDisplay> = {
     ),
   ],
   parameters: {
-    msw: handlers,
     viewport: {
       defaultViewport: 'iphone6',
     },

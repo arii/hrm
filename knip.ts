@@ -26,7 +26,6 @@ const config: KnipConfig = {
     'public/**/*.wav',
     'public/**/*.svg',
     'public/**/*.json',
-    'public/mockServiceWorker.js',
     'next.config.js',
     'jest.config.cjs',
     'commitlint.config.cjs',
