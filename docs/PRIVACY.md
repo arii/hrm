@@ -3,6 +3,8 @@
 **Last Updated:** December 24, 2025
 **Version:** 1.0
 
+> **Status:** Strava upload is planned and not implemented. The repository contains no Strava API code yet. This policy describes the intended behavior.
+
 This Privacy Policy describes how the HRM Dashboard ("Application") collects, uses, and discloses your information in connection with the Strava API.
 
 ## 1. Data Collection

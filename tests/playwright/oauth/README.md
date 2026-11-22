@@ -98,7 +98,6 @@ DEBUG=* npm run test:oauth:playwright
 ## Files
 
 - `local-oauth.spec.ts`: Main OAuth test implementation
-- `../scripts/verify_oauth_local.py`: Test orchestration script
 - `../playwright.oauth.config.ts`: OAuth-specific Playwright configuration
 
 ## Design Philosophy

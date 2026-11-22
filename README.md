@@ -11,6 +11,7 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - [HRM (Heart Rate Monitor) Dashboard](#hrm-heart-rate-monitor-dashboard)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
+  - [Component Status](#component-status)
   - [Quick Start](#quick-start)
     - [One-Click Start with DevContainer (Recommended)](#one-click-start-with-devcontainer-recommended)
     - [Manual Setup](#manual-setup)
@@ -20,7 +21,6 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Primary Scripts](#primary-scripts)
     - [Navigation Shortcuts](#navigation-shortcuts)
     - [Testing \& Verification](#testing--verification)
-  - [VS Code Integration](#vs-code-integration)
   - [Environment Variables](#environment-variables)
     - [Spotify Setup](#spotify-setup)
     - [Audio System](#audio-system)
@@ -33,10 +33,6 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
   - [Development Guidelines](#development-guidelines)
   - [Contributing](#contributing)
   - [Production Readiness Focus](#production-readiness-focus)
-  - [Recent Architecture Improvements](#recent-architecture-improvements)
-    - [Audio System Integration](#audio-system-integration)
-    - [UI/UX Enhancements](#uiux-enhancements)
-    - [Production Readiness](#production-readiness)
   - [README currency checks](#readme-currency-checks)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
@@ -53,6 +49,27 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API (available at `/client/connect`)
 - **Visual Regression Tests** - Playwright screenshot-based testing
 
+## Component Status
+
+Status is based on the code, the unit and Playwright tests, and the docs as of this commit. "Working" means the feature is implemented and covered by unit tests and, where noted, Playwright visual specs. It does not mean verified against live hardware or live Spotify accounts in CI.
+
+| Component                                                                            | Status          | Evidence                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Custom Express and WebSocket server (`server.ts`, `utils/socketManager`)             | Working         | Unit tests for socket manager, middleware and health routes. `realtime-resilience.spec.ts` and `multiple-mock-hrm.spec.ts` run in Playwright.                                                     |
+| Tabata and stopwatch timer (`services/tabataTimer.ts`)                               | Working         | Unit tests in `tests/unit/services/tabataTimer.test.ts`. `timer-ui-sync.spec.ts`, `timer-audio.spec.ts`, `workout-pause.spec.ts` and `vrt-timer-controls.spec.ts` cover the UI.                   |
+| Dashboard (`/`) and workout grid from the Google Doc                                 | Working         | `services/googleDocParser.ts`, `GET /api/workout` and `WorkoutPhaseGrid` have unit tests. `vrt-dashboard`, `vrt-workout-*` specs cover rendering.                                                 |
+| HR zones, calorie estimation (`lib/shared/hr-zones.ts`, `lib/calorie-estimation.ts`) | Working         | Unit tests in `tests/unit/lib` and `tests/unit/utils`. Method documented in [calorie-estimation](docs/calorie-estimation.md).                                                                     |
+| Control panel (`/client/control`)                                                    | Working         | Unit tests in `tests/unit/app/client/control`. `vrt-control-panel.spec.ts`.                                                                                                                       |
+| Mock HRM client (`/client/mock`)                                                     | Working         | Unit tests in `tests/unit/app/client/mock`. `vrt-mock-hrm-client.spec.ts` and the multi-client Playwright spec use it.                                                                            |
+| Bluetooth HRM connect (`/client/connect`, `hooks/useBluetoothHRM`)                   | Working         | Extensive hook tests (battery, race, recovery). `vrt-connect-page.spec.ts` and `bluetooth-flow.spec.ts` use a mocked Bluetooth API. Real straps are not exercised in CI.                          |
+| Spotify playback, devices and playlists                                              | Working         | Unit tests for token, device, polling and playlist services plus Spotify hooks and API routes. `vrt-spotify-*` specs run against mocks. Live Spotify accounts are not exercised in CI.            |
+| Settings and Spotify selection pages                                                 | Working         | Unit tests in `tests/unit/app/client/settings` and `spotify-selection`. `vrt-spotify-selection.spec.ts`.                                                                                          |
+| Experiments tab (`/client/experimental`)                                             | Experimental    | Session recording and analytics stored in browser storage only. Has unit tests and `vrt-experimental.spec.ts`, but it is not part of the live workout flow described in [VISION](docs/VISION.md). |
+| Debug pages and `/api/debug/*`                                                       | Experimental    | Gated by `lib/debug-gate.ts` and `lib/debug-guard.ts` for production. Intended for diagnostics, not end users.                                                                                    |
+| Google OAuth local flow (`tests/playwright/oauth`)                                   | Experimental    | The spec is skipped when `CI` is set, so it only runs on a developer machine with a Chrome profile.                                                                                               |
+| Strava activity upload                                                               | Not implemented | No Strava code exists. It is described in [PRIVACY](docs/PRIVACY.md) and [VISION](docs/VISION.md) as planned.                                                                                     |
+| Broken                                                                               | None known      | No failing or skipped-because-broken tests. The only skipped Playwright tests are the OAuth local test and the lint and `build:server` checks in `infrastructure.spec.ts`.                        |
+
 ## 🔒 Strava Compliance & Privacy
 
 **Data Usage Disclaimer:**
@@ -60,7 +77,7 @@ This application is a **local data generator**.
 
 - **Live Dashboard:** The heart rate tiles and group displays shown in screenshots utilize **direct Bluetooth sensor data**. They do **not** display data fetched from Strava, complying with Strava API Brand Guidelines regarding user privacy.
 - **AI Features:** Any AI/LLM integration (e.g., Gemini) analyzes strictly **local project metadata** or **locally recorded Bluetooth logs**. No data fetched from the Strava API is ever sent to AI models.
-- **Strava Integration:** The Strava API is used strictly for **uploading** completed activities (Write-Only).
+- **Strava Integration:** Planned, not implemented yet. No Strava code exists in the repository today. The intent is **upload only** of completed activities (write-only).
 
 ## Quick Start
 
@@ -282,7 +299,7 @@ The server will start with:
 ### Production Build
 
 ```bash
-# Build TypeScript server and Next.js app (optional; pnpm run start auto-builds if needed)
+# Build TypeScript server and Next.js app (required before start)
 pnpm run build
 
 # Start with PM2 (requires .env.production)
@@ -292,16 +309,14 @@ pnpm run start
 pnpm run pm2:logs
 ```
 
-`pnpm run start` now checks for `.env.production` and verifies build artifacts. When `.next/` or
-`dist/server.mjs` are missing it runs `pnpm run build` before launching PM2, so manual builds are
-only required when you want to inspect the output ahead of time.
+`pnpm run start` runs `scripts/start-production.sh` under PM2. The script exits with an error when
+`dist/server.js` or `.next_prod/` is missing, so run `pnpm run build` first.
 
 ## Project Structure
 
-This project follows a standard Next.js application structure with a few key additions to support its real-time, stateful nature. For a detailed guide to the project's architecture, file organization, and component inventory, please see the documentation in the `docs/` directory.
+This project follows a standard Next.js application structure with a few key additions to support its real-time, stateful nature. For a detailed guide to the project's architecture and file organization, please see the documentation in the `docs/` directory.
 
 - **[File Structure Guide](docs/FILE_STRUCTURE.md)**: A comprehensive overview of the directories and their purposes.
-- **[Component Inventory](docs/COMPONENT_INVENTORY.md)**: A map of the major UI components and their locations.
 
 ### Key Directories
 
@@ -362,20 +377,6 @@ Playwright tests live in `tests/playwright/`; baseline screenshots are stored in
 
 **Best practice:** Run `pnpm run test:visual` before pushing UI changes and regenerate snapshots only after manual review.
 
-## VS Code Integration
-
-This workspace is pre-configured for a seamless development experience with VS Code.
-
-- **`.vscode/settings.json`**: Enables format-on-save (Prettier) and ESLint auto-fix.
-- **`.vscode/launch.json`**: Provides launch configurations to start the server and attach the debugger with one click.
-- **`.vscode/tasks.json`**: Defines helper tasks for running dev scripts and the Chrome DevTools MCP.
-
-**Recommended Extensions**:
-
-- ESLint (`dbaeumer.vscode-eslint`)
-- Prettier - Code formatter (`esbenp.prettier-vscode`)
-- Playwright Test for VSCode (`ms-playwright.playwright`)
-
 ## Environment Variables
 
 Create a `.env.local` file in the root directory for secrets:
@@ -411,9 +412,6 @@ The app includes the original HRM audio feedback system:
 
 These variables control the behavior of the WebSocket server, which manages real-time communication for heart rate data and application state.
 
-> [!NOTE]
-> The variable `WEBSOCKET_CLEANUP_INTERVAL_MS`, mentioned in the original issue, has been superseded by `WEBSOCKET_WATCHDOG_INTERVAL`, which provides a more specific heartbeat-based approach to cleaning up stale connections.
-
 - **`WEBSOCKET_GRACE_PERIOD_MS`**
   - **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
   - **Default**: `5000` (5 seconds)
@@ -430,9 +428,7 @@ These variables control the behavior of the WebSocket server, which manages real
 ## Documentation
 
 - **[Design Guidelines](docs/DESIGN_GUIDELINES.md)** – Theme, typography, and component standards.
-- **[Front-End Improvement Plan](docs/FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
 - **[Testing Guide](docs/TESTING.md)** – How to run and interpret the existing suites.
-- **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
 - **[TypeScript Patterns](docs/TYPESCRIPT_PATTERNS.md)** – Best practices for writing type-safe code and avoiding `any`.
 
 ## Architecture Overview
@@ -452,7 +448,7 @@ This application uses a custom Express server (`server.ts`) that is **stateful**
 All real-time state updates are managed by the server and pushed to clients via WebSocket.
 
 - **Client → Server**: Send commands (e.g., `TIMER_COMMAND`, `SPOTIFY_COMMAND`) or data (`HRM_INPUT`).
-- **Server → Clients**: Broadcasts `STATE_UPDATE` messages containing the latest HR data, timer status, and Spotify track information to all connected clients.
+- **Server → Clients**: Broadcasts `INITIAL_STATE`, `HRM_UPDATE`, `TIMER_UPDATE` and `SPOTIFY_UPDATE` messages (see `types/websocket.ts`) with the latest HR data, timer status, and Spotify track information to all connected clients.
 
 This ensures a single source of truth for application state, keeping all viewers and control panels perfectly in sync.
 
@@ -505,34 +501,8 @@ We welcome contributions to the HRM Dashboard! For a comprehensive guide on our 
 ## Production Readiness Focus
 
 1. **Spotify token persistence audits** – Exercise `pnpm run verify:spotify` after redeploys and confirm `logs/spotify_tokens.json` survives restarts.
-2. **Automated baseline capture** – Implement the Playwright-driven screenshot workflow defined in `docs/automation-plan.md` (background dev server + Chrome MCP bootstrap).
-3. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
-4. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
-
-Track progress by updating the respective markdown plans after each milestone.
-
-## Recent Architecture Improvements
-
-### Audio System Integration
-
-- Copied original HRM audio files from product_hrm
-- Implemented AudioManager class for centralized sound control
-- Added useAudio hook for React components
-- Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
-
-### UI/UX Enhancements
-
-- Consistent layout proportions (no dynamic resizing)
-- Rotated side labels on timer display for better space utilization
-- Volume synchronization between dashboard and control panel
-- Improved mobile navigation with proper labels
-
-### Production Readiness
-
-- Complete deployment scripts and documentation
-- PM2 configuration with proper environment handling
-- Nginx configuration template
-- Pre-deployment validation checks
+2. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
+3. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
 
 ## README currency checks
 

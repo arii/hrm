@@ -22,17 +22,13 @@ If you have an idea for a new feature or an improvement to an existing one, plea
 
 1.  **Fork the repository** and create a new branch for your changes.
 2.  **Make your changes** in a clear and concise manner.
-3.  **Follow the coding standards** outlined in the [Development Standards](./DEVELOPMENT_STANDARDS.md).
+3.  **Follow the coding standards** outlined in the [Development Guide](./DEVELOPMENT.md).
 4.  **Write tests** for your changes, as described in the [Testing Guide](./TESTING.md).
 5.  **Ensure that all tests pass** by running `pnpm run test`.
 6.  **Submit a pull request** with a clear description of your changes.
 
 ## Development Guidelines
 
-For detailed information on our development process, including our coding standards, PR process, and CI/CD pipeline, please refer to the [Development Overview](./DEVELOPMENT.md) and [Development Standards](./DEVELOPMENT_STANDARDS.md).
-
-## Code of Conduct
-
-We have a [Code of Conduct](./CODE_OF_CONDUCT.md) that we expect all contributors to adhere to. Please be respectful and considerate of others when participating in our community.
+For detailed information on our development process, including our coding standards, PR process, and CI/CD pipeline, please refer to the [Development Overview](./DEVELOPMENT.md).
 
 Thank you for contributing to HRM! 🎉

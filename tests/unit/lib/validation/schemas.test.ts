@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 import {
-  UserProfileSchema,
   MeasurementSystemSchema,
   GenderSchema,
   UserPhysicalProfileSchema,
@@ -11,12 +10,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { GENDERS } from '@/types/core'
 
 describe('Zod Schema Validation', () => {
-  describe('UserProfileSchema', () => {
-    it('should correctly import and define the schema', () => {
-      expect(UserProfileSchema).toBeDefined()
-    })
-  })
-
   describe('MeasurementSystemSchema', () => {
     it('should accept valid measurement systems', () => {
       expect(MeasurementSystemSchema.safeParse('IMPERIAL').success).toBe(true)

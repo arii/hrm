@@ -1,6 +1,6 @@
 # Development Guide
 
-This document provides a comprehensive overview of the development process for the HRM project, from initial setup to deployment. It covers our core principles, development workflows, and architectural standards. For a detailed list of enforceable standards and configurations, please refer to the [Development Standards](./DEVELOPMENT_STANDARDS.md) document.
+This document provides a comprehensive overview of the development process for the HRM project, from initial setup to deployment. It covers our core principles, development workflows, and architectural standards.
 
 ## Getting Started
 
@@ -25,7 +25,6 @@ For detailed information on specific topics, please refer to the following docum
 
 - [TypeScript Best Practices](./TYPESCRIPT_PATTERNS.md)
 - [Environment Variable Handling](./ENVIRONMENT_VARIABLES.md)
-- [Testing Guidelines](./TESTING_GUIDELINES.md)
 - [Hook Design Patterns](./HOOK_DESIGN_PATTERNS.md)
 - [Code Review Guidelines](./CODE_REVIEW_GUIDELINES.md)
 
@@ -60,14 +59,6 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 - Update **documentation** if the changes affect project usage or architecture.
 - Create or update an **ADR** for significant architectural decisions.
 
-### Security & Quality Review
-
-The security and quality review process is a critical step in our development lifecycle. It helps us catch potential issues before they make it into production.
-
-- **Standardized Review Format**: We use a standardized format for security and quality summaries to ensure consistency and thoroughness.
-- **File-by-File Audit**: A file-by-file audit approach ensures that every change is carefully examined.
-- **Iterative Feedback**: We encourage multiple review cycles with iterative feedback to achieve the best possible outcome.
-
 ## Quality Assurance Tooling
 
 To maintain code quality and consistency, this project uses a combination of automated tooling.
@@ -85,15 +76,20 @@ This automated process ensures that code merged into the `leader` branch always 
 
 ### Commit Message Standards
 
-To ensure a clean, readable, and automated changelog, this project enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification. For detailed configuration and rules, see the [Development Standards](./DEVELOPMENT_STANDARDS.md).
+This project uses the [Conventional Commits](https://www.conventionalcommits.org/) specification so release-please can generate the changelog. The rules live in [`commitlint.config.cjs`](../commitlint.config.cjs).
+
+- The local `commit-msg` hook runs commitlint but is non-blocking. It prints a warning for a non-compliant message and still allows the commit.
+- A type prefix is required (`feat:`, `fix:`, `chore:`, `docs:`, and so on).
+- The subject may be in any case and must be at most 100 characters.
+- The body has no line length limit.
 
 ## CI/CD, Deployment, and Automation
 
-Our CI/CD pipeline automates many aspects of the development process, including linting, testing, and deployment. We also have several automated workflows to help with tasks such as squashing and rebasing PRs, resolving conflicts, and analyzing technical debt.
+Workflows live in `.github/workflows/` (PR quality checks, PR orchestration, release-please, deployment).
 
 ### Deployment Strategy
 
-The project is deployed to a self-hosted production environment using a GitHub Actions workflow. The deployment follows a "hard restart" strategy.
+The project is deployed to a self-hosted environment by `.github/workflows/deploy.yml`, which runs `scripts/deploy.sh`.
 
 ## Testing
 
@@ -143,17 +139,31 @@ sudo ./scripts/vacuum-system-journal.sh
 
 ## Architectural Decision Records (ADRs)
 
-To ensure that significant architectural decisions are well-reasoned, documented, and consistently applied, we use Architectural Decision Records (ADRs). ADRs capture the context, options considered, and rationale behind important technical choices. For more on the ADR process, see the [Development Standards](./DEVELOPMENT_STANDARDS.md).
+Significant architectural decisions are recorded as ADRs in [`docs/adr/`](./adr/).
 
-All ADRs are stored in the [`docs/adr/`](./adr/) directory.
+1.  **Draft**: Copy the [ADR template](./adr/template.md) to `docs/adr/{adr-number}-{title}.md` with status "Proposed".
+2.  **Review**: Include the ADR in the pull request for the architectural change.
+3.  **Accept**: When the PR merges, set the status to "Accepted".
+4.  **Supersede**: If a decision changes, mark the original ADR "Superseded" and link the new one.
 
 ## Dependency Management and Code Hygiene with Knip
 
-To maintain a clean and efficient codebase, this project uses [Knip](https://knip.dev/) to detect unused files, dependencies, and exports. For detailed configuration and usage, refer to the [Development Standards](./DEVELOPMENT_STANDARDS.md).
+[Knip](https://knip.dev/) detects unused files, dependencies, and exports. Run it with:
+
+```bash
+pnpm run knip
+```
+
+If Knip reports unused items, remove them or add them to the ignore lists in `knip.ts` with a comment explaining why.
 
 ## Dependency Management Guidelines
 
-This section clarifies when and why `package.json` and `pnpm-lock.yaml` should be modified. For specific rules on dependency changes, see the [Development Standards](./DEVELOPMENT_STANDARDS.md).
+- **Adding, updating, or removing a dependency**: the PR must include changes to both `package.json` and `pnpm-lock.yaml`.
+- **Security**: run `pnpm audit` and address vulnerabilities before merging.
+- **Versions**: use stable releases.
+- **Breaking changes**: document them and include migration steps.
+- **Verification**: confirm the application builds and tests pass with the new dependencies.
+- **Internal modules** that use only built-in APIs or existing dependencies do not need `package.json` or `pnpm-lock.yaml` changes.
 
 ## Architectural Patterns
 

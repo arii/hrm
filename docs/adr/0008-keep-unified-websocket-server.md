@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-An architecture audit (`TODO.md`) recommended extracting WebSocket handling
+An architecture audit (a pasted AI chat, formerly `TODO.md`, removed in the slop cleanup; see git history) recommended extracting WebSocket handling
 into a standalone Express + `ws` service, on the grounds that Next.js API
 routes are serverless and drop persistent connections.
 

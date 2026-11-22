@@ -113,28 +113,3 @@ Use `gh` commands to modify issues and add analysis comments.
 
 **Step 5: Reporting**
 The final output is a pull request containing a summary of the work completed.
-
----
-
-## 3. Agent Definition: Merge Conflict Resolver
-
-### Role: Conflict Resolution Specialist
-
-**Specialization**: Git Operations, Code Semantics, and AST Analysis.
-**Primary Task**: To analyze git merge conflicts, understand the intent of both the incoming change (Theirs) and the current branch (Ours), and propose a syntactically correct resolution.
-
-### Methodology
-
-1.  **Context-Aware Resolution**: Analyze code structure to determine if changes can be combined.
-2.  **Safety First**: Generate a resolution proposal rather than force-pushing.
-3.  **Build Integrity**: Proposals are checked against basic syntax rules.
-
-### Workflow: Automated Rebase Recovery
-
-The agent is triggered automatically when the `auto-rebase` workflow fails.
-
-1.  **Workspace Setup**: Checkout the branch and attempt rebase locally.
-2.  **Data Ingestion**: Scan for files containing git conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
-3.  **Local Analysis**: Extract HEAD, Upstream, and context for each conflict block.
-4.  **Artifact Generation**: Produce a `resolution-summary.md` explaining the choices made.
-5.  **Reporting**: Post a comment on the PR with the summary and instructions to apply the patch.

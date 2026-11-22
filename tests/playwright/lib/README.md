@@ -231,9 +231,7 @@ For complex scenarios requiring direct interaction with the application's intern
       await page.evaluate(() => {
         window.__TEST_CONTROLS__.simulateWebSocketMessage({
           type: 'TIMER_UPDATE',
-          data: {
-            /* ... */
-          },
+          data: {/* ... */},
         })
       })
 

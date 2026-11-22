@@ -14,7 +14,7 @@ The project is organized into the following primary directories:
 
 - **`/context`**: Includes React Context providers that manage global state for features like WebSockets, user settings, and error handling.
 
-- **`/docs`**: Contains project documentation, including this file, the component inventory, and other guides to help developers understand the codebase.
+- **`/docs`**: Contains project documentation, including this file, and other guides to help developers understand the codebase.
 
 - **`/hooks`**: Home to custom React hooks that encapsulate reusable logic, such as interacting with browser APIs (e.g., Bluetooth, `localStorage`), managing side effects, or handling complex state.
 
