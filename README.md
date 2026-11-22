@@ -298,10 +298,9 @@ only required when you want to inspect the output ahead of time.
 
 ## Project Structure
 
-This project follows a standard Next.js application structure with a few key additions to support its real-time, stateful nature. For a detailed guide to the project's architecture, file organization, and component inventory, please see the documentation in the `docs/` directory.
+This project follows a standard Next.js application structure with a few key additions to support its real-time, stateful nature. For a detailed guide to the project's architecture and file organization, please see the documentation in the `docs/` directory.
 
 - **[File Structure Guide](docs/FILE_STRUCTURE.md)**: A comprehensive overview of the directories and their purposes.
-- **[Component Inventory](docs/COMPONENT_INVENTORY.md)**: A map of the major UI components and their locations.
 
 ### Key Directories
 
@@ -430,9 +429,7 @@ These variables control the behavior of the WebSocket server, which manages real
 ## Documentation
 
 - **[Design Guidelines](docs/DESIGN_GUIDELINES.md)** – Theme, typography, and component standards.
-- **[Front-End Improvement Plan](docs/FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
 - **[Testing Guide](docs/TESTING.md)** – How to run and interpret the existing suites.
-- **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
 - **[TypeScript Patterns](docs/TYPESCRIPT_PATTERNS.md)** – Best practices for writing type-safe code and avoiding `any`.
 
 ## Architecture Overview
@@ -505,9 +502,8 @@ We welcome contributions to the HRM Dashboard! For a comprehensive guide on our 
 ## Production Readiness Focus
 
 1. **Spotify token persistence audits** – Exercise `pnpm run verify:spotify` after redeploys and confirm `logs/spotify_tokens.json` survives restarts.
-2. **Automated baseline capture** – Implement the Playwright-driven screenshot workflow defined in `docs/automation-plan.md` (background dev server + Chrome MCP bootstrap).
-3. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
-4. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
+2. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
+3. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
 
 Track progress by updating the respective markdown plans after each milestone.
 

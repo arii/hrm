@@ -20,7 +20,7 @@ In this phase, a specialized AI agent is invoked to perform a specific, well-def
       - A JSON file containing data fetched and processed from an external API.
       - A log file from a complex build or test run.
 
-The key principle of this phase is **data capture**. The generated artifacts are committed to the repository (typically in the `docs/audits` or a similar directory) to provide a clear, historical record of the agent's findings at a specific point in time.
+The key principle of this phase is **data capture**. The generated artifacts are committed to the repository (typically in a `docs/` subdirectory) to provide a clear, historical record of the agent's findings at a specific point in time.
 
 ### Phase 2: Actioning the Artifacts
 
