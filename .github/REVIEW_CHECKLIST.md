@@ -10,7 +10,7 @@ Use this checklist to ensure comprehensive and consistent reviews.
 
 ## 2. Architecture & Design
 
-- [ ] **Pattern Adherence**: Does it follow existing patterns (e.g., Service Layer, Event Sourcing)?
+- [ ] **Pattern Adherence**: Does it follow existing patterns (e.g., the service layer in `services/`, server-owned state broadcast over WebSocket)?
 - [ ] **Separation of Concerns**: Is logic properly separated from UI?
 - [ ] **Complexity**: Is the solution as simple as possible?
 - [ ] **Scalability**: Will this scale with more users/data?
@@ -53,7 +53,7 @@ Use this checklist to ensure comprehensive and consistent reviews.
 ## 8. Documentation
 
 - [ ] **Code Docs**: Are JSDoc comments updated?
-- [ ] **Project Docs**: Are README/DEVELOPMENT.md updated if architecture changed?
+- [ ] **Project Docs**: Are README and `docs/` (e.g. `docs/DEVELOPMENT.md`) updated if architecture changed?
 - [ ] **Change Log**: Is the PR description accurate for the changelog?
 
 ---

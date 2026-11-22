@@ -30,7 +30,6 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Real-time Data Flow](#real-time-data-flow)
     - [Architecture Diagram](#architecture-diagram)
     - [Key Services](#key-services)
-  - [Development Guidelines](#development-guidelines)
   - [Contributing](#contributing)
   - [Production Readiness Focus](#production-readiness-focus)
   - [README currency checks](#readme-currency-checks)

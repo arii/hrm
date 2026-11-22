@@ -12,31 +12,24 @@ This directory contains OAuth integration tests designed to run locally with exi
 
 ### Running OAuth Tests
 
-**Option 1: Automated Setup (Recommended)**
-
-```bash
-# This script handles server checks, secrets provisioning, and test execution
-npm run test:oauth:local
-```
-
-**Option 2: Direct Playwright Execution**
+**Option 1: Direct Playwright Execution**
 
 ```bash
 # Start server manually first
-npm run dev
+pnpm run dev
 
 # Then run OAuth tests in another terminal
-npm run test:oauth:playwright
+pnpm run test:oauth:playwright
 ```
 
-**Option 3: Manual Configuration**
+**Option 2: Manual Configuration**
 
 ```bash
 # Explicitly set environment variables
 TEST_BASE_URL=http://localhost:3000 \
 CHROME_PROFILE_PATH=/home/user/.config/google-chrome/Default \
 SPOTIFY_EXPECTED_USER_ID=your_spotify_username \
-npm run test:oauth:playwright
+pnpm run test:oauth:playwright
 ```
 
 ## Test Configuration
@@ -79,12 +72,12 @@ The test automatically detects Chrome profiles:
 
 **Chrome profile not found**
 
-- Manually specify profile path: `CHROME_PROFILE_PATH=/path/to/profile npm run test:oauth:local`
+- Manually specify profile path: `CHROME_PROFILE_PATH=/path/to/profile pnpm run test:oauth:playwright`
 - Or use a temporary profile (requires manual login)
 
 **Server not running**
 
-- Start dev server: `npm run dev`
+- Start dev server: `pnpm run dev`
 - Verify server responds: `curl -I http://localhost:3000`
 
 ### Debug Mode
@@ -92,7 +85,7 @@ The test automatically detects Chrome profiles:
 For detailed debugging, run tests with additional logging:
 
 ```bash
-DEBUG=* npm run test:oauth:playwright
+DEBUG=* pnpm run test:oauth:playwright
 ```
 
 ## Files
