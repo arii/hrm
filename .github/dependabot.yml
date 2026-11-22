@@ -90,14 +90,6 @@ updates:
           - 'minor'
           - 'patch'
 
-      storybook:
-        patterns:
-          - 'storybook'
-          - '@storybook/*'
-        update-types:
-          - 'minor'
-          - 'patch'
-
       # Everything else that is minor/patch
       minor-and-patch:
         patterns:

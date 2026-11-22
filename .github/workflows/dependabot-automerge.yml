@@ -54,7 +54,7 @@ jobs:
             exit 0
           fi
           # Branch looks like dependabot/<ecosystem>/<group>-<hash>
-          if [[ "$HEAD_BRANCH" =~ ^dependabot/(npm_and_yarn|github_actions)/(framework|mui|testing|linting|storybook|minor-and-patch|github-actions)-[0-9a-f]{6,}$ ]]; then
+          if [[ "$HEAD_BRANCH" =~ ^dependabot/(npm_and_yarn|github_actions)/(framework|mui|testing|linting|minor-and-patch|github-actions)-[0-9a-f]{6,}$ ]]; then
             echo "eligible=true" >> "$GITHUB_OUTPUT"
             echo "number=$number" >> "$GITHUB_OUTPUT"
           else
