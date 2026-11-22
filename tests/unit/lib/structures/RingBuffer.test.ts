@@ -2,11 +2,6 @@
 import { RingBuffer } from '../../../../lib/structures/RingBuffer'
 
 describe('RingBuffer', () => {
-  it('should initialize with given capacity', () => {
-    const buffer = new RingBuffer<number>(5)
-    expect(buffer).toBeDefined()
-  })
-
   it('should return items in correct order when not full', () => {
     const buffer = new RingBuffer<number>(5)
     buffer.push(1)
