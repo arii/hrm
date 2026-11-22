@@ -32,3 +32,10 @@ vendor/
 # Ignore a specific file
 src/legacy/code.js
 ```
+
+## Other Manual Tools
+
+- `audit-vrt-changes.sh`: Uses `gh` and `jq` to audit visual regression test file changes across pull requests.
+- `check-pr-conflicts.sh`: Lists open pull requests with a `DIRTY` mergeable status (requires authenticated `gh`).
+- `cleanup-branches.sh`: Lists and removes stale remote branches that have no open pull request.
+- `verify-setup.sh`: Verifies the NGINX configuration and helps set up the `.env` file.
