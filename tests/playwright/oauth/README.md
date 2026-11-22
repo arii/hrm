@@ -72,7 +72,7 @@ The test automatically detects Chrome profiles:
 
 **Chrome profile not found**
 
-- Manually specify profile path: `CHROME_PROFILE_PATH=/path/to/profile ppnpm run test:oauth:playwright`
+- Manually specify profile path: `CHROME_PROFILE_PATH=/path/to/profile pnpm run test:oauth:playwright`
 - Or use a temporary profile (requires manual login)
 
 **Server not running**

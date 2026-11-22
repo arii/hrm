@@ -9,7 +9,7 @@ import { SMALL_DESKTOP_VIEWPORT } from '../lib/viewports'
  * * This test is designed to run LOCALLY (not in CI) using an existing Chrome profile
  * to verify that the Spotify OAuth flow works with real cookies/sessions.
  * * Usage:
- * TEST_BASE_URL=http://localhost:3000 npm run test:visual -- tests/playwright/local-oauth.spec.ts
+ * TEST_BASE_URL=http://localhost:3000 pnpm run test:oauth:playwright
  */
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
