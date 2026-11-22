@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-During a code cleanup and refactoring task, the `calculateMaxHr` function was identified as being duplicated in `utils/constants.ts` and `utils/hr-zones.ts`. The version in `utils/constants.ts` was deemed more robust as it handled `null`, `undefined`, and non-numeric inputs by returning a safe default (`MAX_HR_DEFAULT`, which is 185). The version in `utils/hr-zones.ts` had a different hardcoded default for `age <= 0`, returning 200.
+During a code cleanup and refactoring task, the `calculateMaxHr` function was identified as being duplicated in `utils/constants.ts` and `lib/shared/hr-zones.ts`. The version in `utils/constants.ts` was deemed more robust as it handled `null`, `undefined`, and non-numeric inputs by returning a safe default (`MAX_HR_DEFAULT`, which is 185). The version in `lib/shared/hr-zones.ts` had a different hardcoded default for `age <= 0`, returning 200.
 
 The task was to consolidate to the more robust version of the function, which resulted in a change to the default behavior for invalid or edge-case age inputs.
 

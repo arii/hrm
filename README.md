@@ -20,7 +20,6 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Primary Scripts](#primary-scripts)
     - [Navigation Shortcuts](#navigation-shortcuts)
     - [Testing \& Verification](#testing--verification)
-  - [VS Code Integration](#vs-code-integration)
   - [Environment Variables](#environment-variables)
     - [Spotify Setup](#spotify-setup)
     - [Audio System](#audio-system)
@@ -33,10 +32,6 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
   - [Development Guidelines](#development-guidelines)
   - [Contributing](#contributing)
   - [Production Readiness Focus](#production-readiness-focus)
-  - [Recent Architecture Improvements](#recent-architecture-improvements)
-    - [Audio System Integration](#audio-system-integration)
-    - [UI/UX Enhancements](#uiux-enhancements)
-    - [Production Readiness](#production-readiness)
   - [README currency checks](#readme-currency-checks)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
@@ -60,7 +55,7 @@ This application is a **local data generator**.
 
 - **Live Dashboard:** The heart rate tiles and group displays shown in screenshots utilize **direct Bluetooth sensor data**. They do **not** display data fetched from Strava, complying with Strava API Brand Guidelines regarding user privacy.
 - **AI Features:** Any AI/LLM integration (e.g., Gemini) analyzes strictly **local project metadata** or **locally recorded Bluetooth logs**. No data fetched from the Strava API is ever sent to AI models.
-- **Strava Integration:** The Strava API is used strictly for **uploading** completed activities (Write-Only).
+- **Strava Integration:** Planned, not implemented yet. No Strava code exists in the repository today. The intent is **upload only** of completed activities (write-only).
 
 ## Quick Start
 
@@ -282,7 +277,7 @@ The server will start with:
 ### Production Build
 
 ```bash
-# Build TypeScript server and Next.js app (optional; pnpm run start auto-builds if needed)
+# Build TypeScript server and Next.js app (required before start)
 pnpm run build
 
 # Start with PM2 (requires .env.production)
@@ -292,9 +287,8 @@ pnpm run start
 pnpm run pm2:logs
 ```
 
-`pnpm run start` now checks for `.env.production` and verifies build artifacts. When `.next/` or
-`dist/server.mjs` are missing it runs `pnpm run build` before launching PM2, so manual builds are
-only required when you want to inspect the output ahead of time.
+`pnpm run start` runs `scripts/start-production.sh` under PM2. The script exits with an error when
+`dist/server.js` or `.next_prod/` is missing, so run `pnpm run build` first.
 
 ## Project Structure
 
@@ -361,20 +355,6 @@ Playwright tests live in `tests/playwright/`; baseline screenshots are stored in
 
 **Best practice:** Run `pnpm run test:visual` before pushing UI changes and regenerate snapshots only after manual review.
 
-## VS Code Integration
-
-This workspace is pre-configured for a seamless development experience with VS Code.
-
-- **`.vscode/settings.json`**: Enables format-on-save (Prettier) and ESLint auto-fix.
-- **`.vscode/launch.json`**: Provides launch configurations to start the server and attach the debugger with one click.
-- **`.vscode/tasks.json`**: Defines helper tasks for running dev scripts and the Chrome DevTools MCP.
-
-**Recommended Extensions**:
-
-- ESLint (`dbaeumer.vscode-eslint`)
-- Prettier - Code formatter (`esbenp.prettier-vscode`)
-- Playwright Test for VSCode (`ms-playwright.playwright`)
-
 ## Environment Variables
 
 Create a `.env.local` file in the root directory for secrets:
@@ -409,9 +389,6 @@ The app includes the original HRM audio feedback system:
 ### WebSocket Server
 
 These variables control the behavior of the WebSocket server, which manages real-time communication for heart rate data and application state.
-
-> [!NOTE]
-> The variable `WEBSOCKET_CLEANUP_INTERVAL_MS`, mentioned in the original issue, has been superseded by `WEBSOCKET_WATCHDOG_INTERVAL`, which provides a more specific heartbeat-based approach to cleaning up stale connections.
 
 - **`WEBSOCKET_GRACE_PERIOD_MS`**
   - **Purpose**: The time in milliseconds the server will wait before cleaning up a disconnected client's session data. This allows a user to refresh their browser or momentarily lose connection without losing their heart rate data.
@@ -449,7 +426,7 @@ This application uses a custom Express server (`server.ts`) that is **stateful**
 All real-time state updates are managed by the server and pushed to clients via WebSocket.
 
 - **Client → Server**: Send commands (e.g., `TIMER_COMMAND`, `SPOTIFY_COMMAND`) or data (`HRM_INPUT`).
-- **Server → Clients**: Broadcasts `STATE_UPDATE` messages containing the latest HR data, timer status, and Spotify track information to all connected clients.
+- **Server → Clients**: Broadcasts `INITIAL_STATE`, `HRM_UPDATE`, `TIMER_UPDATE` and `SPOTIFY_UPDATE` messages (see `types/websocket.ts`) with the latest HR data, timer status, and Spotify track information to all connected clients.
 
 This ensures a single source of truth for application state, keeping all viewers and control panels perfectly in sync.
 
@@ -504,31 +481,6 @@ We welcome contributions to the HRM Dashboard! For a comprehensive guide on our 
 1. **Spotify token persistence audits** – Exercise `pnpm run verify:spotify` after redeploys and confirm `logs/spotify_tokens.json` survives restarts.
 2. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
 3. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
-
-Track progress by updating the respective markdown plans after each milestone.
-
-## Recent Architecture Improvements
-
-### Audio System Integration
-
-- Copied original HRM audio files from product_hrm
-- Implemented AudioManager class for centralized sound control
-- Added useAudio hook for React components
-- Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
-
-### UI/UX Enhancements
-
-- Consistent layout proportions (no dynamic resizing)
-- Rotated side labels on timer display for better space utilization
-- Volume synchronization between dashboard and control panel
-- Improved mobile navigation with proper labels
-
-### Production Readiness
-
-- Complete deployment scripts and documentation
-- PM2 configuration with proper environment handling
-- Nginx configuration template
-- Pre-deployment validation checks
 
 ## README currency checks
 
