@@ -39,7 +39,7 @@ export interface WebSocketConnectionValue {
 // the fan-out is split — so state transitions are byte-identical. Slice
 // values are referentially stable for untouched slices because the
 // reducer spreads state.
-// Exported for the Storybook mock provider (same pattern as the old
+// Exported contexts (same pattern as the old
 // single WebSocketContext); app code uses the hooks above.
 export const HrmDataContext = createContext<HrmData[] | null>(null)
 export const TimerDataContext = createContext<TimerData | null>(null)

@@ -1,12 +1,7 @@
 import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
-  entry: [
-    'scripts/**/*.ts',
-    'tests/**/*.ts',
-    '.storybook/*.ts',
-    '.storybook/*.tsx',
-  ],
+  entry: ['scripts/**/*.ts', 'tests/**/*.ts'],
   project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
     '.github',
@@ -16,7 +11,6 @@ const config: KnipConfig = {
     'coverage',
     'playwright-report',
     'test-results',
-    'storybook-static',
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
     'public/assets',
