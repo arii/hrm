@@ -9,7 +9,7 @@ When changing Playwright visual regression tests, follow these standards.
 
 ## Threshold policy
 
-- Default to `maxDiffPixelRatio: 0.1`.
+- Playwright config (`playwright.config.ts`) and full-page dashboard captures default to `maxDiffPixelRatio: 0.1`. The shared `SCREENSHOT_OPTIONS` in `tests/playwright/lib/visual.ts` default to `0.02` for masked element snapshots.
 - Allow up to `0.15` only for clearly documented dynamic captures.
 - Do not introduce `maxDiffPixelRatio > 0.15`.
 - Keep `threshold: 0.2` and `scale: 'css'` in shared screenshot behavior.

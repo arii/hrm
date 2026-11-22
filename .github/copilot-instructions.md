@@ -8,11 +8,11 @@ Read `docs/VISION.md` first. It defines the surfaces (passive dashboard, phone c
 
 ## Tech Stack & Core Concepts
 
-- **Framework**: Next.js with a custom, stateful Express server (`server.ts`).
+- **Framework**: Next.js (App Router, `app/`) with a custom, stateful Express server (`server.ts`).
 - **Language**: TypeScript
 - **UI**: Material-UI (MUI)
 - **State Management**: Server-side for global state, pushed to clients via WebSockets. Client-side state is ephemeral and managed with React Context and hooks.
-- **Real-time**: A WebSocket server (`ws` package) manages real-time communication.
+- **Real-time**: A WebSocket server (`ws` package, `lib/websocket.ts`) manages real-time communication. Client hooks live in `context/WebSocketContext.tsx`.
 - **Deployment**: The application is stateful and deployed on a traditional Node.js host using PM2. It is **not** compatible with serverless platforms like Vercel.
 
 ## Critical Architectural Constraints
@@ -31,7 +31,7 @@ This project uses a **custom Express server** (`server.ts`) as the entry point, 
 
 - The server maintains a singleton state via services in `lib/services.ts`
 - State is broadcast to clients via WebSocket messages defined in `types/websocket.ts`
-- Client components receive state updates through WebSocket subscriptions, not HTTP polling
+- Client components receive state updates through the WebSocket context hooks (`useHrmData`, `useTimerData`, `useSpotifyData`, `useActiveAlerts`, `useWebSocketConnection` in `context/WebSocketContext.tsx`), not HTTP polling
 
 ### The Single Source of Truth Principle
 
@@ -45,7 +45,7 @@ The server is the **authoritative source of truth** for all shared application s
 
 **ALWAYS suggest:**
 
-- Sending commands from client to server via WebSocket messages
+- Sending commands from client to server via WebSocket messages (`sendData` from `useWebSocketConnection`)
 - Receiving state updates from server via typed WebSocket message handlers
 - Using the existing WebSocket message types in `types/websocket.ts`
 
@@ -118,7 +118,7 @@ function processData(data: any) {
 
 ```typescript
 // Good: _test_ property pattern
-class SpotifyService {
+class SpotifyPolling {
   private pollInterval: NodeJS.Timeout | null = null
 
   public _test_ =
@@ -133,12 +133,12 @@ class SpotifyService {
 }
 
 // In tests
-if (spotifyService._test_) {
-  const interval = spotifyService._test_.getPollInterval()
+if (spotifyPolling._test_) {
+  const interval = spotifyPolling._test_.getPollInterval()
 }
 
 // Bad: Casting to any
-const interval = (spotifyService as any).pollInterval // NO!
+const interval = (spotifyPolling as any).pollInterval // NO!
 ```
 
 #### Testing Hooks & Components
@@ -166,14 +166,14 @@ window.TEST_CONTROLS = { ... } // NO!
 ### 3. Linting: Assume Pre-commit Hooks Handle It
 
 - **Rule**: Do not suggest adding manual linting steps to developer workflows or CI scripts.
-- **Context**: The repository is configured with Husky and lint-staged. Code is automatically formatted with Prettier and linted with ESLint before every commit.
-- **When to suggest manual linting**: Only suggest `pnpm run lint` or `pnpm run lint:fix` if the goal is to check the entire project, not just staged files.
+- **Context**: The repository is configured with Husky and lint-staged (`.lintstagedrc.json`). Staged files are formatted with Prettier and linted with ESLint before every commit.
+- **When to suggest manual linting**: Only for whole-project checks, not just staged files. `AGENTS.md` (Working Rules) lists the checks to run before reporting a task done.
 
 ### 4. Deployment Context
 
 - **Branch**: Production deployment always targets the `leader` branch.
 - **Mechanism**: `.github/workflows/deploy.yml` builds a release artifact on every `leader` push, copies it to the self-hosted server and runs `scripts/deploy-artifact.sh`, which restarts the PM2 `hrm-server` process.
-- **Environment**: The production server requires a `.env.production` file.
+- **Environment**: The production server requires a `.env.production` file, which `deploy.yml` generates from repository secrets.
 - **Scripts**: All deployment scripts must align with `package.json` scripts and the `ecosystem.config.cjs` PM2 configuration.
 
 ### 5. Component-Driven Precision with MUI
@@ -190,9 +190,9 @@ All UI components must use Material-UI (MUI) and adhere to the project's theme.
 
 - `@/*` path aliases for all imports from the root directory
 - MUI components from `@mui/material`
-- The project theme defined in `theme/theme.ts` (access via `useTheme()`)
+- The project theme defined in `lib/theme.ts` (access via `useTheme()`)
 - MUI's `sx` prop for component-specific styling
-- Custom theme colors via `theme.palette.custom.*` (e.g., `theme.palette.custom.work`, `theme.palette.custom.rest`)
+- Theme palette values (e.g., `theme.palette.primary.main`, `theme.palette.spotify.main`) and the shared heart rate zone colors in `lib/shared/colors.ts` (`HR_COLORS`)
 
 **Examples:**
 
@@ -206,7 +206,7 @@ function MyComponent() {
   const theme = useTheme()
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.custom.work }}>
+    <Box sx={{ backgroundColor: theme.palette.primary.main }}>
       <Button variant="contained" color="primary">
         Click Me
       </Button>
@@ -265,7 +265,7 @@ WebSocket connection fails to reconnect after server restart.
 
 ## Expected Behavior
 
-Client should attempt exponential backoff reconnection as defined in `lib/websocket.ts`.
+Client should attempt exponential backoff reconnection as defined in `context/ws/connectionLifecycle.ts`.
 
 ## Actual Behavior
 
@@ -277,26 +277,13 @@ Violates **Single Source of Truth Principle** (section: Critical Architectural C
 
 ## Files Involved
 
-- `lib/websocket.ts:45-67` - Client reconnection logic
-- `hooks/useWebSocket.ts:23` - WebSocket hook initialization
+- `context/ws/connectionLifecycle.ts` - Client reconnection logic
+- `context/WebSocketContext.tsx` - WebSocket provider and hooks
 ```
 
 ### 7. Code Conciseness & Redundancy Prevention
 
-This project prioritizes a lean and maintainable codebase. AI assistants should actively suggest ways to reduce total lines of code (LOC).
-
-**NEVER suggest:**
-
-- Re-implementing functions, hooks, or constants that already exist in the codebase.
-- Adding verbose, obvious, or redundant code/comments.
-- Overly complex logic for simple requirements.
-
-**ALWAYS suggest:**
-
-- Refactoring to reuse existing logic.
-- Solutions that reduce the net LOC (added vs. removed).
-- Simplifying complex functions into smaller, more manageable units.
-- Removing boilerplate or over-specified types that can be inferred.
+Follow the Working Rules in `AGENTS.md`. In short: reuse existing helpers, hooks, and constants instead of re-implementing them, and do not add verbose or redundant code or comments.
 
 ### 8. Visual Regression Testing (VRT) Stabilization Standards
 
@@ -305,16 +292,15 @@ Strictly adhere to the standards defined in:
 
 ## Quick Reference: Anti-Patterns to Avoid
 
-| ❌ AI Slop                                              | ✅ Correct Approach                                                                    |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| "You could use Next.js API routes to store timer state" | "Timer state is managed in `server.ts` via `TimerService` and broadcast via WebSocket" |
-| "Install with `npm install <package>`"                  | "Install with `pnpm add <package>`"                                                    |
-| "Use `any` type here for simplicity"                    | "Use discriminated union or `unknown` with type narrowing"                             |
-| "Add a `react-query` hook to fetch timer state"         | "Subscribe to `TIMER_UPDATE` WebSocket messages via `useWebSocket` hook"               |
-| "Use inline styles"                                     | "Use MUI's `sx` prop with theme colors from `theme/theme.ts`"                          |
-| "Import with `../../../components/`"                    | "Import with `@/components/`"                                                          |
-| "Add `eslint-disable no-explicit-any`"                  | "Refactor to use proper types"                                                         |
-| "Cast to `any` to access private property"              | "Use `_test_` property pattern for testing"                                            |
-| "Re-implementing `formatDate` helper"                   | "Reuse existing `formatDate` from `lib/utils.ts`"                                      |
-| "Adding verbose comments to obvious code"               | "Keep code self-documenting and remove redundant comments"                             |
-| "Increasing LOC for a simple change"                    | "Look for more concise alternatives to reduce total LOC"                               |
+| ❌ AI Slop                                              | ✅ Correct Approach                                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| "You could use Next.js API routes to store timer state" | "Timer state is managed by `TabataTimer` (`services/tabataTimer.ts`) and broadcast via WebSocket" |
+| "Install with `npm install <package>`"                  | "Install with `pnpm add <package>`"                                                               |
+| "Use `any` type here for simplicity"                    | "Use discriminated union or `unknown` with type narrowing"                                        |
+| "Add a `react-query` hook to fetch timer state"         | "Read `TIMER_UPDATE` state via the `useTimerData` hook"                                           |
+| "Use inline styles"                                     | "Use MUI's `sx` prop with theme colors from `lib/theme.ts`"                                       |
+| "Import with `../../../components/`"                    | "Import with `@/components/`"                                                                     |
+| "Add `eslint-disable no-explicit-any`"                  | "Refactor to use proper types"                                                                    |
+| "Cast to `any` to access private property"              | "Use `_test_` property pattern for testing"                                                       |
+| "Re-implementing `formatDate` helper"                   | "Reuse existing `formatDate` from `lib/utils.ts`"                                                 |
+| "Adding verbose comments to obvious code"               | "Keep code self-documenting and remove redundant comments"                                        |
