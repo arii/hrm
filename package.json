@@ -45,7 +45,6 @@
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:vrt:check-orphans": "bash scripts/check-orphaned-snapshots.sh",
-    "test:oauth:local": "python3 scripts/verify_oauth_local.py",
     "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "test:remote": "pnpm run build && playwright test remote-capabilities --project=chromium",
     "test:perf": "playwright test tests/playwright/perf-*.spec.ts --project=chromium --workers=1",

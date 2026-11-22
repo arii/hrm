@@ -28,7 +28,7 @@ const config: KnipConfig = {
     'deploy/next.config.js',
   ],
   ignoreDependencies: ['@types/web-bluetooth'],
-  ignoreBinaries: ['scripts/test-json-with-server.sh', 'python3'],
+  ignoreBinaries: ['scripts/test-json-with-server.sh'],
   // Spawned by path in tests/playwright/infrastructure.spec.ts; knip 6 reads it as an import.
   ignoreUnresolved: ['./scripts/start-production.sh'],
 }
