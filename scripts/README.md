@@ -37,7 +37,7 @@ src/legacy/code.js
 
 - `audit-vrt-changes.sh`: Uses `gh` and `jq` to audit visual regression test file changes across pull requests.
 - `check-pr-conflicts.sh`: Lists open pull requests with a `DIRTY` mergeable status (requires authenticated `gh`).
-- `cleanup-branches.sh`: Runs `git push --delete` on every remote branch older than `DAYS_OLD` (default 1 day) that has no open pull request. The deletion is immediate and cannot be undone by the script.
+- `cleanup-branches.sh`: Runs `git push --delete` on every remote branch older than `DAYS_OLD` (default 1 day) that has no open pull request, and also force-deletes a local branch of the same name with `git branch -D` if one exists. The deletion is immediate and cannot be undone by the script.
 - `npm-to-pnpm.sh`: Wrapper that runs the equivalent `pnpm` command for common `npm` commands (install, ci, run, start, test, build, dev).
 - `vacuum-system-journal.sh`: Vacuums the systemd journal to free disk space (run with `sudo`).
 - `verify-isolated.sh`: Starts or stops an isolated dev server in a disposable worktree on its own port (default 3100) for verification.
