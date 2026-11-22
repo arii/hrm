@@ -47,3 +47,14 @@
 - Name Jest unit tests `*.test.ts`.
 - Name Playwright tests `*.spec.ts`.
 - Use `.ts` or `.tsx` extensions for TypeScript files.
+
+## Working Rules (keep slop out)
+
+- Search for an existing helper before writing one. Edit existing files before adding new ones; a new file needs a one-line reason in the PR.
+- No new dependency without saying what it replaces or enables. `pnpm knip` must stay clean.
+- No placeholder code that returns fake success. Fail loudly or do not ship it.
+- Do not commit plans, audits, pasted AI chats or "to be created" inventories. Open an issue instead. Docs must describe what exists.
+- Add tests only for bugs, edge cases or contracts. No tests that restate the implementation or mock everything.
+- Do not add scripts that nothing calls. A script needs a `package.json` entry, a workflow, or a line in `scripts/README.md`.
+- No new GitHub Actions workflows without owner approval. One coherent PR per task.
+- Before reporting done, run `pnpm run lint`, `pnpm run type-check`, `pnpm knip`, `pnpm test:unit` and `pnpm test:components`, and paste the results.
