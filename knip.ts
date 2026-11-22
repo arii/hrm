@@ -4,8 +4,6 @@ const config: KnipConfig = {
   entry: [
     'scripts/**/*.ts',
     'tests/**/*.ts',
-    'stories/**/*.ts',
-    'stories/**/*.tsx',
     '.storybook/*.ts',
     '.storybook/*.tsx',
   ],

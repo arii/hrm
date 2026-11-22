@@ -247,7 +247,6 @@ export default defineConfig([
       'utils/logger.ts',
       'tests/**/*.{ts,tsx,js,jsx,mjs,cjs}',
       'scripts/**/*.{ts,tsx,js,jsx,mjs,cjs}',
-      'stories/**/*.{ts,tsx,js,jsx,mjs,cjs}',
       '**/*.test.{ts,tsx,js,jsx}',
       '**/*.spec.{ts,tsx,js,jsx}',
     ],

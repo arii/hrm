@@ -10,7 +10,7 @@ Storybook allows us to develop and test UI components independently from the mai
 
 ### HrTile Component
 
-Location: `stories/HrTile.stories.tsx`
+Location: `components/HrTile.stories.tsx`
 
 The HrTile story demonstrates different heart rate zones with various configurations:
 
