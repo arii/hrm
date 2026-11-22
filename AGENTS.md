@@ -50,6 +50,7 @@
 
 ## Working Rules (keep slop out)
 
+- Prefer the smaller change: simplify or delete before adding, and aim for a net reduction in lines.
 - Search for an existing helper before writing one. Edit existing files before adding new ones; a new file needs a one-line reason in the PR.
 - No new dependency without saying what it replaces or enables. `pnpm knip` must stay clean.
 - No placeholder code that returns fake success. Fail loudly or do not ship it.
